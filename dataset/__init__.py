@@ -4,4 +4,4 @@ from .batch import Batch, ArrayBatch, DataFrameBatch
 from .dataset import Dataset
 from .fulldataset import FullDataset
 from .dsindex import DatasetIndex
-from .preprocess import Preprocessing
+from .preprocess import Preprocessing, action
