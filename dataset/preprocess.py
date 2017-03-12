@@ -45,9 +45,9 @@ class Preprocessing:
         return self
 
 
-    def create_batch(self, batch_id, batch_indices, *args, **kwargs):
+    def create_batch(self, batch_indices, *args, **kwargs):
         """ Create a new batch by give indices and execute all previous lazy actions """
-        batch = self.dataset.create_batch(batch_id, batch_indices, *args, **kwargs)
+        batch = self.dataset.create_batch(batch_indices, *args, **kwargs)
         self._exec_all_actions(batch)
         return batch
 

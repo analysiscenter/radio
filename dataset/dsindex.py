@@ -8,7 +8,6 @@ class DatasetIndex:
     The index should be 1-d array-like, e.g. numpy array, pandas Series, etc.
     """
     def __init__(self, index):
-        """ init """
         self.index = self.build_index(index)
         self.train = None
         self.test = None
@@ -145,7 +144,3 @@ class DatasetIndex:
                 raise StopIteration()
             else:
                 yield self.next_batch(batch_size, shuffle, one_pass)
-
-
-if __name__ == "__main__":
-    pass

@@ -1,22 +1,32 @@
 """ Contains basic Batch classes """
 
 import os
+from binascii import hexlify
+import blosc
+import numpy as np
+import pandas as pd
 import feather
 
 
 class Batch:
     """ Base Batch class """
-    def __init__(self, batch_id, index):
+    def __init__(self, index):
         """ Create batch by subsetting source dataset """
-        self.batch_id = batch_id
         self.index = index
         self.data = None
 
-    def load(self, src):
+    @staticmethod
+    def make_filename():
+        """ Generate unique filename for the batch """
+        random_data = np.random.uniform(0, 1, size=10) * 123456789
+        filename = hexlify(random_data.data)[:8]
+        return filename.decode("utf-8")
+
+    def load(self, src, fmt=None):
         """ Load data from a file or another data source """
         raise NotImplementedError()
 
-    def dump(self, dst):
+    def dump(self, dst, fmt=None):
         """ Save batch data to disk """
         raise NotImplementedError()
 
@@ -24,34 +34,97 @@ class Batch:
 class ArrayBatch(Batch):
     """ Base Batch class for array-like datasets """
 
-    def load(self, src):
-        """ Load data from another array """
-        self.data = src[self.index]
+    @staticmethod
+    def _read_file(path, attr):
+        with open(path, 'r' + attr) as file:
+            data = file.read()
+        return data
+
+
+    @staticmethod
+    def _write_file(path, attr, data):
+        with open(path, 'w' + attr) as file:
+            file.write(data)
+
+
+    def load(self, src, fmt=None):
+        """ Load data from another array or a file """
+
+        # Read the whole source
+        if fmt is None:
+            _data = src
+        elif fmt == 'blosc':
+            packed_array = self._read_file(src, 'b')
+            _data = blosc.unpack_array(packed_array)
+        else:
+            raise ValueError("Unknown format " + fmt)
+
+        # But put into this batch only part of it (defined by index)
+        if hasattr(_data, "__iter__"):
+            # this creates a copy of the source data (perhaps view could be more efficient)
+            self.data = _data[self.index]
+        else:
+            raise TypeError('Source is expected to be array-like')
+
         return self
 
-    def dump(self, dst):
+
+    def dump(self, dst, fmt=None):
         """ Save batch data to a file or into another array """
+        filename = self.make_filename()
+        fullname = os.path.join(dst, filename + '.' + fmt)
+
+        if fmt is None:
+            if hasattr(dst, "__iter__"):
+                dst = self.data
+            else:
+                raise TypeError('Destination is expected to be array-like')
+        elif fmt == 'blosc':
+            packed_array = blosc.pack_array(self.data)
+            self._write_file(fullname, 'b', packed_array)
+        else:
+            raise ValueError("Unknown format " + fmt)
         return self
 
 
 class DataFrameBatch(Batch):
-    """ Base Batch class for datasets stored in pandas DataFrame """
+    """ Base Batch class for datasets stored in pandas DataFrames """
 
-    def load(self, src):
+    def load(self, src, fmt=None, *args, **kwargs):
         """ Load batch from a dataframe """
-        self.data = src.loc[self.index]
+        # pylint: disable=no-member
+        # Read the whole source
+        if fmt is None:
+            dfr = src
+        elif fmt == 'feather':
+            dfr = feather.read_dataframe(src, *args, **kwargs)
+        elif fmt == 'hdf5':
+            dfr = pd.read_hdf(src, *args, **kwargs)
+        elif fmt == 'csv':
+            dfr = pd.read_csv(src, *args, **kwargs)
+        else:
+            raise ValueError('Unknown format %s' % fmt)
+
+        # But put into this batch only part of it (defined by index)
+        self.data = dfr.loc[self.index]
+
         return self
 
 
     def dump(self, dst, fmt='feather', *args, **kwargs):
         """ Save batch data to disk
             dst should point to a directory where all batches will be stored
-            in separate files named 'batch_id.format', e.g. '1.csv', '2.csv', etc.
+            as separate files named 'batch_id.format', e.g. '1.csv', '2.csv', etc.
         """
-        fname = os.path.join(dst, self.batch_id + '.' + fmt)
-        if format == 'feather':
-            feather.write_dataframe(self.data, fname, *args, **kwargs)
-        elif format == 'csv':
-            self.data.to_csv(fname, *args, **kwargs)
+        filename = self.make_filename()
+        fullname = os.path.join(dst, filename + '.' + fmt)
+
+        if fmt == 'feather':
+            feather.write_dataframe(self.data, fullname, *args, **kwargs)
+        elif fmt == 'hdf5':
+            self.data.to_hdf(fullname, *args, **kwargs)
+        elif fmt == 'csv':
+            self.data.to_csv(fullname, *args, **kwargs)
         else:
             raise ValueError('Unknown format %s' % fmt)
+        return self

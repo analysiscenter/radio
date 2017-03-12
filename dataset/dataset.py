@@ -6,7 +6,6 @@ from .dsindex import DatasetIndex
 class Dataset:
     """ Dataset """
     def __init__(self, index, batch_class=None):
-        """ create """
         self.index = self.build_index(index)
         self.batch_class = batch_class
 
@@ -56,42 +55,13 @@ class Dataset:
             self.validation = Dataset.from_dataset(self, self.index.validation)
 
 
-    def create_batch(self, batch_id, batch_indices, *args, **kwargs):
+    def create_batch(self, batch_indices, *args, **kwargs):
         """ Create a batch from given indices """
-        return self.batch_class(batch_id, batch_indices, *args, **kwargs)
+        return self.batch_class(batch_indices, *args, **kwargs)
 
 
     def gen_batch(self, batch_size, shuffle=False, one_pass=False, *args, **kwargs):
         """ Return an object of the batch class """
-        batch_id = 0
         for ix_batch in self.index.gen_batch(batch_size, shuffle, one_pass):
-            batch_id += 1
-            batch = self.create_batch(batch_id, ix_batch, *args, **kwargs)
+            batch = self.create_batch(ix_batch, *args, **kwargs)
             yield batch
-
-
-class FullDataset:
-    """ Dataset which includes data dataset and target dataset """
-    def __init__(self, data, target):
-        """ """
-        self.data = data
-        self.target = target
-        self.index = data.dataset.index
-        self.batch_generator = None
-
-
-    def gen_batch(self, batch_size, shuffle=False, one_pass=False, *args, **kwargs):
-        """ Generate pairs of batches from data and target """
-        batch_id = 0
-        for ix_batch in self.index.gen_batch(batch_size, shuffle, one_pass):
-            data_batch = self.data.create_batch(batch_id, ix_batch, *args, **kwargs)
-            target_batch = self.target.create_batch(batch_id, ix_batch, *args, **kwargs)
-            yield data_batch, target_batch
-
-
-    def next_batch(self, batch_size, shuffle=False, one_pass=False, *args, **kwargs):
-        """ Return a pair of batches from data and target """
-        if self.batch_generator is None:
-            self.batch_generator = self.gen_batch(batch_size, shuffle=shuffle, one_pass=one_pass, *args, **kwargs)
-        batch = next(self.batch_generator)
-        return batch

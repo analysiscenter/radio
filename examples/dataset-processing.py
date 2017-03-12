@@ -38,13 +38,13 @@ def pd_data():
     data = pd.DataFrame(np.arange(K * 3).reshape(K, -1), index=ix)
     dsindex = DatasetIndex(data.index)
     ds = Dataset(index=dsindex, batch_class=MyDataFrameBatch)
-    return ds, data
+    return ds, data.copy()
 
 # Fill-in target dataset with sample data
 def pd_target(dsindex):
     data = pd.DataFrame(np.arange(K).reshape(K, -1) * 10, index=dsindex.index)
     ds = Dataset(index=dsindex, batch_class=MyDataFrameBatch)
-    return ds, data
+    return ds, data.copy()
 
 
 # Create datasets
@@ -91,4 +91,4 @@ for i in range(5):
 
 ds_data.cv_split([0.5, 0.3])
 print("\nTrain full preprocessing")
-pp = Preprocessing(ds_data.train).load(data).action1().action2().run(BATCH_SIZE, shuffle=False)
+pp = Preprocessing(ds_data.train).load(data).action1().action2().dump("./", "csv").run(BATCH_SIZE, shuffle=False)
