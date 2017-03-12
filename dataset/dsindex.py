@@ -1,5 +1,6 @@
 """ DatasetIndex """
 
+import os
 import numpy as np
 
 
@@ -7,8 +8,9 @@ class DatasetIndex:
     """ Stores an index for a dataset
     The index should be 1-d array-like, e.g. numpy array, pandas Series, etc.
     """
-    def __init__(self, index):
-        self.index = self.build_index(index)
+    def __init__(self, *args, **kwargs):
+        _index = self.build_index(*args, **kwargs)
+        self.index = self.check_index(_index)
         self.train = None
         self.test = None
         self.validation = None
@@ -19,7 +21,12 @@ class DatasetIndex:
 
     @staticmethod
     def build_index(index):
-        """ Create index """
+        """ Return index. Child classes should generate index from the arguments given"""
+        return index
+
+    @staticmethod
+    def check_index(index):
+        """ Check index type and structure """
         if callable(index):
             _index = index()
         else:
@@ -112,8 +119,8 @@ class DatasetIndex:
             if shuffle:
                 np.random.shuffle(self._order)
 
-        rest_items = np.asarray([]).astype('int')
-        if self._start_index + batch_size > num_items:
+        rest_items = None
+        if self._start_index + batch_size >= num_items:
             rest_items = np.copy(self._order[self._start_index:])
             rest_of_batch = self._start_index + batch_size - num_items
             self._start_index = 0
@@ -125,9 +132,12 @@ class DatasetIndex:
 
         new_items = self._order[self._start_index : self._start_index + rest_of_batch]
         # TODO: concat not only numpy arrays
-        batch_items = np.concatenate((rest_items, new_items))
+        if rest_items is None:
+            batch_items = new_items
+        else:
+            batch_items = np.concatenate((rest_items, new_items))
 
-        if one_pass and len(rest_items) > 0:
+        if one_pass and rest_items is not None:
             return self.index[rest_items]
         else:
             self._start_index += rest_of_batch
@@ -144,3 +154,25 @@ class DatasetIndex:
                 raise StopIteration()
             else:
                 yield self.next_batch(batch_size, shuffle, one_pass)
+
+
+class FilesIndex(DatasetIndex):
+    """ Index with the list of files in the given directory """
+    @staticmethod
+    def build_index(path, sort=False):    # pylint: disable=arguments-differ
+        """ Generate index from path """
+        _index = np.asarray([fname for fname in os.listdir(path) if os.path.isfile(os.path.join(path, fname))])
+        if sort:
+            _index = np.sort(_index)
+        return _index
+
+
+class DirectoriesIndex(DatasetIndex):
+    """ Index with the list of directories in the given directory """
+    @staticmethod
+    def build_index(path, sort=False):    # pylint: disable=arguments-differ
+        """ Generate index from path """
+        _index = np.asarray([fname for fname in os.listdir(path) if os.path.isdir(os.path.join(path, fname))])
+        if sort:
+            _index = np.sort(_index)
+        return _index

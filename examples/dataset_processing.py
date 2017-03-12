@@ -8,6 +8,7 @@ path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 sys.path.append(path)
 from dataset import * # pylint: disable=wrong-import-
 
+
 # Example of custome Batch class which defines some actions
 class MyDataFrameBatch(DataFrameBatch):
     @action
