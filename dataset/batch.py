@@ -6,6 +6,7 @@ import blosc
 import numpy as np
 import pandas as pd
 import feather
+from .preprocess import action
 
 
 class Batch:
@@ -22,10 +23,12 @@ class Batch:
         filename = hexlify(random_data.data)[:8]
         return filename.decode("utf-8")
 
+    @action
     def load(self, src, fmt=None):
         """ Load data from a file or another data source """
         raise NotImplementedError()
 
+    @action
     def dump(self, dst, fmt=None):
         """ Save batch data to disk """
         raise NotImplementedError()
@@ -47,6 +50,7 @@ class ArrayBatch(Batch):
             file.write(data)
 
 
+    @action
     def load(self, src, fmt=None):
         """ Load data from another array or a file """
 
@@ -69,6 +73,7 @@ class ArrayBatch(Batch):
         return self
 
 
+    @action
     def dump(self, dst, fmt=None):
         """ Save batch data to a file or into another array """
         filename = self.make_filename()
@@ -90,6 +95,7 @@ class ArrayBatch(Batch):
 class DataFrameBatch(Batch):
     """ Base Batch class for datasets stored in pandas DataFrames """
 
+    @action
     def load(self, src, fmt=None, *args, **kwargs):
         """ Load batch from a dataframe """
         # pylint: disable=no-member
@@ -99,7 +105,7 @@ class DataFrameBatch(Batch):
         elif fmt == 'feather':
             dfr = feather.read_dataframe(src, *args, **kwargs)
         elif fmt == 'hdf5':
-            dfr = pd.read_hdf(src, *args, **kwargs)
+            dfr = pd.read_hdf(src, *args, **kwargs) # pylint: disable=redefined-variable-type
         elif fmt == 'csv':
             dfr = pd.read_csv(src, *args, **kwargs)
         else:
@@ -111,6 +117,7 @@ class DataFrameBatch(Batch):
         return self
 
 
+    @action
     def dump(self, dst, fmt='feather', *args, **kwargs):
         """ Save batch data to disk
             dst should point to a directory where all batches will be stored

@@ -6,12 +6,18 @@ from .preprocess import Preprocessing
 class FullDataset:
     """ Dataset which includes data dataset and target dataset """
     def __init__(self, data, target):
-        if not isinstance(data, Dataset) and not isinstance(data, Preprocessing):
+        self.data = data
+        if isinstance(data, Dataset):
+            self.index = data.index
+        elif isinstance(data, Preprocessing):
+            self.index = data.dataset.index
+        else:
             raise TypeError("Data should be Dataset or Preprocessing")
+
         if not isinstance(target, Dataset) and not isinstance(target, Preprocessing):
             raise TypeError("Target should be Dataset or Preprocessing")
-        self.data = data
         self.target = target
+
         # TODO: check if data and target indices are compatible
         self.batch_generator = None
 

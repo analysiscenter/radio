@@ -1,34 +1,48 @@
 """ Preprocessing """
 
+
+def action(method):
+    """ Decorator for action methods in Batch classes """
+    # TODO: decorator params: parallelization (e.g. threads, processes, async/await, greenlets,...)
+    # use __action for class-specific params
+    method._action = True # pylint: disable=protected-access
+    return method
+
+
 class Preprocessing:
     """ Preprocessing """
     def __init__(self, dataset):
         self.dataset = dataset
-        self.future = []
+        self.action_list = []
         self.batch_generator = None
 
 
     def __getattr__(self, name, *args, **kwargs):
-        """ Check if an unknown attr is a method name from the batch class """
+        """ Check if an unknown attr is an action from the batch class """
         if hasattr(self.dataset.batch_class, name):
             attr_name = getattr(self.dataset.batch_class, name)
             if callable(attr_name):
-                self.future.append({'name': name})
-                return self.append_action
-        raise AttributeError("%s has not been found in Preprocessing and Batch classes" % name)
+                try:
+                    if hasattr(attr_name, "_action"):
+                        self.action_list.append({'name': name})
+                except AttributeError:
+                    raise ValueError("Method %s is not marked with @action decorator" % name)
+        else:
+            raise AttributeError("Method %s has not been found in Preprocessing and Batch classes" % name)
+        return self.append_action
 
 
     def append_action(self, *args, **kwargs):
-        """ Add new action to log of future actions """
-        last = len(self.future) - 1
-        self.future[last].update({'args': args, 'kwargs': kwargs})
+        """ Add new action to the log of future actions """
+        last = len(self.action_list) - 1
+        self.action_list[last].update({'args': args, 'kwargs': kwargs})
         return self
 
 
     def _exec_all_actions(self, batch):
-        for action in self.future:
-            batch_action = getattr(batch, action['name'])
-            batch_action(*action['args'], **action['kwargs'])
+        for _action in self.action_list:
+            batch_action = getattr(batch, _action['name'])
+            batch_action(*_action['args'], **_action['kwargs'])
 
 
     def _run_seq(self, gen_batch):
