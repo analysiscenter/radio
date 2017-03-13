@@ -20,6 +20,7 @@ class Batch:
     def make_filename():
         """ Generate unique filename for the batch """
         random_data = np.random.uniform(0, 1, size=10) * 123456789
+        # probability of collision is around 2e-10.
         filename = hexlify(random_data.data)[:8]
         return filename.decode("utf-8")
 
@@ -64,10 +65,10 @@ class ArrayBatch(Batch):
             raise ValueError("Unknown format " + fmt)
 
         # But put into this batch only part of it (defined by index)
-        if hasattr(_data, "__iter__"):
+        try:
             # this creates a copy of the source data (perhaps view could be more efficient)
             self.data = _data[self.index]
-        else:
+        except TypeError:
             raise TypeError('Source is expected to be array-like')
 
         return self
@@ -80,10 +81,7 @@ class ArrayBatch(Batch):
         fullname = os.path.join(dst, filename + '.' + fmt)
 
         if fmt is None:
-            if hasattr(dst, "__iter__"):
-                dst = self.data
-            else:
-                raise TypeError('Destination is expected to be array-like')
+            dst = self.data
         elif fmt == 'blosc':
             packed_array = blosc.pack_array(self.data)
             self._write_file(fullname, 'b', packed_array)

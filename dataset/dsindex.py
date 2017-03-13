@@ -21,7 +21,7 @@ class DatasetIndex:
 
     @staticmethod
     def build_index(index):
-        """ Return index. Child classes should generate index from the arguments given"""
+        """ Return index. Child classes should generate index from the arguments given """
         return index
 
     @staticmethod
@@ -33,15 +33,13 @@ class DatasetIndex:
             _index = index
 
         if isinstance(_index, DatasetIndex):
-            pass
-        elif hasattr(_index, "__iter__"):
+            _index = _index.index
+        else:
             # index should allow for advance indexing (i.e. subsetting)
             try:
                 _ = _index[[0]]
             except TypeError:
                 _index = np.asarray(_index)
-        else:
-            raise TypeError("index should be array-like or a callable returning array-like")
 
         if len(_index.shape) > 1:
             raise TypeError("index should be 1-dimensional")

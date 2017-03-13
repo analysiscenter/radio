@@ -22,10 +22,9 @@ class Preprocessing:
         if hasattr(self.dataset.batch_class, name):
             attr_name = getattr(self.dataset.batch_class, name)
             if callable(attr_name):
-                try:
-                    if hasattr(attr_name, "_action"):
-                        self.action_list.append({'name': name})
-                except AttributeError:
+                if hasattr(attr_name, "_action"):
+                    self.action_list.append({'name': name})
+                else:
                     raise ValueError("Method %s is not marked with @action decorator" % name)
         else:
             raise AttributeError("Method %s has not been found in Preprocessing and Batch classes" % name)
@@ -34,8 +33,7 @@ class Preprocessing:
 
     def append_action(self, *args, **kwargs):
         """ Add new action to the log of future actions """
-        last = len(self.action_list) - 1
-        self.action_list[last].update({'args': args, 'kwargs': kwargs})
+        self.action_list[-1].update({'args': args, 'kwargs': kwargs})
         return self
 
 
