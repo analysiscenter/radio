@@ -1,9 +1,9 @@
 [MASTER]
+ignore=dataset
 extension-pkg-whitelist=numpy
-max-line-length=120
 
-[TYPECHECK]
-ignored-modules = numpy
+[FORMAT]
+max-line-length=120
 
 [MISCELLANEOUS]
 notes=

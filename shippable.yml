@@ -14,7 +14,7 @@ build:
   pre_ci:
     docker pull $DOCKER_ACC/$DOCKER_REPO:$TAG
   ci:
-    - find . -iname "*.py" | xargs -r pylint3 -rn --rcfile pylintrc
+    - find . -not -path "./dataset/*" -iname "*.py" | xargs -r pylint3 -rn --rcfile pylintrc
 
 integrations:
   hub:
