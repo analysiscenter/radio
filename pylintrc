@@ -1,0 +1,9 @@
+[MASTER]
+extension-pkg-whitelist=numpy
+max-line-length=120
+
+[TYPECHECK]
+ignored-modules = numpy
+
+[MISCELLANEOUS]
+notes=
