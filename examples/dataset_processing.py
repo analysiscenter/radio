@@ -4,8 +4,7 @@ import sys
 import numpy as np
 import pandas as pd
 
-path = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-sys.path.append(path)
+sys.path.append("..")
 from dataset import * # pylint: disable=wrong-import-
 
 
