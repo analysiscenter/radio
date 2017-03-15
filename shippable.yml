@@ -10,9 +10,6 @@ build:
   pre_ci_boot:
     image_name: $DOCKER_ACC/$DOCKER_REPO
     image_tag: $TAG
-    pull: false
-  pre_ci:
-    docker pull $DOCKER_ACC/$DOCKER_REPO:$TAG
   ci:
     - find . -not -path "./dataset/*" -iname "*.py" | xargs -r pylint3 -rn --rcfile pylintrc
 
