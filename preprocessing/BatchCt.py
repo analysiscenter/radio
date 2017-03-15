@@ -151,7 +151,7 @@ class BatchCt(Batch):
         info['method'] = 'load'
         info['params'] = {}
         self.history.append(info)
-        
+
         return self
 
     def __init__(self, index):
@@ -545,7 +545,7 @@ class BatchCt(Batch):
 
         patch = self[person_number][margin, :, :]
         return patch
-    
+
     @action
     def dump(self, dump_path):
         """
@@ -577,7 +577,7 @@ class BatchCt(Batch):
         info['method'] = 'dump'
         info['params'] = {'dump_path': dump_path}
         self.history.append(info)
-        
+
         return self
 
 if __name__ == "__main__":
