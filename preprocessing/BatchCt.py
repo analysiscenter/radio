@@ -7,7 +7,7 @@ sys.path.append('..')
 from dataset import *
 
 import numpy as np
-#import blosc
+import blosc
 import dicom
 
 from preprocessing.auxiliaries import resize_chunk_numba
@@ -146,11 +146,22 @@ class BatchCt(Batch):
         # concatenate scans and initialize patient bounds
         self._initialize_data_and_bounds(list_of_arrs)
 
+        # add info in self.history
+        info = {}
+        info['method'] = 'load'
+        info['params'] = {}
+        self.history.append(info)
+
     def __init__(self, index):
         """
-        common part of initialization from all formats
+        common part of initialization from all formats:
+            -execution of Batch construction
             -initialization of all attrs
-            -creation of empty lists and arrays    
+            -creation of empty lists and arrays
+
+        attrs:
+            index - ndarray of indices
+            dtype is likely to be string    
         """
 
         super().__init__(index)
@@ -235,7 +246,10 @@ class BatchCt(Batch):
             self
             list_of_arrs: list of 3d-scans
         """
+        # make 3d-skyscraper from list of 3d-scans
         self._data = np.concatenate(list_of_arrs, axis=0)
+
+        # set floors for each patient
         list_of_lengths = [len(a) for a in list_of_arrs]
         self._upper_bounds = np.cumsum(np.array(list_of_lengths))
         self._lower_bounds = np.insert(self._upper_bounds, 0, 0)[:-1]
@@ -252,7 +266,8 @@ class BatchCt(Batch):
 
         args:
             self
-            index - can be either number (int) in self
+            index - can be either number (int) of patient
+                         in self from [0,..,len(self.index) - 1]
                     or index from self.index 
                     (here we assume the latter is always 
                     string)
@@ -554,6 +569,11 @@ class BatchCt(Batch):
                       mode='wb') as file:
                 file.write(packed)
 
+        # add info in self.history
+        info = {}
+        info['method'] = 'dump'
+        info['params'] = {'dump_path': dump_path}
+        self.history.append(info)
 
 if __name__ == "__main__":
     pass
