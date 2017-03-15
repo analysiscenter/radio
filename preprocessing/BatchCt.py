@@ -103,7 +103,7 @@ class BatchCt(Batch):
     """
 
     @action
-    def load(self, batch_id, all_patients_paths,
+    def load(self, all_patients_paths,
              btype='dicom'):
         """
         builds batch of patients
@@ -151,6 +151,8 @@ class BatchCt(Batch):
         info['method'] = 'load'
         info['params'] = {}
         self.history.append(info)
+        
+        return self
 
     def __init__(self, index):
         """
@@ -543,7 +545,8 @@ class BatchCt(Batch):
 
         patch = self[person_number][margin, :, :]
         return patch
-
+    
+    @action
     def dump(self, dump_path):
         """
         dump on specified path
@@ -574,6 +577,8 @@ class BatchCt(Batch):
         info['method'] = 'dump'
         info['params'] = {'dump_path': dump_path}
         self.history.append(info)
+        
+        return self
 
 if __name__ == "__main__":
     pass
