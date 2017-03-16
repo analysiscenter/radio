@@ -12,11 +12,11 @@ import numpy as np
 import blosc
 import dicom
 
-from preprocessing.auxiliaries import resize_patient_numba
-from preprocessing.auxiliaries import get_filter_patient
+from .auxiliaries import resize_patient_numba
+from .auxiliaries import get_filter_patient
 
-from preprocessing.mip import image_XIP as XIP
-from preprocessing.crop import return_black_border_array as rbba
+from .mip import image_XIP as XIP
+from .crop import return_black_border_array as rbba
 
 AIR_HU = -2000
 DARK_HU = -2000
