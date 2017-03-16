@@ -24,9 +24,9 @@ AIR_HU = -2000
 DARK_HU = -2000
 
 
-def unpack_blosc(blosc_dir_path):
+def read_unpack_blosc(blosc_dir_path):
     """
-    unpacker of blosc files
+    read, unpack blosc file
     """
     with open(blosc_dir_path, mode='rb') as file:
         packed = file.read()
@@ -128,6 +128,33 @@ class BatchCt(Batch):
 
     """
 
+    def __init__(self, index):
+        """
+        common part of initialization from all formats:
+            -execution of Batch construction
+            -initialization of all attrs
+            -creation of empty lists and arrays
+
+        attrs:
+            index - ndarray of indices
+            dtype is likely to be string
+        """
+
+        super().__init__(index)
+
+        self._data = None
+
+        self._upper_bounds = np.array([], dtype=np.int32)
+        self._lower_bounds = np.array([], dtype=np.int32)
+
+        self._patient_index_path = dict()
+        self._patient_index_number = dict()
+
+        self._crop_centers = np.array([], dtype=np.int32)
+        self._crop_sizes = np.array([], dtype=np.int32)
+
+        self.history = []
+
     @action
     def load(self, all_patients_paths,
              btype='dicom'):
@@ -179,11 +206,11 @@ class BatchCt(Batch):
         # read, prepare and put 3d-scans in list
         # depending on the input type
         if btype == 'dicom':
-            list_of_arrs = self._make_dicom()
+            list_of_arrs = self._load_dicom()
         elif btype == 'blosc':
-            list_of_arrs = self._make_blosc()
+            list_of_arrs = self._load_blosc()
         elif btype == 'raw':
-            list_of_arrs = self._make_raw()
+            list_of_arrs = self._load_raw()
         else:
             raise TypeError("Incorrect type of batch source")
 
@@ -198,34 +225,7 @@ class BatchCt(Batch):
 
         return self
 
-    def __init__(self, index):
-        """
-        common part of initialization from all formats:
-            -execution of Batch construction
-            -initialization of all attrs
-            -creation of empty lists and arrays
-
-        attrs:
-            index - ndarray of indices
-            dtype is likely to be string
-        """
-
-        super().__init__(index)
-
-        self._data = None
-
-        self._upper_bounds = np.array([], dtype=np.int32)
-        self._lower_bounds = np.array([], dtype=np.int32)
-
-        self._patient_index_path = dict()
-        self._patient_index_number = dict()
-
-        self._crop_centers = np.array([], dtype=np.int32)
-        self._crop_sizes = np.array([], dtype=np.int32)
-
-        self.history = []
-
-    def _make_dicom(self):
+    def _load_dicom(self):
         """
         read, prepare and put 3d-scans in list
             given that self contains paths to dicoms in
@@ -261,7 +261,7 @@ class BatchCt(Batch):
             list_of_arrs.append(patient_data)
         return list_of_arrs
 
-    def _make_blosc(self):
+    def _load_blosc(self):
         """
         read, prepare and put 3d-scans in list
             given that self contains paths to blosc in
@@ -269,12 +269,12 @@ class BatchCt(Batch):
 
             *no conversion to hu here
         """
-        list_of_arrs = [unpack_blosc(self._patient_index_path[patient])
+        list_of_arrs = [read_unpack_blosc(self._patient_index_path[patient])
                         for patient in self.index]
 
         return list_of_arrs
 
-    def _make_raw(self):
+    def _load_raw(self):
         """
         read, prepare and put 3d-scans in list
             given that self contains paths to raw (see itk library) in
@@ -285,6 +285,20 @@ class BatchCt(Batch):
         list_of_arrs = [sitk.GetArrayFromImage(sitk.ReadImage(self._patient_index_path[patient]))
                         for patient in self.index]
         return list_of_arrs
+
+    @classmethod
+    def from_array(cls, data, lower_bounds, upper_bounds, history):
+        """
+        Construct batch object from precomputed data: 3d numpy array,
+            list of upper and lower bounds.
+        """
+        out_object = cls.__new__(cls)
+        out_object._data = data
+        out_object._lower_bounds = np.array(lower_bounds)
+        out_object._upper_bounds = np.array(upper_bounds)
+        out_object.history = history.deepcopy()
+
+        return out_object
 
     def _initialize_data_and_bounds(self, list_of_arrs):
         """
@@ -319,8 +333,6 @@ class BatchCt(Batch):
             index - can be either number (int) of patient
                          in self from [0,..,len(self.index) - 1]
                     or index from self.index
-                    (here we assume the latter is always
-                    string)
         """
         if isinstance(index, int):
             if index < self._lower_bounds.shape[0] and index >= 0:
@@ -331,12 +343,10 @@ class BatchCt(Batch):
                 raise IndexError(
                     "Index of patient in the batch is out of range")
 
-        elif isinstance(index, str):
-            lower = self._lower_bounds[self._patient_index_number[index]]
+        else:
+        	lower = self._lower_bounds[self._patient_index_number[index]]
             upper = self._upper_bounds[self._patient_index_number[index]]
             return self._data[lower:upper, :, :]
-        else:
-            raise ValueError("Wrong type of index for batch object")
 
     @property
     def crop_centers(self):
@@ -444,8 +454,8 @@ class BatchCt(Batch):
             upper_bounds = np.cumsum(np.array(list_of_lengths))
             lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
 
-        return Batch.from_array(np.concatenate(mip_patients, axis=0),
-                                lower_bounds, upper_bounds, self.history)
+        return BatchCt.from_array(np.concatenate(mip_patients, axis=0),
+                                  lower_bounds, upper_bounds, self.history)
 
     @action
     def resize(self, num_slices_new=200, num_x_new=400,
