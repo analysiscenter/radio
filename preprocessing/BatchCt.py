@@ -69,31 +69,55 @@ class BatchIterator(object):
 class BatchCt(Batch):
 
     """
-    class for storing batch of Dicom 3d-scans
+    class for storing batch of CT(computed tomography) 3d-scans.
+        Derived from base class Batch
+
 
     Attrs:
-        1. data: 3d-array of stacked scans along number_of_slices axis
-        2. lower_bounds: 1d-array of first floors for each patient
-        3. upper_bounds: 1d, last floors
-        4. history: list of preprocessing operations applied to self
-        5. patients: list of patients' IDs
+        1. index: array of PatientIDs. Usually, PatientIDs are strings
+        2. _data: 3d-array of stacked scans along number_of_slices axis
+        3. _lower_bounds: 1d-array of first floors for each patient
+        4. _upper_bounds: 1d, last floors
+        5. history: list of preprocessing operations applied to self
+            when method with @action-decorator is called
+            info about call should be appended to history
+
+        6. _patient_index_path: index (usually, patientID) -> storage for this patient
+                storage is either directory (dicom-case) or file: .blk for blosc
+                or .raw for mhd
+        7. _patient_index_number: index -> patient's order in batch
+                of use for iterators and indexation
+
 
     Important methods:
-        1. __init__(self, batch_id, patient_names,
-                    paths, btype='dicom', **kwargs):
-            builds skyscraper of patients
+        1. __init__(self, index):
+            basic initialization of patient
+            in accordance with Batch.__init__
+            given base class Batch
+
+        2. load(self, all_patients_paths,
+                btype='dicom'):
+            builds skyscraper of patients given 
+            correspondance patient index -> storage
+            and type of data to build from
+            returns self
 
         2. resize(self, new_sizes, order, num_threads):
             transform the shape of all patients to new_sizes
             method is spline iterpolation(order = order)
-            the function is multithreaded by num_threads
+            the function is multithreaded in num_threads
+            returns self
 
         3. dump(self, path)
             create a dump of the batch
             in the path-folder
+            returns self
 
         4. get_filter(self, erosion_radius=7, num_threads=8)
             returns binary-mask for lungs segmentation
+            the larger erosion_radius
+            the lesser the resulting lungs will be
+            * returns mask, not self 
 
         5. segment(self, erosion_radius=2, num_threads=8)
             segments using mask from get_filter()
@@ -109,31 +133,49 @@ class BatchCt(Batch):
         builds batch of patients
 
         args:
-            batch_id - id of entire batch
-            patient_names - patient names/IDs
-            paths - paths to files (dicoms/mhd/blosc)
-            btype - type of data. 'dicom'|'blosc'|'raw'
+            all_patients_paths - paths to files (dicoms/mhd/blosc)
+                dict-correspondance patient -> storage
+                self.index has to be subset of
+                all_patients_paths.keys()
+            btype - type of data. 
+                Can be 'dicom'|'blosc'|'raw'
 
-        example:
+        Dicom example:
 
-            ###############################################
-            ###############################################
-            ADD ONE!
-            ###############################################
-            ###############################################
+            # initialize batch for storing batch of 3 patients
+            # with following IDs
+            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            batch = BatchCt(ind)
+
+            # initialize dictionary Patient index -> storage
+            dicty = {'1ae34g90': './data/DICOM/1ae34g90', 
+                     '3hf82s76': './data/DICOM/3hf82s76', 
+                     '2ds38d04': './data/DICOM/2ds38d04'}
+            batch.load(dicty, btype='dicom')
+
+        Blosc example:
+            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            batch = BatchCt(ind)
+
+            # initialize dictionary Patient index -> storage
+            dicty = {'1ae34g90': './data/DICOM/1ae34g90/data.blk', 
+                     '3hf82s76': './data/DICOM/3hf82s76/data.blk', 
+                     '2ds38d04': './data/DICOM/2ds38d04/data.blk'}
+            batch.load(dicty, btype='blosc')
 
 
         ***to do: rewrite initialization with asynchronicity
         """
 
-        # auxiliary dictionaries for indexation
-        # dictionary index (patient name) -> path for storing his data
+        # define dictionaries for indexation
+        # index (patient name) -> path for storing his data
         self._patient_index_path = {patient:
                                     all_patients_paths[patient] for patient in self.index}
         self._patient_index_number = {self.index[i]:
                                       i for i in range(len(self.index))}
 
         # read, prepare and put 3d-scans in list
+        # depending on the input type
         if btype == 'dicom':
             list_of_arrs = self._make_dicom()
         elif btype == 'blosc':
@@ -186,6 +228,11 @@ class BatchCt(Batch):
         read, prepare and put 3d-scans in list
             given that self contains paths to dicoms in
             self._patient_index_path
+
+            NOTE: 
+                Important operations performed here:
+                - conversion to hu using meta from dicom-scans
+                - 
         """
 
         list_of_arrs = []
@@ -406,7 +453,7 @@ class BatchCt(Batch):
 
 
         example: Batch = Batch.resize(num_slices_new=128, num_x_new=256,
-                                        num_y_new=256, num_threads=25)
+                                      num_y_new=256, num_threads=25)
         """
 
         # save the result into result_stacked
@@ -499,6 +546,9 @@ class BatchCt(Batch):
 
         sets hu of every pixes outside lungs
             to -2000
+
+        example: 
+            batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get filter with specified params
         # reverse it and set not-lungs to -2000
@@ -551,6 +601,20 @@ class BatchCt(Batch):
         """
         dump on specified path
             create folder corresponding to each patient
+
+        example: 
+            # initialize batch and load data
+            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            batch = BatchCt(ind)
+
+            batch.load(...)
+
+            batch.dump('./data/blosc_preprocessed')
+            # the command above creates files
+
+            # ./data/blosc_preprocessed/1ae34g90/data.blk
+            # ./data/blosc_preprocessed/3hf82s76/data.blk
+            # ./data/blosc_preprocessed/2ds38d04/data.blk
         """
 
         for pat_index in self.index:
