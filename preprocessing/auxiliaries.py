@@ -15,7 +15,7 @@ import scipy.ndimage
 def largest_label_volume(image, background=-1):
     """
     given image,
-        determines largest color that occupies 
+        determines largest color that occupies
         the largest volume, excluding background color
     """
     vals, counts = np.unique(image, return_counts=True)
@@ -118,7 +118,7 @@ def get_filter_patient(chunk, start_from, end_from, res, start_to, erosion_radiu
         # 2d connected components
         labeling = measure.label(axial_slice)
 
-        l_max = largest_label_volume(labeling, bg=0)
+        l_max = largest_label_volume(labeling, background=0)
 
         if l_max is not None:  # This slice contains some lung
             binary_image[i][labeling != l_max] = 1
@@ -136,7 +136,7 @@ def get_filter_patient(chunk, start_from, end_from, res, start_to, erosion_radiu
 
     # again, 3d connected components
     labels = measure.label(binary_image, background=0)
-    l_max = largest_label_volume(labels, bg=0)
+    l_max = largest_label_volume(labels, background=0)
     if l_max is not None:  # There are air pockets
         binary_image[labels != l_max] = 0
 

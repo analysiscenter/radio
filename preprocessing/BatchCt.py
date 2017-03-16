@@ -232,7 +232,6 @@ class BatchCt(Batch):
             NOTE:
                 Important operations performed here:
                 - conversion to hu using meta from dicom-scans
-                - 
         """
 
         list_of_arrs = []
