@@ -1,1 +1,1 @@
-""" 3d ct-scane preprocessing module """
+""" 3d ct-scans preprocessing module """
