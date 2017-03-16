@@ -344,7 +344,7 @@ class BatchCt(Batch):
                     "Index of patient in the batch is out of range")
 
         else:
-        	lower = self._lower_bounds[self._patient_index_number[index]]
+            lower = self._lower_bounds[self._patient_index_number[index]]
             upper = self._upper_bounds[self._patient_index_number[index]]
             return self._data[lower:upper, :, :]
 
