@@ -521,7 +521,6 @@ class BatchCt(Batch):
 
         return self
 
-    @action
     def get_filter(self, erosion_radius=7, num_threads=8):
         """
         multithreaded
@@ -619,9 +618,9 @@ class BatchCt(Batch):
         return patch
 
     @action
-    def dump(self, dump_path):
+    def dump(self, path, fmt='blosc'):
         """
-        dump on specified path
+        dump on specified path and format
             create folder corresponding to each patient
 
         example:
@@ -638,6 +637,8 @@ class BatchCt(Batch):
             # ./data/blosc_preprocessed/3hf82s76/data.blk
             # ./data/blosc_preprocessed/2ds38d04/data.blk
         """
+        if fmt != 'blosc':
+            raise NotImplementedError('Dump to % not implemented yet' % fmt)
 
         for pat_index in self.index:
             # view on patient data
@@ -647,13 +648,13 @@ class BatchCt(Batch):
             packed = blosc.pack_array(pat_data, cname='zstd', clevel=1)
 
             # remove directory if exists
-            if os.path.exists(os.path.join(dump_path, pat_index)):
-                shutil.rmtree(os.path.join(dump_path, pat_index))
+            if os.path.exists(os.path.join(path, pat_index)):
+                shutil.rmtree(os.path.join(path, pat_index))
 
             # put blosc on disk
-            os.makedirs(os.path.join(dump_path, pat_index))
+            os.makedirs(os.path.join(path, pat_index))
 
-            with open(os.path.join(dump_path,
+            with open(os.path.join(path,
                                    pat_index, 'data.blk'),
                       mode='wb') as file:
                 file.write(packed)
@@ -661,7 +662,7 @@ class BatchCt(Batch):
         # add info in self.history
         info = {}
         info['method'] = 'dump'
-        info['params'] = {'dump_path': dump_path}
+        info['params'] = {'path': path}
         self.history.append(info)
 
         return self
