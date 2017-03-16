@@ -6,11 +6,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 import sys
 sys.path.append('..')
-from dataset import Batch, action
 
 import numpy as np
 import blosc
 import dicom
+
+from dataset import Batch, action
+
 
 from .auxiliaries import resize_patient_numba
 from .auxiliaries import get_filter_patient
