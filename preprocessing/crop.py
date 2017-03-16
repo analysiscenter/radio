@@ -1,10 +1,12 @@
+""" contains auxiliary functions for calculating crop parameters """
+
 import numpy as np
-from numba import njit
-from numba import guvectorize
-from numba import vectorize
 
 
 def detect_black_border(masked_image):
+    """
+    returns number of black slices from top and bottom of 3d-scan
+    """
     N = masked_image.shape[0]
     x_l = 0
     x_u = N - 1
@@ -30,6 +32,9 @@ def detect_black_border(masked_image):
 
 
 def return_black_border_array(input_image, B=-2000):
+    """ 
+    return array that contains black border
+    """
     out_array = np.zeros((3, 3))
 
     masked_image = (input_image != B)

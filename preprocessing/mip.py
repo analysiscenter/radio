@@ -1,3 +1,5 @@
+""" Numba-rized functions for MIP calculation """
+
 import numpy as np
 import numba
 from numba import njit
@@ -61,8 +63,8 @@ def numbaAvg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
 
 
 @njit
-def jit_MAX_XIP(image: np.ndarray, start: int = 0, stop: int = -1,
-                step: int = 2, depth: int = 10) -> np.ndarray:
+def jit_MAX_XIP(image: np.ndarray, start: int=0, stop: int=-1,
+                step: int=2, depth: int=10) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,
@@ -90,8 +92,8 @@ def jit_MAX_XIP(image: np.ndarray, start: int = 0, stop: int = -1,
 
 
 @njit
-def jit_MIN_XIP(image: np.ndarray, start: int = 0, stop: int = -1,
-                step: int = 2, depth: int = 10) -> np.ndarray:
+def jit_MIN_XIP(image: np.ndarray, start: int=0, stop: int=-1,
+                step: int=2, depth: int=10) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,
@@ -119,8 +121,8 @@ def jit_MIN_XIP(image: np.ndarray, start: int = 0, stop: int = -1,
 
 
 @njit
-def jit_AVG_XIP(image: np.ndarray, start: int = 0, stop: int = -1,
-                step: int = 2, depth: int = 10) -> np.ndarray:
+def jit_AVG_XIP(image: np.ndarray, start: int=0, stop: int=-1,
+                step: int=2, depth: int=10) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,
@@ -147,10 +149,10 @@ def jit_AVG_XIP(image: np.ndarray, start: int = 0, stop: int = -1,
     return out_array
 
 
-def image_XIP(image: np.ndarray, start: int = 0, stop=None,
-              step: int = 2, depth: int = 10,
-              func: str = 'max', projection: str = "axial",
-              verbose: bool = False) -> np.ndarray:
+def image_XIP(image: np.ndarray, start: int=0, stop=None,
+              step: int=2, depth: int=10,
+              func: str='max', projection: str="axial",
+              verbose: bool=False) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,

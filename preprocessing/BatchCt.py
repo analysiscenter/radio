@@ -1,33 +1,33 @@
+""" contains Batch class for storing Ct-scans """
+
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 import sys
 sys.path.append('..')
-from dataset import *
+from dataset import Batch, action
 
 import numpy as np
 import blosc
 import dicom
 
-from preprocessing.auxiliaries import resize_chunk_numba
 from preprocessing.auxiliaries import resize_patient_numba
 from preprocessing.auxiliaries import get_filter_patient
 
 from preprocessing.mip import image_XIP as XIP
 from preprocessing.crop import return_black_border_array as rbba
 
-INPUT_FOLDER = '/notebooks/data/MRT/nci/'
-BLOSC_STORAGE = '/notebooks/data/MRT/blosc_preprocessed/'
 AIR_HU = -2000
+DARK_HU = -2000
 
 
 def unpack_blosc(blosc_dir_path):
     """
     unpacker of blosc files
     """
-    with open(blosc_dir_path, mode='rb') as f:
-        packed = f.read()
+    with open(blosc_dir_path, mode='rb') as file:
+        packed = file.read()
 
     return blosc.unpack_array(packed)
 
@@ -97,7 +97,7 @@ class BatchCt(Batch):
 
         2. load(self, all_patients_paths,
                 btype='dicom'):
-            builds skyscraper of patients given 
+            builds skyscraper of patients given
             correspondance patient index -> storage
             and type of data to build from
             returns self
@@ -117,7 +117,7 @@ class BatchCt(Batch):
             returns binary-mask for lungs segmentation
             the larger erosion_radius
             the lesser the resulting lungs will be
-            * returns mask, not self 
+            * returns mask, not self
 
         5. segment(self, erosion_radius=2, num_threads=8)
             segments using mask from get_filter()
@@ -137,7 +137,7 @@ class BatchCt(Batch):
                 dict-correspondance patient -> storage
                 self.index has to be subset of
                 all_patients_paths.keys()
-            btype - type of data. 
+            btype - type of data.
                 Can be 'dicom'|'blosc'|'raw'
 
         Dicom example:
@@ -148,8 +148,8 @@ class BatchCt(Batch):
             batch = BatchCt(ind)
 
             # initialize dictionary Patient index -> storage
-            dicty = {'1ae34g90': './data/DICOM/1ae34g90', 
-                     '3hf82s76': './data/DICOM/3hf82s76', 
+            dicty = {'1ae34g90': './data/DICOM/1ae34g90',
+                     '3hf82s76': './data/DICOM/3hf82s76',
                      '2ds38d04': './data/DICOM/2ds38d04'}
             batch.load(dicty, btype='dicom')
 
@@ -158,8 +158,8 @@ class BatchCt(Batch):
             batch = BatchCt(ind)
 
             # initialize dictionary Patient index -> storage
-            dicty = {'1ae34g90': './data/DICOM/1ae34g90/data.blk', 
-                     '3hf82s76': './data/DICOM/3hf82s76/data.blk', 
+            dicty = {'1ae34g90': './data/DICOM/1ae34g90/data.blk',
+                     '3hf82s76': './data/DICOM/3hf82s76/data.blk',
                      '2ds38d04': './data/DICOM/2ds38d04/data.blk'}
             batch.load(dicty, btype='blosc')
 
@@ -205,7 +205,7 @@ class BatchCt(Batch):
 
         attrs:
             index - ndarray of indices
-            dtype is likely to be string    
+            dtype is likely to be string
         """
 
         super().__init__(index)
@@ -229,7 +229,7 @@ class BatchCt(Batch):
             given that self contains paths to dicoms in
             self._patient_index_path
 
-            NOTE: 
+            NOTE:
                 Important operations performed here:
                 - conversion to hu using meta from dicom-scans
                 - 
@@ -288,8 +288,8 @@ class BatchCt(Batch):
     def _initialize_data_and_bounds(self, list_of_arrs):
         """
         put the list of 3d-scans into self._data
-        fill in self._upper_bounds and 
-            self._lower_bounds accordingly 
+        fill in self._upper_bounds and
+            self._lower_bounds accordingly
 
         args:
             self
@@ -317,8 +317,8 @@ class BatchCt(Batch):
             self
             index - can be either number (int) of patient
                          in self from [0,..,len(self.index) - 1]
-                    or index from self.index 
-                    (here we assume the latter is always 
+                    or index from self.index
+                    (here we assume the latter is always
                     string)
         """
         if isinstance(index, int):
@@ -339,12 +339,18 @@ class BatchCt(Batch):
 
     @property
     def crop_centers(self):
+        """
+        returns centers of crop for all scans
+        """
         if not self._crop_centers:
             self._crop_params_patients()
         return self._crop_centers
 
     @property
     def crop_sizes(self):
+        """
+        returns window sizes for crops
+        """
         if not self._crop_sizes:
             self._crop_params_patients()
         return self._crop_sizes
@@ -373,12 +379,15 @@ class BatchCt(Batch):
     @property
     def patient_names_indexes(self):
         """
-        Return list of tuples containing patient index 
+        Return list of tuples containing patient index
             and his number in batch.
         """
         return list(self._patient_index_number.items())
 
     def _crop_params_patients(self, num_threads=8):
+        """
+        calculate params for crop
+        """
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
 
             threads = [executor.submit(rbba, pat) for pat in self]
@@ -388,9 +397,9 @@ class BatchCt(Batch):
             self._crop_sizes = crop_array[:, :, : 2]
 
     @action
-    def make_XIP(self, step: int = 2, depth: int = 10,
-                 func: str = 'max', projection: str = 'axial',
-                 num_threads: int = 4, verbose: bool = False) -> "Batch":
+    def make_XIP(self, step: int=2, depth: int=10,
+                 func: str='max', projection: str='axial',
+                 num_threads: int=4, verbose: bool=False) -> "Batch":
         """
         This function takes 3d picture represented by np.ndarray image,
         start position for 0-axis index, stop position for 0-axis index,
@@ -410,11 +419,11 @@ class BatchCt(Batch):
         for 'coronal' and 'sagital' projections correspondingly.
         """
         args_list = []
-        for l, u in zip(self._lower_bounds, self._upper_bounds):
+        for lower, upper in zip(self._lower_bounds, self._upper_bounds):
 
             args_list.append(dict(image=self._data,
-                                  start=l,
-                                  stop=u,
+                                  start=lower,
+                                  stop=upper,
                                   step=step,
                                   depth=depth,
                                   func=func,
@@ -439,7 +448,7 @@ class BatchCt(Batch):
 
     @action
     def resize(self, num_slices_new=200, num_x_new=400,
-               num_y_new=400, num_threads=8, order=3):
+               num_y_new=400, order=3, num_threads=8):
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
@@ -504,8 +513,10 @@ class BatchCt(Batch):
     @action
     def get_filter(self, erosion_radius=7, num_threads=8):
         """
-        we multithread
-            computation of filter for lungs segmentation
+        multithreaded
+        computation for lungs' segmentating - filter
+        args:
+            -erosion_radius: radius for erosion of lungs' border
 
 
         remember, our patient version of segmentaion has signature
@@ -545,20 +556,20 @@ class BatchCt(Batch):
             changes self
 
         sets hu of every pixes outside lungs
-            to -2000
+            to DARK_HU
 
-        example: 
+        example:
             batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get filter with specified params
-        # reverse it and set not-lungs to -2000
+        # reverse it and set not-lungs to DARK_HU
 
         lungs = self.get_filter(erosion_radius=erosion_radius,
                                 num_threads=num_threads)
         self._data = self._data * lungs
 
         result_filter = 1 - lungs
-        result_filter *= -2000
+        result_filter *= DARK_HU
 
         # apply filter to self.data
         self._data += result_filter
@@ -578,7 +589,7 @@ class BatchCt(Batch):
         """
         get axial slice (e.g., for plots)
 
-        args: person_number - can be either 
+        args: person_number - can be either
             number of person in the batch
             or index of the person
                 whose axial slice we need
@@ -602,7 +613,7 @@ class BatchCt(Batch):
         dump on specified path
             create folder corresponding to each patient
 
-        example: 
+        example:
             # initialize batch and load data
             ind = ['1ae34g90', '3hf82s76', '2ds38d04']
             batch = BatchCt(ind)

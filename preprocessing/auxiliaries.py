@@ -12,11 +12,16 @@ import scipy.ndimage
 
 
 @jit(nogil=True)
-def largest_label_volume(im, bg=-1):
-    vals, counts = np.unique(im, return_counts=True)
+def largest_label_volume(image, background=-1):
+    """
+    given image,
+        determines largest color that occupies 
+        the largest volume, excluding background color
+    """
+    vals, counts = np.unique(image, return_counts=True)
 
-    counts = counts[vals != bg]
-    vals = vals[vals != bg]
+    counts = counts[vals != background]
+    vals = vals[vals != background]
 
     if len(counts) > 0:
         return vals[np.argmax(counts)]
@@ -24,30 +29,22 @@ def largest_label_volume(im, bg=-1):
         return -999999
 
 
-@jit('void(double[:,:,:], double[:], double[:], int64, int64, int64, double[:,:,:], int64)',
-     nogil=True)
-def resize_chunk_numba(concatted_chunk, l_bds, u_bds,
-                       num_slices_new, num_x_new, num_y_new, res, st_ind):
-    for i in np.arange(len(l_bds)):
-        # define resize factor
-        res_factor = [num_slices_new / float((u_bds[i] - l_bds[i])), num_x_new / float(concatted_chunk.shape[1]),
-                      num_y_new / float(concatted_chunk.shape[2])]
-
-        # perform resizeing
-        res[st_ind + i * num_slices_new: st_ind + (i + 1) * num_slices_new, :, :] = scipy.ndimage.interpolation.zoom(
-            concatted_chunk[l_bds[i]:u_bds[i], :, :], res_factor)
-
-        """
-        remember, result is put into res-argument
-            starting from st_ind position
-        so, no return 
-        """
-
-
 @jit('void(double[:,:,:], int64, int64, int64, int64, int64, double[:,:,:], int64)',
      nogil=True)
 def resize_patient_numba(chunk, start_from, end_from, num_slices_new,
                          num_x_new, num_y_new, res, start_to):
+    """
+    resizes 3d-scan for one patient
+        args
+        -chunk: skyscraper from which the patient data is taken
+        - start_from: first floor for patient from chunk
+        - end-from: last floor for patient from chunk
+        - num_slices_new: needed number of slices
+        - num_x_new: needed x-dimension
+        - num_y_new: needed y-dimension
+        - res: skyscraper where to put the resized patient
+        - start_to: first floor for resized patient in
+    """
     # define resize factor
     res_factor = [num_slices_new / float((end_from - start_from)), num_x_new / float(chunk.shape[1]),
                   num_y_new / float(chunk.shape[2])]
@@ -61,6 +58,16 @@ def resize_patient_numba(chunk, start_from, end_from, num_slices_new,
 @jit('void(double[:,:,:], int64, int64, double[:,:,:], int64, int64)',
      nogil=True)
 def get_filter_patient(chunk, start_from, end_from, res, start_to, erosion_radius):
+    """
+    computes lungs-segmenting filter for one patient
+        args
+        -chunk: skyscraper from which the patient data is taken
+        - start_from: first floor for patient from chunk
+        - end-from: last floor for patient from chunk
+        - erosion_radius: radius to use to erod the lungs' border
+        - res: skyscraper where to put the resized patient
+        - start_to: first floor for resized patient in
+    """
 
     # slice the patient out from the skyscraper
     # we use view for simplification
@@ -76,12 +83,14 @@ def get_filter_patient(chunk, start_from, end_from, res, start_to, erosion_radiu
     # create np.array of unique labels of corner pixels
     corner_labs = np.zeros(0)
 
-    for zi in range(bin_shape[0]):
-        corner_labs = np.append(corner_labs, labels[zi, 0, 0])
-        corner_labs = np.append(corner_labs, labels[zi, bin_shape[1] - 1, 0])
+    for z_ind in range(bin_shape[0]):
+        corner_labs = np.append(corner_labs, labels[z_ind, 0, 0])
         corner_labs = np.append(
-            corner_labs, labels[zi, bin_shape[1] - 1, bin_shape[2] - 1])
-        corner_labs = np.append(corner_labs, labels[zi, 0, bin_shape[2] - 1])
+            corner_labs, labels[z_ind, bin_shape[1] - 1, 0])
+        corner_labs = np.append(
+            corner_labs, labels[z_ind, bin_shape[1] - 1, bin_shape[2] - 1])
+        corner_labs = np.append(
+            corner_labs, labels[z_ind, 0, bin_shape[2] - 1])
 
     bk_labs = np.unique(corner_labs)
 
@@ -100,12 +109,12 @@ def get_filter_patient(chunk, start_from, end_from, res, start_to, erosion_radiu
 
         axial_slice = axial_slice - 1
 
-        '''
-        in each axial slice lungs and air are labelled as 0 
+        """
+        in each axial slice lungs and air are labelled as 0
         everything else has label = 1
 
         look for and enumerate connected components in axial_slice
-        '''
+        """
         # 2d connected components
         labeling = measure.label(axial_slice)
 
