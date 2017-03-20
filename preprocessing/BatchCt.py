@@ -454,8 +454,10 @@ class BatchCt(Batch):
             upper_bounds = np.cumsum(np.array(list_of_lengths))
             lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
 
-        return BatchCt.from_array(np.concatenate(mip_patients, axis=0),
-                                  lower_bounds, upper_bounds, self.history)
+        # construct resulting batch with MIPs
+        batch = BatchCt.from_array(np.concatenate(mip_patients, axis=0),
+                                   lower_bounds, upper_bounds, self.history)
+        return batch
 
     @action
     def resize(self, num_slices_new=128, num_x_new=256,
@@ -575,7 +577,7 @@ class BatchCt(Batch):
         # reverse it and set not-lungs to DARK_HU
 
         lungs = self.get_mask(erosion_radius=erosion_radius,
-                                num_threads=num_threads)
+                              num_threads=num_threads)
         self._data = self._data * lungs
 
         result_mask = 1 - lungs
