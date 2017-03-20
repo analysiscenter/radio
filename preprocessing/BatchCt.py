@@ -19,7 +19,7 @@ from dataset import Batch, action
 from .resize import resize_patient_numba
 from .segment import get_mask_patient
 
-from .mip import image_XIP as XIP
+from .mip import image_xip as xip
 from .crop import return_black_border_array as rbba
 
 AIR_HU = -2000
@@ -410,7 +410,7 @@ class BatchCt(Batch):
             self._crop_sizes = crop_array[:, :, : 2]
 
     @action
-    def make_XIP(self, step: int=2, depth: int=10,
+    def make_xip(self, step: int=2, depth: int=10,
                  func: str='max', projection: str='axial',
                  num_threads: int=4, verbose: bool=False) -> "Batch":
         """
@@ -448,7 +448,7 @@ class BatchCt(Batch):
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             list_of_lengths = []
 
-            mip_patients = list(executor.map(lambda x: XIP(**x), args_list))
+            mip_patients = list(executor.map(lambda x: xip(**x), args_list))
             for patient_mip_array in mip_patients:
                 axis_null_size = patient_mip_array.shape[0]
                 list_of_lengths.append(axis_null_size)

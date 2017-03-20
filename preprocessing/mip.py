@@ -5,7 +5,7 @@ from numba import njit
 
 
 @njit
-def numbaMax(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
+def numba_max(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     """
     Takes 3-dimension numpy ndarray view
     with shape parameters as its arguments.
@@ -24,7 +24,7 @@ def numbaMax(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
 
 
 @njit
-def numbaMin(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
+def numba_min(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     """
     Takes 3-dimension numpy ndarray view
     with shape parameters as its arguments.
@@ -43,7 +43,7 @@ def numbaMin(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
 
 
 @njit
-def numbaAvg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
+def numba_avg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     """
     Takes 3-dimension numpy ndarray view
     with shape parameters as its arguments.
@@ -62,7 +62,7 @@ def numbaAvg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
 
 
 @njit
-def jit_MAX_XIP(image: np.ndarray, start: int=0, stop: int=-1,
+def jit_max_xip(image: np.ndarray, start: int=0, stop: int=-1,
                 step: int=2, depth: int=10) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
@@ -83,15 +83,15 @@ def jit_MAX_XIP(image: np.ndarray, start: int=0, stop: int=-1,
                           p.shape[1], p.shape[2]), dtype=image.dtype)
     counter = 0
     for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = numbaMax(p[x: x + depth], depth,
-                                            p.shape[1], p.shape[2])
+        out_array[counter, :, :] = numba_max(p[x: x + depth], depth,
+                                             p.shape[1], p.shape[2])
         counter += 1
 
     return out_array
 
 
 @njit
-def jit_MIN_XIP(image: np.ndarray, start: int=0, stop: int=-1,
+def jit_min_xip(image: np.ndarray, start: int=0, stop: int=-1,
                 step: int=2, depth: int=10) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
@@ -112,15 +112,15 @@ def jit_MIN_XIP(image: np.ndarray, start: int=0, stop: int=-1,
                           p.shape[1], p.shape[2]), dtype=image.dtype)
     counter = 0
     for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = numbaMin(p[x: x + depth], depth,
-                                            p.shape[1], p.shape[2])
+        out_array[counter, :, :] = numba_min(p[x: x + depth], depth,
+                                             p.shape[1], p.shape[2])
         counter += 1
 
     return out_array
 
 
 @njit
-def jit_AVG_XIP(image: np.ndarray, start: int=0, stop: int=-1,
+def jit_avg_xip(image: np.ndarray, start: int=0, stop: int=-1,
                 step: int=2, depth: int=10) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
@@ -141,14 +141,14 @@ def jit_AVG_XIP(image: np.ndarray, start: int=0, stop: int=-1,
                           p.shape[1], p.shape[2]), dtype=np.float64)
     counter = 0
     for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = numbaAvg(p[x: x + depth], depth,
-                                            p.shape[1], p.shape[2])
+        out_array[counter, :, :] = numba_avg(p[x: x + depth], depth,
+                                             p.shape[1], p.shape[2])
         counter += 1
 
     return out_array
 
 
-def image_XIP(image: np.ndarray, start: int=0, stop=None,
+def image_xip(image: np.ndarray, start: int=0, stop=None,
               step: int=2, depth: int=10,
               func: str='max', projection: str="axial",
               verbose: bool=False) -> np.ndarray:
@@ -175,9 +175,9 @@ def image_XIP(image: np.ndarray, start: int=0, stop=None,
              "coronal": [1, 0, 2],
              "sagital": [2, 0, 1]}
 
-    jit_functions_dict = {'max': jit_MAX_XIP,
-                          'min': jit_MIN_XIP,
-                          'mean': jit_AVG_XIP}
+    jit_functions_dict = {'max': jit_max_xip,
+                          'min': jit_min_xip,
+                          'mean': jit_avg_xip}
 
     p = image.transpose(projs[projection])
     if p.shape[0] < depth:
