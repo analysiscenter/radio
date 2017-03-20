@@ -10,6 +10,7 @@ sys.path.append('..')
 import numpy as np
 import blosc
 import dicom
+import SimpleITK as sitk
 
 from dataset import Batch, action
 
