@@ -14,8 +14,8 @@ import dicom
 from dataset import Batch, action
 
 
-from .auxiliaries import resize_patient_numba
-from .auxiliaries import get_filter_patient
+from .resize import resize_patient_numba
+from .segment import get_mask_patient
 
 from .mip import image_XIP as XIP
 from .crop import return_black_border_array as rbba
@@ -115,14 +115,14 @@ class BatchCt(Batch):
             in the path-folder
             returns self
 
-        4. get_filter(self, erosion_radius=7, num_threads=8)
+        4. get_mask(self, erosion_radius=7, num_threads=8)
             returns binary-mask for lungs segmentation
             the larger erosion_radius
             the lesser the resulting lungs will be
             * returns mask, not self
 
         5. segment(self, erosion_radius=2, num_threads=8)
-            segments using mask from get_filter()
+            segments using mask from get_mask()
             that is, sets to hu = -2000 of pixels outside mask
             changes self, returns self
 
@@ -521,20 +521,20 @@ class BatchCt(Batch):
 
         return self
 
-    def get_filter(self, erosion_radius=7, num_threads=8):
+    def get_mask(self, erosion_radius=7, num_threads=8):
         """
         multithreaded
-        computation for lungs' segmentating - filter
+        computation of lungs' segmentating mask
         args:
             -erosion_radius: radius for erosion of lungs' border
 
 
         remember, our patient version of segmentaion has signature
-            get_filter_patient(chunk, start_from, end_from, res,
+            get_mask_patient(chunk, start_from, end_from, res,
                                       start_to, erosion_radius = 7):
 
         """
-        # we put filter into array
+        # we put mask into array
         result_stacked = np.zeros_like(self._data)
 
         # define array of args
@@ -554,9 +554,9 @@ class BatchCt(Batch):
 
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             for arg in args:
-                executor.submit(get_filter_patient, **arg)
+                executor.submit(get_mask_patient, **arg)
 
-        # return filter
+        # return mask
         return result_stacked
 
     @action
@@ -571,18 +571,18 @@ class BatchCt(Batch):
         example:
             batch = batch.segment(erosion_radius=4, num_threads=20)
         """
-        # get filter with specified params
+        # get mask with specified params
         # reverse it and set not-lungs to DARK_HU
 
-        lungs = self.get_filter(erosion_radius=erosion_radius,
+        lungs = self.get_mask(erosion_radius=erosion_radius,
                                 num_threads=num_threads)
         self._data = self._data * lungs
 
-        result_filter = 1 - lungs
-        result_filter *= DARK_HU
+        result_mask = 1 - lungs
+        result_mask *= DARK_HU
 
-        # apply filter to self.data
-        self._data += result_filter
+        # apply mask to self.data
+        self._data += result_mask
 
         # add info about segmentation to history
         info = {}
