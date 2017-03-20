@@ -638,7 +638,8 @@ class BatchCt(Batch):
             # ./data/blosc_preprocessed/2ds38d04/data.blk
         """
         if fmt != 'blosc':
-            raise NotImplementedError('Dump to % not implemented yet' % fmt)
+            raise NotImplementedError(
+                'Dump to {} not implemented yet'.format(fmt))
 
         for pat_index in self.index:
             # view on patient data
