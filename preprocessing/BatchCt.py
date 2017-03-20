@@ -458,8 +458,8 @@ class BatchCt(Batch):
                                   lower_bounds, upper_bounds, self.history)
 
     @action
-    def resize(self, num_slices_new=200, num_x_new=400,
-               num_y_new=400, order=3, num_threads=8):
+    def resize(self, num_slices_new=128, num_x_new=256,
+               num_y_new=256, order=3, num_threads=8):
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
