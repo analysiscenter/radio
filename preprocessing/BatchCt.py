@@ -3,6 +3,7 @@
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+from copy import deepcopy
 
 import sys
 sys.path.append('..')
@@ -297,7 +298,7 @@ class BatchCt(Batch):
         out_object._data = data
         out_object._lower_bounds = np.array(lower_bounds)
         out_object._upper_bounds = np.array(upper_bounds)
-        out_object.history = history.deepcopy()
+        out_object.history = deepcopy(history)
 
         return out_object
 
