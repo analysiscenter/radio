@@ -36,40 +36,6 @@ def read_unpack_blosc(blosc_dir_path):
     return blosc.unpack_array(packed)
 
 
-class BatchIterator(object):
-
-    """
-    iterator for Batch
-
-    instance of Batch contains concatenated (along 0-axis) patients
-        in Batch.data
-
-    consecutive "floors" with numbers from Batch.lower_bounds[i]
-        to Batch.upper_bounds[i] belong to patient i
-
-
-    iterator for Batch iterates over patients
-        i-th iteration returns view on i-th patient's data
-    """
-
-    def __init__(self, batch):
-        self._batch = batch
-        self._patient_index = 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self._patient_index >= self._batch._lower_bounds.shape[0]:
-            raise StopIteration
-        else:
-            lower = self._batch._lower_bounds[self._patient_index]
-            upper = self._batch._upper_bounds[self._patient_index]
-            return_value = self._batch._data[lower:upper, :, :]
-            self._patient_index += 1
-            return return_value
-
-
 class BatchCt(Batch):
 
     """
@@ -319,9 +285,6 @@ class BatchCt(Batch):
         list_of_lengths = [len(a) for a in list_of_arrs]
         self._upper_bounds = np.cumsum(np.array(list_of_lengths))
         self._lower_bounds = np.insert(self._upper_bounds, 0, 0)[:-1]
-
-    def __iter__(self):
-        return BatchIterator(self)
 
     def __len__(self):
         return self._lower_bounds.shape[0]
