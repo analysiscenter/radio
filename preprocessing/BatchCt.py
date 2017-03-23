@@ -125,7 +125,7 @@ class BatchCt(Batch):
 
     @action
     def load(self, all_patients_paths,
-             btype='dicom'):
+             btype='dicom', src=None, upper_bounds=None):
         """
         builds batch of patients
 
@@ -135,7 +135,7 @@ class BatchCt(Batch):
                 self.index has to be subset of
                 all_patients_paths.keys()
             btype - type of data.
-                Can be 'dicom'|'blosc'|'raw'
+                Can be 'dicom'|'blosc'|'raw'|'ndarray'
 
         Dicom example:
 
@@ -160,19 +160,39 @@ class BatchCt(Batch):
                      '2ds38d04': './data/DICOM/2ds38d04/data.blk'}
             batch.load(dicty, btype='blosc')
 
+        Ndarray example:
+            # source_array stores a batch (concatted 3d-scans, skyscraper)
+            # say, ndarray with shape (400, 256, 256)
+
+            # source_ubounds stores ndarray of last floors for each patient
+            # say, source_ubounds = np.asarray([100, 400])
+            batch.load(src=source_array, upper_bounds=source_ubounds)
+
 
         ***to do: rewrite initialization with asynchronicity
         """
 
-        # define dictionaries for indexation
-        # index (patient name) -> path for storing his data
-        self._patient_index_path = {patient:
-                                    all_patients_paths[patient] for patient in self.index}
+        # dictionariy for indexation
         self._patient_index_number = {self.index[i]:
                                       i for i in range(len(self.index))}
 
+        # if ndarray. Might be better to put this into separate function
+        if btype == 'ndarray':
+            lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
+
+            list_of_arrs = [src[lower_bounds[i]:upper_bounds[i], :, :]
+                            for i in range(len(upper_bounds))]
+
+            self._initialize_data_and_bounds(list_of_arrs)
+            return self
+
+        # index (patient name) -> path for storing his data
+        self._patient_index_path = {patient:
+                                    all_patients_paths[patient] for patient in self.index}
+
         # read, prepare and put 3d-scans in list
         # depending on the input type
+
         if btype == 'dicom':
             list_of_arrs = self._load_dicom()
         elif btype == 'blosc':

@@ -1,3 +1,4 @@
+# pylint: disable=invalid-name
 """ contains auxiliary functions for calculating crop parameters """
 
 import numpy as np

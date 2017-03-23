@@ -83,12 +83,11 @@ def get_mask_patient(chunk, start_from, end_from, res, start_to, erosion_radius)
 
         axial_slice = axial_slice - 1
 
-        """
-        in each axial slice lungs and air are labelled as 0
-        everything else has label = 1
+        # in each axial slice lungs and air are labelled as 0
+        # everything else has label = 1
 
-        look for and enumerate connected components in axial_slice
-        """
+        # look for and enumerate connected components in axial_slice
+
         # 2d connected components
         labeling = measure.label(axial_slice)
 
