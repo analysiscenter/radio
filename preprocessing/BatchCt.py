@@ -124,8 +124,8 @@ class BatchCt(Batch):
         self.history = []
 
     @action
-    def load(self, all_patients_paths=None,
-             btype='dicom', src=None, upper_bounds=None):  # pylint: disable=arguments-differ
+    def load(self, all_patients_paths=None,                 # pylint: disable=arguments-differ
+             btype='dicom', src=None, upper_bounds=None):
         """
         builds batch of patients
 
@@ -273,20 +273,6 @@ class BatchCt(Batch):
         list_of_arrs = [sitk.GetArrayFromImage(sitk.ReadImage(self._patient_index_path[patient]))
                         for patient in self.index]
         return list_of_arrs
-
-    @classmethod
-    def from_array(cls, data, lower_bounds, upper_bounds, history):
-        """
-        Construct batch object from precomputed data: 3d numpy array,
-            list of upper and lower bounds.
-        """
-        out_object = cls.__new__(cls)
-        out_object._data = data
-        out_object._lower_bounds = np.array(lower_bounds)
-        out_object._upper_bounds = np.array(upper_bounds)
-        out_object.history = deepcopy(history)
-
-        return out_object
 
     def _initialize_data_and_bounds(self, list_of_arrs):
         """
@@ -444,8 +430,6 @@ class BatchCt(Batch):
         batch.load(btype='ndarray', src=np.concatenate(mip_patients, axis=0),
                    upper_bounds=upper_bounds)
 
-        # batch = BatchCt.from_array(np.concatenate(mip_patients, axis=0),
-        #                           lower_bounds, upper_bounds, self.history)
         return batch
 
     @action
