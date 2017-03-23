@@ -124,8 +124,8 @@ class BatchCt(Batch):
         self.history = []
 
     @action
-    def load(self, all_patients_paths,
-             btype='dicom', src=None, upper_bounds=None):
+    def load(self, all_patients_paths=None,
+             btype='dicom', src=None, upper_bounds=None):  # pylint: disable=arguments-differ
         """
         builds batch of patients
 
@@ -307,7 +307,7 @@ class BatchCt(Batch):
         self._lower_bounds = np.insert(self._upper_bounds, 0, 0)[:-1]
 
     def __len__(self):
-        return self._lower_bounds.shape[0]
+        return len(self.index)
 
     def __getitem__(self, index):
         """
@@ -440,8 +440,12 @@ class BatchCt(Batch):
             lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
 
         # construct resulting batch with MIPs
-        batch = BatchCt.from_array(np.concatenate(mip_patients, axis=0),
-                                   lower_bounds, upper_bounds, self.history)
+        batch = BatchCt(self.index)
+        batch.load(btype='ndarray', src=np.concatenate(mip_patients, axis=0),
+                   upper_bounds=upper_bounds)
+
+        # batch = BatchCt.from_array(np.concatenate(mip_patients, axis=0),
+        #                           lower_bounds, upper_bounds, self.history)
         return batch
 
     @action
