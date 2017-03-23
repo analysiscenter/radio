@@ -3,7 +3,6 @@
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
-from copy import deepcopy
 
 import sys
 sys.path.append('..')
@@ -423,7 +422,6 @@ class BatchCt(Batch):
                 list_of_lengths.append(axis_null_size)
 
             upper_bounds = np.cumsum(np.array(list_of_lengths))
-            lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
 
         # construct resulting batch with MIPs
         batch = BatchCt(self.index)
