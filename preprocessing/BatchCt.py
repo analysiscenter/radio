@@ -412,7 +412,6 @@ class BatchCt(Batch):
                                   verbose=verbose))
 
         upper_bounds = None
-        lower_bounds = None
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             list_of_lengths = []
 
