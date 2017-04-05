@@ -128,7 +128,7 @@ class CTImagesBatch(Batch):
         builds batch of patients
 
         args:
-            src - path to files (dicoms/mhd/blosc)
+            src - path to files (dicoms/mhd/blosc), if None then read files from the location defined in the index
             fmt - type of data.
                 Can be 'dicom'|'blosc'|'raw'|'ndarray'
 
@@ -175,9 +175,9 @@ class CTImagesBatch(Batch):
 
         return self
 
-    def _load_dicom(self):
+    def _load_dicom(self, src=None):
         """
-        read, prepare and put 3d-scans in list
+        read, prepare and put 3d-scans in a list
 
         Important operations performed here:
          - conversion to hu using meta from dicom-scans
@@ -207,7 +207,7 @@ class CTImagesBatch(Batch):
             list_of_arrs.append(patient_data)
         return list_of_arrs
 
-    def _load_blosc(self):
+    def _load_blosc(self, src=None):
         """
         read, prepare and put 3d-scans in list
 
@@ -217,7 +217,7 @@ class CTImagesBatch(Batch):
 
         return list_of_arrs
 
-    def _load_raw(self):
+    def _load_raw(self, src=None):
         """
         read, prepare and put 3d-scans in list
 
