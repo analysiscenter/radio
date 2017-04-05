@@ -175,7 +175,7 @@ class CTImagesBatch(Batch):
 
         return self
 
-    def _load_dicom(self, src=None):
+    def _load_dicom(self):
         """
         read, prepare and put 3d-scans in a list
 
@@ -207,7 +207,7 @@ class CTImagesBatch(Batch):
             list_of_arrs.append(patient_data)
         return list_of_arrs
 
-    def _load_blosc(self, src=None):
+    def _load_blosc(self):
         """
         read, prepare and put 3d-scans in list
 
@@ -217,7 +217,7 @@ class CTImagesBatch(Batch):
 
         return list_of_arrs
 
-    def _load_raw(self, src=None):
+    def _load_raw(self):
         """
         read, prepare and put 3d-scans in list
 
