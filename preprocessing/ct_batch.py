@@ -214,7 +214,7 @@ class CTImagesBatch(Batch):
             *no conversion to hu here
         """
         list_of_arrs = [read_unpack_blosc(
-            os.path.join(self.index.get_fullpath(patient)), 'data.blk') for patient in self.indices]
+            os.path.join(self.index.get_fullpath(patient), 'data.blk')) for patient in self.indices]
 
         return list_of_arrs
 
@@ -351,7 +351,7 @@ class CTImagesBatch(Batch):
 
         # construct resulting batch with MIPs
         batch = type(self)(self.index)
-        batch.load(fmp='ndarray', src=np.concatenate(mip_patients, axis=0),
+        batch.load(fmt='ndarray', src=np.concatenate(mip_patients, axis=0),
                    upper_bounds=upper_bounds)
 
         return batch
