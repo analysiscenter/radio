@@ -3,7 +3,7 @@
 import numpy as np
 
 
-def make_mask(center, diam, x_size, y_size, z_world
+def make_mask(center, diam, x_size, y_size, z_world,
               spacing, origin):
     """
     place nodule and
