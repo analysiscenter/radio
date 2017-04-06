@@ -35,7 +35,7 @@ def read_unpack_blosc(blosc_dir_path):
     return blosc.unpack_array(packed)
 
 
-class BatchCt(Batch):
+class CTImagesBatch(Batch):
 
     """
     class for storing batch of CT(computed tomography) 3d-scans.
@@ -123,41 +123,22 @@ class BatchCt(Batch):
         self.history = []
 
     @action
-    def load(self, all_patients_paths=None,                 # pylint: disable=arguments-differ
-             btype='dicom', src=None, upper_bounds=None):
+    def load(self, src=None, fmt='dicom', upper_bounds=None): # pylint: disable=arguments-differ
         """
         builds batch of patients
 
         args:
-            all_patients_paths - paths to files (dicoms/mhd/blosc)
-                dict-correspondance patient -> storage
-                self.index has to be subset of
-                all_patients_paths.keys()
-            btype - type of data.
+            src - path to files (dicoms/mhd/blosc), if None then read files from the location defined in the index
+            fmt - type of data.
                 Can be 'dicom'|'blosc'|'raw'|'ndarray'
 
         Dicom example:
 
             # initialize batch for storing batch of 3 patients
             # with following IDs
-            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-            batch = BatchCt(ind)
-
-            # initialize dictionary Patient index -> storage
-            dicty = {'1ae34g90': './data/DICOM/1ae34g90',
-                     '3hf82s76': './data/DICOM/3hf82s76',
-                     '2ds38d04': './data/DICOM/2ds38d04'}
-            batch.load(dicty, btype='dicom')
-
-        Blosc example:
-            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-            batch = BatchCt(ind)
-
-            # initialize dictionary Patient index -> storage
-            dicty = {'1ae34g90': './data/DICOM/1ae34g90/data.blk',
-                     '3hf82s76': './data/DICOM/3hf82s76/data.blk',
-                     '2ds38d04': './data/DICOM/2ds38d04/data.blk'}
-            batch.load(dicty, btype='blosc')
+            index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
+            batch = CTImagesBatch(index)
+            batch.load("/data/to/files", fmt='dicom')
 
         Ndarray example:
             # source_array stores a batch (concatted 3d-scans, skyscraper)
@@ -165,38 +146,20 @@ class BatchCt(Batch):
 
             # source_ubounds stores ndarray of last floors for each patient
             # say, source_ubounds = np.asarray([100, 400])
-            batch.load(src=source_array, upper_bounds=source_ubounds)
-
+            batch.load(src=source_array, fmt='ndarray', upper_bounds=source_ubounds)
 
         ***to do: rewrite initialization with asynchronicity
         """
 
-        # dictionariy for indexation
-        self._patient_index_number = {self.index[i]:
-                                      i for i in range(len(self.index))}
-
         # if ndarray. Might be better to put this into separate function
-        if btype == 'ndarray':
+        if fmt == 'ndarray':
             lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
-
-            list_of_arrs = [src[lower_bounds[i]:upper_bounds[i], :, :]
-                            for i in range(len(upper_bounds))]
-
-            self._initialize_data_and_bounds(list_of_arrs)
-            return self
-
-        # index (patient name) -> path for storing his data
-        self._patient_index_path = {patient:
-                                    all_patients_paths[patient] for patient in self.index}
-
-        # read, prepare and put 3d-scans in list
-        # depending on the input type
-
-        if btype == 'dicom':
+            list_of_arrs = [src[lower_bounds[i]:upper_bounds[i], :, :] for i in range(len(upper_bounds))]
+        elif fmt == 'dicom':
             list_of_arrs = self._load_dicom()
-        elif btype == 'blosc':
+        elif fmt == 'blosc':
             list_of_arrs = self._load_blosc()
-        elif btype == 'raw':
+        elif fmt == 'raw':
             list_of_arrs = self._load_raw()
         else:
             raise TypeError("Incorrect type of batch source")
@@ -214,18 +177,15 @@ class BatchCt(Batch):
 
     def _load_dicom(self):
         """
-        read, prepare and put 3d-scans in list
-            given that self contains paths to dicoms in
-            self._patient_index_path
+        read, prepare and put 3d-scans in a list
 
-            NOTE:
-                Important operations performed here:
-                - conversion to hu using meta from dicom-scans
+        Important operations performed here:
+         - conversion to hu using meta from dicom-scans
         """
 
         list_of_arrs = []
-        for patient in self.index:
-            patient_folder = self._patient_index_path[patient]
+        for patient in self.indices:
+            patient_folder = self.index.get_fullpath(patient)
 
             list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
                               for s in os.listdir(patient_folder)]
@@ -235,8 +195,7 @@ class BatchCt(Batch):
             intercept_pat = list_of_dicoms[0].RescaleIntercept
             slope_pat = list_of_dicoms[0].RescaleSlope
 
-            patient_data = np.stack([s.pixel_array
-                                     for s in list_of_dicoms]).astype(np.int16)
+            patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
 
             patient_data[patient_data == AIR_HU] = 0
 
@@ -251,26 +210,22 @@ class BatchCt(Batch):
     def _load_blosc(self):
         """
         read, prepare and put 3d-scans in list
-            given that self contains paths to blosc in
-            self._patient_index_path
 
             *no conversion to hu here
         """
-        list_of_arrs = [read_unpack_blosc(self._patient_index_path[patient])
-                        for patient in self.index]
+        list_of_arrs = [read_unpack_blosc(
+            os.path.join(self.index.get_fullpath(patient), 'data.blk')) for patient in self.indices]
 
         return list_of_arrs
 
     def _load_raw(self):
         """
         read, prepare and put 3d-scans in list
-            given that self contains paths to raw (see itk library) in
-            self._patient_index_path
 
             *no conversion to hu here
         """
-        list_of_arrs = [sitk.GetArrayFromImage(sitk.ReadImage(self._patient_index_path[patient]))
-                        for patient in self.index]
+        list_of_arrs = [sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
+                        for patient in self.indices]
         return list_of_arrs
 
     def _initialize_data_and_bounds(self, list_of_arrs):
@@ -314,8 +269,9 @@ class BatchCt(Batch):
                     "Index of patient in the batch is out of range")
 
         else:
-            lower = self._lower_bounds[self._patient_index_number[index]]
-            upper = self._upper_bounds[self._patient_index_number[index]]
+            ind_pos = self.index.get_pos(index)
+            lower = self._lower_bounds[ind_pos]
+            upper = self._upper_bounds[ind_pos]
             return self._data[lower:upper, :, :]
 
     @property
@@ -335,35 +291,6 @@ class BatchCt(Batch):
         if not self._crop_sizes:
             self._crop_params_patients()
         return self._crop_sizes
-
-    @property
-    def patient_names_paths(self):
-        """
-        Return list of tuples containing patient name and his data directory
-        """
-        return list(self._patient_index_path.items())
-
-    @property
-    def patient_indices(self):
-        """
-        Return ordered list of patient names.
-        """
-        return list(self._patient_index_number.keys())
-
-    @property
-    def patient_paths(self):
-        """
-        Return ordered list of patients' data directories.
-        """
-        return list(self._patient_index_path.values())
-
-    @property
-    def patient_names_indexes(self):
-        """
-        Return list of tuples containing patient index
-            and his number in batch.
-        """
-        return list(self._patient_index_number.items())
 
     def _crop_params_patients(self, num_threads=8):
         """
@@ -423,8 +350,8 @@ class BatchCt(Batch):
             upper_bounds = np.cumsum(np.array(list_of_lengths))
 
         # construct resulting batch with MIPs
-        batch = BatchCt(self.index)
-        batch.load(btype='ndarray', src=np.concatenate(mip_patients, axis=0),
+        batch = type(self)(self.index)
+        batch.load(fmt='ndarray', src=np.concatenate(mip_patients, axis=0),
                    upper_bounds=upper_bounds)
 
         return batch
@@ -590,7 +517,7 @@ class BatchCt(Batch):
         return patch
 
     @action
-    def dump(self, path, fmt='blosc'):
+    def dump(self, dst, fmt='blosc'):
         """
         dump on specified path and format
             create folder corresponding to each patient
@@ -613,32 +540,26 @@ class BatchCt(Batch):
             raise NotImplementedError(
                 'Dump to {} not implemented yet'.format(fmt))
 
-        for pat_index in self.index:
+        for patient in self.indices:
             # view on patient data
-            pat_data = self[pat_index]
-
+            pat_data = self[patient]
             # pack the data
             packed = blosc.pack_array(pat_data, cname='zstd', clevel=1)
 
             # remove directory if exists
-            if os.path.exists(os.path.join(path, pat_index)):
-                shutil.rmtree(os.path.join(path, pat_index))
+            if os.path.exists(os.path.join(dst, patient)):
+                shutil.rmtree(os.path.join(dst, patient))
 
             # put blosc on disk
-            os.makedirs(os.path.join(path, pat_index))
+            os.makedirs(os.path.join(dst, patient))
 
-            with open(os.path.join(path,
-                                   pat_index, 'data.blk'),
-                      mode='wb') as file:
+            with open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
                 file.write(packed)
 
         # add info in self.history
         info = {}
         info['method'] = 'dump'
-        info['params'] = {'path': path}
+        info['params'] = {'path': dst}
         self.history.append(info)
 
         return self
-
-if __name__ == "__main__":
-    pass
