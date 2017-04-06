@@ -357,27 +357,29 @@ class CTImagesBatch(Batch):
         return batch
 
     @action
-    def resize(self, num_slices_new=128, num_x_new=256,
-               num_y_new=256, order=3, num_threads=8):
+    def resize(self, num_x_new=256, num_y_new=256,
+               num_slices_new=128, order=3, num_threads=8):
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
             returns self
 
-            params: (num_slices_new, num_x_new, num_y_new) sets new shape
+            params: (num_slices_new, num_y_new, num_x_new) sets new shape
+                *note that the order of axes is as listed
+                 that is, new patient shape = (num_slices_new, num_y_new, num_x_new)
             num_threads: number of threads used (degree of parallelism)
             order: the order of interpolation (<= 5)
                 large value can improve precision, but also slows down the computaion
 
 
 
-        example: Batch = Batch.resize(num_slices_new=128, num_x_new=256,
-                                      num_y_new=256, num_threads=25)
+        example: Batch = Batch.resize(num_x_new=256, num_y_new=256,
+                                      num_slices_new=128, num_threads=25)
         """
 
         # save the result into result_stacked
         result_stacked = np.zeros((len(self) *
-                                   num_slices_new, num_x_new, num_y_new))
+                                   num_slices_new, num_y_new, num_x_new))
 
         # define array of args
         args = []
@@ -386,9 +388,10 @@ class CTImagesBatch(Batch):
             args_dict = {'chunk': self._data,
                          'start_from': self._lower_bounds[num_pat],
                          'end_from': self._upper_bounds[num_pat],
-                         'num_slices_new': num_slices_new,
                          'num_x_new': num_x_new,
                          'num_y_new': num_y_new,
+                         'num_slices_new': num_slices_new,
+                         'order': order,
                          'res': result_stacked,
                          'start_to': num_pat * num_slices_new}
 
@@ -402,9 +405,9 @@ class CTImagesBatch(Batch):
         # add info to history
         info = {}
         info['method'] = 'resize'
-        info['params'] = {'num_slices_new': num_slices_new,
-                          'num_x_new': num_x_new,
+        info['params'] = {'num_x_new': num_x_new,
                           'num_y_new': num_y_new,
+                          'num_slices_new': num_slices_new,
                           'num_threads': num_threads,
                           'order': order}
 
