@@ -123,7 +123,7 @@ class CTImagesBatch(Batch):
         self.history = []
 
     @action
-    def load(self, src, fmt='dicom', upper_bounds=None): # pylint: disable=arguments-differ
+    def load(self, src=None, fmt='dicom', upper_bounds=None): # pylint: disable=arguments-differ
         """
         builds batch of patients
 
@@ -213,7 +213,8 @@ class CTImagesBatch(Batch):
 
             *no conversion to hu here
         """
-        list_of_arrs = [read_unpack_blosc(self.index.get_fullpath(patient)) for patient in self.indices]
+        list_of_arrs = [read_unpack_blosc(
+        	os.path.join(self.index.get_fullpath(patient)), 'data.blk') for patient in self.indices]
 
         return list_of_arrs
 
@@ -268,8 +269,9 @@ class CTImagesBatch(Batch):
                     "Index of patient in the batch is out of range")
 
         else:
-            lower = self._lower_bounds[self._patient_index_number[index]]
-            upper = self._upper_bounds[self._patient_index_number[index]]
+        	ind_pos = self.index.get_pos(index)
+            lower = self._lower_bounds[ind_pos]
+            upper = self._upper_bounds[ind_pos]
             return self._data[lower:upper, :, :]
 
     @property
@@ -349,7 +351,7 @@ class CTImagesBatch(Batch):
 
         # construct resulting batch with MIPs
         batch = type(self)(self.index)
-        batch.load(btype='ndarray', src=np.concatenate(mip_patients, axis=0),
+        batch.load(fmp='ndarray', src=np.concatenate(mip_patients, axis=0),
                    upper_bounds=upper_bounds)
 
         return batch
