@@ -34,7 +34,7 @@ def make_mask(center, diam, x_size, y_size, z_world,
     # roughly estimate nodule radiuses from above
     # in pixel coords the nodule can be elliptic
     # so, three radiuses
-    pix_rad = int(diam / 2 * np.ones_like(center) / spacing + 5)
+    pix_rad = np.rint(diam / 2 * np.ones_like(center) / spacing + 5)
 
     # outline window in which nodule-points can be located
     pix_xmin = np.max([0, int(pix_center[0] - pix_rad[0]) - 5])

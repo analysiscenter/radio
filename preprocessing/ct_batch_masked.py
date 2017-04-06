@@ -59,7 +59,7 @@ class CTImagesBatchMasked(CTImagesBatch):
         return list_of_arrs
 
     @action
-    def load_mask(self, nodules_df):
+    def load_mask(self, nodules_df): # pylint: disable=too-many-locals
         """
         function for
             loading masks from dataframe with nodules

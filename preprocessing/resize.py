@@ -11,7 +11,7 @@ import scipy.ndimage
 
 @jit('void(double[:,:,:], int64, int64, int64, int64, int64, double[:,:,:], int64)',
      nogil=True)
-def resize_patient_numba(chunk, start_from, end_from, num_x_new,
+def resize_patient_numba(chunk, start_from, end_from, num_x_new,          # pylint: disable=too-many-arguments
                          num_y_new, num_slices_new, order, res, start_to):
     """
     resizes 3d-scan for one patient
