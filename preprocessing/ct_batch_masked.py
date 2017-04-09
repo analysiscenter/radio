@@ -41,7 +41,7 @@ class CTImagesBatchMasked(CTImagesBatch):
         read raw-images and save meta about pixel and spacing
             to self
         """
-        raw_data = [sitk.ReadImage(self._patient_index_path[patient])
+        raw_data = [sitk.ReadImage(self.index.get_fullpath(patient))
                     for patient in self.indices]
 
         list_of_arrs = [sitk.GetArrayFromImage(pat_data) for pat_data
