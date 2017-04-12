@@ -156,8 +156,8 @@ class CTImagesBatchMasked(CTImagesBatch):
 
             # run multithreading
             with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            for arg in args:
-                executor.submit(resize_patient_numba, **arg)
+                for arg in args:
+                    executor.submit(resize_patient_numba, **arg)
 
             # change mask
             self.mask = result_mask

@@ -49,7 +49,7 @@ def make_mask_patient(pat_mask, spacing, origin, nodules):
             coords, diams given in world coords.
     """
 
-    if(len(nodules) > 0):
+    if len(nodules) > 0:
         # nodule locs (centers) in pixel coords
         nod_locs_pix = np.rint((nodules[:, :3] - origin) / spacing)
 
