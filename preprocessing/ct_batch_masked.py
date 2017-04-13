@@ -14,8 +14,30 @@ class CTImagesBatchMasked(CTImagesBatch):
     Class for storing masked batch of ct-scans
 
     in addition to batch itself, stores mask in
-        self.mask (as BatchCt object)
+        self.mask as ndarray type
 
+    new attrs:
+        1. mask: ndarray of masks
+        2. spacing: dict with keys = self.indices
+            stores distances between pixels in mm for patients
+            order is x, y, z
+        3. origin: dict with keys = self.indices
+            stores world coords of [0, 0, 0]-pixel of data for
+            all patients
+
+    Important methods:
+        1. load_mask(self, nodules_df, num_threads=8)
+            function for
+            loading masks from dataframe with nodules
+            multithreading is supported
+        2. resize(self, num_x_new=256, num_y_new=256,
+                  num_slices_new=128, order=3, num_threads=8)
+            transform shape of all patients to
+            (num_slices_new, num_y_new, num_x_new)
+            if masks are loaded, they are are also resized
+
+        *Note: spacing, origin are recalculated when resize is executed
+            As a result, load_mask can be also executed after resize
     """
 
     def __init__(self, index):
@@ -34,7 +56,7 @@ class CTImagesBatchMasked(CTImagesBatch):
         self.origin = dict()
 
     # overload method _load_raw
-    # add origin and spacing to self
+    # load origin and spacing from .raw files
 
     def _load_raw(self):
         """
@@ -63,14 +85,15 @@ class CTImagesBatchMasked(CTImagesBatch):
     @action
     def load_mask(self, nodules_df, num_threads=8):  # pylint: disable=too-many-locals
         """
-        function for
-            loading masks from dataframe with nodules
+        load masks from dataframe with nodules
 
-        nodules_df must contain columns
-            seriesuid: index of patients
-            coordX, coordY, coordZ: coords of nodule-center
-            diameter_mm: diameter of nodule in mm (in 'world' units)
-            *note that self._data is ordered as (z, y, x)
+        args:
+            nodules_df: dataframe that contain columns
+                seriesuid: index of patients
+                coordX, coordY, coordZ: coords of nodule-center
+                diameter_mm: diameter of nodule in mm (in 'world' units)
+                *note that self._data is ordered as (z, y, x)
+            num_threds: number of threads for parallelism
         """
 
         self.mask = np.zeros_like(self._data)
@@ -105,7 +128,7 @@ class CTImagesBatchMasked(CTImagesBatch):
         """
         resize masked batch
             -resize batch itself
-            -resize mask (contained in self.mask)
+            -resize mask if loaded
             -recalculate spacing-dict
         """
         # recalculate new spacing
@@ -168,7 +191,13 @@ class CTImagesBatchMasked(CTImagesBatch):
 
     def get_axial_slice(self, person_number, slice_height):
         """
-        get tuple of slices (data_slice, mask_slice)
+        get tuple of slices (data slice, mask slice)
+
+        args:
+            person_number: person position in the batch
+            slice_height: height, take slices with number
+                int(0.7 * number of slices for person) from
+                patient's scan and mask
         """
         margin = int(slice_height * self[person_number].shape[0])
 
