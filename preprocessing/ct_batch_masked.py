@@ -150,12 +150,6 @@ class CTImagesBatchMasked(CTImagesBatch):
 
         self.spacing = new_spacing
 
-        # resize batch
-        args_res = dict(num_x_new=num_x_new, num_y_new=num_y_new, order=order,
-                        num_slices_new=num_slices_new, num_threads=num_threads)
-
-        super().resize(**args_res)
-
         # resize mask if loaded
 
         if self.mask is not None:
@@ -186,6 +180,12 @@ class CTImagesBatchMasked(CTImagesBatch):
 
             # change mask
             self.mask = result_mask
+
+        # resize batch
+        args_res = dict(num_x_new=num_x_new, num_y_new=num_y_new, order=order,
+                        num_slices_new=num_slices_new, num_threads=num_threads)
+
+        super().resize(**args_res)
 
         return self
 
