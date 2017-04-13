@@ -149,6 +149,7 @@ class CTImagesBatchMasked(CTImagesBatch):
                              'end_from': upper,
                              'num_x_new': num_x_new,
                              'num_y_new': num_y_new,
+                             'num_slices_new': num_slices_new,
                              'order': order,
                              'res': result_mask,
                              'start_to': ind_pos * num_slices_new}

@@ -10,15 +10,19 @@ def insert_cropped(where, what, st_pos):
     where, what: arrays with same ndims=3
     st_pos: ndarray of length=3
         what-array should be put in where-array starting from st_pos
+        what-array is cropped if
+            st_pos is negative or
+            what-array is too large to be put in where-array
+            starting from st_pos
 
     example:
         where = np.zeros(shape=(3, 3, 3), dtype='int')
         what = np.ones(shape=(2, 2, 2), dtype='int')
-        st_pos = (2, 2, 2)
+        st_pos = np.asarray([2, 2, 2])
 
         # after execution
         insert_cropped(where, what, st_pos)
-        # now where[2, 2, 2] = 1, other elems = 0
+        # where[2, 2, 2] = 1, other elems = 0
     """
     # define crop boundaries
     st_what = -np.minimum(np.zeros_like(st_pos), st_pos)
