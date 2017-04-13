@@ -8,7 +8,7 @@ from numba import njit
 def insert_cropped(where, what, st_pos):
     """
     where, what: arrays with same ndims=3
-    st_pos: tuple/list/array of length = 3
+    st_pos: ndarray of length=3
         what-array should be put in where-array starting from st_pos
 
     example:
@@ -20,15 +20,16 @@ def insert_cropped(where, what, st_pos):
         insert_cropped(where, what, st_pos)
         # now where[2, 2, 2] = 1, other elems = 0
     """
-    req_pos = np.zeros(shape=3)
-    for i in range(3):
-        req_pos[i] = what.shape[i] + st_pos[i]
+    # define crop boundaries
+    st_what = -np.minimum(np.zeros_like(st_pos), st_pos)
+    end_what = np.minimum(np.array(where.shape) - st_pos, np.array(what.shape))
+    st_where = np.maximum(st_pos, np.zeros_like(st_pos))
+    end_where = np.minimum(st_pos + np.array(what.shape),
+                           np.array(where.shape))
 
-    for i_x in range(max(st_pos[0], 0), min(where.shape[0], req_pos[0])):
-        for i_y in range(max(st_pos[1], 0), min(where.shape[1], req_pos[1])):
-            for i_z in range(max(st_pos[2], 0), min(where.shape[2], req_pos[2])):
-                where[i_x, i_y, i_z] = what[i_x - st_pos[0], i_y - st_pos[1],
-                                            i_z - st_pos[2]]
+    # perform insert
+    where[st_where[0]:end_where[0], st_where[1]:end_where[1], st_where[2]:end_where[2]] = \
+        what[st_what[0]:end_what[0], st_what[1]:end_what[1], st_what[2]:end_what[2]]
 
 
 @njit(nogil=True)
@@ -55,13 +56,8 @@ def make_mask_patient(pat_mask, spacing, origin, nodules):
 
         # recalculate diameters in pixel coords
         # note that there are 3 diams in pixel coords for each nodule
-        col_diams = nodules[:, 3]
-
-        nod_diams_pix = np.zeros_like(nod_locs_pix)
-        for i in range(3):
-            nod_diams_pix[:, i] = col_diams
-
-        nod_diams_pix = np.rint(nod_diams_pix / spacing)
+        col_diams = nodules[:, 3].reshape(-1, 1)
+        nod_diams_pix = np.rint(col_diams / spacing)
 
         # nodule starting positions in pix coords
         nod_locs_st_pos = nod_locs_pix - np.rint(nod_diams_pix / 2)
@@ -72,7 +68,8 @@ def make_mask_patient(pat_mask, spacing, origin, nodules):
             # note that we use z, y, x order in data and mask
             st_pos_nod = nod_locs_st_pos[i, :][::-1]
             nod_size = nod_diams_pix[i, :][::-1]
-            nodule = np.ones((int(nod_size[0]), int(nod_size[1]), int(nod_size[2])))
+            nodule = np.ones(
+                (int(nod_size[0]), int(nod_size[1]), int(nod_size[2])))
 
             # insert nodule in mask
             insert_cropped(pat_mask, nodule, st_pos_nod)

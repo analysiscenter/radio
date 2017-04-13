@@ -79,14 +79,15 @@ class CTImagesBatchMasked(CTImagesBatch):
         args = []
         for index in self.indices:
             nods = nodules_df[nodules_df['seriesuid'] == index]
-            nodules = nods[['coordX', 'coordY', 'coordZ', 'diameter_mm']].values
+            nodules = nods[['coordX', 'coordY',
+                            'coordZ', 'diameter_mm']].values
             ind_pos = self.index.get_pos(index)
             lower = self._lower_bounds[ind_pos]
             upper = self._upper_bounds[ind_pos]
 
             args_dict = {'pat_mask': self.mask[lower: upper, :, :],
-                         'spacing': self.spacing[index],
-                         'origin': self.origin[index],
+                         'spacing': np.asarray(self.spacing[index]),
+                         'origin': np.asarray(self.origin[index]),
                          'nodules': nodules}
 
             args.append(args_dict)
@@ -136,7 +137,7 @@ class CTImagesBatchMasked(CTImagesBatch):
 
         if self.mask is not None:
             result_mask = np.zeros((len(self) *
-                                   num_slices_new, num_y_new, num_x_new))
+                                    num_slices_new, num_y_new, num_x_new))
             args = []
             for index in self.indices:
                 ind_pos = self.index.get_pos(index)
@@ -144,8 +145,8 @@ class CTImagesBatchMasked(CTImagesBatch):
                 upper = self._upper_bounds[ind_pos]
 
                 args_dict = {'chunk': self.mask,
-                             'start_from': lower, 
-                             'end_from': upper, 
+                             'start_from': lower,
+                             'end_from': upper,
                              'num_x_new': num_x_new,
                              'num_y_new': num_y_new,
                              'order': order,
@@ -163,3 +164,13 @@ class CTImagesBatchMasked(CTImagesBatch):
             self.mask = result_mask
 
         return self
+
+    def get_axial_slice(self, person_number, slice_height):
+        """
+        get tuple of slices (data_slice, mask_slice)
+        """
+        margin = int(slice_height * self[person_number].shape[0])
+
+        patch = (self[person_number][margin, :, :],
+                 self.mask[self._lower_bounds[person_number] + margin, :, :])
+        return patch
