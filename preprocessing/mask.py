@@ -1,62 +1,79 @@
-""" helper functions for masks-creation """
+""" auxiliary functions for mask-creation """
 
 import numpy as np
+from numba import njit
 
 
-def make_mask(center, diam, x_size, y_size, z_world,
-              spacing, origin):
+@njit(nogil=True)
+def insert_cropped(where, what, st_pos):
     """
-    place nodule and
-    create slice(2d) of mask given
-        x_size, y_size: needed shape of mask
-            note that self._data in batch
-            is ordered as (z, y, x)
-            that is, these args should be like
-            (x_size, y_size) = (batch._data.shape[2],
-                                batch._data.shape[1])
-        spacing: distance between pixels in world coords
-                 ordering=(x, y, z)
-        origin: world coords of origin on slice
-                the nodule needs to be placed on
-                ordering=(x, y, z)
-        center: world coords of center of nodule
-                ordering=(x, y, z)
-        z_world: world z-coord (different-slices-direction) of slice
-                 the nodule needs to be placed on
+    where, what: arrays with same ndims=3
+    st_pos: ndarray of length=3
+        what-array should be put in where-array starting from st_pos
+        what-array is cropped if
+            st_pos is negative or
+            what-array is too large to be put in where-array
+            starting from st_pos
+
+    example:
+        where = np.zeros(shape=(3, 3, 3), dtype='int')
+        what = np.ones(shape=(2, 2, 2), dtype='int')
+        st_pos = np.asarray([2, 2, 2])
+
+        # after execution
+        insert_cropped(where, what, st_pos)
+        # where[2, 2, 2] = 1, other elems = 0
     """
-    mask = np.zeros([y_size, x_size])
+    # define crop boundaries
+    st_what = -np.minimum(np.zeros_like(st_pos), st_pos)
+    end_what = np.minimum(np.array(where.shape) - st_pos, np.array(what.shape))
+    st_where = np.maximum(st_pos, np.zeros_like(st_pos))
+    end_where = np.minimum(st_pos + np.array(what.shape),
+                           np.array(where.shape))
 
-    # pix prefix means 'in pixel coords'
-    # center, origin, spacing have xyz-order
+    # perform insert
+    where[st_where[0]:end_where[0], st_where[1]:end_where[1], st_where[2]:end_where[2]] = \
+        what[st_what[0]:end_what[0], st_what[1]:end_what[1], st_what[2]:end_what[2]]
 
-    pix_center = (center - origin) / spacing
 
-    # roughly estimate nodule radiuses from above
-    # in pixel coords the nodule can be elliptic
-    # so, three radiuses
-    pix_rad = np.rint(diam / 2 * np.ones_like(center) / spacing + 5)
+@njit(nogil=True)
+def make_mask_patient(pat_mask, spacing, origin, nodules):
+    """
+    make mask for one patient and put it into pat_mask
+    args:
+        pat_mask: array where the mask should be put
+            the order of axes should be z, y, x
+        spacing: array with spacing (world-distance between pixels) of patient
+            order of axes is x, y, z
+        origin: array with world coords of pixel[0, 0, 0]
+            order of axes is x, y, z
+        nodules: ndarray with info about location of patient's nodules
+            has shape (number_of_nodules, 4)
+            each row corresponds to one nodule
+            nodules[i]  = [nod_coord_x, nod_coord_y, nod_coord_z, nod_diam]
+            coords, diams given in world coords.
+    """
 
-    # outline window in which nodule-points can be located
-    pix_xmin = np.max([0, int(pix_center[0] - pix_rad[0]) - 5])
-    pix_xmax = np.min([x_size - 1, int(pix_center[0] + pix_rad[0]) + 5])
+    if len(nodules) > 0:
+        # nodule locs (centers) in pixel coords
+        nod_locs_pix = np.rint((nodules[:, :3] - origin) / spacing)
 
-    pix_ymin = np.max([0, int(pix_center[1] - pix_rad[1]) - 5])
-    pix_ymax = np.min([y_size - 1, int(pix_center[1] + pix_rad[1]) + 5])
+        # recalculate diameters in pixel coords
+        # note that there are 3 diams in pixel coords for each nodule
+        col_diams = nodules[:, 3].reshape(-1, 1)
+        nod_diams_pix = np.rint(col_diams / spacing)
 
-    pix_xrange = range(pix_xmin, pix_xmax + 1)
-    pix_yrange = range(pix_ymin, pix_ymax + 1)
+        # nodule starting positions in pix coords
+        nod_locs_st_pos = nod_locs_pix - np.rint(nod_diams_pix / 2)
 
-    # cycle along pixels of window
-    for pix_x in pix_xrange:
-        for pix_y in pix_yrange:
-            # compute world coords of pixel
-            world_x = spacing[0] * pix_x + origin[0]
-            world_y = spacing[1] * pix_y + origin[1]
+        # loop over nodules (rows in ndarray)
+        for i in range(len(nodules)):
+            # read info about nodule
+            # note that we use z, y, x order in data and mask
+            st_pos_nod = nod_locs_st_pos[i, :][::-1]
+            nod_size = nod_diams_pix[i, :][::-1]
+            nodule = np.ones(
+                (int(nod_size[0]), int(nod_size[1]), int(nod_size[2])))
 
-            # mark pixel as 1 if it radius-close to nodule center
-            # in world coords
-            if np.linalg.norm(
-                    center - np.array([world_x, world_y, z_world])) <= diam / 2:
-                mask[pix_y, pix_x] = 1.0
-
-    return mask
+            # insert nodule in mask
+            insert_cropped(pat_mask, nodule, st_pos_nod)

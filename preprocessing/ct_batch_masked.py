@@ -1,9 +1,11 @@
 """ contains class BatchCtMasked(BatchCt) for storing masked Ct-scans """
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
-from .mask import make_mask
+from .mask_ed2 import make_mask_patient
+from .resize import resize_patient_numba
 from dataset import action
 
 
@@ -24,8 +26,8 @@ class CTImagesBatchMasked(CTImagesBatch):
         # initialize BatchCt itself
         super().__init__(index)
 
-        # initialize BatchCt for mask
-        self.mask = CTImagesBatch(index)
+        # initialize mask to None
+        self.mask = None
 
         # add origin and spacing attrs
         self.spacing = dict()
@@ -59,7 +61,7 @@ class CTImagesBatchMasked(CTImagesBatch):
         return list_of_arrs
 
     @action
-    def load_mask(self, nodules_df): # pylint: disable=too-many-locals
+    def load_mask(self, nodules_df, num_threads=8):  # pylint: disable=too-many-locals
         """
         function for
             loading masks from dataframe with nodules
@@ -70,66 +72,30 @@ class CTImagesBatchMasked(CTImagesBatch):
             diameter_mm: diameter of nodule in mm (in 'world' units)
             *note that self._data is ordered as (z, y, x)
         """
-        lst_masks = []
 
-        # over patients in batch
+        self.mask = np.zeros_like(self._data)
+
+        # define list of args for multithreading
+        args = []
         for index in self.indices:
-            # get all nodules for the patient
-            nodules = nodules_df[nodules_df['seriesuid'] == index]
+            nods = nodules_df[nodules_df['seriesuid'] == index]
+            nodules = nods[['coordX', 'coordY',
+                            'coordZ', 'diameter_mm']].values
+            ind_pos = self.index.get_pos(index)
+            lower = self._lower_bounds[ind_pos]
+            upper = self._upper_bounds[ind_pos]
 
-            # view for patient data
-            data = self[index]
+            args_dict = {'pat_mask': self.mask[lower: upper, :, :],
+                         'spacing': np.asarray(self.spacing[index]),
+                         'origin': np.asarray(self.origin[index]),
+                         'nodules': nodules}
 
-            # future patient mask
-            mask = np.zeros_like(data)
+            args.append(args_dict)
 
-            if len(nodules) > 0:
-                # data is ordered (z y x)
-                num_slices, y_size, x_size = data.shape
-
-                # fetch origin and spacing of patient
-                # ordered x y z
-                origin = self.origin[index]
-                spacing = self.spacing[index]
-
-                # over patient's nodules
-
-                for _, row in nodules.iterrows():
-                    # fetch nodule-params in world coords
-                    node_x, node_y, node_z = row.coordX, row.coordY, row.coordZ
-                    diam = row.diameter_mm
-
-                    # center of nodule in world and pix coords
-                    world_center = np.array([node_x, node_y, node_z])
-
-                    # the order of axes in spacing/origin is
-                    # x, y, z
-                    pix_center = np.rint((world_center - origin) / spacing)
-
-                    # outline range of slices to add mask on
-                    # range for iter
-
-                    slices = (np.arange(int(pix_center[2] - diam / 2 / spacing[2] - 2),
-                                        int(pix_center[2] + diam / 2 / spacing[2] + 2)).
-                              clip(0, num_slices - 1))
-
-                    for i_z in slices:
-                        # create mask
-                        mask_2d = make_mask(world_center, diam, x_size, y_size,
-                                            i_z * spacing[2] + origin[2],
-                                            spacing, origin)
-                        # add it to patient-mask
-                        mask[i_z, :, :] = mask_2d
-
-            lst_masks.append(mask)
-
-        # set params for load batch with masks from array
-        bounds_masks = np.cumsum([mask.shape[0] for mask in lst_masks])
-        src_masks = np.concatenate(lst_masks)
-
-        # fill self.mask with data
-        self.mask.load(fmt='ndarray', src=src_masks,
-                       upper_bounds=bounds_masks)
+        # run threading procedure
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            for arg in args:
+                executor.submit(make_mask_patient, **arg)
 
         return self
 
@@ -161,11 +127,51 @@ class CTImagesBatchMasked(CTImagesBatch):
 
         self.spacing = new_spacing
 
-        # resize batch and mask
+        # resize batch
         args_res = dict(num_x_new=num_x_new, num_y_new=num_y_new, order=order,
                         num_slices_new=num_slices_new, num_threads=num_threads)
 
         super().resize(**args_res)
-        self.mask = self.mask.resize(**args_res)
+
+        # resize mask if loaded
+
+        if self.mask is not None:
+            result_mask = np.zeros((len(self) *
+                                    num_slices_new, num_y_new, num_x_new))
+            args = []
+            for index in self.indices:
+                ind_pos = self.index.get_pos(index)
+                lower = self._lower_bounds[ind_pos]
+                upper = self._upper_bounds[ind_pos]
+
+                args_dict = {'chunk': self.mask,
+                             'start_from': lower,
+                             'end_from': upper,
+                             'num_x_new': num_x_new,
+                             'num_y_new': num_y_new,
+                             'num_slices_new': num_slices_new,
+                             'order': order,
+                             'res': result_mask,
+                             'start_to': ind_pos * num_slices_new}
+
+                args.append(args_dict)
+
+            # run multithreading
+            with ThreadPoolExecutor(max_workers=num_threads) as executor:
+                for arg in args:
+                    executor.submit(resize_patient_numba, **arg)
+
+            # change mask
+            self.mask = result_mask
 
         return self
+
+    def get_axial_slice(self, person_number, slice_height):
+        """
+        get tuple of slices (data_slice, mask_slice)
+        """
+        margin = int(slice_height * self[person_number].shape[0])
+
+        patch = (self[person_number][margin, :, :],
+                 self.mask[self._lower_bounds[person_number] + margin, :, :])
+        return patch
