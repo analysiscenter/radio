@@ -4,7 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
-from .mask_ed2 import make_mask_patient
+from .mask import make_mask_patient
 from .resize import resize_patient_numba
 from dataset import action
 
