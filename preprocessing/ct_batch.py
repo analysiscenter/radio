@@ -51,12 +51,6 @@ class CTImagesBatch(Batch):
             when method with @action-decorator is called
             info about call should be appended to history
 
-        6. _patient_index_path: index (usually, patientID) -> storage for this patient
-                storage is either directory (dicom-case) or file: .blk for blosc
-                or .raw for mhd
-        7. _patient_index_number: index -> patient's order in batch
-                of use for iterators and indexation
-
 
     Important methods:
         1. __init__(self, index):
@@ -64,20 +58,19 @@ class CTImagesBatch(Batch):
             in accordance with Batch.__init__
             given base class Batch
 
-        2. load(self, all_patients_paths,
-                btype='dicom'):
-            builds skyscraper of patients given
-            correspondance patient index -> storage
-            and type of data to build from
+        2. load(self, src, fmt, upper_bounds):
+            builds skyscraper of patients
+            from either 'dicom'|'raw'|'blosc'|'ndarray'
             returns self
 
-        2. resize(self, new_sizes, order, num_threads):
+        2. resize(self, num_x_new, num_y_new, num_slices_new,
+                  order, num_threads):
             transform the shape of all patients to new_sizes
             method is spline iterpolation(order = order)
             the function is multithreaded in num_threads
             returns self
 
-        3. dump(self, path)
+        3. dump(self, dst)
             create a dump of the batch
             in the path-folder
             returns self
@@ -91,6 +84,17 @@ class CTImagesBatch(Batch):
         5. segment(self, erosion_radius=2, num_threads=8)
             segments using mask from get_mask()
             that is, sets to hu = -2000 of pixels outside mask
+            changes self, returns self
+
+        6. flip(self)
+            invert slices corresponding to each patient
+            do not change the order of patients
+            changes self, returns self
+
+        7. normalize_hu(self, min_hu=-1000, max_hu=400):
+            normalizes hu-densities to interval [0, 255]
+            trims hus outside range [min_hu, max_hu]
+            then scales to [0, 255]
             changes self, returns self
 
     """
@@ -357,27 +361,29 @@ class CTImagesBatch(Batch):
         return batch
 
     @action
-    def resize(self, num_slices_new=128, num_x_new=256,
-               num_y_new=256, order=3, num_threads=8):
+    def resize(self, num_x_new=256, num_y_new=256,
+               num_slices_new=128, order=3, num_threads=8):
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
             returns self
 
-            params: (num_slices_new, num_x_new, num_y_new) sets new shape
+            params: (num_slices_new, num_y_new, num_x_new) sets new shape
+                *note that the order of axes is as listed
+                 that is, new patient shape = (num_slices_new, num_y_new, num_x_new)
             num_threads: number of threads used (degree of parallelism)
             order: the order of interpolation (<= 5)
                 large value can improve precision, but also slows down the computaion
 
 
 
-        example: Batch = Batch.resize(num_slices_new=128, num_x_new=256,
-                                      num_y_new=256, num_threads=25)
+        example: Batch = Batch.resize(num_x_new=256, num_y_new=256,
+                                      num_slices_new=128, num_threads=25)
         """
 
         # save the result into result_stacked
         result_stacked = np.zeros((len(self) *
-                                   num_slices_new, num_x_new, num_y_new))
+                                   num_slices_new, num_y_new, num_x_new))
 
         # define array of args
         args = []
@@ -386,9 +392,10 @@ class CTImagesBatch(Batch):
             args_dict = {'chunk': self._data,
                          'start_from': self._lower_bounds[num_pat],
                          'end_from': self._upper_bounds[num_pat],
-                         'num_slices_new': num_slices_new,
                          'num_x_new': num_x_new,
                          'num_y_new': num_y_new,
+                         'num_slices_new': num_slices_new,
+                         'order': order,
                          'res': result_stacked,
                          'start_to': num_pat * num_slices_new}
 
@@ -402,9 +409,9 @@ class CTImagesBatch(Batch):
         # add info to history
         info = {}
         info['method'] = 'resize'
-        info['params'] = {'num_slices_new': num_slices_new,
-                          'num_x_new': num_x_new,
+        info['params'] = {'num_x_new': num_x_new,
                           'num_y_new': num_y_new,
+                          'num_slices_new': num_slices_new,
                           'num_threads': num_threads,
                           'order': order}
 
@@ -492,6 +499,48 @@ class CTImagesBatch(Batch):
 
         self.history.append(info)
 
+        return self
+
+    @action
+    def normalize_hu(self, min_hu=-1000, max_hu=400):
+        """
+        normalizes hu-densities to interval [0, 255]:
+            trims hus outside range [min_hu, max_hu]
+            then scales to [0, 255]
+
+        example:
+            batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
+        """
+
+        # trimming and scaling to [0, 1]
+        self._data = (self._data - min_hu) / (max_hu - min_hu)
+        self._data[self._data > 1] = 1.
+        self._data[self._data < 0] = 0.
+
+        # scaling to [0, 255]
+        self._data *= 255
+        return self
+
+    @action
+    def flip(self):
+        """
+        flip each patient
+            i.e. invert the order of slices for each patient
+            does not change the order of patients
+            changes self
+
+        example:
+            batch = batch.flip()
+        """
+
+        # list of flipped patients
+        list_of_pats = [np.flipud(self[pat_number])
+                        for pat_number in range(len(self))]
+
+        # change self._data
+        self._data = np.concatenate(list_of_pats, axis=0)
+
+        # return self
         return self
 
     def get_axial_slice(self, person_number, slice_height):
