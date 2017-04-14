@@ -1,4 +1,4 @@
-""" contains class BatchCtMasked(BatchCt) for storing masked Ct-scans """
+""" contains class CTImagesMaskedBatch(CTImagesBatch) for storing masked Ct-scans """
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
@@ -9,7 +9,7 @@ from .resize import resize_patient_numba
 from dataset import action
 
 
-class CTImagesBatchMasked(CTImagesBatch):
+class CTImagesMaskedBatch(CTImagesBatch):
     """
     Class for storing masked batch of ct-scans
 
