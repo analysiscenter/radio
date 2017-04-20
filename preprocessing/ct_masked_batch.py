@@ -239,7 +239,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def get_mask(self, patient_index):
+    def mask_by_index(self, patient_index):
         """Get patient mask data by indexation.
 
         Argument patient_index can be either number of patient in batch
