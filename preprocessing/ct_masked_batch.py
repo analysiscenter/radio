@@ -233,7 +233,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         # add info in self.history
         info = {}
-        info['method'] = 'dump'
+        info['method'] = 'dump_mask'
         info['params'] = {'path': dst}
         self.history.append(info)
 
