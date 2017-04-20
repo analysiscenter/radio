@@ -1,4 +1,6 @@
 """ contains class CTImagesMaskedBatch(CTImagesBatch) for storing masked Ct-scans """
+import os
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
