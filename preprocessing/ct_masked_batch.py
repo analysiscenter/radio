@@ -2,8 +2,10 @@
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
+import blosc
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
+from .ct_batch import read_unpack_blosc
 from .mask import make_mask_patient
 from .resize import resize_patient_numba
 from dataset import action
