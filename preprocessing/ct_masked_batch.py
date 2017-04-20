@@ -227,7 +227,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             # put blosc on disk
             os.makedirs(os.path.join(dst, patient_id))
 
-            with open(os.path.join(dst, patient_id, 'data.blk'), mode='wb') as file:
+            with open(os.path.join(dst, patient_id,
+                                   'data.blk'), mode='wb') as file:
                 file.write(packed)
 
         # add info in self.history
