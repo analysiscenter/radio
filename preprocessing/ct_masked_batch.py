@@ -234,6 +234,28 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
+    def get_mask(self, patient_index):
+        """Get patient mask data by indexation.
+
+        Argument patient_index can be either number of patient in batch
+        and patient_id which is stored in self.index.
+        Returns view of data array which corresponds
+        to patient defined by index.
+        """
+        if isinstance(patient_index, int):
+            if patient_index < len(self) and patient_index >= 0:
+                lower = self._lower_bounds[patient_index]
+                upper = self._upper_bounds[patient_index]
+                return self.mask[lower: upper, :, :]
+            else:
+                raise IndexError("Index of patient in the batch" +
+                                 "is out of range")
+        else:
+            ind_pos = self.index.get_pos(patient_index)
+            lower = self._lower_bounds[ind_pos]
+            upper = self._upper_bounds[ind_pos]
+            return self.mask[lower: upper, :, :]
+
     def get_axial_slice(self, person_number, slice_height):
         """
         get tuple of slices (data slice, mask slice)
