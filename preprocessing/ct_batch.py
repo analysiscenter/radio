@@ -115,11 +115,7 @@ class CTImagesBatch(Batch):
 
         self._data = None
 
-        self._upper_bounds = np.array([], dtype=np.int32)
-        self._lower_bounds = np.array([], dtype=np.int32)
-
-        self._patient_index_path = dict()
-        self._patient_index_number = dict()
+        self._bounds = np.array([], dtype=np.int32)
 
         self._crop_centers = np.array([], dtype=np.int32)
         self._crop_sizes = np.array([], dtype=np.int32)
@@ -127,7 +123,7 @@ class CTImagesBatch(Batch):
         self.history = []
 
     @action
-    def load(self, src=None, fmt='dicom', upper_bounds=None): # pylint: disable=arguments-differ
+    def load(self, src=None, fmt='dicom', bounds=None):    # pylint: disable=arguments-differ
         """
         builds batch of patients
 
@@ -157,8 +153,7 @@ class CTImagesBatch(Batch):
 
         # if ndarray. Might be better to put this into separate function
         if fmt == 'ndarray':
-            lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
-            list_of_arrs = [src[lower_bounds[i]:upper_bounds[i], :, :] for i in range(len(upper_bounds))]
+            list_of_arrs = [src[start:end, :, :] for start, end in zip(bounds[:-1], bounds[1:])]
         elif fmt == 'dicom':
             list_of_arrs = self._load_dicom()
         elif fmt == 'blosc':
@@ -170,12 +165,6 @@ class CTImagesBatch(Batch):
 
         # concatenate scans and initialize patient bounds
         self._initialize_data_and_bounds(list_of_arrs)
-
-        # add info in self.history
-        info = {}
-        info['method'] = 'load'
-        info['params'] = {}
-        self.history.append(info)
 
         return self
 
@@ -243,12 +232,7 @@ class CTImagesBatch(Batch):
             list_of_arrs: list of 3d-scans
         """
         # make 3d-skyscraper from list of 3d-scans
-        self._data = np.concatenate(list_of_arrs, axis=0)
-
-        # set floors for each patient
-        list_of_lengths = [len(a) for a in list_of_arrs]
-        self._upper_bounds = np.cumsum(np.array(list_of_lengths))
-        self._lower_bounds = np.insert(self._upper_bounds, 0, 0)[:-1]
+        self._post_default(list_of_arrs)
 
     def __len__(self):
         return len(self.index)
@@ -263,20 +247,20 @@ class CTImagesBatch(Batch):
                          in self from [0,..,len(self.index) - 1]
                     or index from self.index
         """
-        if isinstance(index, int):
-            if index < self._lower_bounds.shape[0] and index >= 0:
-                lower = self._lower_bounds[index]
-                upper = self._upper_bounds[index]
-                return self._data[lower:upper, :, :]
-            else:
-                raise IndexError(
-                    "Index of patient in the batch is out of range")
+        return self.get_image(index)
 
+    def get_image(self, index):
+        if isinstance(index, int):
+            if index < self._bounds.shape[0] - 1 and index >= 0:
+                pos = index
+            else:
+                raise IndexError("Index is out of range")
         else:
-            ind_pos = self.index.get_pos(index)
-            lower = self._lower_bounds[ind_pos]
-            upper = self._upper_bounds[ind_pos]
-            return self._data[lower:upper, :, :]
+            pos = self.index.get_pos(index)
+
+        lower = self._bounds[pos]
+        upper = self._bounds[pos + 1]
+        return self._data[lower:upper, :, :]
 
     @property
     def crop_centers(self):
@@ -296,19 +280,40 @@ class CTImagesBatch(Batch):
             self._crop_params_patients()
         return self._crop_sizes
 
-    def _crop_params_patients(self, num_threads=8):
-        """
-        calculate params for crop
-        """
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
 
-            threads = [executor.submit(rbba, pat) for pat in self]
-            crop_array = np.array([t.result() for t in threads])
+    def _init_default(self, *args, **kwargs):
+        pargs = []
+        for i in range(len(self.indices)):
+            oargs = [self._data, self._bounds[i], self._bounds[i+1]]
+            pargs += [oargs]
+        return pargs
 
-            self._crop_centers = crop_array[:, :, 2]
-            self._crop_sizes = crop_array[:, :, : 2]
+    def _post_default(self, list_of_arrs):
+        self._data = np.concatenate(list_of_arrs, axis=0)
+        self._bounds = np.array([len(a) for a in [[]] + list_of_arrs])
+        return self
+
+    @inbatch_parallel(init='_init_crop', post='_post_crop', target='nogil')
+    def _crop_params_patients(self):
+        """
+        calculate params for crop, calling return_black_border_array
+        """
+        return rbba
+
+    def _crop_init(self):
+        all_args = []
+        for i in self.indices:
+            item_args = [self.get_image(i)]
+            all_args += [item_args]
+        return pargs
+
+    def _crop_post(self, list_of_arrs):
+        crop_array = np.array(list_of_arrs)
+        self._crop_centers = crop_array[:, :, 2]
+        self._crop_sizes = crop_array[:, :, : 2]
 
     @action
+    @inbatch_parallel(init='_init_default', post='_post_default', target='nogil')
     def make_xip(self, step: int=2, depth: int=10,
                  func: str='max', projection: str='axial',
                  num_threads: int=4, verbose: bool=False) -> "Batch":
@@ -330,39 +335,11 @@ class CTImagesBatch(Batch):
         axises will be transposed as [x, z, y] and [y, z, x]
         for 'coronal' and 'sagital' projections correspondingly.
         """
-        args_list = []
-        for lower, upper in zip(self._lower_bounds, self._upper_bounds):
-
-            args_list.append(dict(image=self._data,
-                                  start=lower,
-                                  stop=upper,
-                                  step=step,
-                                  depth=depth,
-                                  func=func,
-                                  projection=projection,
-                                  verbose=verbose))
-
-        upper_bounds = None
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            list_of_lengths = []
-
-            mip_patients = list(executor.map(lambda x: xip(**x), args_list))
-            for patient_mip_array in mip_patients:
-                axis_null_size = patient_mip_array.shape[0]
-                list_of_lengths.append(axis_null_size)
-
-            upper_bounds = np.cumsum(np.array(list_of_lengths))
-
-        # construct resulting batch with MIPs
-        batch = type(self)(self.index)
-        batch.load(fmt='ndarray', src=np.concatenate(mip_patients, axis=0),
-                   upper_bounds=upper_bounds)
-
-        return batch
+        return xip
 
     @action
-    def resize(self, num_x_new=256, num_y_new=256,
-               num_slices_new=128, order=3, num_threads=8):
+    @inbatch_parallel(init='_init_default', post='_post_default', target='nogil')
+    def resize(self, shape=(256, 256, 128), order=3):
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
@@ -375,57 +352,11 @@ class CTImagesBatch(Batch):
             order: the order of interpolation (<= 5)
                 large value can improve precision, but also slows down the computaion
 
-
-
         example: Batch = Batch.resize(num_x_new=256, num_y_new=256,
                                       num_slices_new=128, num_threads=25)
         """
+        return resize_patient_numba
 
-        # save the result into result_stacked
-        result_stacked = np.zeros((len(self) *
-                                   num_slices_new, num_y_new, num_x_new))
-
-        # define array of args
-        args = []
-        for num_pat in range(len(self)):
-
-            args_dict = {'chunk': self._data,
-                         'start_from': self._lower_bounds[num_pat],
-                         'end_from': self._upper_bounds[num_pat],
-                         'num_x_new': num_x_new,
-                         'num_y_new': num_y_new,
-                         'num_slices_new': num_slices_new,
-                         'order': order,
-                         'res': result_stacked,
-                         'start_to': num_pat * num_slices_new}
-
-            args.append(args_dict)
-
-        # print(args)
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            for arg in args:
-                executor.submit(resize_patient_numba, **arg)
-
-        # add info to history
-        info = {}
-        info['method'] = 'resize'
-        info['params'] = {'num_x_new': num_x_new,
-                          'num_y_new': num_y_new,
-                          'num_slices_new': num_slices_new,
-                          'num_threads': num_threads,
-                          'order': order}
-
-        self.history.append(info)
-
-        # change data
-        self._data = result_stacked
-
-        # change lower/upper bounds
-        cur_pat_num = len(self)
-        self._lower_bounds = np.arange(cur_pat_num) * num_slices_new
-        self._upper_bounds = np.arange(1, cur_pat_num + 1) * num_slices_new
-
-        return self
 
     def get_mask(self, erosion_radius=7, num_threads=8):
         """

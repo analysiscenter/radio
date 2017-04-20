@@ -3,7 +3,7 @@
 
 import numpy as np
 
-
+@njit(nogil=True)
 def detect_black_border(masked_image):
     """
     returns number of black slices from top and bottom of 3d-scan
@@ -32,9 +32,10 @@ def detect_black_border(masked_image):
     return x_l, x_u
 
 
+@njit(nogil=True)
 def return_black_border_array(input_image, B=-2000):
     """
-    return array that contains black border
+    return an array that contains black border
     """
     out_array = np.zeros((3, 3))
 
@@ -45,13 +46,12 @@ def return_black_border_array(input_image, B=-2000):
 
         data_for_mean = np.moveaxis(masked_image, axis, -1)
 
-        _cntr = (data_for_mean * np.arange(data_for_mean.shape[-1])).sum() / \
-            (data_for_mean.sum() + 0.01)
+        _centr = (data_for_mean * np.arange(data_for_mean.shape[-1])).sum() / (data_for_mean.sum() + 0.01)
 
         (l, u) = detect_black_border(data)
 
         out_array[axis, 0] = l
         out_array[axis, 1] = u
-        out_array[axis, 2] = _cntr
+        out_array[axis, 2] = _centr
 
     return out_array
