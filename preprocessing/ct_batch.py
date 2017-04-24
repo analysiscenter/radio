@@ -3,17 +3,17 @@
 import os
 import shutil
 from concurrent.futures import ThreadPoolExecutor
+import aiofiles
 
 import sys
-sys.path.append('..')
 
 import numpy as np
 import blosc
 import dicom
 import SimpleITK as sitk
 
+sys.path.append('..')
 from dataset import Batch, action
-
 
 from .resize import resize_patient_numba
 from .segment import get_mask_patient
@@ -162,13 +162,10 @@ class CTImagesBatch(Batch):
             list_of_arrs = self._load_raw()
         else:
             raise TypeError("Incorrect type of batch source")
-
-        # concatenate scans and initialize patient bounds
-        self._initialize_data_and_bounds(list_of_arrs)
-
         return self
 
-    def _load_dicom(self):
+    @inbatch_parallel(init='_io_init', post='_post_default', target='threads')
+    def _load_dicom(self, patient):
         """
         read, prepare and put 3d-scans in a list
 
@@ -176,63 +173,91 @@ class CTImagesBatch(Batch):
          - conversion to hu using meta from dicom-scans
         """
 
-        list_of_arrs = []
-        for patient in self.indices:
-            patient_folder = self.index.get_fullpath(patient)
+        patient_folder = self.index.get_fullpath(patient)
 
-            list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
-                              for s in os.listdir(patient_folder)]
+        list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s)) for s in os.listdir(patient_folder)]
 
-            list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]),
-                                reverse=True)
-            intercept_pat = list_of_dicoms[0].RescaleIntercept
-            slope_pat = list_of_dicoms[0].RescaleSlope
+        list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
+        intercept_pat = list_of_dicoms[0].RescaleIntercept
+        slope_pat = list_of_dicoms[0].RescaleSlope
 
-            patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
+        patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
 
-            patient_data[patient_data == AIR_HU] = 0
+        patient_data[patient_data == AIR_HU] = 0
 
-            if slope_pat != 1:
-                patient_data = slope_pat * patient_data.astype(np.float64)
-                patient_data = patient_data.astype(np.int16)
+        if slope_pat != 1:
+            patient_data = slope_pat * patient_data.astype(np.float64)
+            patient_data = patient_data.astype(np.int16)
 
-            patient_data += np.int16(intercept_pat)
-            list_of_arrs.append(patient_data)
-        return list_of_arrs
+        patient_data += np.int16(intercept_pat)
 
-    def _load_blosc(self):
+        return patient_data
+
+    @inbatch_parallel(init='_io_init', post='_post_default', target='async')
+    async def _load_blosc(self, patient):
         """
         read, prepare and put 3d-scans in list
 
             *no conversion to hu here
         """
-        list_of_arrs = [read_unpack_blosc(
-            os.path.join(self.index.get_fullpath(patient), 'data.blk')) for patient in self.indices]
+        blosc_dir_path = os.path.join(self.index.get_fullpath(patient), 'data.blk')
+        with aiofiles.open(blosc_dir_path, mode='rb') as file:
+            packed = await file.read()
 
-        return list_of_arrs
+        return blosc.unpack_array(packed)
 
-    def _load_raw(self):
+    @inbatch_parallel(init='_io_init', post='_post_default', target='threads')
+    def _load_raw(self, patient):
         """
         read, prepare and put 3d-scans in list
 
             *no conversion to hu here
         """
-        list_of_arrs = [sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
-                        for patient in self.indices]
-        return list_of_arrs
+        return sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
 
-    def _initialize_data_and_bounds(self, list_of_arrs):
+    @action
+    @inbatch_parallel(init='_io_init', post='_post_default', target='async', update=False)
+    async def dump(self, patient, dst, fmt='blosc'):
         """
-        put the list of 3d-scans into self._data
-        fill in self._upper_bounds and
-            self._lower_bounds accordingly
+        dump on specified path and format
+            create folder corresponding to each patient
 
-        args:
-            self
-            list_of_arrs: list of 3d-scans
+        example:
+            # initialize batch and load data
+            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            batch = BatchCt(ind)
+
+            batch.load(...)
+
+            batch.dump('./data/blosc_preprocessed')
+            # the command above creates files
+
+            # ./data/blosc_preprocessed/1ae34g90/data.blk
+            # ./data/blosc_preprocessed/3hf82s76/data.blk
+            # ./data/blosc_preprocessed/2ds38d04/data.blk
         """
-        # make 3d-skyscraper from list of 3d-scans
-        self._post_default(list_of_arrs)
+        if fmt != 'blosc':
+            raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
+
+        # view on patient data
+        pat_data = self.get_image(patient)
+        # pack the data
+        packed = blosc.pack_array(pat_data, cname='zstd', clevel=1)
+
+        # remove directory if exists
+        if os.path.exists(os.path.join(dst, patient)):
+            shutil.rmtree(os.path.join(dst, patient))
+
+        # put blosc on disk
+        os.makedirs(os.path.join(dst, patient))
+
+        async with aiofiles.open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
+            await file.write(packed)
+
+        return None
+
+    def _io_init(self, *args, **kwargs):
+        return self.indices
 
     def __len__(self):
         return len(self.index)
@@ -280,20 +305,7 @@ class CTImagesBatch(Batch):
             self._crop_params_patients()
         return self._crop_sizes
 
-
-    def _init_default(self, *args, **kwargs):
-        pargs = []
-        for i in range(len(self.indices)):
-            oargs = [self._data, self._bounds[i], self._bounds[i+1]]
-            pargs += [oargs]
-        return pargs
-
-    def _post_default(self, list_of_arrs):
-        self._data = np.concatenate(list_of_arrs, axis=0)
-        self._bounds = np.array([len(a) for a in [[]] + list_of_arrs])
-        return self
-
-    @inbatch_parallel(init='_init_crop', post='_post_crop', target='nogil')
+    @inbatch_parallel(init='_crop_init', post='_crop_post', target='nogil')
     def _crop_params_patients(self):
         """
         calculate params for crop, calling return_black_border_array
@@ -305,12 +317,27 @@ class CTImagesBatch(Batch):
         for i in self.indices:
             item_args = [self.get_image(i)]
             all_args += [item_args]
-        return pargs
+        return all_args
 
     def _crop_post(self, list_of_arrs):
+        # TODO: check for errors
         crop_array = np.array(list_of_arrs)
         self._crop_centers = crop_array[:, :, 2]
         self._crop_sizes = crop_array[:, :, : 2]
+
+    def _init_default(self, *args, **kwargs):
+        all_args = []
+        for i in range(len(self.indices)):
+            item_args = [self._data, self._bounds[i], self._bounds[i+1]]
+            all_args += [item_args]
+        return all_args
+
+    def _post_default(self, list_of_arrs, update=True):
+        # TODO: check for errors
+        if update:
+            self._data = np.concatenate(list_of_arrs, axis=0)
+            self._bounds = np.array([len(a) for a in [[]] + list_of_arrs])
+        return self
 
     @action
     @inbatch_parallel(init='_init_default', post='_post_default', target='nogil')
@@ -421,15 +448,6 @@ class CTImagesBatch(Batch):
         # apply mask to self.data
         self._data += result_mask
 
-        # add info about segmentation to history
-        info = {}
-        info['method'] = 'segmentation'
-
-        info['params'] = {'erosion_radius': erosion_radius,
-                          'num_threads': num_threads}
-
-        self.history.append(info)
-
         return self
 
     @action
@@ -495,51 +513,3 @@ class CTImagesBatch(Batch):
 
         patch = self[person_number][margin, :, :]
         return patch
-
-    @action
-    def dump(self, dst, fmt='blosc'):
-        """
-        dump on specified path and format
-            create folder corresponding to each patient
-
-        example:
-            # initialize batch and load data
-            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-            batch = BatchCt(ind)
-
-            batch.load(...)
-
-            batch.dump('./data/blosc_preprocessed')
-            # the command above creates files
-
-            # ./data/blosc_preprocessed/1ae34g90/data.blk
-            # ./data/blosc_preprocessed/3hf82s76/data.blk
-            # ./data/blosc_preprocessed/2ds38d04/data.blk
-        """
-        if fmt != 'blosc':
-            raise NotImplementedError(
-                'Dump to {} not implemented yet'.format(fmt))
-
-        for patient in self.indices:
-            # view on patient data
-            pat_data = self[patient]
-            # pack the data
-            packed = blosc.pack_array(pat_data, cname='zstd', clevel=1)
-
-            # remove directory if exists
-            if os.path.exists(os.path.join(dst, patient)):
-                shutil.rmtree(os.path.join(dst, patient))
-
-            # put blosc on disk
-            os.makedirs(os.path.join(dst, patient))
-
-            with open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
-                file.write(packed)
-
-        # add info in self.history
-        info = {}
-        info['method'] = 'dump'
-        info['params'] = {'path': dst}
-        self.history.append(info)
-
-        return self
