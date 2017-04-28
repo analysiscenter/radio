@@ -446,8 +446,6 @@ class CTImagesBatch(Batch):
             new_batch: if True, returns new batch with data
                 agregated from workers_ouputs
         """
-        print(workers_outputs)
-        print(workers_outputs[0][0].shape)
         bounds = np.insert(0, 1, np.cumsum([output[1][0] for output in 
                                             workers_outputs]))
         new_data = workers_outputs[0][0]
