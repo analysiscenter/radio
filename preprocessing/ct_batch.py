@@ -45,11 +45,8 @@ class CTImagesBatch(Batch):
     Attrs:
         1. index: array of PatientIDs. Usually, PatientIDs are strings
         2. _data: 3d-array of stacked scans along number_of_slices axis
-        3. _lower_bounds: 1d-array of first floors for each patient
-        4. _upper_bounds: 1d, last floors
-        5. history: list of preprocessing operations applied to self
-            when method with @action-decorator is called
-            info about call should be appended to history
+        3. _bounds: 1d-array of bound-floors for each patient
+            has length = number of patients + 1
 
 
     Important methods:
@@ -115,24 +112,19 @@ class CTImagesBatch(Batch):
 
         self._data = None
 
-        self._upper_bounds = np.array([], dtype=np.int32)
-        self._lower_bounds = np.array([], dtype=np.int32)
-
-        self._patient_index_path = dict()
-        self._patient_index_number = dict()
+        self._bounds = np.array([], dtype=np.int32)
 
         self._crop_centers = np.array([], dtype=np.int32)
         self._crop_sizes = np.array([], dtype=np.int32)
 
-        self.history = []
-
     @action
-    def load(self, src=None, fmt='dicom', upper_bounds=None): # pylint: disable=arguments-differ
+    def load(self, src=None, fmt='dicom', bounds=None):  # pylint: disable=arguments-differ
         """
         builds batch of patients
 
         args:
-            src - path to files (dicoms/mhd/blosc), if None then read files from the location defined in the index
+            src - source array with skyscraper, needd iff fmt = 'ndarray'
+            bounds - bound floors for patients
             fmt - type of data.
                 Can be 'dicom'|'blosc'|'raw'|'ndarray'
 
@@ -142,116 +134,148 @@ class CTImagesBatch(Batch):
             # with following IDs
             index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
             batch = CTImagesBatch(index)
-            batch.load("/data/to/files", fmt='dicom')
+            batch.load(fmt='dicom')
 
         Ndarray example:
             # source_array stores a batch (concatted 3d-scans, skyscraper)
             # say, ndarray with shape (400, 256, 256)
 
-            # source_ubounds stores ndarray of last floors for each patient
-            # say, source_ubounds = np.asarray([100, 400])
-            batch.load(src=source_array, fmt='ndarray', upper_bounds=source_ubounds)
+            # bounds stores ndarray of last floors for each patient
+            # say, source_ubounds = np.asarray([0, 100, 400])
+            batch.load(src=source_array, fmt='ndarray', bounds=bounds)
 
-        ***to do: rewrite initialization with asynchronicity
         """
 
         # if ndarray. Might be better to put this into separate function
         if fmt == 'ndarray':
-            lower_bounds = np.insert(upper_bounds, 0, 0)[:-1]
-            list_of_arrs = [src[lower_bounds[i]:upper_bounds[i], :, :] for i in range(len(upper_bounds))]
+            self._data = src
+            self._bounds = bounds
         elif fmt == 'dicom':
-            list_of_arrs = self._load_dicom()
+            self._load_dicom()
         elif fmt == 'blosc':
-            list_of_arrs = self._load_blosc()
+            self._load_blosc()
         elif fmt == 'raw':
-            list_of_arrs = self._load_raw()
+            self._load_raw()
         else:
             raise TypeError("Incorrect type of batch source")
-
-        # concatenate scans and initialize patient bounds
-        self._initialize_data_and_bounds(list_of_arrs)
-
-        # add info in self.history
-        info = {}
-        info['method'] = 'load'
-        info['params'] = {}
-        self.history.append(info)
-
         return self
 
-    def _load_dicom(self):
+
+    @inbatch_parallel(init='_io_init', post='_post_default', target='threads')
+    def _load_dicom(self, patient, *args, **kwargs):
         """
-        read, prepare and put 3d-scans in a list
+        read, prepare and put stacked 3d-scans in an array
+            return the array
+
+        args:
+            patient - index of patient from batch, whose scans we need to
+            stack
 
         Important operations performed here:
          - conversion to hu using meta from dicom-scans
         """
+        patient_folder = self.index.get_fullpath(patient)
 
-        list_of_arrs = []
-        for patient in self.indices:
-            patient_folder = self.index.get_fullpath(patient)
+        list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s)) for s in os.listdir(patient_folder)]
 
-            list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
-                              for s in os.listdir(patient_folder)]
+        list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
+        intercept_pat = list_of_dicoms[0].RescaleIntercept
+        slope_pat = list_of_dicoms[0].RescaleSlope
 
-            list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]),
-                                reverse=True)
-            intercept_pat = list_of_dicoms[0].RescaleIntercept
-            slope_pat = list_of_dicoms[0].RescaleSlope
+        patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
 
-            patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
+        patient_data[patient_data == AIR_HU] = 0
 
-            patient_data[patient_data == AIR_HU] = 0
+        if slope_pat != 1:
+            patient_data = slope_pat * patient_data.astype(np.float64)
+            patient_data = patient_data.astype(np.int16)
 
-            if slope_pat != 1:
-                patient_data = slope_pat * patient_data.astype(np.float64)
-                patient_data = patient_data.astype(np.int16)
+        patient_data += np.int16(intercept_pat)
 
-            patient_data += np.int16(intercept_pat)
-            list_of_arrs.append(patient_data)
-        return list_of_arrs
+        return patient_data
 
-    def _load_blosc(self):
+    @inbatch_parallel(init='_io_init', post='_post_default', target='async')
+    async def _load_blosc(self, patient, *args, **kwargs):
         """
-        read, prepare and put 3d-scans in list
-
-            *no conversion to hu here
-        """
-        list_of_arrs = [read_unpack_blosc(
-            os.path.join(self.index.get_fullpath(patient), 'data.blk')) for patient in self.indices]
-
-        return list_of_arrs
-
-    def _load_raw(self):
-        """
-        read, prepare and put 3d-scans in list
-
-            *no conversion to hu here
-        """
-        list_of_arrs = [sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
-                        for patient in self.indices]
-        return list_of_arrs
-
-    def _initialize_data_and_bounds(self, list_of_arrs):
-        """
-        put the list of 3d-scans into self._data
-        fill in self._upper_bounds and
-            self._lower_bounds accordingly
+        read, prepare and put 3d-scans in array from blosc
+            return the array
 
         args:
-            self
-            list_of_arrs: list of 3d-scans
-        """
-        # make 3d-skyscraper from list of 3d-scans
-        self._data = np.concatenate(list_of_arrs, axis=0)
+            patient - index of patient from batch, whose scans we need to
+            stack
 
-        # set floors for each patient
-        list_of_lengths = [len(a) for a in list_of_arrs]
-        self._upper_bounds = np.cumsum(np.array(list_of_lengths))
-        self._lower_bounds = np.insert(self._upper_bounds, 0, 0)[:-1]
+            *no conversion to hu here
+        """
+        blosc_dir_path = os.path.join(self.index.get_fullpath(patient), 'data.blk')
+        async with aiofiles.open(blosc_dir_path, mode='rb') as file:
+            packed = await file.read()
+
+        return blosc.unpack_array(packed)
+
+    @inbatch_parallel(init='_io_init', post='_post_default', target='threads')
+    def _load_raw(self, patient, *args, **kwargs):
+        """
+        read, prepare and put 3d-scans in array from raw(mhd)
+            return the array
+
+        args:
+            patient - index of patient from batch, whose scans we need to
+            stack
+
+            *no conversion to hu here
+        """
+        return sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
+
+    @action
+    @inbatch_parallel(init='_io_init', post='_post_default', target='async', update=False)
+    async def dump(self, patient, dst, fmt='blosc'):
+        """
+        dump on specified path and format
+            create folder corresponding to each patient
+
+        example:
+            # initialize batch and load data
+            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            batch = BatchCt(ind)
+
+            batch.load(...)
+
+            batch.dump(dst='./data/blosc_preprocessed')
+            # the command above creates files
+
+            # ./data/blosc_preprocessed/1ae34g90/data.blk
+            # ./data/blosc_preprocessed/3hf82s76/data.blk
+            # ./data/blosc_preprocessed/2ds38d04/data.blk
+        """
+        if fmt != 'blosc':
+            raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
+
+        # view on patient data
+        pat_data = self.get_image(patient)
+        # pack the data
+        packed = blosc.pack_array(pat_data, cname='zstd', clevel=1)
+
+        # remove directory if exists
+        if os.path.exists(os.path.join(dst, patient)):
+            shutil.rmtree(os.path.join(dst, patient))
+
+        # put blosc on disk
+        os.makedirs(os.path.join(dst, patient))
+
+        async with aiofiles.open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
+            await file.write(packed)
+
+        return None
+
+    def _io_init(self, *args, **kwargs):
+        """
+        args-fetcher for _load-funcs
+            used in parallezation-decorator
+        """
+        return [{'patient': self.indices[i]} for i in range(len(self))]
 
     def __len__(self):
-        return len(self.index)
+        return len(self.indices)
 
     def __getitem__(self, index):
         """
@@ -263,20 +287,27 @@ class CTImagesBatch(Batch):
                          in self from [0,..,len(self.index) - 1]
                     or index from self.index
         """
-        if isinstance(index, int):
-            if index < self._lower_bounds.shape[0] and index >= 0:
-                lower = self._lower_bounds[index]
-                upper = self._upper_bounds[index]
-                return self._data[lower:upper, :, :]
-            else:
-                raise IndexError(
-                    "Index of patient in the batch is out of range")
+        return self.get_image(index)
 
+    def get_image(self, index):
+        """
+        get view on patient data
+
+        args:
+            index - can be either position of patient in self._data
+                or index from self.index
+        """
+        if isinstance(index, int):
+            if index < self._bounds.shape[0] - 1 and index >= 0:
+                pos = index
+            else:
+                raise IndexError("Index is out of range")
         else:
-            ind_pos = self.index.get_pos(index)
-            lower = self._lower_bounds[ind_pos]
-            upper = self._upper_bounds[ind_pos]
-            return self._data[lower:upper, :, :]
+            pos = self.index.get_pos(index)
+
+        lower = self._bounds[pos]
+        upper = self._bounds[pos + 1]
+        return self._data[lower:upper, :, :]
 
     @property
     def crop_centers(self):
@@ -331,7 +362,7 @@ class CTImagesBatch(Batch):
         for 'coronal' and 'sagital' projections correspondingly.
         """
         args_list = []
-        for lower, upper in zip(self._lower_bounds, self._upper_bounds):
+        for lower, upper in zip(self._bounds[:-1], self._bounds[1:]):
 
             args_list.append(dict(image=self._data,
                                   start=lower,
@@ -342,7 +373,7 @@ class CTImagesBatch(Batch):
                                   projection=projection,
                                   verbose=verbose))
 
-        upper_bounds = None
+        bounds = None
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
             list_of_lengths = []
 
@@ -351,81 +382,109 @@ class CTImagesBatch(Batch):
                 axis_null_size = patient_mip_array.shape[0]
                 list_of_lengths.append(axis_null_size)
 
-            upper_bounds = np.cumsum(np.array(list_of_lengths))
+            bounds = np.insert(0, 1, np.cumsum(np.array(list_of_lengths)))
 
         # construct resulting batch with MIPs
         batch = type(self)(self.index)
         batch.load(fmt='ndarray', src=np.concatenate(mip_patients, axis=0),
-                   upper_bounds=upper_bounds)
+                   bounds=bounds)
 
         return batch
 
+    def _init_default(self, *args, **kwargs):
+        """
+        default args-fetcher for parallelization with decorator
+        """
+        all_args = []
+        for i in range(len(self.indices)):
+            item_args = [self._data, self._bounds[i], self._bounds[i+1]]
+            all_args += [item_args]
+        return all_args
+
+    def _post_default(self, list_of_arrs, update=True, *args, **kwargs):
+        """ 
+        gatherer of outputs of different workers
+            assumes that output of each worker corresponds to patient data
+        """
+        if update:
+            self._data = np.concatenate(list_of_arrs, axis=0)
+            self._bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
+        return self
+
+    def _init_rebuild(self, **kwargs):
+        """
+        args-fetcher for parallelization using decorator
+            can be used when batch-data is rebuild from scratch
+
+        if shape is supplied as one of the args
+            assumes that data should be resizd
+        """
+        if 'shape' in kwargs:
+            new_shape = kwargs['shape']
+            new_bounds = new_shape[2] * np.arange(len(self) + 1)
+            new_data = np.zeros((new_shape[2] * len(self),
+                                 new_shape[1], new_shape[0]))
+        else:
+            new_bounds = self._bounds
+            new_data = np.zeros_like(self._data)
+
+        all_args = []
+        for i in range(len(self.indices)):
+            out_patient = new_data[new_bounds[i] : new_bounds[i + 1], :, :]
+            item_args = {'patient':self.get_image(i), 'out_patient':out_patient, 'res':new_data}
+            all_args += [item_args]
+
+        return all_args
+
+    def _post_rebuild(self, workers_outputs, new_batch=True, **kwargs):
+        """
+        gatherer of outputs from different workers for
+            ops, requiring complete rebuild of batch._data
+
+        args: 
+            new_batch: if True, returns new batch with data
+                agregated from workers_ouputs
+        """
+        print(workers_outputs)
+        print(workers_outputs[0][0].shape)
+        bounds = np.insert(0, 1, np.cumsum([output[1][0] for output in 
+                                            workers_outputs]))
+        new_data = workers_outputs[0][0]
+
+        if new_batch:
+            batch_res =  CTImagesBatch(self.index)
+            batch_res.load(src=new_data, bounds=bounds)
+            return batch_res
+
+        else:
+            self._data = new_data
+            self._bounds = bounds
+            return self
+
     @action
-    def resize(self, num_x_new=256, num_y_new=256,
-               num_slices_new=128, order=3, num_threads=8):
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=False)
+    def resize(self, shape=(256, 256, 128), order=3, **kwargs):
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
             returns self
 
-            params: (num_slices_new, num_y_new, num_x_new) sets new shape
-                *note that the order of axes is as listed
-                 that is, new patient shape = (num_slices_new, num_y_new, num_x_new)
-            num_threads: number of threads used (degree of parallelism)
+        args:
+            shape: needed shape after resize in order x, y, z
+                *note that the order of axes in data is z, y, x
+                 that is, new patient shape = (shape[2], shape[1], shape[0])
+            n_workers: number of threads used (degree of parallelism)
+                *note: available in the result of decoration of the function
+                above
             order: the order of interpolation (<= 5)
-                large value can improve precision, but also slows down the computaion
+                large value improves precision, but slows down the computaion
 
-
-
-        example: Batch = Batch.resize(num_x_new=256, num_y_new=256,
-                                      num_slices_new=128, num_threads=25)
+        example: 
+            shape = (256, 256, 128)
+            Batch = Batch.resize(shape=shape, n_workers=20, order=2)
         """
+        return resize_patient_numba
 
-        # save the result into result_stacked
-        result_stacked = np.zeros((len(self) *
-                                   num_slices_new, num_y_new, num_x_new))
-
-        # define array of args
-        args = []
-        for num_pat in range(len(self)):
-
-            args_dict = {'chunk': self._data,
-                         'start_from': self._lower_bounds[num_pat],
-                         'end_from': self._upper_bounds[num_pat],
-                         'num_x_new': num_x_new,
-                         'num_y_new': num_y_new,
-                         'num_slices_new': num_slices_new,
-                         'order': order,
-                         'res': result_stacked,
-                         'start_to': num_pat * num_slices_new}
-
-            args.append(args_dict)
-
-        # print(args)
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            for arg in args:
-                executor.submit(resize_patient_numba, **arg)
-
-        # add info to history
-        info = {}
-        info['method'] = 'resize'
-        info['params'] = {'num_x_new': num_x_new,
-                          'num_y_new': num_y_new,
-                          'num_slices_new': num_slices_new,
-                          'num_threads': num_threads,
-                          'order': order}
-
-        self.history.append(info)
-
-        # change data
-        self._data = result_stacked
-
-        # change lower/upper bounds
-        cur_pat_num = len(self)
-        self._lower_bounds = np.arange(cur_pat_num) * num_slices_new
-        self._upper_bounds = np.arange(1, cur_pat_num + 1) * num_slices_new
-
-        return self
 
     def get_mask(self, erosion_radius=7, num_threads=8):
         """
@@ -448,10 +507,10 @@ class CTImagesBatch(Batch):
         for num_pat in range(len(self)):
 
             args_dict = {'chunk': self._data,
-                         'start_from': self._lower_bounds[num_pat],
-                         'end_from': self._upper_bounds[num_pat],
+                         'start_from': self._bounds[num_pat],
+                         'end_from': self._bounds[num_pat + 1],
                          'res': result_stacked,
-                         'start_to': self._lower_bounds[num_pat],
+                         'start_to': self._bounds[num_pat],
                          'erosion_radius': erosion_radius}
             args.append(args_dict)
 
@@ -489,15 +548,6 @@ class CTImagesBatch(Batch):
 
         # apply mask to self.data
         self._data += result_mask
-
-        # add info about segmentation to history
-        info = {}
-        info['method'] = 'segmentation'
-
-        info['params'] = {'erosion_radius': erosion_radius,
-                          'num_threads': num_threads}
-
-        self.history.append(info)
 
         return self
 
@@ -564,51 +614,3 @@ class CTImagesBatch(Batch):
 
         patch = self[person_number][margin, :, :]
         return patch
-
-    @action
-    def dump(self, dst, fmt='blosc'):
-        """
-        dump on specified path and format
-            create folder corresponding to each patient
-
-        example:
-            # initialize batch and load data
-            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-            batch = BatchCt(ind)
-
-            batch.load(...)
-
-            batch.dump('./data/blosc_preprocessed')
-            # the command above creates files
-
-            # ./data/blosc_preprocessed/1ae34g90/data.blk
-            # ./data/blosc_preprocessed/3hf82s76/data.blk
-            # ./data/blosc_preprocessed/2ds38d04/data.blk
-        """
-        if fmt != 'blosc':
-            raise NotImplementedError(
-                'Dump to {} not implemented yet'.format(fmt))
-
-        for patient in self.indices:
-            # view on patient data
-            pat_data = self[patient]
-            # pack the data
-            packed = blosc.pack_array(pat_data, cname='zstd', clevel=1)
-
-            # remove directory if exists
-            if os.path.exists(os.path.join(dst, patient)):
-                shutil.rmtree(os.path.join(dst, patient))
-
-            # put blosc on disk
-            os.makedirs(os.path.join(dst, patient))
-
-            with open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
-                file.write(packed)
-
-        # add info in self.history
-        info = {}
-        info['method'] = 'dump'
-        info['params'] = {'path': dst}
-        self.history.append(info)
-
-        return self
