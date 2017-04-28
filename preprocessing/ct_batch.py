@@ -124,7 +124,7 @@ class CTImagesBatch(Batch):
         builds batch of patients
 
         args:
-            src - source array with skyscraper, needd iff fmt = 'ndarray'
+            src - source array with skyscraper, needed iff fmt = 'ndarray'
             bounds - bound floors for patients
             fmt - type of data.
                 Can be 'dicom'|'blosc'|'raw'|'ndarray'
@@ -152,11 +152,11 @@ class CTImagesBatch(Batch):
             self._data = src
             self._bounds = bounds
         elif fmt == 'dicom':
-            self._load_dicom()
-        elif fmt == 'blosc':
-            self._load_blosc()
+            self._load_dicom()              # pylint: disable=no-value-for-parameter
+        elif fmt == 'blosc':                
+            self._load_blosc()              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
-            self._load_raw()
+            self._load_raw()                # pylint: disable=no-value-for-parameter
         else:
             raise TypeError("Incorrect type of batch source")
         return self
@@ -195,7 +195,7 @@ class CTImagesBatch(Batch):
 
         return patient_data
 
-    @inbatch_parallel(init='_io_init', post='_post_default', target='async')
+    @inbatch_parallel(init='_io_init', post='_post_default', target='async') # pragma pylint: disable=undefined-variable
     async def _load_blosc(self, patient, *args, **kwargs):
         """
         read, prepare and put 3d-scans in array from blosc
@@ -211,10 +211,10 @@ class CTImagesBatch(Batch):
         async with aiofiles.open(blosc_dir_path, mode='rb') as file:
             packed = await file.read()
 
-        return blosc.unpack_array(packed)
+        return blosc.unpack_array(packed)                                   # pragma pylint: enable=undefined-variable
 
     @inbatch_parallel(init='_io_init', post='_post_default', target='threads')
-    def _load_raw(self, patient, *args, **kwargs):
+    def _load_raw(self, patient, *args, **kwargs):                          # pylint: disable=unused-argument
         """
         read, prepare and put 3d-scans in array from raw(mhd)
             return the array
@@ -228,7 +228,7 @@ class CTImagesBatch(Batch):
         return sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
 
     @action
-    @inbatch_parallel(init='_io_init', post='_post_default', target='async', update=False)
+    @inbatch_parallel(init='_io_init', post='_post_default', target='async', update=False) # pragma pylint: disable=undefined-variable
     async def dump(self, patient, dst, fmt='blosc'):
         """
         dump on specified path and format
@@ -266,9 +266,9 @@ class CTImagesBatch(Batch):
         async with aiofiles.open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
             await file.write(packed)
 
-        return None
+        return None                                                                         # pragma pylint: enable=undefined-variable
 
-    def _io_init(self, *args, **kwargs):
+    def _io_init(self, *args, **kwargs):                                                    # pylint: disable=unused-argument
         """
         args-fetcher for _load-funcs
             used in parallezation-decorator
@@ -392,7 +392,7 @@ class CTImagesBatch(Batch):
 
         return batch
 
-    def _init_default(self, *args, **kwargs):
+    def _init_default(self, *args, **kwargs):                                       # pylint: disable=unused-argument
         """
         default args-fetcher for parallelization with decorator
         """
@@ -402,8 +402,8 @@ class CTImagesBatch(Batch):
             all_args += [item_args]
         return all_args
 
-    def _post_default(self, list_of_arrs, update=True, *args, **kwargs):
-        """ 
+    def _post_default(self, list_of_arrs, update=True, *args, **kwargs):            # pylint: disable=unused-argument
+        """
         gatherer of outputs of different workers
             assumes that output of each worker corresponds to patient data
         """
@@ -437,21 +437,21 @@ class CTImagesBatch(Batch):
 
         return all_args
 
-    def _post_rebuild(self, workers_outputs, new_batch=True, **kwargs):
+    def _post_rebuild(self, workers_outputs, new_batch=True, **kwargs):             # pylint: disable=unused-argument
         """
         gatherer of outputs from different workers for
             ops, requiring complete rebuild of batch._data
 
-        args: 
+        args:
             new_batch: if True, returns new batch with data
                 agregated from workers_ouputs
         """
-        bounds = np.insert(0, 1, np.cumsum([output[1][0] for output in 
+        bounds = np.insert(0, 1, np.cumsum([output[1][0] for output in
                                             workers_outputs]))
         new_data = workers_outputs[0][0]
 
         if new_batch:
-            batch_res =  CTImagesBatch(self.index)
+            batch_res = CTImagesBatch(self.index)
             batch_res.load(src=new_data, bounds=bounds)
             return batch_res
 
@@ -462,7 +462,7 @@ class CTImagesBatch(Batch):
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=False)
-    def resize(self, shape=(256, 256, 128), order=3, **kwargs):
+    def resize(self, shape=(256, 256, 128), order=3, **kwargs):                 # pylint: disable=unused-argument, no-self-use
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
@@ -478,7 +478,7 @@ class CTImagesBatch(Batch):
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
 
-        example: 
+        example:
             shape = (256, 256, 128)
             Batch = Batch.resize(shape=shape, n_workers=20, order=2)
         """
