@@ -12,7 +12,7 @@ import numpy as np
 
 @jit('void(double[:,:,:], double[:,:,:], double[:,:,:], int64, double[:], int64)',
      nogil=True)
-def resize_patient_numba(patient, out_patient, res, order=3, shape=None, n_workers=None):
+def resize_patient_numba(patient, out_patient, res, order=3, shape=None, n_workers=None):    # pylint: disable=unused-argument
     """
     resizes 3d-scan for one patient
         args
