@@ -12,7 +12,7 @@ import blosc
 import dicom
 import SimpleITK as sitk
 
-from dataset import Batch, action
+from dataset import Batch, action, inbatch_parallel
 
 
 from .resize import resize_patient_numba
