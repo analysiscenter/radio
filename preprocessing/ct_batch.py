@@ -9,6 +9,7 @@ sys.path.append('..')
 
 import numpy as np
 import blosc
+import aiofiles
 import dicom
 import SimpleITK as sitk
 
