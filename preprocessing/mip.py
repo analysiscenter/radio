@@ -5,7 +5,14 @@ import numpy as np
 from numba import njit
 
 
-@njit
+_projections = {"axial": [0, 1, 2],
+                "coronal": [1, 0, 2],
+                "sagital": [2, 0, 1]}
+
+_jit_functions = {'max': 0, 'min': 1, 'mean': 2}
+
+
+@njit(nogil=True)
 def numba_max(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     """
     Takes 3-dimension numpy ndarray view
@@ -24,7 +31,7 @@ def numba_max(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     return MAX
 
 
-@njit
+@njit(nogil=True)
 def numba_min(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     """
     Takes 3-dimension numpy ndarray view
@@ -43,7 +50,7 @@ def numba_min(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     return MIN
 
 
-@njit
+@njit(nogil=True)
 def numba_avg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     """
     Takes 3-dimension numpy ndarray view
@@ -62,9 +69,9 @@ def numba_avg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     return AVG
 
 
-@njit
-def jit_max_xip(image: np.ndarray, start: int=0, stop: int=-1,
-                step: int=2, depth: int=10) -> np.ndarray:
+@njit(nogil=True)
+def make_xip(func: int, projection: list, step: int, depth: int,
+            patient: np.ndarray, start: int=0, stop: int=-1) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,
@@ -74,85 +81,34 @@ def jit_max_xip(image: np.ndarray, start: int=0, stop: int=-1,
     Code inside the body of function is precompiled
     with numba.
     """
-    p = image
-    if stop == -1:
-        stop = p.shape[0] - depth
-    elif (stop + depth) > p.shape[0]:
+    p = patient.transpose(projection)
+
+    if p.shape[0] < depth:
+        depth = p.shape[0]
+
+    if stop < 0 or stop + depth > p.shape[0]:
         stop = p.shape[0] - depth
 
-    out_array = np.zeros((int((stop - start) / step + 1),
-                          p.shape[1], p.shape[2]), dtype=image.dtype)
+    new_shape = p.shape
+    new_shape[0] = (stop - start) // step + 1
+    out_array = np.zeros(new_shape, dtype=image.dtype)
+
+    if func == 1:
+        xip_fn = numba_max
+    elif func == 1:
+        xip_fn = numba_min
+    else:
+        xip_fn = numba_avg
+
     counter = 0
     for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = numba_max(p[x: x + depth], depth,
-                                             p.shape[1], p.shape[2])
+        out_array[counter, :, :] = xip_fn(p[x: x + depth], depth, p.shape[1], p.shape[2])
         counter += 1
 
     return out_array
 
 
-@njit
-def jit_min_xip(image: np.ndarray, start: int=0, stop: int=-1,
-                step: int=2, depth: int=10) -> np.ndarray:
-    """
-    This function takes 3d picture represented by np.ndarray image,
-    start position for 0-axis index, stop position for 0-axis index,
-    step parameter which represents the step across 0-axis and, finally,
-    depth parameter which is associated with the depth of slices across
-    0-axis made on each step for computing MIN.
-    Code inside the body of function is precompiled
-    with numba.
-    """
-    p = image
-    if stop == -1:
-        stop = p.shape[0] - depth
-    elif (stop + depth) > p.shape[0]:
-        stop = p.shape[0] - depth
-
-    out_array = np.zeros((int((stop - start) / step + 1),
-                          p.shape[1], p.shape[2]), dtype=image.dtype)
-    counter = 0
-    for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = numba_min(p[x: x + depth], depth,
-                                             p.shape[1], p.shape[2])
-        counter += 1
-
-    return out_array
-
-
-@njit
-def jit_avg_xip(image: np.ndarray, start: int=0, stop: int=-1,
-                step: int=2, depth: int=10) -> np.ndarray:
-    """
-    This function takes 3d picture represented by np.ndarray image,
-    start position for 0-axis index, stop position for 0-axis index,
-    step parameter which represents the step across 0-axis and, finally,
-    depth parameter which is associated with the depth of slices across
-    0-axis made on each step for computing MEAN.
-    Code inside the body of function is precompiled
-    with numba.
-    """
-    p = image
-    if stop == -1:
-        stop = p.shape[0] - depth
-    elif (stop + depth) > p.shape[0]:
-        stop = p.shape[0] - depth
-
-    out_array = np.zeros((int((stop - start) / step + 1),
-                          p.shape[1], p.shape[2]), dtype=np.float64)
-    counter = 0
-    for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = numba_avg(p[x: x + depth], depth,
-                                             p.shape[1], p.shape[2])
-        counter += 1
-
-    return out_array
-
-
-def image_xip(image: np.ndarray, start: int=0, stop=None,
-              step: int=2, depth: int=10,
-              func: str='max', projection: str="axial",
-              verbose: bool=False) -> np.ndarray:
+def numba_xip_fn(func='max', projection="axial", step=2, depth=10):
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,
@@ -171,32 +127,4 @@ def image_xip(image: np.ndarray, start: int=0, stop=None,
     axises will be transposed as [x, z, y] and [y, z, x]
     for 'coronal' and 'sagital' projections correspondingly.
     """
-
-    projs = {"axial": [0, 1, 2],
-             "coronal": [1, 0, 2],
-             "sagital": [2, 0, 1]}
-
-    jit_functions_dict = {'max': jit_max_xip,
-                          'min': jit_min_xip,
-                          'mean': jit_avg_xip}
-
-    p = image.transpose(projs[projection])
-    if p.shape[0] < depth:
-        raise IndexError('Depth is bigger than ' +
-                         'corresponing array dimension')
-
-    if stop is None:
-        stop = p.shape[0] - depth
-        if verbose:
-            print("Stop value changed to ", stop)
-    elif (stop + depth) > p.shape[0]:
-        stop = p.shape[0] - depth
-        if verbose:
-            print("Stop value changed to ", stop)
-
-    result = jit_functions_dict[func](p, start,
-                                      stop, step, depth)
-    return result
-
-if __name__ == '__main__':
-    pass
+    return partial(make_xip, _jit_functions[func], _projections[projection], step, depth)
