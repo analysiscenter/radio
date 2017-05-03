@@ -4,8 +4,6 @@ import os
 import sys
 import shutil
 
-from concurrent.futures import ThreadPoolExecutor
-
 import numpy as np
 import aiofiles
 import blosc
@@ -439,7 +437,8 @@ class CTImagesBatch(Batch):
         return numba_xip_fn(func, projection, step, depth)
 
     @inbatch_parallel(init='_init_resize', post='_post_resize', target='nogil')
-    def get_mask(self, erosion_radius=7):
+    def get_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
+        """ Return a mask for lungs """
         return get_mask_patient
 
     @action
