@@ -10,8 +10,8 @@ import scipy.ndimage
 import numpy as np
 
 
-@jit('void(double[:,:,:], double[:,:,:], double[:,:,:], int64, double[:], int64)',
-     nogil=True)
+#@jit('void(double[:,:,:], double[:,:,:], double[:,:,:], int64, double[:], int64)', nogil=True)
+@jit(nogil=True)
 def resize_patient_numba(patient, out_patient, res, order=3, shape=None):
     """
     resizes 3d-scan for one patient

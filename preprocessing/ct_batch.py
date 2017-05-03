@@ -13,7 +13,7 @@ import dicom
 import SimpleITK as sitk
 
 sys.path.append('..')
-from dataset import Batch, action, inbatch_parallel
+from dataset import Batch, action, inbatch_parallel, any_action_failed
 
 from .resize import resize_patient_numba
 from .segment import get_mask_patient
@@ -190,7 +190,6 @@ class CTImagesBatch(Batch):
             patient_data = patient_data.astype(np.int16)
 
         patient_data += np.int16(intercept_pat)
-
         return patient_data
 
     @inbatch_parallel(init='indices', post='_post_default', target='async')
@@ -327,6 +326,11 @@ class CTImagesBatch(Batch):
         gatherer of outputs of different workers
             assumes that output of each worker corresponds to patient data
         """
+        if any_action_failed(list_of_arrs):
+            # Something failed
+            return self
+
+        res = self
         if update:
             new_data = np.concatenate(list_of_arrs, axis=0)
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
@@ -337,7 +341,6 @@ class CTImagesBatch(Batch):
             else:
                 self._data = new_data
                 self._bounds = new_bounds
-                res = self
         return res
 
     def _init_images(self, **kwargs):               # pylint: disable=unused-argument
@@ -390,7 +393,7 @@ class CTImagesBatch(Batch):
             self._bounds = bounds
             return self
 
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
+    @inbatch_parallel(init='_init_resize', post='_post_resize', target='nogil')
     def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
         """
         performs resize (change of shape) of each CT-scan in the batch.
