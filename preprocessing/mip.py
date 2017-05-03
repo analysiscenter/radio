@@ -1,6 +1,7 @@
 # pylint: disable=invalid-name
 """ Numba-rized functions for MIP calculation """
 
+from functools import partial
 import numpy as np
 from numba import njit
 
@@ -71,7 +72,7 @@ def numba_avg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
 
 @njit(nogil=True)
 def make_xip(func: int, projection: list, step: int, depth: int,
-            patient: np.ndarray, start: int=0, stop: int=-1) -> np.ndarray:
+             patient: np.ndarray, start: int=0, stop: int=-1) -> np.ndarray:
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,
@@ -91,7 +92,7 @@ def make_xip(func: int, projection: list, step: int, depth: int,
 
     new_shape = p.shape
     new_shape[0] = (stop - start) // step + 1
-    out_array = np.zeros(new_shape, dtype=image.dtype)
+    out_array = np.zeros(new_shape, dtype=patient.dtype)
 
     if func == 1:
         xip_fn = numba_max

@@ -1,15 +1,14 @@
 """ contains Batch class for storing Ct-scans """
 
 import os
-import shutil
-from concurrent.futures import ThreadPoolExecutor
-import aiofiles
-
 import sys
+import shutil
+
+from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
-import blosc
 import aiofiles
+import blosc
 import dicom
 import SimpleITK as sitk
 
@@ -19,7 +18,7 @@ from dataset import Batch, action, inbatch_parallel
 from .resize import resize_patient_numba
 from .segment import get_mask_patient
 
-from .mip import image_xip as xip
+from .mip import numba_xip_fn
 from .crop import return_black_border_array as rbba
 
 AIR_HU = -2000
@@ -146,14 +145,13 @@ class CTImagesBatch(Batch):
             batch.load(src=source_array, fmt='ndarray', bounds=bounds)
 
         """
-
         # if ndarray. Might be better to put this into separate function
         if fmt == 'ndarray':
             self._data = src
             self._bounds = bounds
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
-        elif fmt == 'blosc':                
+        elif fmt == 'blosc':
             self._load_blosc()              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
@@ -163,7 +161,7 @@ class CTImagesBatch(Batch):
 
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_dicom(self, patient, *args, **kwargs):
+    def _load_dicom(self, patient, *args, **kwargs):                # pylint: disable=unused-argument
         """
         read, prepare and put stacked 3d-scans in an array
             return the array
@@ -384,7 +382,7 @@ class CTImagesBatch(Batch):
         new_data = workers_outputs[0][0]
 
         if new_batch:
-            batch_res =  CTImagesBatch(self.index)
+            batch_res = type(self)(self.index)
             batch_res.load(src=new_data, bounds=bounds)
             return batch_res
         else:
