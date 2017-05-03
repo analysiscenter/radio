@@ -382,7 +382,7 @@ class CTImagesBatch(Batch):
         """
         # TODO: process errors
         bounds = np.cumsum([wshape[0] for _, wshape in [[0, (0, )]] + workers_outputs])
-        new_data = workers_outputs[0][0]
+        new_data, _ = workers_outputs[0]
 
         if new_batch:
             batch_res = type(self)(self.index)
@@ -438,47 +438,12 @@ class CTImagesBatch(Batch):
         """
         return numba_xip_fn(func, projection, step, depth)
 
-
-    def get_mask(self, erosion_radius=7, num_threads=8):
-        """
-        multithreaded
-        computation of lungs' segmentating mask
-        args:
-            -erosion_radius: radius for erosion of lungs' border
-
-
-        remember, our patient version of segmentaion has signature
-            get_mask_patient(chunk, start_from, end_from, res,
-                                      start_to, erosion_radius = 7):
-
-        """
-        # we put mask into array
-        result_stacked = np.zeros_like(self._data)
-
-        # define array of args
-        args = []
-        for num_pat in range(len(self)):
-
-            args_dict = {'chunk': self._data,
-                         'start_from': self._bounds[num_pat],
-                         'end_from': self._bounds[num_pat + 1],
-                         'res': result_stacked,
-                         'start_to': self._bounds[num_pat],
-                         'erosion_radius': erosion_radius}
-            args.append(args_dict)
-
-        # run threads and put the fllter into result_stacked
-        # print(args)
-
-        with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            for arg in args:
-                executor.submit(get_mask_patient, **arg)
-
-        # return mask
-        return result_stacked
+    @inbatch_parallel(init='_init_resize', post='_post_resize', target='nogil')
+    def get_mask(self, erosion_radius=7):
+        return get_mask_patient
 
     @action
-    def segment(self, erosion_radius=2, num_threads=8):
+    def segment(self, erosion_radius=2):
         """
         lungs segmenting function
             changes self
@@ -492,8 +457,7 @@ class CTImagesBatch(Batch):
         # get mask with specified params
         # reverse it and set not-lungs to DARK_HU
 
-        lungs = self.get_mask(erosion_radius=erosion_radius,
-                              num_threads=num_threads)
+        lungs = self.get_mask(erosion_radius=erosion_radius)
         self._data = self._data * lungs
 
         result_mask = 1 - lungs
