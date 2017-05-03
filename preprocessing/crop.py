@@ -1,7 +1,8 @@
 # pylint: disable=invalid-name
 """ contains auxiliary functions for calculating crop parameters """
-
 import numpy as np
+from numba import njit
+
 
 @njit(nogil=True)
 def detect_black_border(masked_image):

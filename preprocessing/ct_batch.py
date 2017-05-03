@@ -208,7 +208,7 @@ class CTImagesBatch(Batch):
         blosc_dir_path = os.path.join(self.index.get_fullpath(patient), 'data.blk')
         with aiofiles.open(blosc_dir_path, mode='rb') as file:
             packed = await file.read()
-        return blosc.unpack_array(packed)                                  # pylint: enable=undefined-variable
+        return blosc.unpack_array(packed)
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
     async def _load_raw(self, patient, *args, **kwargs):                   # pylint: disable=unused-argument
@@ -258,7 +258,7 @@ class CTImagesBatch(Batch):
         # put blosc on disk
         os.makedirs(os.path.join(dst, patient))
         async with aiofiles.open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
-            await file.write(packed)
+            _ = await file.write(packed)
 
         return None
 
@@ -316,13 +316,13 @@ class CTImagesBatch(Batch):
         return self._crop_sizes
 
     @inbatch_parallel(init='_init_images', post='_crop_post', target='nogil')
-    def _crop_params_patients(self, *args, **kwargs):
+    def _crop_params_patients(self, *args, **kwargs):                    # pylint: disable=unused-argument,no-self-use
         """
         calculate params for crop, calling return_black_border_array
         """
         return rbba
 
-    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
+    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):    # pylint: disable=unused-argument
         """
         gatherer of outputs of different workers
             assumes that output of each worker corresponds to patient data
@@ -340,10 +340,10 @@ class CTImagesBatch(Batch):
                 res = self
         return res
 
-    def _init_images(self, **kwargs):
+    def _init_images(self, **kwargs):               # pylint: disable=unused-argument
         return [self.get_image(patient) for patient in self.indices]
 
-    def _crop_post(self, list_of_arrs, **kwargs):
+    def _crop_post(self, list_of_arrs, **kwargs):   # pylint: disable=unused-argument
         # TODO: check for errors
         crop_array = np.array(list_of_arrs)
         self._crop_centers = crop_array[:, :, 2]
@@ -369,7 +369,7 @@ class CTImagesBatch(Batch):
 
         return all_args
 
-    def _post_resize(self, workers_outputs, new_batch=False, **kwargs):
+    def _post_resize(self, workers_outputs, new_batch=False, **kwargs):   # pylint: disable=unused-argument
         """
         gatherer of outputs from different workers for
             ops, requiring complete rebuild of batch._data
@@ -391,7 +391,7 @@ class CTImagesBatch(Batch):
             return self
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):
+    def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
@@ -414,7 +414,7 @@ class CTImagesBatch(Batch):
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
-    def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):
+    def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
         """
         This function takes 3d picture represented by np.ndarray image,
         start position for 0-axis index, stop position for 0-axis index,
