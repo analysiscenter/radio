@@ -14,10 +14,11 @@ sys.path.append('..')
 from dataset import Batch, action, inbatch_parallel, any_action_failed
 
 from .resize import resize_patient_numba
-from .segment import get_mask_patient
-
+from .segment import numba_calc_lung_mask
 from .mip import numba_xip_fn
+from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
+
 
 AIR_HU = -2000
 DARK_HU = -2000
@@ -294,6 +295,84 @@ class CTImagesBatch(Batch):
         upper = self._bounds[pos + 1]
         return self._data[lower:upper, :, :]
 
+    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):    # pylint: disable=unused-argument
+        """
+        gatherer of outputs of different workers
+            assumes that output of each worker corresponds to patient data
+        """
+        if any_action_failed(list_of_arrs):
+            raise ValueError("Failed while parallelizing")
+
+        res = self
+        if update:
+            new_data = np.concatenate(list_of_arrs, axis=0)
+            new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
+            if new_batch:
+                batch = type(self)(self.index)
+                batch.load(fmt='ndarray', src=new_data, bounds=new_bounds)
+                res = batch
+            else:
+                self._data = new_data
+                self._bounds = new_bounds
+        return res
+
+    def _init_images(self, **kwargs):               # pylint: disable=unused-argument
+        return [self.get_image(patient) for patient in self.indices]
+
+    def _post_crop(self, list_of_arrs, **kwargs):   # pylint: disable=unused-argument
+        # TODO: check for errors
+        crop_array = np.array(list_of_arrs)
+        self._crop_centers = crop_array[:, :, 2]
+        self._crop_sizes = crop_array[:, :, : 2]
+
+
+    def _init_rebuild(self, **kwargs):
+        """
+        args-fetcher for parallelization using decorator
+            can be used when batch-data is rebuild from scratch
+        if shape is supplied as one of the args
+            assumes that data should be resizd
+        """
+        if 'shape' in kwargs:
+            x, y, num_slices = kwargs['shape']
+            new_bounds = num_slices * np.arange(len(self) + 1)
+            new_data = np.zeros((num_slices * len(self), x, y))
+        else:
+            new_bounds = self._bounds
+            new_data = np.zeros_like(self._data)
+
+        all_args = []
+        for i in range(len(self.indices)):
+            out_patient = new_data[new_bounds[i] : new_bounds[i + 1], :, :]
+            item_args = {'patient': self.get_image(i), 'out_patient': out_patient, 'res': new_data}
+            all_args += [item_args]
+
+        return all_args
+
+    def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):   # pylint: disable=unused-argument
+        """
+        gatherer of outputs from different workers for
+            ops, requiring complete rebuild of batch._data
+        args:
+            new_batch: if True, returns new batch with data
+                agregated from workers_ouputs
+        """
+        if any_action_failed(all_outputs):
+            raise ValueError("Failed while parallelizing")
+
+        new_bounds = np.cumsum([patient_shape[0] for _, patient_shape in [[0, (0, )]] + all_outputs])
+        # each worker returns the same ref to the whole res array
+        new_data, _ = all_outputs[0]
+
+        if new_batch:
+            batch_res = type(self)(self.index)
+            batch_res.load(src=new_data, bounds=new_bounds)
+            return batch_res
+        else:
+            self._data = new_data
+            self._bounds = new_bounds
+            return self
+
     @property
     def crop_centers(self):
         """
@@ -312,86 +391,16 @@ class CTImagesBatch(Batch):
             self._crop_params_patients()
         return self._crop_sizes
 
-    @inbatch_parallel(init='_init_images', post='_crop_post', target='nogil')
+
+    @inbatch_parallel(init='_init_images', post='_post_crop', target='nogil')
     def _crop_params_patients(self, *args, **kwargs):                    # pylint: disable=unused-argument,no-self-use
         """
         calculate params for crop, calling return_black_border_array
         """
         return rbba
 
-    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):    # pylint: disable=unused-argument
-        """
-        gatherer of outputs of different workers
-            assumes that output of each worker corresponds to patient data
-        """
-        if any_action_failed(list_of_arrs):
-            # Something failed
-            return self
-
-        res = self
-        if update:
-            new_data = np.concatenate(list_of_arrs, axis=0)
-            new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
-            if new_batch:
-                batch = type(self)(self.index)
-                batch.load(fmt='ndarray', src=new_data, bounds=new_bounds)
-                res = batch
-            else:
-                self._data = new_data
-                self._bounds = new_bounds
-        return res
-
-    def _init_images(self, **kwargs):               # pylint: disable=unused-argument
-        return [self.get_image(patient) for patient in self.indices]
-
-    def _crop_post(self, list_of_arrs, **kwargs):   # pylint: disable=unused-argument
-        # TODO: check for errors
-        crop_array = np.array(list_of_arrs)
-        self._crop_centers = crop_array[:, :, 2]
-        self._crop_sizes = crop_array[:, :, : 2]
-
-
-    def _init_resize(self, **kwargs):
-        """
-        args-fetcher for parallelization using decorator
-            can be used when batch-data is rebuild from scratch
-        if shape is supplied as one of the args
-            assumes that data should be resizd
-        """
-        new_shape = kwargs['shape']
-        new_bounds = new_shape[2] * np.arange(len(self) + 1)
-        new_data = np.zeros((new_shape[2] * len(self), new_shape[1], new_shape[0]))
-
-        all_args = []
-        for i in range(len(self.indices)):
-            out_patient = new_data[new_bounds[i] : new_bounds[i + 1], :, :]
-            item_args = {'patient': self.get_image(i), 'out_patient': out_patient, 'res': new_data}
-            all_args += [item_args]
-
-        return all_args
-
-    def _post_resize(self, workers_outputs, new_batch=False, **kwargs):   # pylint: disable=unused-argument
-        """
-        gatherer of outputs from different workers for
-            ops, requiring complete rebuild of batch._data
-        args:
-            new_batch: if True, returns new batch with data
-                agregated from workers_ouputs
-        """
-        # TODO: process errors
-        bounds = np.cumsum([wshape[0] for _, wshape in [[0, (0, )]] + workers_outputs])
-        new_data, _ = workers_outputs[0]
-
-        if new_batch:
-            batch_res = type(self)(self.index)
-            batch_res.load(src=new_data, bounds=bounds)
-            return batch_res
-        else:
-            self._data = new_data
-            self._bounds = bounds
-            return self
-
-    @inbatch_parallel(init='_init_resize', post='_post_resize', target='nogil')
+    @action
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
         """
         performs resize (change of shape) of each CT-scan in the batch.
@@ -436,10 +445,10 @@ class CTImagesBatch(Batch):
         """
         return numba_xip_fn(func, projection, step, depth)
 
-    @inbatch_parallel(init='_init_resize', post='_post_resize', target='nogil')
-    def get_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
+    def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
         """ Return a mask for lungs """
-        return get_mask_patient
+        return numba_calc_lung_mask
 
     @action
     def segment(self, erosion_radius=2):
@@ -456,13 +465,13 @@ class CTImagesBatch(Batch):
         # get mask with specified params
         # reverse it and set not-lungs to DARK_HU
 
-        lungs = self.get_mask(erosion_radius=erosion_radius)
-        self._data = self._data * lungs
+        mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius)
+        lungs_mask = mask_batch.data
+        self._data = self._data * lungs_mask
 
-        result_mask = 1 - lungs
+        result_mask = 1 - lungs_mask
         result_mask *= DARK_HU
 
-        # apply mask to self.data
         self._data += result_mask
 
         return self
@@ -488,6 +497,7 @@ class CTImagesBatch(Batch):
         return self
 
     @action
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def flip(self):
         """
         flip each patient
@@ -498,16 +508,7 @@ class CTImagesBatch(Batch):
         example:
             batch = batch.flip()
         """
-
-        # list of flipped patients
-        list_of_pats = [np.flipud(self[pat_number])
-                        for pat_number in range(len(self))]
-
-        # change self._data
-        self._data = np.concatenate(list_of_pats, axis=0)
-
-        # return self
-        return self
+        return flip_patient_numba
 
     def get_axial_slice(self, person_number, slice_height):
         """
@@ -527,6 +528,5 @@ class CTImagesBatch(Batch):
 
         """
         margin = int(slice_height * self[person_number].shape[0])
-
         patch = self[person_number][margin, :, :]
         return patch

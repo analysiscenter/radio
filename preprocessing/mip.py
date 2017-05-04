@@ -94,7 +94,7 @@ def make_xip(func: int, projection: list, step: int, depth: int,
     new_shape[0] = (stop - start) // step + 1
     out_array = np.zeros(new_shape, dtype=patient.dtype)
 
-    if func == 1:
+    if func == 0:
         xip_fn = numba_max
     elif func == 1:
         xip_fn = numba_min
