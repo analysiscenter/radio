@@ -30,7 +30,7 @@ def largest_label_volume(image, background=-1):
 
 # segmentation of a patient sliced from skyscraper
 @jit('void(double[:,:,:], double[:,:,:], double[:,:,:], int64)', nogil=True)
-def numba_calc_lung_mask(patient, out_patient, res, erosion_radius=7):
+def calc_lung_mask_numba(patient, out_patient, res, erosion_radius=7):
     """
     computes lungs-segmenting mask for one patient
         args

@@ -1,4 +1,3 @@
-# pylint: disable=invalid-name
 """ Numba-rized functions for MIP calculation """
 
 from functools import partial
@@ -23,13 +22,13 @@ def numba_max(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     Code inside the body of function is precompiled
     with numba.
     """
-    MAX = np.full((m, n), -10000, dtype=arr.dtype)
+    res = np.full((m, n), -10000, dtype=arr.dtype)
     for j in range(m):
         for k in range(n):
             for i in range(l):
-                if arr[i, j, k] > MAX[j, k]:
-                    MAX[j, k] = arr[i, j, k]
-    return MAX
+                if arr[i, j, k] > res[j, k]:
+                    res[j, k] = arr[i, j, k]
+    return res
 
 
 @njit(nogil=True)
@@ -42,13 +41,13 @@ def numba_min(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     Code inside the body of function is precompiled
     with numba.
     """
-    MIN = np.full((m, n), 10000, dtype=arr.dtype)
+    res = np.full((m, n), 10000, dtype=arr.dtype)
     for j in range(m):
         for k in range(n):
             for i in range(l):
-                if arr[i, j, k] < MIN[j, k]:
-                    MIN[j, k] = arr[i, j, k]
-    return MIN
+                if arr[i, j, k] < res[j, k]:
+                    res[j, k] = arr[i, j, k]
+    return res
 
 
 @njit(nogil=True)
@@ -61,13 +60,13 @@ def numba_avg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
     Code inside the body of function is precompiled
     with numba.
     """
-    AVG = np.zeros((m, n), np.float64)
+    res = np.zeros((m, n), np.float64)
     for j in range(m):
         for k in range(n):
             for i in range(l):
-                AVG[j, k] += arr[i, j, k]
-            AVG[j, k] /= l
-    return AVG
+                res[j, k] += arr[i, j, k]
+            res[j, k] /= l
+    return res
 
 
 @njit(nogil=True)
@@ -109,7 +108,7 @@ def make_xip(func: int, projection: list, step: int, depth: int,
     return out_array
 
 
-def numba_xip_fn(func='max', projection="axial", step=2, depth=10):
+def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
     """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,

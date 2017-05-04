@@ -14,8 +14,8 @@ sys.path.append('..')
 from dataset import Batch, action, inbatch_parallel, any_action_failed
 
 from .resize import resize_patient_numba
-from .segment import numba_calc_lung_mask
-from .mip import numba_xip_fn
+from .segment import calc_lung_mask_numba
+from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
 
@@ -443,12 +443,12 @@ class CTImagesBatch(Batch):
         axises will be transposed as [x, z, y] and [y, z, x]
         for 'coronal' and 'sagital' projections correspondingly.
         """
-        return numba_xip_fn(func, projection, step, depth)
+        return xip_fn_numba(func, projection, step, depth)
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
     def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
         """ Return a mask for lungs """
-        return numba_calc_lung_mask
+        return calc_lung_mask_numba
 
     @action
     def segment(self, erosion_radius=2):
