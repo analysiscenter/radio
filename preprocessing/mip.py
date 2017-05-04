@@ -5,11 +5,11 @@ import numpy as np
 from numba import njit
 
 
-_projections = {"axial": [0, 1, 2],
+_PROJECTIONS = {"axial": [0, 1, 2],
                 "coronal": [1, 0, 2],
                 "sagital": [2, 0, 1]}
 
-_jit_functions = {'max': 0, 'min': 1, 'mean': 2}
+_NUMBA_FUNC = {'max': 0, 'min': 1, 'mean': 2}
 
 
 @njit(nogil=True)
@@ -127,4 +127,4 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
     axises will be transposed as [x, z, y] and [y, z, x]
     for 'coronal' and 'sagital' projections correspondingly.
     """
-    return partial(make_xip, _jit_functions[func], _projections[projection], step, depth)
+    return partial(make_xip, _NUMBA_FUNC[func], _PROJECTIONS[projection], step, depth)

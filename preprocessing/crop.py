@@ -1,5 +1,4 @@
-# pylint: disable=invalid-name
-""" contains auxiliary functions for calculating crop parameters """
+""" Contains auxiliary functions for calculating crop parameters """
 import numpy as np
 from numba import njit
 
@@ -9,18 +8,18 @@ def detect_black_border(masked_image):
     """
     returns number of black slices from top and bottom of 3d-scan
     """
-    N = masked_image.shape[0]
+    n = masked_image.shape[0]
     x_l = 0
     x_u = N - 1
 
-    for i in range(N):
+    for i in range(n):
         current_size = masked_image[:i, :, :][masked_image[:i, :, :]].size
         if current_size != 0:
             break
         else:
             x_l = i
 
-    for i in range(N - 1, -1, -1):
+    for i in range(n - 1, -1, -1):
         current_size = masked_image[i:, :, :][masked_image[i:, :, :]].size
         if current_size != 0:
             break

@@ -8,7 +8,7 @@ max-args=8
 max-locals=20
 
 [BASIC]
-good-names=_,x,y,z,i,j,k,l,m,n,p,ex
+good-names=_,x,y,z,i,j,k,l,m,n,p,r,u,ex
 
 [TYPECHECK]
 ignored-modules=numpy
