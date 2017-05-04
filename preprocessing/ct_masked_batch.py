@@ -1,4 +1,3 @@
-#pylint: disable=arguments-differ
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 
 from concurrent.futures import ThreadPoolExecutor
@@ -11,6 +10,7 @@ from .ct_batch import CTImagesBatch
 # from .mask import make_mask_patient, insert_cropped
 from .resize import resize_patient_numba
 from .dataset_import import action
+from .dataset_import import inbatch_parallel
 
 
 NoduleBase = namedtuple(typename='NoduleBase',
@@ -243,7 +243,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             raise TypeError("Incorrect type of batch source")
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    async def _load_raw(self, patient_id, *args, **kwargs):
+    def _load_raw(self, patient_id, *args, **kwargs):
         """Read, prepare and put 3d-scans in array from raw(mhd).
 
         This method reads 3d-scans from mhd format
