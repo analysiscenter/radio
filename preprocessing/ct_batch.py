@@ -209,7 +209,7 @@ class CTImagesBatch(Batch):
         return blosc.unpack_array(packed)
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    async def _load_raw(self, patient, *args, **kwargs):                   # pylint: disable=unused-argument
+    def _load_raw(self, patient, *args, **kwargs):                   # pylint: disable=unused-argument
         """
         read, prepare and put 3d-scans in array from raw(mhd)
             return the array
