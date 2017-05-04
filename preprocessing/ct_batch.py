@@ -204,7 +204,7 @@ class CTImagesBatch(Batch):
             *no conversion to hu here
         """
         blosc_dir_path = os.path.join(self.index.get_fullpath(patient), 'data.blk')
-        with aiofiles.open(blosc_dir_path, mode='rb') as file:
+        async with aiofiles.open(blosc_dir_path, mode='rb') as file:
             packed = await file.read()
         return blosc.unpack_array(packed)
 
