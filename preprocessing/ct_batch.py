@@ -498,7 +498,7 @@ class CTImagesBatch(Batch):
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def flip(self):
+    def flip(self):    # pylint: disable=no-self-use
         """
         flip each patient
             i.e. invert the order of slices for each patient

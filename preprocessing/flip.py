@@ -1,5 +1,4 @@
 """ Flip CT-image """
-import numpy as np
 from numba import njit
 
 
