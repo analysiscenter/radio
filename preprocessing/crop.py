@@ -10,7 +10,7 @@ def detect_black_border(masked_image):
     """
     n = masked_image.shape[0]
     x_l = 0
-    x_u = N - 1
+    x_u = n - 1
 
     for i in range(n):
         current_size = masked_image[:i, :, :][masked_image[:i, :, :]].size
@@ -33,13 +33,13 @@ def detect_black_border(masked_image):
 
 
 @njit(nogil=True)
-def return_black_border_array(input_image, B=-2000):
+def return_black_border_array(input_image, background=-2000):
     """
     return an array that contains black border
     """
     out_array = np.zeros((3, 3))
 
-    masked_image = (input_image != B)
+    masked_image = (input_image != background)
 
     for axis in range(3):
         data = np.moveaxis(masked_image, axis, 0)
