@@ -336,7 +336,7 @@ class CTImagesBatch(Batch):
         if 'shape' in kwargs:
             x, y, num_slices = kwargs['shape']
             new_bounds = num_slices * np.arange(len(self) + 1)
-            new_data = np.zeros((num_slices * len(self), x, y))
+            new_data = np.zeros((num_slices * len(self), y, x))
         else:
             new_bounds = self._bounds
             new_data = np.zeros_like(self._data)
