@@ -366,7 +366,7 @@ class CTImagesBatch(Batch):
 
         if new_batch:
             batch_res = type(self)(self.index)
-            batch_res.load(src=new_data, bounds=new_bounds)
+            batch_res.load(src=new_data, fmt='ndarray', bounds=new_bounds)
             return batch_res
         else:
             self._data = new_data
