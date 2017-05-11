@@ -30,7 +30,7 @@ class Nodule(NoduleBase):
         Args:
         - spacing: list, tuple or numpy array with spacing;
         """
-        return np.ones(self.size / spacing, dtype=np.int32)
+        return np.ones(np.rint(self.size / spacing).astype('int32'), dtype=np.int32)
 
     def start_pix(self, origin, spacing):
         """Get the start pixel of the Nodule.
@@ -211,7 +211,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.origin = dict()
 
     @action
-    def load(src=None, fmt='dicom', bounds=None,
+    def load(self, src=None, fmt='dicom', bounds=None,
              origin=None, spacing=None, nodules_info=None):
         """Load data in masked batch of patients.
 
@@ -231,6 +231,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         if fmt == 'raw':
             self._load_raw()
+            self.mask = np.zeros_like(self.data)
         elif fmt in ['dicom', 'blosc']:
             raise NotImplementedError("This load format option " +
                                       "is not implemented for masked batch")
@@ -241,6 +242,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.spacing = spacing
         else:
             raise TypeError("Incorrect type of batch source")
+        return self
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
     def _load_raw(self, patient_id, *args, **kwargs):
@@ -328,14 +330,22 @@ class CTImagesMaskedBatch(CTImagesBatch):
             nodule_size = nodule.size_pix(spacing)
 
         img_size = np.array(self.get_image(nodule.patient_id).shape,
-                            dtype='int32')
-        start_pix = nodule.start_pix(origin, spacing)
-        end_pix = start_pix + nodule_size
+                            dtype=np.int32)
+        start_pix = nodule.start_pix(origin, spacing) - np.rint(nodule_size / 2).astype(np.int32)
+        end_pix = start_pix + (nodule_size - np.rint(nodule_size / 2)).astype(np.int32)
 
-        bias_out_of_bounds = np.where(end_pix > img_size,
-                                      end_pix - img_size, np.zeros(3))
-        start_pix -= bias_out_of_bounds
-        end_pix -= bias_out_of_bounds
+        bias_upper = np.where(end_pix > img_size,
+                              end_pix - img_size,
+                              np.zeros(3, dtype=np.int32))
+
+        start_pix -= bias_upper
+        end_pix -= bias_upper
+
+        bias_lower = np.where(start_pix < 0, -start_pix,
+                                      np.zeros(3, dtype=np.int32))
+
+        start_pix += bias_lower
+        end_pix += bias_lower
 
         patient_bias = np.array([self._bounds[patient_pos], 0, 0],
                                 dtype=np.int32)
@@ -443,8 +453,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         nodule_size = np.asarray(nodule_size, dtype=np.int32)
 
-        nodules = np.stack([self._nodule_bounds(nodule)
+        nodules = np.stack([self._nodule_bounds(nodule, nodule_size)
                             for nodule in self.nodules_info])
+
+        # print("Size of nodules: ", nodule_size)
+        # print("Nodules coordinates: ", nodules)
 
         cancer_n = int(share * batch_size)
         cancer_n = (nodules.shape[0] if cancer_n > nodules.shape[0]
@@ -466,7 +479,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         bounds = np.arange(data.shape[0] + 1) * nodule_size[0]
 
         nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
-        nodules_batch.load(src=data, fmt='ndarray', upper_bounds=bounds)
+        nodules_batch.load(src=data, fmt='ndarray', bounds=bounds)
         nodules_batch.mask = mask
         nodules_batch.origin = self.origin
         nodules_batch.spacing = self.spacing
@@ -494,7 +507,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # ./data/blosc_preprocessed/2ds38d04/data.blk
         """
         dtype_values = ['source', 'mask']
-
+        # print("I'm here!")
         if isinstance(dtype, (tuple, list)):
             if any(dt not in dtype_values for dt in dtype):
                 raise ValueError("Argument dtype must be list or tuple" +
@@ -564,13 +577,36 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if shape is supplied as one of the args
             assumes that data should be resizd
         """
-        if 'shape' is not in kwargs:
+        if 'shape' not in kwargs:
             raise TypeError("Output shape must be" +
                             "specified in argument shape!")
-        self._rescale_spacing(new_shape=shape)
+        self._rescale_spacing(new_shape=kwargs['shape'])
         return super()._init_rebuild(**kwargs)
 
-    def _post_rebuild(self, workers_outputs, new_batch=False, **kwargs):
+    @action
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
+    def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+        """
+        performs resize (change of shape) of each CT-scan in the batch.
+            When called from Batch, changes Batch
+            returns self
+        args:
+            shape: needed shape after resize in order x, y, z
+                *note that the order of axes in data is z, y, x
+                 that is, new patient shape = (shape[2], shape[1], shape[0])
+            n_workers: number of threads used (degree of parallelism)
+                *note: available in the result of decoration of the function
+                above
+            order: the order of interpolation (<= 5)
+                large value improves precision, but slows down the computaion
+        example:
+            shape = (256, 256, 128)
+            Batch = Batch.resize(shape=shape, n_workers=20, order=2)
+        """
+        return resize_patient_numba
+
+
+    def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """Post-function for resize parallelization.
 
         gatherer of outputs from different workers for
@@ -583,6 +619,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
         batch.origin = self.origin
         batch.spacing = self.spacing
-        batch.nodules_info = self.nodules.info
+        batch.nodules_info = self.nodules_info
         batch.create_mask()
         return batch
