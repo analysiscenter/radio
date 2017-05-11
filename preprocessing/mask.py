@@ -32,8 +32,11 @@ def insert_cropped(where, what, st_pos):
                            np.array(where.shape))
 
     # perform insert
-    where[st_where[0]:end_where[0], st_where[1]:end_where[1], st_where[2]:end_where[2]] = \
-        what[st_what[0]:end_what[0], st_what[1]:end_what[1], st_what[2]:end_what[2]]
+    where[st_where[0]: end_where[0],
+          st_where[1]: end_where[1],
+          st_where[2]: end_where[2]] = what[st_what[0]: end_what[0],
+                                            st_what[1]: end_what[1],
+                                            st_what[2]: end_what[2]]
 
 
 @njit(nogil=True)
