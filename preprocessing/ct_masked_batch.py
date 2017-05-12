@@ -4,105 +4,20 @@ from concurrent.futures import ThreadPoolExecutor
 from binascii import hexlify
 from collections import namedtuple
 import numpy as np
+from numba import int32
+from numba import float32, float64
 from numba import jit
+from numba import njit
+from numba import jitclass
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 # from .mask import make_mask_patient, insert_cropped
+from .mask import insert_cropped, make_mask_patient
 from .resize import resize_patient_numba
 from .dataset_import import action
 from .dataset_import import inbatch_parallel
 
-
-NoduleBase = namedtuple(typename='NoduleBase',
-                        field_names=['patient_id', 'z',
-                                     'y', 'x', 'd'])
-
-
-class Nodule(NoduleBase):
-    """Extended Nodule class."""
-
-    def mask(self, spacing):
-        """Get 3d numpy array with mask.
-
-        Returns ndarray(Nz, Ny, Nx) array filled with 1 and 0
-        representing the mask of the nodule.
-
-        Args:
-        - spacing: list, tuple or numpy array with spacing;
-        """
-        return np.ones(np.rint(self.size / spacing).astype('int32'), dtype=np.int32)
-
-    def start_pix(self, origin, spacing):
-        """Get the start pixel of the Nodule.
-
-        Returns ndarray(3, ) with coordinate of nodule's start
-        pixel in patient's data array.
-
-        Args:
-        - origin: list, tuple or numpy array with origin coordinates;
-        - spacing: list, tuple or numpy array with spacing;
-        """
-        origin = np.asarray(origin)
-        spacing = np.asarray(spacing)
-        start_pix = np.abs(self.center - origin) - (self.size / 2)
-        return np.rint(start_pix / spacing).astype(np.int32)
-
-    def center_pix(self, origin, spacing):
-        """Get the center pixel of the Nodule.
-
-        Returns ndarray(3, ) with coordinates of nodule's center
-        pixel in patient's data array.
-
-        Args:
-        - origin: list, tuple or numpy array with origin coordinates;
-        - spacing: list, tuple or numpy array with spacing;
-        """
-        origin = np.asarray(origin)
-        spacing = np.asarray(spacing)
-        center_pix = np.abs(self.center - origin)
-        return np.rint(center_pix / spacing).astype(np.int32)
-
-    def size_pix(self, spacing):
-        """Get nodule's pixel sizes.
-
-        Returns ndarray(3, ) with nodule's sizes in number of pixels.
-
-        Args:
-        - spacing: list, tuple of numpy array with spacing;
-        """
-        spacing = np.asarray(spacing)
-        return np.rint(self.size / spacing).astype(np.int32)
-
-    @property
-    def start(self):
-        """Get nodule's start position in world's coordinates.
-
-        This property returns ndarray(3, ) with nodule's
-        start position in world's coordinate system.
-        """
-        return self.center - (self.size / 2)
-
-    @property
-    def center(self):
-        """Get nodule's start position in world's coordinates.
-
-        This property returns ndarray(3, ) with nodule's
-        start position in world's coordinate system.
-        """
-        coords = np.array([self.z, self.y, self.x])
-        return coords
-
-    @property
-    def size(self):
-        """Get nodule's absolute sizes.
-
-        This property returns ndarray(3, ) with nodule's
-        absolute sizes computed in world's cordinate system.
-        """
-        return np.tile(self.d, 3)
-
-
-@jit('float64[:, :, :](float64[:, :, :], int32[:, :], int32[:])', nogil=True)
+# @jit('float64[:, :, :](float64[:, :, :], int32[:, :], int32[:])', nogil=True)
 def get_nodules_jit(data: "ndarray(l, j, k)",
                     positions: "ndarray(q, 3)", size: "ndarray(3, )"):
     """Fetch nodules from array by array of starting positions.
@@ -206,9 +121,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         super().__init__(index)
         self.mask = None
-        self.nodules_info = None
-        self.spacing = dict()
-        self.origin = dict()
+        self.nodules = None
+        self.nodules_pat_pos = None
+        self.spacing = np.zeros((len(self.index), 3))
+        self.origin = np.zeros((len(self.index), 3))
 
     @action
     def load(self, src=None, fmt='dicom', bounds=None,
@@ -260,8 +176,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - ndarray(Nz, Ny, Nx) patient's data array;
         """
         raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
-        self.origin[patient_id] = np.array(raw_data.GetOrigin())[::-1]
-        self.spacing[patient_id] = np.array(raw_data.GetSpacing())[::-1]
+        patient_pos = self.index.get_pos(patient_id)
+        self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
+        self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
         return sitk.GetArrayFromImage(raw_data)
 
     def get_mask(self, index):
@@ -296,7 +213,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         This method fetch info about all nodules in batch
         and put them in 2d numpy array.
         """
-        if self.nodules_info is not None and not update:
+        if self.nodules is not None and not update:
             return self
         nodules_df = nodules_df.set_index('seriesuid')
 
@@ -307,52 +224,74 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                     ["coordZ", "coordY",
                                      "coordX", "diameter_mm"]]
 
-        self.nodules_info = []
+        n_nodules = nodules_df.shape[0]
+        nod_pat_pos= np.zeros(n_nodules, dtype=np.int32)
+        spacing_arr = np.zeros((n_nodules, 3))
+        origin_arr = np.zeros((n_nodules, 3))
+        center_arr = np.zeros((n_nodules, 3))
+        size_arr = np.zeros((n_nodules, 3))
+        bias_arr = np.zeros((n_nodules, 3))
+        img_size_arr = np.zeros((n_nodules, 3))
+        counter = 0
+
         for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
-            nodule = Nodule(pat_id, coordz, coordy, coordx, diam)
-            self.nodules_info.append(nodule)
+            pat_pos = self.index.get_pos(pat_id)
+            nod_pat_pos[counter] = pat_pos
+
+            img_size_arr[counter, :] = np.array(self[pat_id].shape)
+            center_arr[counter, :] = np.array([coordz, coordy, coordx])
+            size_arr[counter, :] = np.array([diam] * 3)
+            counter += 1
+
+        bias_arr = np.stack([self._bounds[nod_pat_pos],
+                             np.zeros(n_nodules),
+                             np.zeros(n_nodules)]).T
+
+        spacing_arr = self.spacing[nod_pat_pos, :]
+        origin_arr = self.origin[nod_pat_pos, :]
+        self.nodules = np.rec.array([bias_arr, origin_arr,
+                                     spacing_arr, center_arr,
+                                     size_arr, img_size_arr],
+                                    names=['bias', 'origin', 'spacing',
+                                           'center', 'size', 'img_size'])
+        self.nodules_pat_pos = nod_pat_pos
         return self
 
-    def _nodule_bounds(self, nodule, nodule_size=None):
-        """Transform nodule world coordinates to pixel coords of patient.
+    def _shift_out_of_bounds(self, size):
+        """Fetch start pixel coordinates of all nodules.
+
+        This method returns start pixel coordinates of all nodules
+        in batch. Note that all nodules are considered to have the
+        fixed size defined by argument size: if nodule is out of
+        patient's 3d image bounds than it's center is shifted.
 
         Args:
-        - nodule: nodule instance;
-        location in patient data;
-        Return:
-        - ndarray(, 3) pixel coordinates of nodule in batch skyscraper;
+        - size: list, tuple of numpy array of length 3 with pixel
+        size of nodules.
         """
-        patient_pos = self.index.get_pos(nodule.patient_id)
-        origin = self.origin[nodule.patient_id]
-        spacing = self.spacing[nodule.patient_id]
+        size = np.array(size, dtype=np.int)
+        center_pix = np.abs(self.nodules.center - self.nodules.origin) / self.nodules.spacing
+        start_pix = (np.rint(center_pix) - np.rint(size / 2))
+        end_pix = start_pix + size
 
-        if nodule_size is None:
-            nodule_size = nodule.size_pix(spacing)
+        # print("start before shifting: ", start_pix)
+        # print("end before shifting: ", end_pix)
+        # print("difference before shifting: ", end_pix - start_pix)
 
-        img_size = np.array(self.get_image(nodule.patient_id).shape,
-                            dtype=np.int32)
-        start_pix = nodule.start_pix(origin, spacing) - np.rint(nodule_size / 2).astype(np.int32)
-        end_pix = start_pix + (nodule_size - np.rint(nodule_size / 2)).astype(np.int32)
+        bias_upper = np.where(end_pix > self.nodules.img_size,
+                              end_pix - self.nodules.img_size, 0)
 
-        bias_upper = np.where(end_pix > img_size,
-                              end_pix - img_size,
-                              np.zeros(3, dtype=np.int32))
-
+        # print("bias upper: ", bias_upper)
         start_pix -= bias_upper
         end_pix -= bias_upper
 
-        bias_lower = np.where(start_pix < 0, -start_pix,
-                                      np.zeros(3, dtype=np.int32))
+        bias_lower = np.where(start_pix < 0, -start_pix, 0)
+        # print("bias lower: ", bias_lower)
 
         start_pix += bias_lower
         end_pix += bias_lower
 
-        patient_bias = np.array([self._bounds[patient_pos], 0, 0],
-                                dtype=np.int32)
-
-        start_pix += patient_bias
-        end_pix += patient_bias
-        return start_pix
+        return (start_pix + self.nodules.bias).astype(np.int)
 
     @action
     def create_mask(self):
@@ -361,25 +300,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Load mask into self.mask using info in attribute self.nodules_info.
         *Note: nodules info must be loaded before the call of this method.
         """
-        if self.nodules_info is None:
+        if self.nodules is None:
             raise AttributeError("Info about nodules location must " +
                                  "be loaded before calling this method")
-        for nodule in self.nodules_info:
-            mask_view = self.get_mask(nodule.patient_id)
-            origin = self.origin[nodule.patient_id]
-            spacing = self.spacing[nodule.patient_id]
 
-            size = nodule.size_pix(spacing)
-            start = nodule.start_pix(origin, spacing)
-            end = np.minimum(start + size, np.asarray(mask_view.shape))
-
-            if np.any(start < 0):
-                raise ValueError("Start pixel of nodule has negative " +
-                                 "coordinates")
-
-            mask_view[start[0]: end[0],
-                      start[1]: end[1],
-                      start[2]: end[2]] = nodule.mask(spacing)
+        center_pix = np.rint(np.abs(self.nodules.center - self.nodules.origin) / self.nodules.spacing)
+        size_pix = np.rint(self.nodules.size / self.nodules.spacing).astype(np.int)
+        start_pix = (center_pix - np.rint(size_pix / 2)).astype(np.int)
+        for patient_id in self.indices:
+            ndarray_mask = (self.nodules_pat_pos == self.index.get_pos(patient_id))
+            if np.any(ndarray_mask):
+                make_mask_patient(self.get_mask(patient_id),
+                                  start_pix[ndarray_mask, :],
+                                  size_pix[ndarray_mask, :])
 
         return self
 
@@ -447,30 +380,27 @@ class CTImagesMaskedBatch(CTImagesBatch):
         If source CTImagesBatch contains less cancer
         nodules than needed random nodules will be taken;
         """
-        if self.nodules_info is None:
+        if self.nodules is None:
             raise AttributeError("Info about nodules location must " +
                                  "be loaded before calling this method")
 
         nodule_size = np.asarray(nodule_size, dtype=np.int32)
 
-        nodules = np.stack([self._nodule_bounds(nodule, nodule_size)
-                            for nodule in self.nodules_info])
-
-        # print("Size of nodules: ", nodule_size)
-        # print("Nodules coordinates: ", nodules)
+        n_nodules = self.nodules_pat_pos.shape[0]
 
         cancer_n = int(share * batch_size)
-        cancer_n = (nodules.shape[0] if cancer_n > nodules.shape[0]
-                    else cancer_n)
-        if nodules.shape[0] == 0:
+        cancer_n = n_nodules if cancer_n > n_nodules else cancer_n
+        if n_nodules == 0:
             cancer_nodules = np.zeros((0, 3))
         else:
-            sample_indices = np.random.choice(np.arange(nodules.shape[0]),
+            sample_indices = np.random.choice(np.arange(n_nodules),
                                               size=cancer_n, replace=False)
-            cancer_nodules = nodules[sample_indices, :]
+            cancer_nodules = self._shift_out_of_bounds(nodule_size)
+            cancer_nodules = cancer_nodules[sample_indices, :]
 
         random_nodules = self.sample_random_nodules(batch_size - cancer_n,
                                                     nodule_size)
+
         nodules_indices = np.vstack([cancer_nodules,
                                      random_nodules]).astype('int32')  # pylint: disable=no-member
 
@@ -481,8 +411,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
         nodules_batch.load(src=data, fmt='ndarray', bounds=bounds)
         nodules_batch.mask = mask
-        nodules_batch.origin = self.origin
-        nodules_batch.spacing = self.spacing
+        nodules_batch.origin = None
+        nodules_batch.spacing = None
         return nodules_batch
 
     @action
@@ -563,10 +493,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns:
         - self;
         """
+        if self.spacing is None:
+            return self
+
+        new_shape = np.asarray(new_shape)
         for patient_id in self.indices:
             old_shape = np.asarray(self.get_image(patient_id).shape)
-            new_shape = np.asarray(new_shape)
-            self.spacing[patient_id] *= (old_shape / new_shape)
+            self.spacing[self.index.get_pos(patient_id)] *= (old_shape / new_shape)
+
+        if self.nodules is not None:
+            n_nodules = self.nodules_pat_pos.shape[0]
+            self.nodules.spacing = self.spacing[self.nodules_pat_pos, :]
+            self.nodules.img_size = np.tile(new_shape, n_nodules).reshape(n_nodules, 3)
+            self.nodules.bias = np.zeros((n_nodules, 3))
+            self.nodules.bias[:, 0] = (np.arange(len(self.index)) * new_shape[0])[self.nodules_pat_pos]
         return self
 
     def _init_rebuild(self, **kwargs):
@@ -582,6 +522,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                             "specified in argument shape!")
         self._rescale_spacing(new_shape=kwargs['shape'])
         return super()._init_rebuild(**kwargs)
+
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
@@ -619,6 +560,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
         batch.origin = self.origin
         batch.spacing = self.spacing
-        batch.nodules_info = self.nodules_info
-        batch.create_mask()
+        batch.mask = np.zeros_like(batch.data)
+        if self.nodules is not None:
+            batch.nodules = self.nodules
+            batch.nodules_pat_pos = self.nodules_pat_pos
+            batch.create_mask()
         return batch
