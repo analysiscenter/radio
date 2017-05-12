@@ -333,7 +333,7 @@ class CTImagesBatch(Batch):
             assumes that data should be resizd
         """
         if 'shape' in kwargs:
-            x, y, num_slices = kwargs['shape']
+            num_slices, y, x = kwargs['shape']
             new_bounds = num_slices * np.arange(len(self) + 1)
             new_data = np.zeros((num_slices * len(self), y, x))
         else:
@@ -400,7 +400,7 @@ class CTImagesBatch(Batch):
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+    def resize(self, shape=(128, 256, 256), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
