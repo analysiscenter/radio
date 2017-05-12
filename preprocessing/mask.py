@@ -42,19 +42,23 @@ def insert_cropped(where, what, st_pos):
 
 
 @njit(nogil=True)
-def make_mask_patient(pat_mask, center, size):
+def make_mask_patient(pat_mask, start, size):
     """
     make mask for one patient and put it into pat_mask
     args:
         pat_mask: array where the mask should be put
             the order of axes should be z, y, x
-        center: coordinates of nodules' center pixels;
+        start: coordinates of nodules' start pixels;
         size: pixel sizes of nodules;
     """
 
-    if len(size.shape[0]) > 0:
-        for i in range(nodules_size.shape[0]):
-            nod_start = nod_locs_st_pos[i, :]
-            nod_size = nod_diams_pix[i, :]
-            nodule = np.ones((int(nod_size[0]), int(nod_size[1]), int(nod_size[2])))
+    if size.shape[0] > 0:
+        for i in range(size.shape[0]):
+            nod_start = start[i, :]
+            nod_size = size[i, :]
+
+            nodule = np.ones((int(nod_size[0]),
+                              int(nod_size[1]),
+                              int(nod_size[2])))
+
             insert_cropped(pat_mask, nodule, nod_start)
