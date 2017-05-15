@@ -36,7 +36,7 @@ def insert_cropped(where, what, origin):
 
 
 @njit(nogil=True)
-def make_patient_mask(patient_mask, spacing, origin, nodules):
+def make_patient_mask(patient_mask, origin, spacing, nodules):
     """
     make mask for one patient and put it into pat_mask
     args:
@@ -63,7 +63,7 @@ def make_patient_mask(patient_mask, spacing, origin, nodules):
         nod_diams = np.rint(col_diams / spacing)
 
         # nodule starting positions in pix coords
-        nod_origin = nod_center_pix - np.rint(nod_diams_pix / 2)
+        nod_origin = center_pix - np.rint(nod_diams / 2)
 
         # loop over nodules (rows in ndarray)
         for i in range(len(nodules)):

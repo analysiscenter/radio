@@ -49,10 +49,10 @@ class CTImagesBatch(Batch):
             from either 'dicom'|'raw'|'blosc'|'ndarray'
             returns self
 
-        2. resize(self, shape, order, num_threads):
+        2. resize(self, shape, order):
             transform the shape of all patients to new_sizes
             method is spline iterpolation(order = order)
-            the function is multithreaded in num_threads
+            the function is multithreaded
             returns self
 
         3. dump(self, dst)
