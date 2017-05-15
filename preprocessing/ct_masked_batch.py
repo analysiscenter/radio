@@ -1,6 +1,5 @@
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import os
-from concurrent.futures import ThreadPoolExecutor
 from binascii import hexlify
 # from itertools import chain
 import shutil
