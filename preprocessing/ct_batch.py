@@ -1,3 +1,4 @@
+# pylint: disable=no-name-in-module
 """ contains Batch class for storing Ct-scans """
 
 import os
