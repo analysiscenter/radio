@@ -2,7 +2,6 @@
 """ contains Batch class for storing Ct-scans """
 
 import os
-import sys
 import shutil
 
 import numpy as np
