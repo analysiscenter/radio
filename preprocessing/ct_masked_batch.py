@@ -3,14 +3,12 @@
 from concurrent.futures import ThreadPoolExecutor
 from binascii import hexlify
 from collections import namedtuple
-from itertools import chain
+# from itertools import chain
 import os
 import sys
-import blosc
 import shutil
+import blosc
 import numpy as np
-from numba import int32
-from numba import float32, float64
 from numba import jit
 from numba import njit
 import SimpleITK as sitk
@@ -159,6 +157,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self._bounds = bounds
             self.origin = origin
             self.spacing = spacing
+            self.nodules = nodules
         else:
             raise TypeError("Incorrect type of batch source")
         return self
