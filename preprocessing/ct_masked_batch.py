@@ -465,7 +465,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 int(0.7 * number of slices for patient) from
                 patient's scan and mask
         """
-        margin = int(slice_height * self[patient_pos].shape[0])
+        margin = int(height * self[patient_pos].shape[0])
 
         patch = (self.get_image(patient_pos)[margin, :, :],
                  self.get_mask(patient_pos)[margin:, :, :])
