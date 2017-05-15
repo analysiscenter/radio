@@ -2,7 +2,6 @@
 
 from concurrent.futures import ThreadPoolExecutor
 from binascii import hexlify
-from collections import namedtuple
 # from itertools import chain
 import os
 import sys
