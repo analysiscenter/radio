@@ -1,3 +1,6 @@
+# pylint: disable=import-error
+# pylint: disable=wildcard-import
+# pylint: disable=unused-import
 """Import of dataset."""
 
 import os
