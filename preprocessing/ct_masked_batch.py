@@ -8,7 +8,6 @@ import sys
 import shutil
 import blosc
 import numpy as np
-from numba import jit
 from numba import njit
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
