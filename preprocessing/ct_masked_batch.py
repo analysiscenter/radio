@@ -131,7 +131,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def load(self, src=None, fmt='dicom', bounds=None,
-             origin=None, spacing=None, nodules=None):
+             origin=None, spacing=None, nodules=None):  # pylint: disable=arguments-differ
         """Load data in masked batch of patients.
 
         Args:
