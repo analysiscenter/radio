@@ -107,7 +107,7 @@ class CTImagesBatch(Batch):
         #pylint: disable=attribute-defined-outside-init
         self._data = source
         self._bounds = bounds if bounds is not None else np.array([], dtype='int')
-        self.origin =  origin if origin is not None else np.zeros((len(self), 3))
+        self.origin = origin if origin is not None else np.zeros((len(self), 3))
         self.spacing = spacing if spacing is not None else np.zeros((len(self), 3))
 
     def _rescale_spacing(self, shape):
