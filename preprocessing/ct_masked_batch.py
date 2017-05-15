@@ -24,7 +24,6 @@ logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
-
 @njit(nogil=True)
 def get_nodules_jit(data, positions, size):
     """Fetch nodules from array by array of starting positions.
