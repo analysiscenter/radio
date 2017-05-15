@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import os
 from binascii import hexlify
