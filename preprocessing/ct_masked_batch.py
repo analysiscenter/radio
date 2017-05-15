@@ -569,8 +569,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         args_list = []
         for patient_pos, patient_id in enumerate(self.indices):
-            ndarray_mask = (self.nodules_pat_pos == self.index.get_pos(patient_id))
-            ndarray_mask = (self.nodules_pat_pos == self.index.get_pos(patient_id))
+            ndarray_mask = (self.nodules_pat_pos == patient_pos)
+            ndarray_mask = (self.nodules_pat_pos == patient_pos)
             if np.any(ndarray_mask):
                 args_list.append({'patient_mask': patient_id,
                                   'start': start_pix[ndarray_mask, :],
