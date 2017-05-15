@@ -4,7 +4,6 @@
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import os
 from binascii import hexlify
-# from itertools import chain
 import shutil
 import blosc
 import logging
@@ -232,7 +231,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         unique_indices = nodules_df.index.unique()
         inter_index = np.intersect1d(unique_indices, self.indices)
-        # inter_index = list(set(self.indices) & set(unique_indices))
         nodules_df = nodules_df.loc[inter_index,
                                     ["coordZ", "coordY",
                                      "coordX", "diameter_mm"]]
