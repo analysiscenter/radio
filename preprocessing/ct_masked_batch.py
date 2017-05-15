@@ -7,8 +7,9 @@ from binascii import hexlify
 # from itertools import chain
 import shutil
 import blosc
+import logging
 import numpy as np
-from numba import njit
+from numba import jit, njit
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_patient
@@ -17,7 +18,15 @@ from .dataset_import import action
 from .dataset_import import inbatch_parallel
 from .dataset_import import any_action_failed
 
-@njit('float64[:, :, :](float64[:, :, :], int32[:, :], int32[:])', nogil=True)
+
+LOGGING_FMT = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s'
+logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
+
+logger = logging.getLogger(__name__)
+
+
+
+@njit(nogil=True)
 def get_nodules_jit(data, positions, size):
     """Fetch nodules from array by array of starting positions.
 
@@ -38,8 +47,7 @@ def get_nodules_jit(data, positions, size):
     - size: ndarray(3,) of int32 containing
       nodules' sizes along each axis;
     """
-    out_arr = np.zeros((positions.shape[0], size[0],
-                        size[1], size[2]), dtype=data.dtype)
+    out_arr = np.zeros((np.int(positions.shape[0]), size[0], size[1], size[2]))
 
     n_positions = positions.shape[0]
     for i in range(n_positions):
@@ -84,7 +92,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     """
 
     @staticmethod
-    def make_indices(size: 'int'):
+    def make_indices(size):
         """Generate list of batch indices of given size.
 
         Take number of indices as input parameter size and
@@ -122,7 +130,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.mask = None
         self.nodules = None
         self.nodules_pat_pos = None
-        self.spacing = np.zeros((len(self.index), 3))
+        self.spacing = np.ones((len(self.index), 3))
         self.origin = np.zeros((len(self.index), 3))
 
     @action
@@ -146,15 +154,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         if fmt == 'raw':
             self._load_raw()
-            self.mask = np.zeros_like(self.data)
+            self.mask = None
         elif fmt in ['dicom', 'blosc']:
             raise NotImplementedError("This load format option " +
                                       "is not implemented for masked batch")
         elif fmt == 'ndarray':
             self._data = src
             self._bounds = bounds
-            self.origin = origin
-            self.spacing = spacing
+            self.origin = np.zeros((len(bounds), 3))
+            self.spacing = np.ones((len(bounds), 3))
             self.nodules = nodules
         else:
             raise TypeError("Incorrect type of batch source")
@@ -194,6 +202,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Return:
         - ndarray(Nz, Ny, Nz): view on patient data's mask array;
         """
+        if self.mask is None:
+            return None
+
         if isinstance(index, int):
             if index < self._bounds.shape[0] - 1 and index >= 0:
                 pos = index
@@ -214,6 +225,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         and put them in 2d numpy array.
         """
         if self.nodules is not None and not update:
+            logger.warning("Nodules have already been extracted. "  +
+                           "Put update argument as True for refreshing")
             return self
         nodules_df = nodules_df.set_index('seriesuid')
 
@@ -225,7 +238,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                      "coordX", "diameter_mm"]]
 
         n_nodules = nodules_df.shape[0]
-        nod_pat_pos = np.zeros(n_nodules, dtype=np.int32)
+        nod_pat_pos = np.zeros(n_nodules, dtype=np.int)
         spacing_arr = np.zeros((n_nodules, 3))
         origin_arr = np.zeros((n_nodules, 3))
         center_arr = np.zeros((n_nodules, 3))
@@ -294,8 +307,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         *Note: nodules info must be loaded before the call of this method.
         """
         if self.nodules is None:
-            raise AttributeError("Info about nodules location must " +
-                                 "be loaded before calling this method")
+            logger.warning("Info about nodules location must " +
+                           "be loaded before calling this method. " +
+                           "Nothing happened.")
+            # raise AttributeError("Info about nodules location must " +
+            #                      "be loaded before calling this method")
+            return self
 
         center_pix = np.rint(np.abs(self.nodules.center - self.nodules.origin) /
                              self.nodules.spacing)
@@ -377,7 +394,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             raise AttributeError("Info about nodules location must " +
                                  "be loaded before calling this method")
 
-        nodule_size = np.asarray(nodule_size, dtype=np.int32)
+        nodule_size = np.asarray(nodule_size, dtype=np.int)
 
         n_nodules = self.nodules_pat_pos.shape[0]
 
@@ -395,7 +412,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                                     nodule_size)
 
         nodules_indices = np.vstack([cancer_nodules,
-                                     random_nodules]).astype('int32')  # pylint: disable=no-member
+                                     random_nodules]).astype(np.int)  # pylint: disable=no-member
 
         data = get_nodules_jit(self.data, nodules_indices, nodule_size)
         mask = get_nodules_jit(self.mask, nodules_indices, nodule_size)
@@ -453,8 +470,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
                     self.dump_blosc(self.data[lower: upper, :, :],
                                     patient_id, dump_path)
                 elif dump_type == 'mask':
-                    self.dump_blosc(self.mask[lower: upper, :, :],
-                                    patient_id, dump_path)
+                    if self.mask is not None:
+                        self.dump_blosc(self.mask[lower: upper, :, :],
+                                        patient_id, dump_path)
         return self
 
     def get_axial_slice(self, patient_pos, height):
@@ -467,9 +485,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 patient's scan and mask
         """
         margin = int(height * self[patient_pos].shape[0])
-
-        patch = (self.get_image(patient_pos)[margin, :, :],
-                 self.get_mask(patient_pos)[margin:, :, :])
+        if self.mask is not None:
+            patch = (self.get_image(patient_pos)[margin, :, :],
+                     self.get_mask(patient_pos)[margin:, :, :])
+        else:
+            patch = (self.get_image(patient_pos)[margin, :, :], None)
         return patch
 
     def _rescale_spacing(self, new_shape):
@@ -485,9 +505,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns:
         - self;
         """
-        if self.spacing is None:
-            return self
-
         new_shape = np.asarray(new_shape)
         for patient_id in self.indices:
             old_shape = np.asarray(self.get_image(patient_id).shape)
@@ -554,11 +571,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
         batch.origin = self.origin
         batch.spacing = self.spacing
-        batch.mask = np.zeros_like(batch.data)
         if self.nodules is not None:
             batch.nodules = self.nodules
             batch.nodules_pat_pos = self.nodules_pat_pos
-            batch.create_mask()
+            if batch.mask is not None:
+                batch.create_mask()
         return batch
 
     def _init_create_mask(self, *kwargs):  # pylint: disable=unused-argument
@@ -567,6 +584,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         This methods returns a list of arguments for inbatch_parallelization
         of create_mask_parallel method.
         """
+        self.mask = np.zeros_like(self.data)
         center_pix = np.rint(np.abs(self.nodules.center -
                                     self.nodules.origin) / self.nodules.spacing)
         size_pix = np.rint(self.nodules.size /
@@ -578,7 +596,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             ndarray_mask = (self.nodules_pat_pos == patient_pos)
             ndarray_mask = (self.nodules_pat_pos == patient_pos)
             if np.any(ndarray_mask):
-                args_list.append({'patient_mask': patient_id,
+                args_list.append({'patient_id': patient_id,
                                   'start': start_pix[ndarray_mask, :],
                                   'size': size_pix[ndarray_mask, :]})
         return args_list
@@ -590,7 +608,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         argument and checks if any action failed.
         """
         if any_action_failed(list_of_res):
-            assert "Some actions failed during threading"
+            logger.warning("Some actions failed during threading create_mask method.")
         return self
 
 
@@ -606,70 +624,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return make_mask_patient(self.get_mask(patient_id), start, size)
 
-    # def _init_images_mask(self, **kwargs):
-    #     """Parallelization initializer for both mask and images data.
-    #
-    #     Args fetcher for parallelization using decorator. Fetch arguments
-    #     both for masks and images.
-    #     """
-    #     result = chain((self.get_image(patient_id) for patient_id in self.indices),
-    #                    (self.get_mask(patient_id) for patient_id in self.indices))
-    #     return result
-    #
-    # def _post_images_mask(self, all_outputs, update=True, new_batch=False, **kwargs):
-    #     """Gather outputs of differecnt workers into batch.
-    #
-    #     This protected method assumes that first half of all_outputs list
-    #     all_outputs[:len(self.index)]
-    #     contains output data for images and
-    #     the second half all_outputs[:len(self.index)]
-    #     contains output data for  masks.
-    #     """
-    #     if any_action_failed(all_outputs):
-    #         raise ValueError("Failed while parallelizing")
-    #
-    #     new_bounds = np.cumsum([patient_shape[0] for _, patient_shape
-    #                             in [[0, (0, )]] + all_outputs[:len(self.index)]])
-    #
-    #     new_images = np.concatenate(all_outputs[:len(self.index)], axis=0)
-    #     new_masks = np.concatenate(all_outputs[len(self.index):
-    #                                            2 * len(self.index)], axis=0)
-    #
-    #     if new_batch:
-    #         batch_res = type(self)(self.index)
-    #         batch_res.load(src=new_images, bounds=new_bounds)
-    #         batch_res.mask =new_masks
-    #         batch_res.nodules = self.nodules
-    #         batch_res.nodules_pat_pos = self.nodules_pat_pos
-    #         return batch_res
-    #     else:
-    #         self._data = new_data
-    #         self.mask = new_masks
-    #         self._bounds = new_bounds
-    #         return self
-    #
-    #
-    # @action
-    # @inbatch_parallel(init='_init_images_mask',
-    #                   post='_post_images_mask',
-    #                   target='nogil', new_batch=False)
-    # def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-    #     """
-    #     This function takes 3d picture represented by np.ndarray image,
-    #     start position for 0-axis index, stop position for 0-axis index,
-    #     step parameter which represents the step across 0-axis and, finally,
-    #     depth parameter which is associated with the depth of slices across
-    #     0-axis made on each step for computing MEAN, MAX, MIN
-    #     depending on func argument.
-    #     Possible values for func are 'max', 'min' and 'avg'.
-    #     Notice that 0-axis in this annotation is defined in accordance with
-    #     projection argument which may take the following values: 'axial',
-    #     'coroanal', 'sagital'.
-    #     Suppose that input 3d-picture has axis associations [z, x, y], then
-    #     axial projection doesn't change the order of axis and 0-axis will
-    #     be correspond to 0-axis of the input array.
-    #     However in case of 'coronal' and 'sagital' projections the source tensor
-    #     axises will be transposed as [x, z, y] and [y, z, x]
-    #     for 'coronal' and 'sagital' projections correspondingly.
-    #     """
-    #     return xip_fn_numba(func, projection, step, depth)
+    def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+        logger.warning("There is no implementation of make_xip method. " +
+                       "in ct_masked_batch. Nothing happend.")
+        return self
