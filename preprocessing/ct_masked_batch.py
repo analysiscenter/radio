@@ -13,18 +13,16 @@ from numba import int32
 from numba import float32, float64
 from numba import jit
 from numba import njit
-from numba import jitclass
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_patient
-# from .resize import resize_patient_numba
+from .resize import resize_patient_numba
 from .dataset_import import action
 from .dataset_import import inbatch_parallel
 from .dataset_import import any_action_failed
 
 @jit('float64[:, :, :](float64[:, :, :], int32[:, :], int32[:])', nogil=True)
-def get_nodules_jit(data: "ndarray(l, j, k)",
-                    positions: "ndarray(q, 3)", size: "ndarray(3, )"):
+def get_nodules_jit(data, positions, size):
     """Fetch nodules from array by array of starting positions.
 
     This numberized function takes source array with data of shape (n, k, l)
