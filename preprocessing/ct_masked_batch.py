@@ -16,9 +16,8 @@ from numba import njit
 from numba import jitclass
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
-from .mask import insert_cropped, make_mask_patient
-from .resize import resize_patient_numba
-from .mip import xip_fn_numba
+from .mask import make_mask_patient
+# from .resize import resize_patient_numba
 from .dataset_import import action
 from .dataset_import import inbatch_parallel
 from .dataset_import import any_action_failed
