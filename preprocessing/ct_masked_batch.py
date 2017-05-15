@@ -458,10 +458,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
             for dump_type, dump_path in zip(dtype, dst):
                 if dump_type == 'source':
                     self.dump_blosc(self.data[lower: upper, :, :],
-                               patient_id, dump_path)
+                                    patient_id, dump_path)
                 elif dump_type == 'mask':
                     self.dump_blosc(self.mask[lower: upper, :, :],
-                               patient_id, dump_path)
+                                    patient_id, dump_path)
         return self
 
     def get_axial_slice(self, patient_pos, height):
