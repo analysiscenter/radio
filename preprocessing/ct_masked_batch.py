@@ -39,10 +39,10 @@ def get_nodules_jit(data, positions, size):
 
     Args:
     - data: CTImagesBatch skyscraper represented by 3d numpy array;
-    - positions: ndarray(l, 3) of int32 containing
+    - positions: ndarray(l, 3) of int containing
       nodules' starting indices along [zyx]-axis
       accordingly in ndarray data;
-    - size: ndarray(3,) of int32 containing
+    - size: ndarray(3,) of int containing
       nodules' sizes along each axis;
     """
     out_arr = np.zeros((np.int(positions.shape[0]), size[0], size[1], size[2]))
@@ -402,6 +402,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             sample_indices = np.random.choice(np.arange(n_nodules),
                                               size=cancer_n, replace=False)
+
             cancer_nodules = self._shift_out_of_bounds(nodule_size)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
