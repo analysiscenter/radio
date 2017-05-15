@@ -228,7 +228,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                      "coordX", "diameter_mm"]]
 
         n_nodules = nodules_df.shape[0]
-        nod_pat_pos= np.zeros(n_nodules, dtype=np.int32)
+        nod_pat_pos = np.zeros(n_nodules, dtype=np.int32)
         spacing_arr = np.zeros((n_nodules, 3))
         origin_arr = np.zeros((n_nodules, 3))
         center_arr = np.zeros((n_nodules, 3))
