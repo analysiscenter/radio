@@ -4,6 +4,10 @@ from concurrent.futures import ThreadPoolExecutor
 from binascii import hexlify
 from collections import namedtuple
 from itertools import chain
+import os
+import sys
+import blosc
+import shutil
 import numpy as np
 from numba import int32
 from numba import float32, float64
@@ -453,10 +457,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
             for dump_type, dump_path in zip(dtype, dst):
                 if dump_type == 'source':
-                    dump_blosc(self.data[lower: upper, :, :],
+                    self.dump_blosc(self.data[lower: upper, :, :],
                                patient_id, dump_path)
                 elif dump_type == 'mask':
-                    dump_blosc(self.mask[lower: upper, :, :],
+                    self.dump_blosc(self.mask[lower: upper, :, :],
                                patient_id, dump_path)
         return self
 
