@@ -317,7 +317,7 @@ class CTImagesBatch(Batch):
         return res
 
     def _init_images(self, **kwargs):               # pylint: disable=unused-argument
-        return [self.get_image(patient) for patient in self.indices]
+        return [self.get_image(patient_id) for patient_id in self.indices]
 
     def _post_crop(self, list_of_arrs, **kwargs):   # pylint: disable=unused-argument
         # TODO: check for errors
