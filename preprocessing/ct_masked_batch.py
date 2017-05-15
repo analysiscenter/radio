@@ -159,7 +159,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_raw(self, patient_id, *args, **kwargs):
+    def _load_raw(self, patient_id, *args, **kwargs):  # pylint: disable=unused-argument
         """Read, prepare and put 3d-scans in array from raw(mhd).
 
         This method reads 3d-scans from mhd format
@@ -308,8 +308,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def sample_random_nodules(self, n_nodules: 'int',
-                              nodule_size: 'ndarray(3, )') -> "ndarray(l, 3)":
+    def sample_random_nodules(self, n_nodules, nodule_size):
         """Sample random nodules from CTImagesBatchMasked skyscraper.
 
         Samples random n_nodules' lower_bounds coordinates
