@@ -24,16 +24,6 @@ AIR_HU = -2000
 DARK_HU = -2000
 
 
-def read_unpack_blosc(blosc_dir_path):
-    """
-    read, unpack blosc file
-    """
-    with open(blosc_dir_path, mode='rb') as file:
-        packed = file.read()
-
-    return blosc.unpack_array(packed)
-
-
 class CTImagesBatch(Batch):
 
     """
@@ -54,13 +44,12 @@ class CTImagesBatch(Batch):
             in accordance with Batch.__init__
             given base class Batch
 
-        2. load(self, src, fmt, upper_bounds):
+        2. load(self, src, fmt, bounds):
             builds skyscraper of patients
             from either 'dicom'|'raw'|'blosc'|'ndarray'
             returns self
 
-        2. resize(self, num_x_new, num_y_new, num_slices_new,
-                  order, num_threads):
+        2. resize(self, shape, order, num_threads):
             transform the shape of all patients to new_sizes
             method is spline iterpolation(order = order)
             the function is multithreaded in num_threads
@@ -71,14 +60,14 @@ class CTImagesBatch(Batch):
             in the path-folder
             returns self
 
-        4. get_mask(self, erosion_radius=7, num_threads=8)
+        4. calc_lungs_mask(self, erosion_radius=7)
             returns binary-mask for lungs segmentation
             the larger erosion_radius
             the lesser the resulting lungs will be
             * returns mask, not self
 
-        5. segment(self, erosion_radius=2, num_threads=8)
-            segments using mask from get_mask()
+        5. segment(self, erosion_radius=2)
+            segments using mask from calc_lungs_mask()
             that is, sets to hu = -2000 of pixels outside mask
             changes self, returns self
 
@@ -109,15 +98,29 @@ class CTImagesBatch(Batch):
 
         super().__init__(index)
 
-        self._data = None
-
-        self._bounds = np.array([], dtype=np.int32)
+        self._init_data()
 
         self._crop_centers = np.array([], dtype=np.int32)
         self._crop_sizes = np.array([], dtype=np.int32)
 
+    def _init_data(self, source=None, bounds=None, origin=None, spacing=None):
+        #pylint: disable=attribute-defined-outside-init
+        self._data = source
+        self._bounds = bounds if bounds is not None else np.array([], dtype='int')
+        self.origin =  origin if origin is not None else np.zeros((len(self), 3))
+        self.spacing = spacing if spacing is not None else np.zeros((len(self), 3))
+
+    def _rescale_spacing(self, shape):
+        slice_shape = self.get_image(0).shape[1:]
+        old_shapes = np.zeros((len(self._bounds) - 1, slice_shape[0], slice_shape[1]), dtype='int')
+        old_shapes[2] = self._bounds[1:] - self._bounds[:-1]
+        old_shapes[1] = slice_shape[1]
+        old_shapes[0] = slice_shape[0]
+        return self.spacing * old_shapes / shape[::-1]
+
+
     @action
-    def load(self, src=None, fmt='dicom', bounds=None):    # pylint: disable=arguments-differ
+    def load(self, src=None, fmt='dicom', bounds=None, origin=None, spacing=None):    # pylint: disable=arguments-differ
         """
         builds batch of patients
 
@@ -146,8 +149,7 @@ class CTImagesBatch(Batch):
         """
         # if ndarray. Might be better to put this into separate function
         if fmt == 'ndarray':
-            self._data = src
-            self._bounds = bounds
+            self._init_data(src, bounds, origin, spacing)
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
@@ -220,7 +222,11 @@ class CTImagesBatch(Batch):
 
             *no conversion to hu here
         """
-        return sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
+        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
+        patient_pos = self.index.get_pos(patient_id)
+        self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
+        self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
+        return sitk.GetArrayFromImage(raw_data)
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
@@ -309,11 +315,10 @@ class CTImagesBatch(Batch):
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
             if new_batch:
                 batch = type(self)(self.index)
-                batch.load(fmt='ndarray', src=new_data, bounds=new_bounds)
+                batch.load(fmt='ndarray', src=new_data, bounds=new_bounds, origin=self.origin, spacing=self.spacing)
                 res = batch
             else:
-                self._data = new_data
-                self._bounds = new_bounds
+                self._init_data(new_data, new_bounds, self.origin, self.spacing)
         return res
 
     def _init_images(self, **kwargs):               # pylint: disable=unused-argument
@@ -364,13 +369,17 @@ class CTImagesBatch(Batch):
         # each worker returns the same ref to the whole res array
         new_data, _ = all_outputs[0]
 
+        if 'shape' in kwargs:
+            new_spacing = self._rescale_spacing(kwargs['shape'])
+        else:
+            new_spacing = self.spacing
+
         if new_batch:
             batch_res = type(self)(self.index)
-            batch_res.load(src=new_data, fmt='ndarray', bounds=new_bounds)
+            batch_res.load(src=new_data, fmt='ndarray', bounds=new_bounds, origin=self.origin, spacing=new_spacing)
             return batch_res
         else:
-            self._data = new_data
-            self._bounds = new_bounds
+            self._init_data(new_data, new_bounds, self.origin, new_spacing)
             return self
 
     @property

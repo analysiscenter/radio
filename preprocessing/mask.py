@@ -5,31 +5,30 @@ from numba import njit
 
 
 @njit(nogil=True)
-def insert_cropped(where, what, st_pos):
+def insert_cropped(where, what, origin):
     """
     where, what: arrays with same ndims=3
-    st_pos: ndarray of length=3
-        what-array should be put in where-array starting from st_pos
+    origin: ndarray of length=3
+        what-array should be put in where-array starting from origin
         what-array is cropped if
-            st_pos is negative or
+            origin is negative or
             what-array is too large to be put in where-array
-            starting from st_pos
+            starting from origin
 
     example:
         where = np.zeros(shape=(3, 3, 3), dtype='int')
         what = np.ones(shape=(2, 2, 2), dtype='int')
-        st_pos = np.asarray([2, 2, 2])
+        origin = np.asarray([2, 2, 2])
 
         # after execution
-        insert_cropped(where, what, st_pos)
+        insert_cropped(where, what, origin)
         # where[2, 2, 2] = 1, other elems = 0
     """
     # define crop boundaries
-    st_what = -np.minimum(np.zeros_like(st_pos), st_pos)
-    end_what = np.minimum(np.array(where.shape) - st_pos, np.array(what.shape))
-    st_where = np.maximum(st_pos, np.zeros_like(st_pos))
-    end_where = np.minimum(st_pos + np.array(what.shape),
-                           np.array(where.shape))
+    st_what = -np.minimum(np.zeros_like(origin), origin)
+    end_what = np.minimum(np.array(where.shape) - origin, np.array(what.shape))
+    st_where = np.maximum(origin, np.zeros_like(origin))
+    end_where = np.minimum(origin + np.array(what.shape), np.array(where.shape))
 
     # perform insert
     where[st_where[0]:end_where[0], st_where[1]:end_where[1], st_where[2]:end_where[2]] = \
@@ -37,11 +36,11 @@ def insert_cropped(where, what, st_pos):
 
 
 @njit(nogil=True)
-def make_mask_patient(pat_mask, spacing, origin, nodules):
+def make_patient_mask(patient_mask, spacing, origin, nodules):
     """
     make mask for one patient and put it into pat_mask
     args:
-        pat_mask: array where the mask should be put
+        patient_mask: array where the mask should be put
             the order of axes should be z, y, x
         spacing: array with spacing (world-distance between pixels) of patient
             order of axes is x, y, z
@@ -55,25 +54,25 @@ def make_mask_patient(pat_mask, spacing, origin, nodules):
     """
 
     if len(nodules) > 0:
-        # nodule locs (centers) in pixel coords
-        nod_locs_pix = np.rint((nodules[:, :3] - origin) / spacing)
+        # nodule centers in pixel coords
+        center_pix = np.rint((nodules[:, :3] - origin) / spacing)
 
         # recalculate diameters in pixel coords
         # note that there are 3 diams in pixel coords for each nodule
         col_diams = nodules[:, 3].reshape(-1, 1)
-        nod_diams_pix = np.rint(col_diams / spacing)
+        nod_diams = np.rint(col_diams / spacing)
 
         # nodule starting positions in pix coords
-        nod_locs_st_pos = nod_locs_pix - np.rint(nod_diams_pix / 2)
+        nod_origin = nod_center_pix - np.rint(nod_diams_pix / 2)
 
         # loop over nodules (rows in ndarray)
         for i in range(len(nodules)):
             # read info about nodule
             # note that we use z, y, x order in data and mask
-            st_pos_nod = nod_locs_st_pos[i, :][::-1]
-            nod_size = nod_diams_pix[i, :][::-1]
-            nodule = np.ones(
-                (int(nod_size[0]), int(nod_size[1]), int(nod_size[2])))
+            origin_nod = nod_origin[i, :][::-1]
+            diams_nod = nod_diams[i, :][::-1]
+            # nodule mask is a cube now (but could be a circle)
+            nodule = np.ones(diams_nod.astype('int'))
 
             # insert nodule in mask
-            insert_cropped(pat_mask, nodule, st_pos_nod)
+            insert_cropped(patient_mask, nodule, origin_nod)
