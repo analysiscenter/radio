@@ -584,7 +584,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     def _post_create_mask(self, list_of_res, **kwargs):
         if any_action_failed(list_of_res):
-            assert("Some actions failed during threading")
+            assert "Some actions failed during threading"
         return self
 
 
