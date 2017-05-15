@@ -559,7 +559,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.create_mask()
         return batch
 
-    def _init_create_mask(self, *kwargs):
+    def _init_create_mask(self, *kwargs):  # pylint: disable=unused-argument
+        """Init-function fro create_mask parallelization.
+
+        This methods returns a list of arguments for inbatch_parallelization
+        of create_mask_parallel method.
+        """
         center_pix = np.rint(np.abs(self.nodules.center -
                                     self.nodules.origin) / self.nodules.spacing)
         size_pix = np.rint(self.nodules.size /
@@ -576,7 +581,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                   'size': size_pix[ndarray_mask, :]})
         return args_list
 
-    def _post_create_mask(self, list_of_res, **kwargs):
+    def _post_create_mask(self, list_of_res, **kwargs):  # pylint: disable=unused-argument
+        """Post-function for create_mask parallelization.
+
+        Gathers outputs of different workers represented by list_of_res
+        argument and checks if any action failed.
+        """
         if any_action_failed(list_of_res):
             assert "Some actions failed during threading"
         return self
@@ -587,6 +597,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
                       post='_post_create_mask',
                       target='threads')
     def create_mask_parallel(self, patient_id, start, size):
+        """Parallel variant of mask creation method main part.
+
+        This function is used as kernel in parallelization via
+        inbatch_parallel decorator.
+        """
         return make_mask_patient(self.get_mask(patient_id), start, size)
 
     # def _init_images_mask(self, **kwargs):
