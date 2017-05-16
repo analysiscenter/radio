@@ -251,6 +251,10 @@ class CTImagesBatch(Batch):
         """
         raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
         patient_pos = self.index.get_pos(patient_id)
+
+        # *.mhd files contain information about scans' origin and spacing;
+        # however the order of axes there is inversed:
+        # so, we just need to reverse arrays with spacing and origin.
         self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
         self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
         return sitk.GetArrayFromImage(raw_data)
@@ -401,8 +405,8 @@ class CTImagesBatch(Batch):
                            origin=self.origin, spacing=self.spacing)
                 res = batch
             else:
-                self._data = new_data
-                self._bounds = new_bounds
+                self._init_data(source=new_data, bounds=new_bounds,
+                                origin=self.origin, spacing=self.spacing)
         return res
 
     def _init_images(self, **kwargs):               # pylint: disable=unused-argument
