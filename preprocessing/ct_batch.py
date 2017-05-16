@@ -328,6 +328,61 @@ class CTImagesBatch(Batch):
         upper = self._bounds[pos + 1]
         return self._data[lower:upper, :, :]
 
+    @property
+    def shape(self):
+        """Get CTImages shapes for all patients in CTImagesBatch.
+
+        This property returns ndarray(n_patients, 3) containing
+        shapes of data for each patient(first dimension).
+        """
+        shapes = np.zeros((len(self), 3))
+        shapes[:, 0] = self.upper_bounds - self.lower_bounds
+        shapes[:, 1], shapes[:, 2] = self.get_image(0).shape[1:]
+        return shapes
+
+    @property
+    def lower_bounds(self):
+        """Get lower bounds of patients data in CTImagesBatch.
+
+        This property returns ndarray(n_patients,) containing
+        lower bounds of patients data along z-axis.
+        """
+        return self._bounds[:-1]
+
+    @property
+    def upper_bounds(self):
+        """Get upper bounds of patients data in CTImagesBatch.
+
+        This property returns ndarray(n_patients,) containing
+        upper bounds of patients data along z-axis.
+        """
+        return self._bounds[1:]
+
+    @property
+    def slice_shape(self):
+        """Get shape of slice in yx-plane.
+
+        This property returns ndarray(2,) containing shape of scan slice
+        in yx-plane.
+        """
+        return np.asarray(self._data.shape[1:], np.int)
+
+    def rescale_spacing(self, new_shape):
+        """Rescale patients' spacing parameter after resise.
+
+        This method recomputes spacing values
+        for patients' data stored in CTImagesBatch after resize operation.
+
+        Args:
+        - new_shape: new shape of single patient data array, supposed to be
+        np.array([j, k, l], dtype=np.int) where j, k, l -- sizes of
+        single patient data array along z, y, x correspondingly;
+        Return:
+        - new_spacing: ndarray(n_patients, 3) with spacing values for each
+        patient along z, y, x axes.
+        """
+        return (self.spacing * self.shape) / new_shape
+
     def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):    # pylint: disable=unused-argument
         """
         gatherer of outputs of different workers
@@ -416,38 +471,6 @@ class CTImagesBatch(Batch):
             self._init_data(source=new_data, bounds=new_bounds,
                             origin=self.origin, spacing=new_spacing)
             return self
-
-    @property
-    def shape(self):
-        """Get CTImages shapes for all patients in CTImagesBatch.
-
-        This property returns ndarray(n_patients, 3) containing
-        shapes of data for each patient(first dimension).
-        """
-        shapes = np.zeros((len(self), 3))
-        shapes[:, 0] = self._bounds[1:] - self._bounds[:-1]
-        shapes[:, 1], shapes[:, 2] = self.get_image(0).shape[1:]
-        return shapes
-
-    @property
-    def bounds(self):
-        return self._bounds[:-1]
-
-    def rescale_spacing(self, new_shape):
-        """Rescale patients' spacing parameter after resise.
-
-        This method recomputes spacing values
-        for patients' data stored in CTImagesBatch after resize operation.
-
-        Args:
-        - new_shape: new shape of single patient data array, supposed to be
-        np.array([j, k, l], dtype=np.int) where j, k, l -- sizes of
-        single patient data array along z, y, x correspondingly;
-        Return:
-        - new_spacing: ndarray(n_patients, 3) with spacing values for each
-        patient along z, y, x axes.
-        """
-        return (self.spacing * self.shape) / new_shape
 
     @property
     def crop_centers(self):
