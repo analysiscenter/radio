@@ -159,8 +159,17 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif fmt == 'ndarray':
             self._data = src
             self._bounds = bounds
-            self.origin = np.zeros((len(bounds), 3))
-            self.spacing = np.ones((len(bounds), 3))
+
+            if origin is not None:
+                self.origin = origin
+            else:
+                self.origin = np.zeros((len(bounds), 3))
+
+            if spacing is not None:
+                self.spacing = spacing
+            else:
+                self.spacing = np.zeros((len(bounds, 3)))
+
             self.nodules = nodules
         else:
             raise TypeError("Incorrect type of batch source")
