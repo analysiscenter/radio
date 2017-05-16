@@ -94,6 +94,22 @@ class CTImagesBatch(Batch):
 
     """
 
+    @staticmethod
+    async def dump_blosc_async(data, patient_id, dst):
+        packed = blosc.pack_array(data, cname='zstd', clevel=1)
+
+        # remove directory if exists
+        if os.path.exists(os.path.join(dst, patient_id)):
+            shutil.rmtree(os.path.join(dst, patient_id))
+
+        # put blosc on disk
+        os.makedirs(os.path.join(dst, patient_id))
+        async with aiofiles.open(os.path.join(dst, patient_id,
+                                              'data.blk'), mode='wb') as file:
+            _ = await file.write(packed)
+        return None
+
+
     def __init__(self, index):
         """
         common part of initialization from all formats:
@@ -281,21 +297,8 @@ class CTImagesBatch(Batch):
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
-        # view on patient data
         pat_data = self.get_image(patient)
-        # pack the data
-        packed = blosc.pack_array(pat_data, cname='zstd', clevel=1)
-
-        # remove directory if exists
-        if os.path.exists(os.path.join(dst, patient)):
-            shutil.rmtree(os.path.join(dst, patient))
-
-        # put blosc on disk
-        os.makedirs(os.path.join(dst, patient))
-        async with aiofiles.open(os.path.join(dst, patient, 'data.blk'), mode='wb') as file:
-            _ = await file.write(packed)
-
-        return None
+        return await self.dump_blosc_async(pat_data, patient, dst)
 
     def __len__(self):
         return len(self.indices)
@@ -339,7 +342,7 @@ class CTImagesBatch(Batch):
         This property returns ndarray(n_patients, 3) containing
         shapes of data for each patient(first dimension).
         """
-        shapes = np.zeros((len(self), 3))
+        shapes = np.zeros((len(self), 3), dtype=np.int)
         shapes[:, 0] = self.upper_bounds - self.lower_bounds
         shapes[:, 1], shapes[:, 2] = self.slice_shape
         return shapes
@@ -462,7 +465,7 @@ class CTImagesBatch(Batch):
         new_data, _ = all_outputs[0]
 
         if 'shape' in kwargs:
-            new_spacing = self.rescale_spacing(kwargs['shape'])
+            new_spacing = self.rescale(kwargs['shape'])
         else:
             new_spacing = self.spacing
 
