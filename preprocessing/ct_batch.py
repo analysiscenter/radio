@@ -107,6 +107,12 @@ class CTImagesBatch(Batch):
         """
 
         super().__init__(index)
+
+        self._data = None
+        self._bounds = None
+        self.origin = None
+        self.spacing = None
+
         self._init_data()
 
         self._crop_centers = np.array([], dtype=np.int32)
@@ -137,12 +143,13 @@ class CTImagesBatch(Batch):
         self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
 
     @action
-    def load(self, src=None, fmt='dicom', bounds=None):    # pylint: disable=arguments-differ
+    def load(self, fmt='dicom', source=None,
+             bounds=None, origin=None, spacing=None):    # pylint: disable=arguments-differ
         """
         builds batch of patients
 
         args:
-            src - source array with skyscraper, needed iff fmt = 'ndarray'
+            source - source array with skyscraper, needed iff fmt = 'ndarray'
             bounds - bound floors for patients
             fmt - type of data.
                 Can be 'dicom'|'blosc'|'raw'|'ndarray'
@@ -166,8 +173,7 @@ class CTImagesBatch(Batch):
         """
         # if ndarray. Might be better to put this into separate function
         if fmt == 'ndarray':
-            self._data = src
-            self._bounds = bounds
+            self._init_data(source, bounds, origin, spacing)
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
@@ -180,19 +186,19 @@ class CTImagesBatch(Batch):
 
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_dicom(self, patient, *args, **kwargs):                # pylint: disable=unused-argument
+    def _load_dicom(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
         """
         read, prepare and put stacked 3d-scans in an array
             return the array
 
         args:
-            patient - index of patient from batch, whose scans we need to
+            patient_id - index of patient from batch, whose scans we need to
             stack
 
         Important operations performed here:
          - conversion to hu using meta from dicom-scans
         """
-        patient_folder = self.index.get_fullpath(patient)
+        patient_folder = self.index.get_fullpath(patient_id)
 
         list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s)) for s in os.listdir(patient_folder)]
 
@@ -212,18 +218,18 @@ class CTImagesBatch(Batch):
         return patient_data
 
     @inbatch_parallel(init='indices', post='_post_default', target='async')
-    async def _load_blosc(self, patient, *args, **kwargs):                # pylint: disable=unused-argument
+    async def _load_blosc(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
         """
         read, prepare and put 3d-scans in array from blosc
             return the array
 
         args:
-            patient - index of patient from batch, whose scans we need to
+            patient_id - index of patient from batch, whose scans we need to
             stack
 
             *no conversion to hu here
         """
-        blosc_dir_path = os.path.join(self.index.get_fullpath(patient), 'data.blk')
+        blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'data.blk')
         async with aiofiles.open(blosc_dir_path, mode='rb') as file:
             packed = await file.read()
         return blosc.unpack_array(packed)
@@ -387,18 +393,28 @@ class CTImagesBatch(Batch):
         if any_action_failed(all_outputs):
             raise ValueError("Failed while parallelizing")
 
-        new_bounds = np.cumsum([patient_shape[0] for _, patient_shape in [[0, (0, )]] + all_outputs])
+        new_bounds = np.cumsum([patient_shape[0] for _, patient_shape
+                                in [[0, (0, )]] + all_outputs])
         # each worker returns the same ref to the whole res array
         new_data, _ = all_outputs[0]
 
+        if 'shape' in kwargs:
+            new_spacing = self._rescale_spacing(kwargs['shape'])
+        else:
+            new_spacing = self.spacing
+
         if new_batch:
             batch_res = type(self)(self.index)
-            batch_res.load(src=new_data, bounds=new_bounds)
+            batch_res.load(source=new_data, bounds=new_bounds, fmt='ndarray',
+                           origin=self.origin, spacing=new_spacing)
             return batch_res
         else:
-            self._data = new_data
-            self._bounds = new_bounds
+            self._init_data(source=new_data, bounds=new_bounds, fmt='ndarray',
+                            origin=self.origin, spacing=self.spacing)
             return self
+
+    def _rescale_spacing(self, new_shape):
+
 
     @property
     def crop_centers(self):
@@ -434,16 +450,16 @@ class CTImagesBatch(Batch):
             When called from Batch, changes Batch
             returns self
         args:
-            shape: needed shape after resize in order x, y, z
+            shape: needed shape after resize in order z, y, x
                 *note that the order of axes in data is z, y, x
-                 that is, new patient shape = (shape[2], shape[1], shape[0])
+                 that is, new patient shape = (shape[0], shape[1], shape[2])
             n_workers: number of threads used (degree of parallelism)
                 *note: available in the result of decoration of the function
                 above
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
         example:
-            shape = (256, 256, 128)
+            shape = (128, 256, 256)
             Batch = Batch.resize(shape=shape, n_workers=20, order=2)
         """
         return resize_patient_numba
