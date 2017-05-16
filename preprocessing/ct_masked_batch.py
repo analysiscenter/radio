@@ -4,10 +4,10 @@
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import os
 from binascii import hexlify
-# from itertools import chain
+import logging
 import shutil
 import blosc
-import logging
+
 import numpy as np
 from numba import njit
 import SimpleITK as sitk
