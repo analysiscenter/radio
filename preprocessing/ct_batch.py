@@ -377,7 +377,10 @@ class CTImagesBatch(Batch):
         all_args = []
         for i in range(len(self.indices)):
             out_patient = new_data[new_bounds[i] : new_bounds[i + 1], :, :]
-            item_args = {'patient': self.get_image(i), 'out_patient': out_patient, 'res': new_data}
+            item_args = {'patient': self.get_image(i),
+                         'out_patient': out_patient,
+                         'res': new_data}
+
             all_args += [item_args]
 
         return all_args
@@ -409,12 +412,30 @@ class CTImagesBatch(Batch):
                            origin=self.origin, spacing=new_spacing)
             return batch_res
         else:
-            self._init_data(source=new_data, bounds=new_bounds, fmt='ndarray',
+            self._init_data(source=new_data, bounds=new_bounds,
                             origin=self.origin, spacing=self.spacing)
             return self
 
     def _rescale_spacing(self, new_shape):
+        """Rescale patients' spacing parameter after resise.
 
+        This method recomputes spacing values
+        for patients' data stored in Batch after resize operation.
+
+        Args:
+        - new_shape: new shape of single patient data array, supposed to be
+        np.array([j, k, l], dtype=np.int) where j, k, l -- sizes of
+        single patient data array along z, y, x correspondingly;
+        Return:
+        - new_spacing: ndarray(n_patients, 3) with spacing values for each
+        patient along z, y, x axes.
+        """
+        yx_slice_shape = np.asarray(self.get_image(0).shape[1:])
+        old_shapes = np.zeros((len(self), 3))
+        old_shapes[:, 0] = self._bounds[1:] - self._bounds[:-1]
+        old_shapes[:, 1] = yx_slice_shape[0]
+        old_shapes[:, 2] = yx_slice_shape[1]
+        return (self.spacing * old_shapes) / new_shape
 
     @property
     def crop_centers(self):
