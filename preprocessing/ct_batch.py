@@ -422,7 +422,7 @@ class CTImagesBatch(Batch):
         """Get CTImages shapes for patients.
 
         This property returns ndarray(n_patients, 3) containing
-        shapes of data for each patient(first dimension). 
+        shapes of data for each patient(first dimension).
         """
         shapes = np.zeros((len(self), 3))
         shapes[:, 0] = self._bounds[1:] - self._bounds[:-1]
@@ -443,7 +443,7 @@ class CTImagesBatch(Batch):
         - new_spacing: ndarray(n_patients, 3) with spacing values for each
         patient along z, y, x axes.
         """
-        return (self.spacing * self.shapes) / new_shape
+        return (self.spacing * self.shape) / new_shape
 
     @property
     def crop_centers(self):
