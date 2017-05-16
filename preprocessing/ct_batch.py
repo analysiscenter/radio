@@ -337,7 +337,7 @@ class CTImagesBatch(Batch):
         """
         shapes = np.zeros((len(self), 3))
         shapes[:, 0] = self.upper_bounds - self.lower_bounds
-        shapes[:, 1], shapes[:, 2] = self.get_image(0).shape[1:]
+        shapes[:, 1], shapes[:, 2] = self.slice_shape
         return shapes
 
     @property
