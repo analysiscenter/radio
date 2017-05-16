@@ -4,6 +4,7 @@
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import os
 from binascii import hexlify
+# from itertools import chain
 import shutil
 import blosc
 import logging
@@ -297,7 +298,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return (start_pix + self.nodules.bias).astype(np.int)
 
     @action
-    def create_mask(self):
+    def create_mask_single_thread(self):
         """Load mask data for using nodule's info.
 
         Load mask into self.mask using info in attribute self.nodules_info.
@@ -307,8 +308,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             logger.warning("Info about nodules location must " +
                            "be loaded before calling this method. " +
                            "Nothing happened.")
-            # raise AttributeError("Info about nodules location must " +
-            #                      "be loaded before calling this method")
             return self
 
         center_pix = np.rint(np.abs(self.nodules.center - self.nodules.origin) /
@@ -402,7 +401,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             sample_indices = np.random.choice(np.arange(n_nodules),
                                               size=cancer_n, replace=False)
-
             cancer_nodules = self._shift_out_of_bounds(nodule_size)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
@@ -614,7 +612,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @inbatch_parallel(init='_init_create_mask',
                       post='_post_create_mask',
                       target='threads')
-    def create_mask_parallel(self, patient_id, start, size):
+    def create_mask(self, patient_id, start, size):
         """Parallel variant of mask creation method main part.
 
         This function is used as kernel in parallelization via
