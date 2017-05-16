@@ -367,7 +367,7 @@ class CTImagesBatch(Batch):
         """
         return np.asarray(self._data.shape[1:], np.int)
 
-    def rescale_spacing(self, new_shape):
+    def rescale(self, new_shape):
         """Rescale patients' spacing parameter after resise.
 
         This method recomputes spacing values
