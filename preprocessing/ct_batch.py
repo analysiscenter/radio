@@ -419,7 +419,7 @@ class CTImagesBatch(Batch):
 
     @property
     def shape(self):
-        """Get CTImages shapes for patients.
+        """Get CTImages shapes for all patients in CTImagesBatch.
 
         This property returns ndarray(n_patients, 3) containing
         shapes of data for each patient(first dimension).
@@ -429,11 +429,15 @@ class CTImagesBatch(Batch):
         shapes[:, 1], shapes[:, 2] = self.get_image(0).shape[1:]
         return shapes
 
+    @property
+    def bounds(self):
+        return self._bounds[:-1]
+
     def rescale_spacing(self, new_shape):
         """Rescale patients' spacing parameter after resise.
 
         This method recomputes spacing values
-        for patients' data stored in Batch after resize operation.
+        for patients' data stored in CTImagesBatch after resize operation.
 
         Args:
         - new_shape: new shape of single patient data array, supposed to be
