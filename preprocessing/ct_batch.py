@@ -403,7 +403,7 @@ class CTImagesBatch(Batch):
         new_data, _ = all_outputs[0]
 
         if 'shape' in kwargs:
-            new_spacing = self._rescale_spacing(kwargs['shape'])
+            new_spacing = self.rescale_spacing(kwargs['shape'])
         else:
             new_spacing = self.spacing
 
@@ -429,7 +429,7 @@ class CTImagesBatch(Batch):
         shapes[:, 1], shapes[:, 2] = self.get_image(0).shape[1:]
         return shapes
 
-    def _rescale_spacing(self, new_shape):
+    def rescale_spacing(self, new_shape):
         """Rescale patients' spacing parameter after resise.
 
         This method recomputes spacing values
