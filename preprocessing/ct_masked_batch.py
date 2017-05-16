@@ -7,7 +7,6 @@ from binascii import hexlify
 import logging
 import shutil
 import blosc
-
 import numpy as np
 from numba import njit
 import SimpleITK as sitk
