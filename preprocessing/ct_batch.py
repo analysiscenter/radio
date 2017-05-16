@@ -107,13 +107,34 @@ class CTImagesBatch(Batch):
         """
 
         super().__init__(index)
-
-        self._data = None
-
-        self._bounds = np.array([], dtype=np.int32)
+        self._init_data()
 
         self._crop_centers = np.array([], dtype=np.int32)
         self._crop_sizes = np.array([], dtype=np.int32)
+
+    def _init_data(self, source=None, bounds=None, origin=None, spacing=None):
+        """Initialize _data, _bounds, _crop_centers, _crop_sizes atteributes.
+
+        This method is called inside __init__ and some other methods
+        and used as initializer of batch inner structures.
+
+        Args:
+        - source: ndarray(n_patients * k, l, m) or None(default) that will be used
+        as self._data;
+        - bounds: ndarray(n_patients, dtype=np.int) or None(default) that will be
+        uses as self._bounds;
+        - origin: ndarray(n_patients, 3) or None(default) that will be used as
+        self.origin attribute representing patients origins in world coordinate
+        system. None value will be converted to zero-array.
+        - spacing: ndarray(n_patients, 3) or None(default) that will be used as
+        self.spacing attribute representing patients spacings in world coordinate
+        system. None value will be converted to ones-array.
+        """
+        # pylint: disable=attribute-defined-outside-init
+        self._data = source
+        self._bounds = bounds if bounds is not None else np.array([], dtype='int')
+        self.origin = origin if origin is not None else np.zeros((len(self), 3))
+        self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
 
     @action
     def load(self, src=None, fmt='dicom', bounds=None):    # pylint: disable=arguments-differ
@@ -208,18 +229,25 @@ class CTImagesBatch(Batch):
         return blosc.unpack_array(packed)
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_raw(self, patient, *args, **kwargs):                   # pylint: disable=unused-argument
-        """
-        read, prepare and put 3d-scans in array from raw(mhd)
-            return the array
+    def _load_raw(self, patient_id, *args, **kwargs):  # pylint: disable=unused-argument
+        """Read, prepare and put 3d-scans in array from raw(mhd).
 
-        args:
-            patient - index of patient from batch, whose scans we need to
-            stack
+        This method reads 3d-scans from mhd format
+        in CTImagesMaskedBatch object. This method additionaly
+        initializes origin and spacing attributes.
 
-            *no conversion to hu here
+        Args:
+        - patient_id: index of patient from batch, whose scans need to
+        be put in stack(skyscraper);
+
+        Return :
+        - ndarray(Nz, Ny, Nx) patient's data array;
         """
-        return sitk.GetArrayFromImage(sitk.ReadImage(self.index.get_fullpath(patient)))
+        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
+        patient_pos = self.index.get_pos(patient_id)
+        self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
+        self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
+        return sitk.GetArrayFromImage(raw_data)
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
