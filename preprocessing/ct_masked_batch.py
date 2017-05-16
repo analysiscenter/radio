@@ -168,33 +168,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
             if spacing is not None:
                 self.spacing = spacing
             else:
-                self.spacing = np.zeros((len(bounds, 3)))
+                self.spacing = np.ones((len(bounds, 3)))
 
             self.nodules = nodules
         else:
             raise TypeError("Incorrect type of batch source")
         return self
-
-    @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_raw(self, patient_id, *args, **kwargs):  # pylint: disable=unused-argument
-        """Read, prepare and put 3d-scans in array from raw(mhd).
-
-        This method reads 3d-scans from mhd format
-        in CTImagesMaskedBatch object. This method additionaly
-        initializes origin and spacing attributes.
-
-        Args:
-        - patient_id: index of patient from batch, whose scans need to
-        be put in stack(skyscraper);
-
-        Return :
-        - ndarray(Nz, Ny, Nx) patient's data array;
-        """
-        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
-        patient_pos = self.index.get_pos(patient_id)
-        self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
-        self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
-        return sitk.GetArrayFromImage(raw_data)
 
     def get_mask(self, index):
         """Get view on patient data's mask.
@@ -510,6 +489,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - self;
         """
         new_shape = np.asarray(new_shape)
+        n_patients = len(self.index)
+
+        #TODO use bounds
         for patient_id in self.indices:
             old_shape = np.asarray(self.get_image(patient_id).shape)
             self.spacing[self.index.get_pos(patient_id)] *= (old_shape / new_shape)
@@ -572,6 +554,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 agregated from workers_ouputs
         """
         # TODO: process errors
+        # TODO: put in separate method
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
         batch.origin = self.origin
         batch.spacing = self.spacing
