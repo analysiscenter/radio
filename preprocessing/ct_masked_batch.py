@@ -127,17 +127,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         super().__init__(index)
         self.mask = None
         self.nodules = None
-        self.nodules_pat_pos = None
-        self.spacing = np.ones((len(self.index), 3))
-        self.origin = np.zeros((len(self.index), 3))
+        self.nodules_pat_pos = None # array containing numbers of patients to which
+                                    # the nodule is binded.
 
     @action
-    def load(self, src=None, fmt='dicom', bounds=None,
-             origin=None, spacing=None, nodules=None):
+    def load(self, source=None, fmt='dicom', bounds=None,
+             origin=None, spacing=None, nodules=None, mask=None):
         """Load data in masked batch of patients.
 
         Args:
-        - src: source array with skyscraper, needed if fmt is 'ndarray';
+        - source: source array with skyscraper, needed if fmt is 'ndarray';
         - fmt: type of source data; possible values are 'raw' and 'ndarray';
         Returns:
         - self;
@@ -150,29 +149,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
         >>> batch.load(src=source_array, fmt='ndarray', bounds=bounds,
         ...            origin=origin_dict, spacing=spacing_dict)
         """
-        if fmt == 'raw':
-            self._load_raw()
-            self.mask = None
-        elif fmt in ['dicom', 'blosc']:
-            raise NotImplementedError("This load format option " +
-                                      "is not implemented for masked batch")
-        elif fmt == 'ndarray':
-            self._data = src
-            self._bounds = bounds
-
-            if origin is not None:
-                self.origin = origin
-            else:
-                self.origin = np.zeros((len(bounds), 3))
-
-            if spacing is not None:
-                self.spacing = spacing
-            else:
-                self.spacing = np.ones((len(bounds, 3)))
-
+        if fmt == 'ndarray':
+            self._init_data(source=source, bounds=bounds,
+                            origin=origin, spacing=spacing)
             self.nodules = nodules
+            self.mask = mask
         else:
-            raise TypeError("Incorrect type of batch source")
+            super().load(source=source, bounds=bounds,
+                         origin=origin, spacing=spacing, fmt=fmt)
         return self
 
     def get_mask(self, index):
@@ -556,8 +540,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # TODO: process errors
         # TODO: put in separate method
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
-        batch.origin = self.origin
-        batch.spacing = self.spacing
+        batch.nodules = self.nodules
+        batch.nodules_pat_pos = self.nodules_pat_pos
+        return batch
+
+    def _new_batch_update_nodules_mask(self, batch):
         if self.nodules is not None:
             batch.nodules = self.nodules
             batch.nodules_pat_pos = self.nodules_pat_pos
