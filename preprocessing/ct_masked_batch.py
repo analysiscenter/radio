@@ -56,6 +56,10 @@ def get_nodules_jit(data, positions, size):
     return out_arr.reshape(n_positions * size[0], size[1], size[2])
 
 
+from collections import namedtuple
+NodulesInfo = namedtuple('NodulesInfo', ['patient_pos', 'center'])
+
+
 class CTImagesMaskedBatch(CTImagesBatch):
     """Class for storing masked batch of ct-scans.
 
@@ -126,9 +130,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         super().__init__(index)
         self.mask = None
+
+         # record array contains the following information about nodules:
+         # - self.nodules.center -- ndarray(n_nodules, 3) centers of nodules in world coords;
+         # - self.nodules.size -- ndarray(n_nodules, 3) sizes of nodules along z, y, x in world coord;
+         # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
+         #   patient data corresponding to nodule;
+         # - self.nodules.patient_bias -- ndarray(n_nodules, 3) of biases of
+         #   patients which corresponds to nodule;
         self.nodules = None
-        self.nodules_pat_pos = None # array containing numbers of patients to which
-                                    # the nodule is binded.
+
+        # - ndarray(n_nodules, ) array containing positions of patients' data in batch to which
+        # the nodule is binded.
+        self.nodules_pat_pos = None
 
     @action
     def load(self, source=None, fmt='dicom', bounds=None,
@@ -158,6 +172,35 @@ class CTImagesMaskedBatch(CTImagesBatch):
             super().load(source=source, bounds=bounds,
                          origin=origin, spacing=spacing, fmt=fmt)
         return self
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
+    async def dump(self, patient, dst, src='mask', fmt='blosc'):
+        """Dump mask or source data on specified path and format.mro
+
+        Dump data or mask in CTIMagesMaskedBatch on specified path and format.
+        Create folder corresponing to each patient.
+
+        example:
+            # initialize batch and load data
+            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            batch.load(...)
+            batch.create_mask(...)
+            batch.dump(dst='./data/blosc_preprocessed', src='data')
+            # the command above creates files
+
+            # ./data/blosc_preprocessed/1ae34g90/data.blk
+            # ./data/blosc_preprocessed/3hf82s76/data.blk
+            # ./data/blosc_preprocessed/2ds38d04/data.blk
+            batch.dump(dst='./data/blosc_preprocessed_mask', src='mask')
+        """
+        if fmt != 'blosc':
+            raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
+        if src == 'data':
+            data_to_dump = self.get_image(patient)
+        elif src == 'mask':
+            data_to_dump = self.get_mask(patient)
+        return self.dump_blosc_async(data_to_dump)
 
     def get_mask(self, index):
         """Get view on patient data's mask.
@@ -393,7 +436,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return nodules_batch
 
     @action
-    def dump(self, dst, fmt='blosc', dtype='source'):
+    def dump_old(self, dst, fmt='blosc', dtype='source'):
         """Dump patients data and mask(optional) on disc.
 
         Dump on specified path and format
