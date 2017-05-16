@@ -9,7 +9,7 @@ import shutil
 import blosc
 import logging
 import numpy as np
-from numba import jit, njit
+from numba import njit
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_patient
