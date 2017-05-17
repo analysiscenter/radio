@@ -131,17 +131,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
         super().__init__(index)
         self.mask = None
 
-         # record array contains the following information about nodules:
-         # - self.nodules.center -- ndarray(n_nodules, 3) centers of nodules in world coords;
-         # - self.nodules.size -- ndarray(n_nodules, 3) sizes of nodules along z, y, x in world coord;
-         # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
-         #   patient data corresponding to nodule;
-         # - self.nodules.patient_bias -- ndarray(n_nodules, 3) of biases of
-         #   patients which corresponds to nodule;
+        # record array contains the following information about nodules:
+        # - self.nodules.center -- ndarray(n_nodules, 3) centers of
+        #   nodules in world coords;
+        # - self.nodules.size -- ndarray(n_nodules, 3) sizes of
+        #   nodules along z, y, x in world coord;
+        # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
+        #   patient data corresponding to nodule;
+        # - self.nodules.patient_bias -- ndarray(n_nodules, 3) of biases of
+        #   patients which corresponds to nodule;
         self.nodules = None
 
-        # - ndarray(n_nodules, ) array containing positions of patients' data in batch to which
-        # the nodule is binded.
+        # - ndarray(n_nodules, ) array containing positions of
+        #   patients' data in batch to which
+        #   the nodule is binded.
         self.nodules_pat_pos = None
 
     @action
