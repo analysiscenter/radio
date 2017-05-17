@@ -329,12 +329,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
                            "Nothing happened.")
             return self
 
-        center_pix = np.rint(np.abs(self.nodules.center - self.nodules.origin) /
-                             self.nodules.spacing)
-        size_pix = np.rint(self.nodules.size / self.nodules.spacing).astype(np.int)
+        center_pix = np.rint(np.abs(self.nodules.center -
+                                    self.nodules.origin) / self.nodules.spacing)
+        size_pix = np.rint(self.nodules.size /
+                           self.nodules.spacing).astype(np.int)
         start_pix = (center_pix - np.rint(size_pix / 2)).astype(np.int)
         for patient_id in self.indices:
-            ndarray_mask = (self.nodules_pat_pos == self.index.get_pos(patient_id))
+            ndarray_mask = (self.nodules_pat_pos ==
+                            self.index.get_pos(patient_id))
             if np.any(ndarray_mask):
                 make_mask_patient(self.get_mask(patient_id),
                                   start_pix[ndarray_mask, :],
