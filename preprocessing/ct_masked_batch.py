@@ -296,7 +296,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self._refresh_nodules_info()
         return self
 
-    def normal_shift3d(self, n_samples, shift_sigma=(3, 3, 3)):
+    @staticmethod
+    def normal_shift3d(n_samples, shift_sigma=(3, 3, 3)):
         """Generate ndarray(n_samples, 3) of random shifts.
 
         This static method generates array of random shifts
