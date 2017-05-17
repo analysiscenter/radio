@@ -366,18 +366,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         sampled_indices = np.random.choice(all_indices,
                                            n_nodules, replace=True)
 
-        shape_z = (self.upper_bounds[sampled_indices] -
-                   self.lower_bounds[sampled_indices])
-        shape_z = shape_z.reshape(-1, 1)
+        offset = np.zeros((n_nodules, 3))
+        offset[:, 0] = self.lower_bounds
 
-        offset = np.vstack([np.asarray(self._bounds[sampled_indices]),
-                            np.zeros(n_nodules), np.zeros(n_nodules)]).T
-
-        shapes_yx = np.tile(self.slice_shape, n_nodules)
-
-        shapes_yx = shapes_yx.reshape(-1, 2)
-
-        data_shape = np.concatenate([shape_z, shapes_yx], axis=1)
+        data_shape = self.shape[sampled_indices, :]
         samples = np.random.rand(n_nodules, 3) * (data_shape - nodule_size)
         return samples + offset
 
@@ -428,10 +420,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         bounds = np.arange(data.shape[0] + 1) * nodule_size[0]
 
         nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
-        nodules_batch.load(src=data, fmt='ndarray', bounds=bounds)
+        nodules_batch.load(src=data, fmt='ndarray',
+                           bounds=bounds, spacing=self.spacing)
+        #TODO add info about nodules by changing self.nodules
         nodules_batch.mask = mask
-        nodules_batch.origin = None
-        nodules_batch.spacing = None
         return nodules_batch
 
     def get_axial_slice(self, patient_pos, height):
