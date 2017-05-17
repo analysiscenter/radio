@@ -177,7 +177,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
+    @inbatch_parallel(init='indices', post='_post_default',
+                      target='async', update=False)
     async def dump(self, patient, dst, src='mask', fmt='blosc'):
         """Dump mask or source data on specified path and format.mro
 
@@ -241,7 +242,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         and put them in 2d numpy array.
         """
         if self.nodules is not None and not update:
-            logger.warning("Nodules have already been extracted. "  +
+            logger.warning("Nodules have already been extracted. " +
                            "Put update argument as True for refreshing")
             return self
         nodules_df = nodules_df.set_index('seriesuid')
