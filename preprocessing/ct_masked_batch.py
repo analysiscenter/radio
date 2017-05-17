@@ -557,7 +557,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
+    @inbatch_parallel(init='_init_rebuild',
+                      post='_post_rebuild', target='nogil')
     def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
         """
         performs resize (change of shape) of each CT-scan in the batch.
