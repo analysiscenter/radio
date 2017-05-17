@@ -634,9 +634,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         argument and checks if any action failed.
         """
         if any_action_failed(list_of_res):
-            logger.warning("Some actions failed during threading create_mask method.")
+            logger.warning("Some actions failed during " +
+                           "threading create_mask method.")
         return self
-
 
     @action
     @inbatch_parallel(init='_init_create_mask',
@@ -650,7 +650,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return make_mask_patient(self.get_mask(patient_id), start, size)
 
-    def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+    def make_xip(self, step=2, depth=10, func='max',
+                 projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
         logger.warning("There is no implementation of make_xip method. " +
                        "in ct_masked_batch. Nothing happend.")
         return self
