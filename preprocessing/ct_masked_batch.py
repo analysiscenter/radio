@@ -238,6 +238,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
         upper = self._bounds[pos + 1]
         return self.mask[lower: upper, :, :]
 
+    @property
+    def n_nodules(self):
+        """Get number of nodules in CTImagesMaskedBatch.
+
+        This property returns the number
+        of nodules in CTImagesMaskedBatch. If fetch_nodules_info
+        method has not been called yet returns -1.
+        """
+        if self.nodules is not None:
+            return self.nodules.patient_pos.shape[0]
+        else:
+            return -1
+
     @action
     def fetch_nodules_info(self, nodules_df, update=False):
         """Extract nodules' info from nodules_df into attribute self.nodules.
