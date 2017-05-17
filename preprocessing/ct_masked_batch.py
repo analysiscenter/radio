@@ -92,12 +92,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
     """
 
     nodules_dtype = np.dtype([('patient_pos', np.int, 1),
+                              ('bias', np.int, (3,)),
+                              ('img_size', np.int, (3,)),
                               ('center', np.float, (3,)),
                               ('size', np.float, (3,)),
                               ('spacing', np.float, (3,)),
-                              ('origin', np.float, (3,)),
-                              ('bias', np.int, (3,)),
-                              ('img_size', np.int, (3,))])
+                              ('origin', np.float, (3,))])
 
     @staticmethod
     def make_indices(size):
@@ -139,7 +139,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # record array contains the following information about nodules:
         # - self.nodules.center -- ndarray(n_nodules, 3) centers of
         #   nodules in world coords;
-        # - self.nodules.size -- ndarray(n_nodules, 3) sizes of
+        # - self.nodules.nod_size -- ndarray(n_nodules, 3) sizes of
         #   nodules along z, y, x in world coord;
         # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
         #   patient data corresponding to nodules;
@@ -290,11 +290,22 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.center[counter, :] = np.array([coordz,
                                                         coordy,
                                                         coordx])
-            self.nodules.size[counter, :] = np.array([diam] * 3)
+            self.nodules.nod_size[counter, :] = np.array([diam, diam, diam])
             counter += 1
 
         self._refresh_nodules_info()
         return self
+
+    def normal_shift3d(self, n_samples, shift_sigma=(3, 3, 3)):
+        """Generates ndarray(n_samples, 3) of random shifts.
+
+        This static method generates array of random shifts
+        for samples(nodules). Shifts along each axis are normaly
+        distributed with
+        sigma = [shigt_sigma[0], shift_sigma[1], shift_sigma[2]]
+        for shift along [z, y, x] axes correspondingly.
+        """
+        pass
 
     def _shift_out_of_bounds(self, size):
         """Fetch start pixel coordinates of all nodules.
@@ -340,11 +351,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         center_pix = np.abs(self.nodules.center -
                             self.nodules.origin) / self.nodules.spacing
-        start_pix = (np.rint(center_pix) - np.rint(self.nodules.size / 2))
+        start_pix = (np.rint(center_pix) - np.rint(self.nodules.nod_size / 2))
 
         make_mask(self.mask, self.nodules.bias,
                   self.nodules.img_size + self.nodules.bias,
-                  start_pix, self.nodules.size)
+                  start_pix, self.nodules.nod_size)
 
         return self
 
