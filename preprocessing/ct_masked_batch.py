@@ -56,10 +56,6 @@ def get_nodules_jit(data, positions, size):
     return out_arr.reshape(n_positions * size[0], size[1], size[2])
 
 
-from collections import namedtuple
-NodulesInfo = namedtuple('NodulesInfo', ['patient_pos', 'center'])
-
-
 class CTImagesMaskedBatch(CTImagesBatch):
     """Class for storing masked batch of ct-scans.
 
