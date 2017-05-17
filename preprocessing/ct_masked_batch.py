@@ -441,6 +441,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return patch
 
     def _refresh_nodules_info(self):
+        """Refresh self.nodules attributes [spacing, origin, img_size, bias].
+
+        This method should be called when it is needed to make
+        [spacing, origin, img_size, bias] attributes of self.nodules
+        to correspond the structure of batch inner data.
+        """
         self.nodules.bias[:, 0] = self.lower_bounds[self.nodules.patient_pos]
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
@@ -454,7 +460,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         new shape of every patient's CTImages.
         Args:
         - new_shape: ndarray(3,) containing new_shape
-          of each patients data array.
+        of each patients data array.
         """
         self.spacing = self.rescale(new_shape)
         if nodules is not None:
