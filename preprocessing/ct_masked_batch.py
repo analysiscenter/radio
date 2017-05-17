@@ -382,7 +382,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         data_shape = self.shape[sampled_indices, :]
         samples = np.random.rand(n_nodules, 3) * (data_shape - nodule_size)
-        return samples + offset
+        return np.asarray(samples + offset, dtype=np.int)
 
     @action
     def sample_nodules(self, batch_size,
