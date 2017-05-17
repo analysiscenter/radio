@@ -297,7 +297,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     def normal_shift3d(self, n_samples, shift_sigma=(3, 3, 3)):
-        """Generates ndarray(n_samples, 3) of random shifts.
+        """Generate ndarray(n_samples, 3) of random shifts.
 
         This static method generates array of random shifts
         for samples(nodules). Shifts along each axis are normaly
@@ -305,7 +305,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         sigma = [shigt_sigma[0], shift_sigma[1], shift_sigma[2]]
         for shift along [z, y, x] axes correspondingly.
         """
-        pass
+        shft_z = np.random.normal(scale=shift_sigma[0], size=n_samples)
+        shft_y = np.random.normal(scale=shift_sigma[1], size=n_samples)
+        shft_x = np.random.normal(scale=sfigt_sigma[2], size=n_samples)
+        return np.stack([shft_z, shft_y, shft_x]).T
 
     def _shift_out_of_bounds(self, size):
         """Fetch start pixel coordinates of all nodules.
