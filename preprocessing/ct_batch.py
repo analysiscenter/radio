@@ -336,13 +336,21 @@ class CTImagesBatch(Batch):
         return self._data[lower:upper, :, :]
 
     @property
+    def batch_size(self):
+        """Get batch_size.
+
+        Just another alias for len(self).
+        """
+        return len(self)
+
+    @property
     def shape(self):
         """Get CTImages shapes for all patients in CTImagesBatch.
 
         This property returns ndarray(n_patients, 3) containing
         shapes of data for each patient(first dimension).
         """
-        shapes = np.zeros((len(self), 3), dtype=np.int)
+        shapes = np.zeros((self.batch_size, 3), dtype=np.int)
         shapes[:, 0] = self.upper_bounds - self.lower_bounds
         shapes[:, 1], shapes[:, 2] = self.slice_shape
         return shapes
@@ -421,7 +429,6 @@ class CTImagesBatch(Batch):
         self._crop_centers = crop_array[:, :, 2]
         self._crop_sizes = crop_array[:, :, : 2]
 
-
     def _init_rebuild(self, **kwargs):
         """
         args-fetcher for parallelization using decorator
@@ -431,15 +438,15 @@ class CTImagesBatch(Batch):
         """
         if 'shape' in kwargs:
             num_slices, y, x = kwargs['shape']
-            new_bounds = num_slices * np.arange(len(self) + 1)
-            new_data = np.zeros((num_slices * len(self), y, x))
+            new_bounds = num_slices * np.arange(self.batch_size + 1)
+            new_data = np.zeros((num_slices * self.batch_size, y, x))
         else:
             new_bounds = self._bounds
             new_data = np.zeros_like(self._data)
 
         all_args = []
-        for i in range(len(self.indices)):
-            out_patient = new_data[new_bounds[i] : new_bounds[i + 1], :, :]
+        for i in range(self.batch_size):
+            out_patient = new_data[new_bounds[i]: new_bounds[i + 1], :, :]
             item_args = {'patient': self.get_image(i),
                          'out_patient': out_patient,
                          'res': new_data}
