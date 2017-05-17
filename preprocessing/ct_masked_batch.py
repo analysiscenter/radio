@@ -196,10 +196,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    @inbatch_parallel(init='indices', post='_post_default',
-                      target='async', update=False)
-    async def dump(self, patient, dst, src='mask', fmt='blosc'):
-        """Dump mask or source data on specified path and format.mro
+    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
+    async def dump(self, patient, dst, src="mask", fmt="blosc"):
+        """Dump mask or source data on specified path and format.mro.
 
         Dump data or mask in CTIMagesMaskedBatch on specified path and format.
         Create folder corresponing to each patient.
@@ -218,7 +217,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.dump(dst='./data/blosc_preprocessed_mask', src='mask')
         """
         if fmt != 'blosc':
-            raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
+            raise NotImplementedError('Dump to {} is ' +
+                                      'not implemented yet'.format(fmt))
         if src == 'data':
             data_to_dump = self.get_image(patient)
         elif src == 'mask':
