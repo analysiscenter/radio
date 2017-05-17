@@ -40,6 +40,27 @@ def insert_cropped(where, what, st_pos):
                                             st_what[1]: end_what[1],
                                             st_what[2]: end_what[2]]
 
+@njit(nogil=True)
+def make_mask(batch_mask, img_start, img_end, nodules_start, nodules_size):
+    """Make mask using information about nodules location and sizes.
+
+    This function takes batch mask array(batch_mask) filled with zeros,
+    start and end pixels of coresponding patient's data array in batch_mask,
+    and information about nodules location pixels and pixels sizes.
+    Pixels that correspond nodules' locations are filled with ones in
+    target array batch_mask.
+    """
+    for i in range(nodules_start.shape[0]):
+        nod_size = nodules_size[0, :]
+
+        nodule = np.ones(int(nod_size[0]),
+                         int(nod_size[1]),
+                         int(nod_size[2]))
+
+        patient_mask = batch_mask[img_start[0]: img_end[0],
+                                  img_start[1]: img_end[1],
+                                  img_start[2]: img_end[2]]
+        insert_cropped(patient_mask, nodule, nodules_start[i, :])
 
 @njit(nogil=True)
 def make_mask_patient(pat_mask, start, size):
