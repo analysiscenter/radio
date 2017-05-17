@@ -223,7 +223,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             data_to_dump = self.get_image(patient)
         elif src == 'mask':
             data_to_dump = self.get_mask(patient)
-        return await self.dump_blosc_async(data_to_dump)
+        return await self.dump_blosc_async(data_to_dump, patient, dst)
 
     def get_mask(self, index):
         """Get view on patient data's mask.
