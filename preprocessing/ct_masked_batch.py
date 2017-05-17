@@ -457,7 +457,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         This method should be called when it is needed to make
         [spacing, origin, img_size, bias] attributes of self.nodules
-        to correspond the structure of batch inner data.
+        to correspond the structure of batch's inner data.
         """
         self.nodules.bias[:, 0] = self.lower_bounds[self.nodules.patient_pos]
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
