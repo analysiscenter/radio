@@ -474,24 +474,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - new_shape: ndarray(3,) containing new_shape
         of each patients data array.
         """
-        self.spacing = self.rescale(new_shape)
         if nodules is not None:
             self._refresh_nodules_info()
         return self
-
-    def _init_rebuild(self, **kwargs):
-        """Args-fetcher for resize parallelization.
-
-        args-fetcher for parallelization using decorator
-            can be used when batch-data is rebuild from scratch
-        if shape is supplied as one of the args
-            assumes that data should be resize
-        """
-        if 'shape' not in kwargs:
-            raise TypeError("Output shape must be" +
-                            "specified in argument shape!")
-        self._rescale_spacing(new_shape=kwargs['shape'])
-        return super()._init_rebuild(**kwargs)
 
     @action
     @inbatch_parallel(init='_init_rebuild',
@@ -528,6 +513,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # TODO: process errors
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
         batch.nodules = self.nodules
+        batch._rescale_spacing()
         if self.mask is not None:
             batch.create_mask()
         return batch
