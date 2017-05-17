@@ -40,6 +40,7 @@ def insert_cropped(where, what, st_pos):
                                             st_what[1]: end_what[1],
                                             st_what[2]: end_what[2]]
 
+
 @njit(nogil=True)
 def make_mask(batch_mask, img_start, img_end, nodules_start, nodules_size):
     """Make mask using information about nodules location and sizes.
@@ -61,6 +62,7 @@ def make_mask(batch_mask, img_start, img_end, nodules_start, nodules_size):
                                   img_start[1]: img_end[1],
                                   img_start[2]: img_end[2]]
         insert_cropped(patient_mask, nodule, nodules_start[i, :])
+
 
 @njit(nogil=True)
 def make_mask_patient(pat_mask, start, size):
