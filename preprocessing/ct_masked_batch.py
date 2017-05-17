@@ -519,6 +519,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     def make_xip(self, step=2, depth=10, func='max',
                  projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-        logger.warning("There is no implementation of make_xip method. " +
-                       "in ct_masked_batch. Nothing happend.")
+        logger.warning("There is no implementation of make_xip method for " +
+                       "CTImagesMaskedBatch. Nothing happened.")
+        return self
+
+    def flip(self):
+        logger.warning("There is no implementation of flip method for class " +
+                       "CTIMagesMaskedBatch. Nothing happened")
         return self
