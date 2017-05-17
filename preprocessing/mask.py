@@ -58,9 +58,9 @@ def make_mask(batch_mask, img_start, img_end, nodules_start, nodules_size):
                           int(nod_size[1]),
                           int(nod_size[2])))
 
-        patient_mask = batch_mask[img_start[0]: img_end[0],
-                                  img_start[1]: img_end[1],
-                                  img_start[2]: img_end[2]]
+        patient_mask = batch_mask[img_start[i, 0]: img_end[i, 0],
+                                  img_start[i, 1]: img_end[i, 1],
+                                  img_start[i, 2]: img_end[i, 2]]
         insert_cropped(patient_mask, nodule, nodules_start[i, :])
 
 
