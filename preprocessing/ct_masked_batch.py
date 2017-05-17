@@ -227,16 +227,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return None
 
         if isinstance(index, int):
-            if index < self._bounds.shape[0] - 1 and index >= 0:
+            if index < self.batch_size and index >= 0:
                 pos = index
             else:
                 raise IndexError("Index is out of range")
         else:
             pos = self.index.get_pos(index)
 
-        lower = self._bounds[pos]
-        upper = self._bounds[pos + 1]
-        return self.mask[lower: upper, :, :]
+        return self.mask[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
     @property
     def n_nodules(self):
