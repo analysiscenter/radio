@@ -528,7 +528,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         #TODO use bounds
         for patient_id in self.indices:
             old_shape = np.asarray(self.get_image(patient_id).shape)
-            self.spacing[self.index.get_pos(patient_id)] *= (old_shape / new_shape)
+            self.spacing[self.index.get_pos(patient_id)] *= (old_shape /
+                                                             new_shape)
 
         if self.nodules is not None:
             n_nodules = self.nodules_pat_pos.shape[0]
