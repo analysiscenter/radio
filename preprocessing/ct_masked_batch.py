@@ -311,7 +311,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self._refresh_nodules_info()
         return self
 
-    def _shift_out_of_bounds(self, size):
+    def _shift_out_of_bounds(self, size, shift_scale=None):
         """Fetch start pixel coordinates of all nodules.
 
         This method returns start pixel coordinates of all nodules
@@ -328,6 +328,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         center_pix = np.abs(self.nodules.center -
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
+        if shift_scale is not None:
+            start_pix += self.normal_shift3d(self.n_nodules, shift_scale)
         end_pix = start_pix + size
 
         bias_upper = np.maximum(end_pix - self.nodules.img_size, 0)
@@ -401,7 +403,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def sample_nodules(self, batch_size,
-                       nodule_size, share=0.8) -> 'CTImagesBatchMasked':
+                       nodule_size, share=0.8, scale=None) -> 'CTImagesBatchMasked':
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -420,7 +422,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if self.nodules is None:
             raise AttributeError("Info about nodules location must " +
                                  "be loaded before calling this method")
-
+        if scale is not None:
+            scale = np.asarray(scale, dtype=np.int)
+            scale = scale.flatten()
+            if len(scale) != 3:
+                logger.warning('Argument scale be np.array-like' +
+                               'and has shape (3,). ' +
+                               'Would be used no-scale-shift.')
+                scale = None
         nodule_size = np.asarray(nodule_size, dtype=np.int)
         cancer_n = int(share * batch_size)
         cancer_n = self.n_nodules if cancer_n > self.n_nodules else cancer_n
@@ -429,7 +438,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             sample_indices = np.random.choice(np.arange(self.n_nodules),
                                               size=cancer_n, replace=False)
-            cancer_nodules = self._shift_out_of_bounds(nodule_size)
+            cancer_nodules = self._shift_out_of_bounds(nodule_size,
+                                                       shift_scale=scale)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
         random_nodules = self.sample_random_nodules(batch_size - cancer_n,
