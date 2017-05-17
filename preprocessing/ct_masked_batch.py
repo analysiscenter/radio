@@ -141,7 +141,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         shft_z = np.random.normal(scale=shift_sigma[0], size=n_samples)
         shft_y = np.random.normal(scale=shift_sigma[1], size=n_samples)
-        shft_x = np.random.normal(scale=sfigt_sigma[2], size=n_samples)
+        shft_x = np.random.normal(scale=shift_sigma[2], size=n_samples)
         return np.stack([shft_z, shft_y, shft_x]).T
 
     def __init__(self, index):
