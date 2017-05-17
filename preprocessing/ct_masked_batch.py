@@ -95,7 +95,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                               ('bias', np.int, (3,)),
                               ('img_size', np.int, (3,)),
                               ('center', np.float, (3,)),
-                              ('size', np.float, (3,)),
+                              ('nod_size', np.float, (3,)),
                               ('spacing', np.float, (3,)),
                               ('origin', np.float, (3,))])
 
@@ -472,17 +472,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules.bias[:, 0] = self.lower_bounds[self.nodules.patient_pos]
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
-        self.nodules.img_size = self.shapes[self.nodules.patient_pos, :]
+        self.nodules.img_size = self.shape[self.nodules.patient_pos, :]
 
-    def _rescale_spacing(self, new_shape):
+    def _rescale_spacing(self):
         """Rescale spacing values and update nodules_info.
 
         This method should be called after any operation that
-        changes shape of inner data. Argument new_shape represents
-        new shape of every patient's CTImages.
-        Args:
-        - new_shape: ndarray(3,) containing new_shape
-        of each patients data array.
+        changes shape of inner data.
         """
         if nodules is not None:
             self._refresh_nodules_info()
