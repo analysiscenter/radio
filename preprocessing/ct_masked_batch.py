@@ -18,7 +18,8 @@ from .dataset_import import inbatch_parallel
 from .dataset_import import any_action_failed
 
 
-LOGGING_FMT = u'%(filename)s[LINE:%(lineno)d]# %(levelname)-8s [%(asctime)s]  %(message)s'
+LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
+               "%(levelname)-8s [%(asctime)s]  %(message)s")
 logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
 
 logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
