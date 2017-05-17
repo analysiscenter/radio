@@ -240,10 +240,22 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def fetch_nodules_info(self, nodules_df, update=False):
-        """Get nodules in 3d ndarray.
+        """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
-        and put them in 2d numpy array.
+        and put them in numpy record array which can be accessed outside
+        the class by self.nodules. Record array self.nodules
+        has 'spacing', 'origin', 'img_size' and 'bias' properties, each
+        represented by ndarray(n_nodules, 3) referring to spacing, origin,
+        image size and bound of patients which correspond to fetched nodules.
+        Record array self.nodules also contains attributes 'center' and 'size'
+        which contain information about center and size of nodules in
+        world coordinate system, each of these properties is represented by
+        ndarray(n_nodules, 3). Finally, self.nodules.patient_pos refers to
+        positions of patients which correspond to stored nodules.
+        Object self.nodules is used by some methods which create mask
+        or sample nodule batch to perform transform from world coordinate
+        system to pixel one.
         """
         if self.nodules is not None and not update:
             logger.warning("Nodules have already been extracted. " +
