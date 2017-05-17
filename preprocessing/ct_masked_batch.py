@@ -361,7 +361,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         make_mask(self.mask, self.nodules.bias,
                   self.nodules.img_size + self.nodules.bias,
-                  start_pix, self.nodules.nod_size)
+                  start_pix,
+                  np.rint(self.nodules.nod_size / self.nodules.spacing))
 
         return self
 
