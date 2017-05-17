@@ -299,7 +299,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         size of nodules.
         """
         size = np.array(size, dtype=np.int)
-        center_pix = np.abs(self.nodules.center - self.nodules.origin) / self.nodules.spacing
+        center_pix = np.abs(self.nodules.center -
+                            self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
         end_pix = start_pix + size
         bias_upper = np.where(end_pix > self.nodules.img_size,
