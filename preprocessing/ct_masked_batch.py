@@ -366,15 +366,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
         sampled_indices = np.random.choice(all_indices,
                                            n_nodules, replace=True)
 
-        shape_z = (self._bounds[sampled_indices] -
-                   self._bounds[sampled_indices + 1])
+        shape_z = (self.upper_bounds[sampled_indices] -
+                   self.lower_bounds[sampled_indices])
         shape_z = shape_z.reshape(-1, 1)
 
         offset = np.vstack([np.asarray(self._bounds[sampled_indices]),
                             np.zeros(n_nodules), np.zeros(n_nodules)]).T
 
-        shapes_yx = np.tile([self.data.shape[1],
-                             self.data.shape[2]], n_nodules)
+        shapes_yx = np.tile(self.slice_shape, n_nodules)
 
         shapes_yx = shapes_yx.reshape(-1, 2)
 
