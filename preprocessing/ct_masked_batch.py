@@ -494,7 +494,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         This method should be called after any operation that
         changes shape of inner data.
         """
-        if nodules is not None:
+        if self.nodules is not None:
             self._refresh_nodules_info()
         return self
 
