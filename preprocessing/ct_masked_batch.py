@@ -247,7 +247,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if self.nodules is not None:
             return self.nodules.patient_pos.shape[0]
         else:
-            return -1
+            return 0
 
     @action
     def fetch_nodules_info(self, nodules_df, update=False):
@@ -373,7 +373,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         *Note: [zyx]-ordering is used;
         """
-        all_indices = np.arange(len(self.indices))
+        all_indices = np.arange(self.batch_size)
         sampled_indices = np.random.choice(all_indices,
                                            n_nodules, replace=True)
 
@@ -407,15 +407,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                  "be loaded before calling this method")
 
         nodule_size = np.asarray(nodule_size, dtype=np.int)
-
-        n_nodules = self.nodules_pat_pos.shape[0]
-
         cancer_n = int(share * batch_size)
-        cancer_n = n_nodules if cancer_n > n_nodules else cancer_n
-        if n_nodules == 0:
+        cancer_n = self.n_nodules if cancer_n > self.n_nodules else cancer_n
+        if self.n_nodules == 0:
             cancer_nodules = np.zeros((0, 3))
         else:
-            sample_indices = np.random.choice(np.arange(n_nodules),
+            sample_indices = np.random.choice(np.arange(self.n_nodules),
                                               size=cancer_n, replace=False)
             cancer_nodules = self._shift_out_of_bounds(nodule_size)
             cancer_nodules = cancer_nodules[sample_indices, :]
@@ -428,7 +425,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         data = get_nodules_jit(self.data, nodules_indices, nodule_size)
         mask = get_nodules_jit(self.mask, nodules_indices, nodule_size)
-        bounds = np.arange(data.shape[0] + 1) * nodule_size[0]
+        bounds = np.arange(batch_size + 1) * nodule_size[0]
 
         nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
         nodules_batch.load(src=data, fmt='ndarray',
