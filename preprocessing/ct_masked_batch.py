@@ -447,6 +447,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules.img_size = self.shapes[self.nodules.patient_pos, :]
 
     def _rescale_spacing(self, new_shape):
+        """Rescale spacing values and update nodules_info.
+
+        This method should be called after any operation that
+        changes shape of inner data. Argument new_shape represents
+        new shape of every patient's CTImages.
+        Args:
+        - new_shape: ndarray(3,) containing new_shape
+          of each patients data array.
+        """
         self.spacing = self.rescale(new_shape)
         if nodules is not None:
             self._refresh_nodules_info()
@@ -458,7 +467,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         args-fetcher for parallelization using decorator
             can be used when batch-data is rebuild from scratch
         if shape is supplied as one of the args
-            assumes that data should be resizd
+            assumes that data should be resize
         """
         if 'shape' not in kwargs:
             raise TypeError("Output shape must be" +
