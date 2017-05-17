@@ -12,6 +12,7 @@ from numba import njit
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_patient
+from .mask import make_mask
 from .resize import resize_patient_numba
 from .dataset_import import action
 from .dataset_import import inbatch_parallel
@@ -90,6 +91,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
             As a result, load_mask can be also executed after resize
     """
 
+    nodules_dtype = np.dtype([('patient_pos', np.int, 1),
+                              ('center', np.float, (3,)),
+                              ('size', np.float, (3,)),
+                              ('spacing', np.float, (3,)),
+                              ('origin', np.float, (3,)),
+                              ('bias', np.int, (3,)),
+                              ('img_size', np.int, (3,))])
+
     @staticmethod
     def make_indices(size):
         """Generate list of batch indices of given size.
@@ -127,22 +136,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         super().__init__(index)
         self.mask = None
-
         # record array contains the following information about nodules:
         # - self.nodules.center -- ndarray(n_nodules, 3) centers of
         #   nodules in world coords;
         # - self.nodules.size -- ndarray(n_nodules, 3) sizes of
         #   nodules along z, y, x in world coord;
         # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
-        #   patient data corresponding to nodule;
-        # - self.nodules.patient_bias -- ndarray(n_nodules, 3) of biases of
-        #   patients which corresponds to nodule;
+        #   patient data corresponding to nodules;
+        # - self.nodules.bias -- ndarray(n_nodules, 3) of biases of
+        #   patients which correspond to nodules;
+        # - self.nodules.spacing -- ndarray(n_nodules, 3) of spacinf attribute
+        #   of patients which correspond to nodules;
+        # - self.nodules.origin -- ndarray(n_nodules, 3) of origin attribute
+        #   of patients which correspond to nodules;
         self.nodules = None
-
-        # - ndarray(n_nodules, ) array containing positions of
-        #   patients' data in batch to which
-        #   the nodule is binded.
-        self.nodules_pat_pos = None
 
     @action
     def load(self, source=None, fmt='dicom', bounds=None,
@@ -251,36 +258,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                      "coordX", "diameter_mm"]]
 
         n_nodules = nodules_df.shape[0]
-        nod_pat_pos = np.zeros(n_nodules, dtype=np.int)
-        spacing_arr = np.zeros((n_nodules, 3))
-        origin_arr = np.zeros((n_nodules, 3))
-        center_arr = np.zeros((n_nodules, 3))
-        size_arr = np.zeros((n_nodules, 3))
-        bias_arr = np.zeros((n_nodules, 3))
-        img_size_arr = np.zeros((n_nodules, 3))
+        self.nodules = np.rec.array(np.zeros(n_nodules,
+                                             dtype=self.nodules_dtype))
         counter = 0
-
         for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
             pat_pos = self.index.get_pos(pat_id)
-            nod_pat_pos[counter] = pat_pos
-
-            img_size_arr[counter, :] = np.array(self[pat_id].shape)
-            center_arr[counter, :] = np.array([coordz, coordy, coordx])
-            size_arr[counter, :] = np.array([diam] * 3)
+            self.nodules.patient_pos[counter] = pat_pos
+            self.nodules.center[counter, :] = np.array([coordz,
+                                                        coordy,
+                                                        coordx])
+            self.nodules.size[counter, :] = np.array([diam] * 3)
             counter += 1
 
-        bias_arr = np.stack([self._bounds[nod_pat_pos],
-                             np.zeros(n_nodules),
-                             np.zeros(n_nodules)]).T
-
-        spacing_arr = self.spacing[nod_pat_pos, :]
-        origin_arr = self.origin[nod_pat_pos, :]
-        self.nodules = np.rec.array([bias_arr, origin_arr,
-                                     spacing_arr, center_arr,
-                                     size_arr, img_size_arr],
-                                    names=['bias', 'origin', 'spacing',
-                                           'center', 'size', 'img_size'])
-        self.nodules_pat_pos = nod_pat_pos
+        self._refresh_nodules_info()
         return self
 
     def _shift_out_of_bounds(self, size):
@@ -296,25 +286,24 @@ class CTImagesMaskedBatch(CTImagesBatch):
         size of nodules.
         """
         size = np.array(size, dtype=np.int)
+
         center_pix = np.abs(self.nodules.center -
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
         end_pix = start_pix + size
-        bias_upper = np.where(end_pix > self.nodules.img_size,
-                              end_pix - self.nodules.img_size, 0)
 
+        bias_upper = np.maximum(end_pix - self.nodules.img_size, 0)
         start_pix -= bias_upper
         end_pix -= bias_upper
 
-        bias_lower = np.where(start_pix < 0, -start_pix, 0)
-
+        bias_lower = np.maximum(-start_pix, 0)
         start_pix += bias_lower
         end_pix += bias_lower
 
         return (start_pix + self.nodules.bias).astype(np.int)
 
     @action
-    def create_mask_single_thread(self):
+    def create_mask(self):
         """Load mask data for using nodule's info.
 
         Load mask into self.mask using info in attribute self.nodules_info.
@@ -324,20 +313,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
             logger.warning("Info about nodules location must " +
                            "be loaded before calling this method. " +
                            "Nothing happened.")
-            return self
+        self.mask = np.zeros_like(self.data)
 
-        center_pix = np.rint(np.abs(self.nodules.center -
-                                    self.nodules.origin) / self.nodules.spacing)
-        size_pix = np.rint(self.nodules.size /
-                           self.nodules.spacing).astype(np.int)
-        start_pix = (center_pix - np.rint(size_pix / 2)).astype(np.int)
-        for patient_id in self.indices:
-            ndarray_mask = (self.nodules_pat_pos ==
-                            self.index.get_pos(patient_id))
-            if np.any(ndarray_mask):
-                make_mask_patient(self.get_mask(patient_id),
-                                  start_pix[ndarray_mask, :],
-                                  size_pix[ndarray_mask, :])
+        center_pix = np.abs(self.nodules.center -
+                            self.nodules.origin) / self.nodules.spacing
+        start_pix = (np.rint(center_pix) - np.rint(self.nodules.size / 2))
+
+        make_mask(self.mask, self.nodules.bias,
+                  self.nodules.img_size + self.nodules.bias,
+                  start_pix, self.nodules.size)
 
         return self
 
@@ -439,56 +423,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch.spacing = None
         return nodules_batch
 
-    @action
-    def dump_old(self, dst, fmt='blosc', dtype='source'):
-        """Dump patients data and mask(optional) on disc.
-
-        Dump on specified path and format
-        create folder corresponding to each patient
-        *Note: this method is decorated with @history and @action.
-        If mask_dst in not None than dump mask too.
-
-        Example:
-        # initialize batch and load data
-        >>> ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-        >>> batch = BatchCt(ind)
-        >>> batch.load(...)
-        >>> batch.dump('./data/blosc_preprocessed', dtype='source')
-
-        # the command above creates files
-        # ./data/blosc_preprocessed/1ae34g90/data.blk
-        # ./data/blosc_preprocessed/3hf82s76/data.blk
-        # ./data/blosc_preprocessed/2ds38d04/data.blk
-        """
-        dtype_values = ['source', 'mask']
-        if isinstance(dtype, (tuple, list)):
-            if any(dt not in dtype_values for dt in dtype):
-                raise ValueError("Argument dtype must be list or tuple" +
-                                 "containing 'source' or 'mask'")
-            if len(dtype) != len(dst):
-                raise ValueError("Arguments dtype and dst must have " +
-                                 "the same length if having " +
-                                 "type list or tuple")
-
-        elif not(isinstance(dtype, str) and isinstance(dst, str)):
-            raise ValueError("Arguments dtype and dst must " +
-                             "have the same type")
-
-        for patient_id in self.indices:
-            patient_pos = self.index.get_pos(patient_id)
-            lower = self._bounds[patient_pos]
-            upper = self._bounds[patient_pos + 1]
-
-            for dump_type, dump_path in zip(dtype, dst):
-                if dump_type == 'source':
-                    self.dump_blosc(self.data[lower: upper, :, :],
-                                    patient_id, dump_path)
-                elif dump_type == 'mask':
-                    if self.mask is not None:
-                        self.dump_blosc(self.mask[lower: upper, :, :],
-                                        patient_id, dump_path)
-        return self
-
     def get_axial_slice(self, patient_pos, height):
         """Get tuple of slices (data slice, mask slice).
 
@@ -506,36 +440,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
             patch = (self.get_image(patient_pos)[margin, :, :], None)
         return patch
 
+    def _refresh_nodules_info(self):
+        self.nodules.bias[:, 0] = self.lower_bounds[self.nodules.patient_pos]
+        self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
+        self.nodules.origin = self.origin[self.nodules.patient_pos, :]
+        self.nodules.img_size = self.shapes[self.nodules.patient_pos, :]
+
     def _rescale_spacing(self, new_shape):
-        """Rescale spacing during resize.
-
-        During resize action it is neccessary to update patient's
-        current spacing cause it used for mask creation
-        and nodules extraction.
-
-        Args:
-        - new_shape: list, tuple or ndarray(3, ) that represents
-        new_shape of patient's scans;
-        Returns:
-        - self;
-        """
-        new_shape = np.asarray(new_shape)
-        n_patients = len(self.index)
-
-        #TODO use bounds
-        for patient_id in self.indices:
-            old_shape = np.asarray(self.get_image(patient_id).shape)
-            self.spacing[self.index.get_pos(patient_id)] *= (old_shape /
-                                                             new_shape)
-
-        if self.nodules is not None:
-            n_nodules = self.nodules_pat_pos.shape[0]
-            self.nodules.spacing = self.spacing[self.nodules_pat_pos, :]
-            self.nodules.img_size = np.tile(new_shape,
-                                            n_nodules).reshape(n_nodules, 3)
-            self.nodules.bias = np.zeros((n_nodules, 3))
-            self.nodules.bias[:, 0] = (np.arange(len(self.index)) *
-                                       new_shape[0])[self.nodules_pat_pos]
+        self.spacing = self.rescale(new_shape)
+        if nodules is not None:
+            self._refresh_nodules_info()
         return self
 
     def _init_rebuild(self, **kwargs):
@@ -551,7 +465,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
                             "specified in argument shape!")
         self._rescale_spacing(new_shape=kwargs['shape'])
         return super()._init_rebuild(**kwargs)
-
 
     @action
     @inbatch_parallel(init='_init_rebuild',
@@ -576,7 +489,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return resize_patient_numba
 
-
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """Post-function for resize parallelization.
 
@@ -587,65 +499,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 agregated from workers_ouputs
         """
         # TODO: process errors
-        # TODO: put in separate method
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
         batch.nodules = self.nodules
-        batch.nodules_pat_pos = self.nodules_pat_pos
+        if self.mask is not None:
+            batch.create_mask()
         return batch
-
-    def _new_batch_update_nodules_mask(self, batch):
-        if self.nodules is not None:
-            batch.nodules = self.nodules
-            batch.nodules_pat_pos = self.nodules_pat_pos
-            if batch.mask is not None:
-                batch.create_mask()
-        return batch
-
-    def _init_create_mask(self, *kwargs):  # pylint: disable=unused-argument
-        """Init-function fro create_mask parallelization.
-
-        This methods returns a list of arguments for inbatch_parallelization
-        of create_mask_parallel method.
-        """
-        self.mask = np.zeros_like(self.data)
-        center_pix = np.rint(np.abs(self.nodules.center -
-                                    self.nodules.origin) / self.nodules.spacing)
-        size_pix = np.rint(self.nodules.size /
-                           self.nodules.spacing).astype(np.int)
-        start_pix = (center_pix - np.rint(size_pix / 2)).astype(np.int)
-
-        args_list = []
-        for patient_pos, patient_id in enumerate(self.indices):
-            ndarray_mask = (self.nodules_pat_pos == patient_pos)
-            ndarray_mask = (self.nodules_pat_pos == patient_pos)
-            if np.any(ndarray_mask):
-                args_list.append({'patient_id': patient_id,
-                                  'start': start_pix[ndarray_mask, :],
-                                  'size': size_pix[ndarray_mask, :]})
-        return args_list
-
-    def _post_create_mask(self, list_of_res, **kwargs):  # pylint: disable=unused-argument
-        """Post-function for create_mask parallelization.
-
-        Gathers outputs of different workers represented by list_of_res
-        argument and checks if any action failed.
-        """
-        if any_action_failed(list_of_res):
-            logger.warning("Some actions failed during " +
-                           "threading create_mask method.")
-        return self
-
-    @action
-    @inbatch_parallel(init='_init_create_mask',
-                      post='_post_create_mask',
-                      target='threads')
-    def create_mask(self, patient_id, start, size):
-        """Parallel variant of mask creation method main part.
-
-        This function is used as kernel in parallelization via
-        inbatch_parallel decorator.
-        """
-        return make_mask_patient(self.get_mask(patient_id), start, size)
 
     def make_xip(self, step=2, depth=10, func='max',
                  projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
