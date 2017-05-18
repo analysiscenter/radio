@@ -403,8 +403,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.asarray(samples + offset, dtype=np.int)
 
     @action
-    def sample_nodules(self, batch_size,
-                       nodule_size, share=0.8, scale=None) -> 'CTImagesBatchMasked':
+    def sample_nodules(self, batch_size, nodule_size,
+                       share=0.8, scale=None) -> 'CTImagesBatchMasked':
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
