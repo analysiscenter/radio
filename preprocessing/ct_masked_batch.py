@@ -456,7 +456,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
         nodules_batch.load(source=data, fmt='ndarray',
                            bounds=bounds, spacing=self.spacing)
-        #TODO add info about nodules by changing self.nodules
+        # TODO add info about nodules by changing self.nodules
         nodules_batch.mask = mask
         return nodules_batch
 
