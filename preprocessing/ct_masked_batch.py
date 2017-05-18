@@ -503,7 +503,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @inbatch_parallel(init='_init_rebuild',
                       post='_post_rebuild', target='nogil')
     def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-        """
+        """Perform resize of each CT-scan.
+
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
             returns self
@@ -549,3 +550,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         logger.warning("There is no implementation of flip method for class " +
                        "CTIMagesMaskedBatch. Nothing happened")
         return self
+
+    def visualize(self, index):
+        """Visualize masked CTImage with ipyvolume.
+
+        This method visualizes masked CTImages using ipyvolumne package.
+        Points where mask has 1 values are supposed to be brighter in
+        3d picture.
+
+        Args:
+        - index: int or str containing sample position
+        or index correspondingly.
+        """
+        pass
