@@ -311,6 +311,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self._refresh_nodules_info()
         return self
 
+    # TODO think about another name of method
     def _shift_out_of_bounds(self, size, shift_scale=None):
         """Fetch start pixel coordinates of all nodules.
 
@@ -329,6 +330,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
         if shift_scale is not None:
+            # TODO make via multivariate normal
             start_pix += self.normal_shift3d(self.n_nodules, shift_scale)
         end_pix = start_pix + size
 
@@ -366,6 +368,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
+    # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, n_nodules, nodule_size):
         """Sample random nodules from CTImagesBatchMasked skyscraper.
 
