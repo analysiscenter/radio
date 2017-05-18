@@ -54,9 +54,9 @@ def make_mask(batch_mask, img_start, img_end, nodules_start, nodules_size):
     for i in range(nodules_start.shape[0]):
         nod_size = nodules_size[0, :]
 
-        nodule = np.ones((nod_size[0],
-                          nod_size[1],
-                          nod_size[2]))
+        nodule = np.ones((int(nod_size[0]),
+                          int(nod_size[1]),
+                          int(nod_size[2])))
 
         patient_mask = batch_mask[img_start[i, 0]: img_end[i, 0],
                                   img_start[i, 1]: img_end[i, 1],
