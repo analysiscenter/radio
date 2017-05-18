@@ -534,7 +534,6 @@ class CTImagesBatch(Batch):
         """
         return resize_patient_numba
 
-
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
     def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
