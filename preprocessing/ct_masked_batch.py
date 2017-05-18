@@ -562,4 +562,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - index: int or str containing sample position
         or index correspondingly.
         """
-        pass
+        import ipyvolume
+        data = batch.get_image(index)
+        mask = batch.get_mask(index)
+        ipyvolume.quickvolshow(data + mask * 1000, level=[0.25, 0.75],
+                               opacity=0.03, level_width=0.1,
+                               data_min=0, data_max=1300)
+        return
