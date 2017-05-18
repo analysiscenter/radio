@@ -279,8 +279,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         world coordinate system, each of these properties is represented by
         ndarray(n_nodules, 3). Finally, self.nodules.patient_pos refers to
         positions of patients which correspond to stored nodules.
-        Object self.nodules is used by some methods which create mask
-        or sample nodule batch to perform transform from world coordinate
+        Object self.nodules is used by some methods, for example, create mask
+        or sample nodule batch, to perform transform from world coordinate
         system to pixel one.
         """
         if self.nodules is not None and not update:
