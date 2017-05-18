@@ -460,7 +460,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch.mask = mask
         return nodules_batch
 
-
     def get_axial_slice(self, patient_pos, height):
         """Get tuple of slices (data slice, mask slice).
 
