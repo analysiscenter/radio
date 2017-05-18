@@ -563,8 +563,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         or index correspondingly.
         """
         import ipyvolume
-        data = batch.get_image(index)
-        mask = batch.get_mask(index)
+        data = self.get_image(index)
+        mask = self.get_mask(index)
         ipyvolume.quickvolshow(data + mask * 1000, level=[0.25, 0.75],
                                opacity=0.03, level_width=0.1,
                                data_min=0, data_max=1300)
