@@ -152,15 +152,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
         >>> batch.load(src=source_array, fmt='ndarray', bounds=bounds,
         ...            origin=origin_dict, spacing=spacing_dict)
         """
+        params = dict(source=source, bounds=bounds,
+                      origin=origin, spacing=spacing)
         if fmt == 'ndarray':
-            self._init_data(source=source, bounds=bounds,
-                            origin=origin, spacing=spacing)
+            self._init_data(**params)
             self.nodules = nodules
             self.mask = mask
         else:
             # TODO check this
-            super().load(source=source, bounds=bounds,
-                         origin=origin, spacing=spacing, fmt=fmt)
+            super().load(fmt=fmt, **params)
         return self
 
     @action
