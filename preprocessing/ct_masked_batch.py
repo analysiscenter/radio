@@ -88,7 +88,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
         *Note: spacing, origin are recalculated when resize is executed
             As a result, load_mask can be also executed after resize
     """
-
+    # record array contains the following information about nodules:
+    # - self.nodules.center -- ndarray(n_nodules, 3) centers of
+    #   nodules in world coords;
+    # - self.nodules.nod_size -- ndarray(n_nodules, 3) sizes of
+    #   nodules along z, y, x in world coord;
+    # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
+    #   patient data corresponding to nodules;
+    # - self.nodules.bias -- ndarray(n_nodules, 3) of biases of
+    #   patients which correspond to nodules;
+    # - self.nodules.spacing -- ndarray(n_nodules, 3) of spacinf attribute
+    #   of patients which correspond to nodules;
+    # - self.nodules.origin -- ndarray(n_nodules, 3) of origin attribute
+    #   of patients which correspond to nodules;
     nodules_dtype = np.dtype([('patient_pos', np.int, 1),
                               ('bias', np.int, (3,)),
                               ('img_size', np.int, (3,)),
@@ -134,19 +146,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         super().__init__(index)
         self.mask = None
-        # record array contains the following information about nodules:
-        # - self.nodules.center -- ndarray(n_nodules, 3) centers of
-        #   nodules in world coords;
-        # - self.nodules.nod_size -- ndarray(n_nodules, 3) sizes of
-        #   nodules along z, y, x in world coord;
-        # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
-        #   patient data corresponding to nodules;
-        # - self.nodules.bias -- ndarray(n_nodules, 3) of biases of
-        #   patients which correspond to nodules;
-        # - self.nodules.spacing -- ndarray(n_nodules, 3) of spacinf attribute
-        #   of patients which correspond to nodules;
-        # - self.nodules.origin -- ndarray(n_nodules, 3) of origin attribute
-        #   of patients which correspond to nodules;
         self.nodules = None
 
     @action
@@ -180,7 +179,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
+    @inbatch_parallel(init='indices', post='_post_default',
+                      target='async', update=False)
     async def dump(self, patient, dst, src="mask", fmt="blosc"):
         """Dump mask or source data on specified path and format.mro.
 
@@ -296,7 +296,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     # TODO think about another name of method
-    def _shift_out_of_bounds(self, size, shift_scale=None):
+    def _shift_out_of_bounds(self, size, covariance=None):
         """Fetch start pixel coordinates of all nodules.
 
         This method returns start pixel coordinates of all nodules
@@ -306,16 +306,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Args:
         - size: list, tuple of numpy array of length 3 with pixel
-        size of nodules.
+        size of nodules;
+        - covariance: ndarray(3, ) diagonal elements
+        of multivariate normal distribution used for sampling random shifts
+        along [z, y, x] correspondingly;
         """
         size = np.array(size, dtype=np.int)
 
         center_pix = np.abs(self.nodules.center -
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
-        if shift_scale is not None:
+        if covariance is not None:
             # TODO make via multivariate normal
-            start_pix += self.normal_shift3d(self.n_nodules, shift_scale)
+            start_pix += np.random.multivariate_normal(cov=np.diag(covariance))
         end_pix = start_pix + size
 
         bias_upper = np.maximum(end_pix - self.nodules.img_size, 0)
