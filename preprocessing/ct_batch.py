@@ -95,7 +95,7 @@ class CTImagesBatch(Batch):
     """
 
     @staticmethod
-    async def dump_blosc_async(data, patient_id, dst):
+    async def dump_blosc(data, patient_id, dst):
         packed = blosc.pack_array(data, cname='zstd', clevel=1)
 
         # remove directory if exists
