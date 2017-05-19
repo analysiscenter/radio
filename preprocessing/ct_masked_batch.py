@@ -124,21 +124,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
                    for i in range(size)]
         return indices
 
-    @staticmethod
-    def normal_shift3d(n_samples, shift_sigma=(3, 3, 3)):
-        """Generate ndarray(n_samples, 3) of random shifts.
-
-        This static method generates array of random shifts
-        for samples(nodules). Shifts along each axis are normaly
-        distributed with
-        sigma = [shigt_sigma[0], shift_sigma[1], shift_sigma[2]]
-        for shift along [z, y, x] axes correspondingly.
-        """
-        shft_z = np.random.normal(scale=shift_sigma[0], size=n_samples)
-        shft_y = np.random.normal(scale=shift_sigma[1], size=n_samples)
-        shft_x = np.random.normal(scale=shift_sigma[2], size=n_samples)
-        return np.stack([shft_z, shft_y, shft_x]).T
-
     def __init__(self, index):
         """Initialization of CTImagesMaskedBatch.
 
