@@ -301,7 +301,7 @@ class CTImagesBatch(Batch):
         return await self.dump_blosc_async(pat_data, patient, dst)
 
     def __len__(self):
-        return len(self.indices)
+        return len(self.index)
 
     def __getitem__(self, index):
         """
@@ -410,14 +410,14 @@ class CTImagesBatch(Batch):
         if update:
             new_data = np.concatenate(list_of_arrs, axis=0)
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
+            params = dict(source=new_data, bounds=new_bounds,
+                          origin=self.origin, spacing=self.spacing)
             if new_batch:
                 batch = type(self)(self.index)
-                batch.load(fmt='ndarray', src=new_data, bounds=new_bounds,
-                           origin=self.origin, spacing=self.spacing)
+                batch.load(fmt='ndarray', **params)
                 res = batch
             else:
-                self._init_data(source=new_data, bounds=new_bounds,
-                                origin=self.origin, spacing=self.spacing)
+                self._init_data(**params)
         return res
 
     def _init_images(self, **kwargs):               # pylint: disable=unused-argument
@@ -476,14 +476,14 @@ class CTImagesBatch(Batch):
         else:
             new_spacing = self.spacing
 
+        params = dict(source=new_data, bouns=new_bounds,
+                      origin=self.origin, spacing=self.spacing)
         if new_batch:
             batch_res = type(self)(self.index)
-            batch_res.load(source=new_data, bounds=new_bounds, fmt='ndarray',
-                           origin=self.origin, spacing=new_spacing)
+            batch_res.load(fmt='ndarray', **params)
             return batch_res
         else:
-            self._init_data(source=new_data, bounds=new_bounds,
-                            origin=self.origin, spacing=new_spacing)
+            self._init_data(**params)
             return self
 
     @property
