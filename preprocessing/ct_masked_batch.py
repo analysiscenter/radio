@@ -335,7 +335,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(self.nodules.nod_size / 2))
 
-        make_mask(self.mask, self.nodules.bias,
+        make_mask_numba(self.mask, self.nodules.bias,
                   self.nodules.img_size + self.nodules.bias,
                   start_pix,
                   np.rint(self.nodules.nod_size / self.nodules.spacing))
