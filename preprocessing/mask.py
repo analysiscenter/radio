@@ -42,7 +42,7 @@ def insert_cropped(where, what, st_pos):
 
 
 @njit(nogil=True)
-def make_mask(batch_mask, img_start, img_end, nodules_start, nodules_size):
+def make_mask_numba(batch_mask, img_start, img_end, nodules_start, nodules_size):
     """Make mask using information about nodules location and sizes.
 
     This function takes batch mask array(batch_mask) filled with zeros,
