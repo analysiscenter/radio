@@ -13,9 +13,7 @@ import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .resize import resize_patient_numba
-from .dataset_import import action
-from .dataset_import import inbatch_parallel
-from .dataset_import import any_action_failed
+from .dataset_import import action, inbatch_parallel, any_action_failed
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
@@ -58,6 +56,7 @@ def get_nodules_jit(data, positions, size):
 
 
 class CTImagesMaskedBatch(CTImagesBatch):
+    # TODO change bias in name to offset or smth like this
     """Class for storing masked batch of ct-scans.
 
     In addition to batch itself, stores mask in
@@ -175,6 +174,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules = nodules
             self.mask = mask
         else:
+            # TODO check this
             super().load(source=source, bounds=bounds,
                          origin=origin, spacing=spacing, fmt=fmt)
         return self
