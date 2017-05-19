@@ -53,7 +53,7 @@ class CTImagesBatch(Batch):
             in accordance with Batch.__init__
             given base class Batch
 
-        2. load(self, src, fmt, upper_bounds):
+        2. load(self, source, fmt, upper_bounds):
             builds skyscraper of patients
             from either 'dicom'|'raw'|'blosc'|'ndarray'
             returns self
@@ -184,7 +184,7 @@ class CTImagesBatch(Batch):
 
             # bounds stores ndarray of last floors for each patient
             # say, source_ubounds = np.asarray([0, 100, 400])
-            batch.load(src=source_array, fmt='ndarray', bounds=bounds)
+            batch.load(source=source_array, fmt='ndarray', bounds=bounds)
 
         """
         # if ndarray. Might be better to put this into separate function
