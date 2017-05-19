@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 
 @njit(nogil=True)
-def get_nodules_jit(data, positions, size):
+def get_nodules_numba(data, positions, size):
     """Fetch nodules from array by array of starting positions.
 
     This numberized function takes source array with data of shape (n, k, l)
@@ -303,7 +303,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
         if covariance is not None:
             # TODO make via multivariate normal
-            start_pix += np.random.multivariate_normal(cov=np.diag(covariance))
+            start_pix += np.random.multivariate_normal(np.zeros(3),
+                                                       np.diag(variance),
+                                                       self.nodules.patient_pos.shape[0])
         end_pix = start_pix + size
 
         bias_upper = np.maximum(end_pix - self.nodules.img_size, 0)
@@ -424,8 +426,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_indices = np.vstack([cancer_nodules,
                                      random_nodules]).astype(np.int)  # pylint: disable=no-member
 
-        data = get_nodules_jit(self.data, nodules_indices, nodule_size)
-        mask = get_nodules_jit(self.mask, nodules_indices, nodule_size)
+        data = get_nodules_numba(self.data, nodules_indices, nodule_size)
+        mask = get_nodules_numba(self.mask, nodules_indices, nodule_size)
         bounds = np.arange(batch_size + 1) * nodule_size[0]
 
         nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
