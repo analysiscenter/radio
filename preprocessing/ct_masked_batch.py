@@ -281,7 +281,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     # TODO think about another name of method
-    def _shift_out_of_bounds(self, size, covariance=None):
+    def _shift_out_of_bounds(self, size, variance=None):
         """Fetch start pixel coordinates of all nodules.
 
         This method returns start pixel coordinates of all nodules
@@ -301,7 +301,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         center_pix = np.abs(self.nodules.center -
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
-        if covariance is not None:
+        if variance is not None:
             # TODO make via multivariate normal
             start_pix += np.random.multivariate_normal(np.zeros(3),
                                                        np.diag(variance),
@@ -333,12 +333,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         center_pix = np.abs(self.nodules.center -
                             self.nodules.origin) / self.nodules.spacing
-        start_pix = (np.rint(center_pix) - np.rint(self.nodules.nod_size / 2))
-
+        start_pix = (center_pix - np.rint(self.nodules.nod_size /
+                                          self.nodules.spacing / 2))
+        start_pix = np.rint(start_pix).astype(np.int)
         make_mask_numba(self.mask, self.nodules.bias,
-                  self.nodules.img_size + self.nodules.bias,
-                  start_pix,
-                  np.rint(self.nodules.nod_size / self.nodules.spacing))
+                        self.nodules.img_size + self.nodules.bias, start_pix,
+                        np.rint(self.nodules.nod_size / self.nodules.spacing))
 
         return self
 
@@ -381,7 +381,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def sample_nodules(self, batch_size, nodule_size,
-                       share=0.8, scale=None) -> 'CTImagesBatchMasked':
+                       share=0.8, variance=None) -> 'CTImagesBatchMasked':
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -400,14 +400,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if self.nodules is None:
             raise AttributeError("Info about nodules location must " +
                                  "be loaded before calling this method")
-        if scale is not None:
-            scale = np.asarray(scale, dtype=np.int)
-            scale = scale.flatten()
-            if len(scale) != 3:
-                logger.warning('Argument scale be np.array-like' +
+        if variance is not None:
+            variance = np.asarray(variance, dtype=np.int)
+            variance = variance.flatten()
+            if len(variance) != 3:
+                logger.warning('Argument variance be np.array-like' +
                                'and has shape (3,). ' +
                                'Would be used no-scale-shift.')
-                scale = None
+                variance = None
         nodule_size = np.asarray(nodule_size, dtype=np.int)
         cancer_n = int(share * batch_size)
         cancer_n = self.n_nodules if cancer_n > self.n_nodules else cancer_n
@@ -417,7 +417,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             sample_indices = np.random.choice(np.arange(self.n_nodules),
                                               size=cancer_n, replace=False)
             cancer_nodules = self._shift_out_of_bounds(nodule_size,
-                                                       shift_scale=scale)
+                                                       variance=variance)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
         random_nodules = self.sample_random_nodules(batch_size - cancer_n,
