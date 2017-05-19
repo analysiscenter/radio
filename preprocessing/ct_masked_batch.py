@@ -517,11 +517,18 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.create_mask()
         return batch
 
+    @action
     def make_xip(self, step=2, depth=10, func='max',
                  projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-        logger.warning("There is no implementation of make_xip method for " +
-                       "CTImagesMaskedBatch. Nothing happened.")
-        return self
+        # logger.warning("There is no implementation of make_xip method for " +
+        #                "CTImagesMaskedBatch. Nothing happened.")
+        batch = super().make_xip(step, depth, func,
+                                 projection, *args, **kwargs)
+        batch.spacing = batch.spacing * depth
+        batch._rescale_spacing()
+        if batch.mask is not None:
+            batch.create_mask()
+        return batch
 
     def flip(self):
         logger.warning("There is no implementation of flip method for class " +
