@@ -114,21 +114,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return indices
 
     @staticmethod
-    def dump_blosc(data, index, path):
-        """Dump data on hard disk in blosc format.
-
-        Save data on hard drive in file with path
-        os.path.join(path, str(index)).
-        """
-        full_path = os.path.join(path, index)
-        packed = blosc.pack_array(data, cname='zstd', clevel=1)
-        if os.path.exists(full_path):
-            shutil.rmtree(full_path)
-        os.makedirs(full_path)
-        with open(os.path.join(full_path, 'data.blk'), mode='wb') as dump_file:
-            dump_file.write(packed)
-
-    @staticmethod
     def normal_shift3d(n_samples, shift_sigma=(3, 3, 3)):
         """Generate ndarray(n_samples, 3) of random shifts.
 
