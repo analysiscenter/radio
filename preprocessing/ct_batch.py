@@ -476,8 +476,8 @@ class CTImagesBatch(Batch):
         else:
             new_spacing = self.spacing
 
-        params = dict(source=new_data, bouns=new_bounds,
-                      origin=self.origin, spacing=self.spacing)
+        params = dict(source=new_data, bounds=new_bounds,
+                      origin=self.origin, spacing=new_spacing)
         if new_batch:
             batch_res = type(self)(self.index)
             batch_res.load(fmt='ndarray', **params)
