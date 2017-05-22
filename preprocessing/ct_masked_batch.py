@@ -89,17 +89,17 @@ class CTImagesMaskedBatch(CTImagesBatch):
             As a result, load_mask can be also executed after resize
     """
     # record array contains the following information about nodules:
-    # - self.nodules.center -- ndarray(n_nodules, 3) centers of
+    # - self.nodules.center -- ndarray(num_nodules, 3) centers of
     #   nodules in world coords;
-    # - self.nodules.nod_size -- ndarray(n_nodules, 3) sizes of
+    # - self.nodules.nod_size -- ndarray(num_nodules, 3) sizes of
     #   nodules along z, y, x in world coord;
-    # - self.nodules.img_size -- ndarray(n_nodules, 3) sizes of images of
+    # - self.nodules.img_size -- ndarray(num_nodules, 3) sizes of images of
     #   patient data corresponding to nodules;
-    # - self.nodules.bias -- ndarray(n_nodules, 3) of biases of
+    # - self.nodules.bias -- ndarray(num_nodules, 3) of biases of
     #   patients which correspond to nodules;
-    # - self.nodules.spacing -- ndarray(n_nodules, 3) of spacinf attribute
+    # - self.nodules.spacing -- ndarray(num_nodules, 3) of spacinf attribute
     #   of patients which correspond to nodules;
-    # - self.nodules.origin -- ndarray(n_nodules, 3) of origin attribute
+    # - self.nodules.origin -- ndarray(num_nodules, 3) of origin attribute
     #   of patients which correspond to nodules;
     nodules_dtype = np.dtype([('patient_pos', np.int, 1),
                               ('bias', np.int, (3,)),
@@ -221,7 +221,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self.mask[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
     @property
-    def n_nodules(self):
+    def num_nodules(self):
         """Get number of nodules in CTImagesMaskedBatch.
 
         This property returns the number
@@ -241,12 +241,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         and put them in numpy record array which can be accessed outside
         the class by self.nodules. Record array self.nodules
         has 'spacing', 'origin', 'img_size' and 'bias' properties, each
-        represented by ndarray(n_nodules, 3) referring to spacing, origin,
+        represented by ndarray(num_nodules, 3) referring to spacing, origin,
         image size and bound of patients which correspond to fetched nodules.
         Record array self.nodules also contains attributes 'center' and 'size'
         which contain information about center and size of nodules in
         world coordinate system, each of these properties is represented by
-        ndarray(n_nodules, 3). Finally, self.nodules.patient_pos refers to
+        ndarray(num_nodules, 3). Finally, self.nodules.patient_pos refers to
         positions of patients which correspond to stored nodules.
         Object self.nodules is used by some methods, for example, create mask
         or sample nodule batch, to perform transform from world coordinate
@@ -264,8 +264,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                     ["coordZ", "coordY",
                                      "coordX", "diameter_mm"]]
 
-        n_nodules = nodules_df.shape[0]
-        self.nodules = np.rec.array(np.zeros(n_nodules,
+        num_nodules = nodules_df.shape[0]
+        self.nodules = np.rec.array(np.zeros(num_nodules,
                                              dtype=self.nodules_dtype))
         counter = 0
         for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
@@ -343,10 +343,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     # TODO rename function to sample_random_nodules_positions
-    def sample_random_nodules(self, n_nodules, nodule_size):
+    def sample_random_nodules(self, num_nodules, nodule_size):
         """Sample random nodules from CTImagesBatchMasked skyscraper.
 
-        Samples random n_nodules' lower_bounds coordinates
+        Samples random num_nodules' lower_bounds coordinates
         and stack obtained data into ndarray(l, 3) then returns it.
         First dimension of that array is just an index of sampled
         nodules while second points out pixels of start of nodules
@@ -356,7 +356,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         NotImplementedError will be raised.
 
         Args:
-        - n_nodules: number of random nodules to sample from BatchCt data;
+        - num_nodules: number of random nodules to sample from BatchCt data;
         - nodule_size: ndarray(3, ) nodule size in number of pixels;
 
         return
@@ -370,13 +370,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         all_indices = np.arange(len(self))
         sampled_indices = np.random.choice(all_indices,
-                                           n_nodules, replace=True)
+                                           num_nodules, replace=True)
 
-        offset = np.zeros((n_nodules, 3))
+        offset = np.zeros((num_nodules, 3))
         offset[:, 0] = self.lower_bounds
 
         data_shape = self.shape[sampled_indices, :]
-        samples = np.random.rand(n_nodules, 3) * (data_shape - nodule_size)
+        samples = np.random.rand(num_nodules, 3) * (data_shape - nodule_size)
         return np.asarray(samples + offset, dtype=np.int)
 
     @action
@@ -410,11 +410,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 variance = None
         nodule_size = np.asarray(nodule_size, dtype=np.int)
         cancer_n = int(share * batch_size)
-        cancer_n = self.n_nodules if cancer_n > self.n_nodules else cancer_n
-        if self.n_nodules == 0:
+        cancer_n = self.num_nodules if cancer_n > self.num_nodules else cancer_n
+        if self.num_nodules == 0:
             cancer_nodules = np.zeros((0, 3))
         else:
-            sample_indices = np.random.choice(np.arange(self.n_nodules),
+            sample_indices = np.random.choice(np.arange(self.num_nodules),
                                               size=cancer_n, replace=False)
             cancer_nodules = self._shift_out_of_bounds(nodule_size,
                                                        variance=variance)
