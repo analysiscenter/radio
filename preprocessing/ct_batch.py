@@ -315,6 +315,27 @@ class CTImagesBatch(Batch):
         """
         return self.get_image(index)
 
+    def _get_verified_pos(self, index):
+        """Get verified position of patient in batch by index.
+
+        Firstly, check if index is instance of str or int. If int
+        then it is supposed that index represents patient's position in Batch.
+        If fetched position is out of bounds then Exception is generated.
+        If str then position of patient is fetched.
+
+        args:
+            index - can be either position of patient in self._data
+                or index from self.index
+        """
+        if isinstance(index, int):
+            if index < len(self) and index >= 0:
+                pos = index
+            else:
+                raise IndexError("Index is out of range")
+        else:
+            pos = self.index.get_pos(index)
+        return pos
+
     def get_image(self, index):
         """
         get view on patient data
@@ -323,14 +344,7 @@ class CTImagesBatch(Batch):
             index - can be either position of patient in self._data
                 or index from self.index
         """
-        if isinstance(index, int):
-            if index < self._bounds.shape[0] - 1 and index >= 0:
-                pos = index
-            else:
-                raise IndexError("Index is out of range")
-        else:
-            pos = self.index.get_pos(index)
-
+        pos = self._get_verified_pos(index)
         return self._data[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
     @property
