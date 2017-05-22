@@ -109,6 +109,21 @@ class CTImagesMaskedBatch(CTImagesBatch):
                               ('spacing', np.float, (3,)),
                               ('origin', np.float, (3,))])
 
+    # @staticmethod
+    # def make_indices(size):
+    #     """Generate list of batch indices of given size.
+    #
+    #     Take number of indices as input parameter size and
+    #     generates list of random indices of length size.
+    #
+    #     Args:
+    #     - size: size of list with indices;
+    #     """
+    #     random_data = np.random.uniform(0, 1, size=(size, 10)) * 123456789
+    #     indices = [hexlify(random_data[i, :])[:8].decode("utf-8")
+    #                for i in range(size)]
+    #     return indices
+
     @staticmethod
     def make_indices(size):
         """Generate list of batch indices of given size.
@@ -119,10 +134,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
         - size: size of list with indices;
         """
-        random_data = np.random.uniform(0, 1, size=(size, 10)) * 123456789
-        indices = [hexlify(random_data[i, :])[:8].decode("utf-8")
-                   for i in range(size)]
-        return indices
+        return [CTImagesMaskedBatch.make_filename() for i in range(size)]
 
     def __init__(self, index):
         """Initialization of CTImagesMaskedBatch.
