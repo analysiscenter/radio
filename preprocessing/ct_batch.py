@@ -372,7 +372,7 @@ class CTImagesBatch(Batch):
         This property returns ndarray(2,) containing shape of scan slice
         in yx-plane.
         """
-        return np.asarray(self._data.shape[1:], np.int)
+        return np.asarray(self._data.shape[1:])
 
     def rescale(self, new_shape):
         """Rescale patients' spacing parameter after resise.
