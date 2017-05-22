@@ -331,9 +331,7 @@ class CTImagesBatch(Batch):
         else:
             pos = self.index.get_pos(index)
 
-        lower = self._bounds[pos]
-        upper = self._bounds[pos + 1]
-        return self._data[lower:upper, :, :]
+        return self._data[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
     @property
     def shape(self):
