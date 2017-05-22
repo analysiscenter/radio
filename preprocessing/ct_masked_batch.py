@@ -211,7 +211,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return None
 
         if isinstance(index, int):
-            if index < self.batch_size and index >= 0:
+            if index < len(self) and index >= 0:
                 pos = index
             else:
                 raise IndexError("Index is out of range")
@@ -368,7 +368,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         *Note: [zyx]-ordering is used;
         """
-        all_indices = np.arange(self.batch_size)
+        all_indices = np.arange(len(self))
         sampled_indices = np.random.choice(all_indices,
                                            n_nodules, replace=True)
 
