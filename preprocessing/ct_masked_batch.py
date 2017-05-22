@@ -209,7 +209,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         if self.mask is None:
             return None
-
         pos = self._get_verified_pos(index)
         return self.mask[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
