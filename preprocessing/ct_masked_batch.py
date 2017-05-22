@@ -210,14 +210,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if self.mask is None:
             return None
 
-        if isinstance(index, int):
-            if index < len(self) and index >= 0:
-                pos = index
-            else:
-                raise IndexError("Index is out of range")
-        else:
-            pos = self.index.get_pos(index)
-
+        pos = self._get_verified_pos(index)
         return self.mask[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
     @property
