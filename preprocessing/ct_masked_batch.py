@@ -91,7 +91,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     # record array contains the following information about nodules:
     # - self.nodules.center -- ndarray(num_nodules, 3) centers of
     #   nodules in world coords;
-    # - self.nodules.nod_size -- ndarray(num_nodules, 3) sizes of
+    # - self.nodules.nodule_size -- ndarray(num_nodules, 3) sizes of
     #   nodules along z, y, x in world coord;
     # - self.nodules.img_size -- ndarray(num_nodules, 3) sizes of images of
     #   patient data corresponding to nodules;
@@ -105,7 +105,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                               ('offset', np.int, (3,)),
                               ('img_size', np.int, (3,)),
                               ('center', np.float, (3,)),
-                              ('nod_size', np.float, (3,)),
+                              ('nodule_size', np.float, (3,)),
                               ('spacing', np.float, (3,)),
                               ('origin', np.float, (3,))])
 
@@ -263,7 +263,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.center[counter, :] = np.array([coordz,
                                                         coordy,
                                                         coordx])
-            self.nodules.nod_size[counter, :] = np.array([diam, diam, diam])
+            self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
             counter += 1
 
         self._refresh_nodules_info()
@@ -321,12 +321,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         center_pix = np.abs(self.nodules.center -
                             self.nodules.origin) / self.nodules.spacing
-        start_pix = (center_pix - np.rint(self.nodules.nod_size /
+        start_pix = (center_pix - np.rint(self.nodules.nodule_size /
                                           self.nodules.spacing / 2))
         start_pix = np.rint(start_pix).astype(np.int)
         make_mask_numba(self.mask, self.nodules.offset,
                         self.nodules.img_size + self.nodules.offset, start_pix,
-                        np.rint(self.nodules.nod_size / self.nodules.spacing))
+                        np.rint(self.nodules.nodule_size / self.nodules.spacing))
 
         return self
 
@@ -524,7 +524,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             pr = 1
         elif projection == 'sagital':
             pr = 2
-        batch.nodules.nod_size[:, pr] += depth * self.nodules.spacing[:, pr]
+        batch.nodules.nodule_size[:, pr] += depth * self.nodules.spacing[:, pr]
         batch.spacing = self.rescale(batch[0].shape)
         batch._rescale_spacing()
         if self.mask is not None:
@@ -553,7 +553,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             raise ValueError("Argument axis must be instance " +
                              "of type str and have one of the " +
                              "following values ['z', 'y', 'x']")
-        self.nodules.nod_size += size_inc * self.nodules.spacing
+        self.nodules.nodule_size += size_inc * self.nodules.spacing
 
     def flip(self):
         logger.warning("There is no implementation of flip method for class " +
