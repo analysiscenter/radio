@@ -102,7 +102,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     # - self.nodules.origin -- ndarray(num_nodules, 3) of origin attribute
     #   of patients which correspond to nodules;
     nodules_dtype = np.dtype([('patient_pos', np.int, 1),
-                              ('bias', np.int, (3,)),
+                              ('offset', np.int, (3,)),
                               ('img_size', np.int, (3,)),
                               ('center', np.float, (3,)),
                               ('nod_size', np.float, (3,)),
