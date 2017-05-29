@@ -95,7 +95,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     #   nodules along z, y, x in world coord;
     # - self.nodules.img_size -- ndarray(num_nodules, 3) sizes of images of
     #   patient data corresponding to nodules;
-    # - self.nodules.bias -- ndarray(num_nodules, 3) of biases of
+    # - self.nodules.offset -- ndarray(num_nodules, 3) of biases of
     #   patients which correspond to nodules;
     # - self.nodules.spacing -- ndarray(num_nodules, 3) of spacinf attribute
     #   of patients which correspond to nodules;
@@ -304,7 +304,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         start_pix += bias_lower
         end_pix += bias_lower
 
-        return (start_pix + self.nodules.bias).astype(np.int)
+        return (start_pix + self.nodules.offset).astype(np.int)
 
     @action
     def create_mask(self):
@@ -324,8 +324,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         start_pix = (center_pix - np.rint(self.nodules.nod_size /
                                           self.nodules.spacing / 2))
         start_pix = np.rint(start_pix).astype(np.int)
-        make_mask_numba(self.mask, self.nodules.bias,
-                        self.nodules.img_size + self.nodules.bias, start_pix,
+        make_mask_numba(self.mask, self.nodules.offset,
+                        self.nodules.img_size + self.nodules.offset, start_pix,
                         np.rint(self.nodules.nod_size / self.nodules.spacing))
 
         return self
@@ -449,7 +449,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         [spacing, origin, img_size, bias] attributes of self.nodules
         to correspond the structure of batch's inner data.
         """
-        self.nodules.bias[:, 0] = self.lower_bounds[self.nodules.patient_pos]
+        self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
         self.nodules.img_size = self.shape[self.nodules.patient_pos, :]
