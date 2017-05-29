@@ -124,6 +124,6 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
         result = make_xip(data_tr, step=step, depth=depth,
                           start=start, stop=end,
                           func=_function, fill_value=fill_value)
-        result.transpose(_reverse_projection)
+        result = result.transpose(_reverse_projection)
         return result / depth if _function == 2 else result
     return out_function
