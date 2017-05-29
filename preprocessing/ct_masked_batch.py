@@ -524,15 +524,36 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def make_xip(self, step=2, depth=10, func='max',
                  projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-        # logger.warning("There is no implementation of make_xip method for " +
-        #                "CTImagesMaskedBatch. Nothing happened.")
-        batch = super().make_xip(step, depth, func,
-                                 projection, *args, **kwargs)
-        batch.spacing = batch.spacing * depth
+        batch = super().make_xip(step=step, depth=depth, func=func,
+                                 projection=projection, *args, **kwargs)
+
+        batch.nodules = self.nodules
+        if projection == 'axial':
+            pr = 0
+        elif projection == 'coronal':
+            pr = 1
+        elif projection == 'sagital':
+            pr = 2
+        batch.nodules.nod_size[:, pr] += depth * self.nodules.spacing[:, pr]
+        batch.spacing = self.rescale(batch[0].shape)
         batch._rescale_spacing()
-        if batch.mask is not None:
+        if self.mask is not None:
             batch.create_mask()
         return batch
+
+
+    def _update_nodule_size(self, step, depth, axis='z'):
+        if axis == 'z':
+            size_inc = np.array([depth, 0, 0])
+        elif axis == 'y':
+            size_inc = np.array([0, depth, 0])
+        elif axis == 'x':
+            size_inc = np.array([0, 0, depth])
+        else:
+            raise ValueError("Argument axis must be instance " +
+                             "of type str and have one of the " +
+                             "following values ['z', 'y', 'x']")
+        self.nodules.nod_size += size_inc * self.nodules.spacing
 
     def flip(self):
         logger.warning("There is no implementation of flip method for class " +
