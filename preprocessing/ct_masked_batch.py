@@ -270,7 +270,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     # TODO think about another name of method
-    def _shift_out_of_bounds(self, size, variance=None):
+    def _fit_into_bounds(self, size, variance=None):
         """Fetch start pixel coordinates of all nodules.
 
         This method returns start pixel coordinates of all nodules
@@ -404,7 +404,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             sample_indices = np.random.choice(np.arange(self.num_nodules),
                                               size=cancer_n, replace=False)
-            cancer_nodules = self._shift_out_of_bounds(nodule_size,
+            cancer_nodules = self._fit_into_bounds(nodule_size,
                                                        variance=variance)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
