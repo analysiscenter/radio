@@ -89,7 +89,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             As a result, load_mask can be also executed after resize
     """
     # record array contains the following information about nodules:
-    # - self.nodules.center -- ndarray(num_nodules, 3) centers of
+    # - self.nodules.nodule_center -- ndarray(num_nodules, 3) centers of
     #   nodules in world coords;
     # - self.nodules.nodule_size -- ndarray(num_nodules, 3) sizes of
     #   nodules along z, y, x in world coord;
@@ -104,7 +104,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     nodules_dtype = np.dtype([('patient_pos', np.int, 1),
                               ('offset', np.int, (3,)),
                               ('img_size', np.int, (3,)),
-                              ('center', np.float, (3,)),
+                              ('nodule_center', np.float, (3,)),
                               ('nodule_size', np.float, (3,)),
                               ('spacing', np.float, (3,)),
                               ('origin', np.float, (3,))])
@@ -260,7 +260,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
             pat_pos = self.index.get_pos(pat_id)
             self.nodules.patient_pos[counter] = pat_pos
-            self.nodules.center[counter, :] = np.array([coordz,
+            self.nodules.nodule_center[counter, :] = np.array([coordz,
                                                         coordy,
                                                         coordx])
             self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
@@ -287,7 +287,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         size = np.array(size, dtype=np.int)
 
-        center_pix = np.abs(self.nodules.center -
+        center_pix = np.abs(self.nodules.nodule_center -
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
         if variance is not None:
@@ -319,7 +319,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                            "Nothing happened.")
         self.mask = np.zeros_like(self.data)
 
-        center_pix = np.abs(self.nodules.center -
+        center_pix = np.abs(self.nodules.nodule_center -
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (center_pix - np.rint(self.nodules.nodule_size /
                                           self.nodules.spacing / 2))
