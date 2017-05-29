@@ -52,11 +52,11 @@ def make_mask_numba(batch_mask, img_start, img_end, nodules_start, nodules_size)
     target array batch_mask.
     """
     for i in range(nodules_start.shape[0]):
-        nod_size = nodules_size[i, :]
+        nodule_size = nodules_size[i, :]
 
-        nodule = np.ones((int(nod_size[0]),
-                          int(nod_size[1]),
-                          int(nod_size[2])))
+        nodule = np.ones((int(nodule_size[0]),
+                          int(nodule_size[1]),
+                          int(nodule_size[2])))
 
         patient_mask = batch_mask[img_start[i, 0]: img_end[i, 0],
                                   img_start[i, 1]: img_end[i, 1],
