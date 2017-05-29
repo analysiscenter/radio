@@ -291,7 +291,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
                             self.nodules.origin) / self.nodules.spacing
         start_pix = (np.rint(center_pix) - np.rint(size / 2))
         if variance is not None:
-            # TODO make via multivariate normal
             start_pix += np.random.multivariate_normal(np.zeros(3),
                                                        np.diag(variance),
                                                        self.nodules.patient_pos.shape[0])
@@ -509,6 +508,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def make_xip(self, step=2, depth=10, func='max',
                  projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+        """Compute xip of source CTImage along given x with given step and depth.
+
+        Call parent variant of make_xip then change nodules sizes'
+        via calling _update_nodule_size and create new mask that corresponds
+        to data after transform.
+        """
         batch = super().make_xip(step=step, depth=depth, func=func,
                                  projection=projection, *args, **kwargs)
 
