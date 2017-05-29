@@ -543,6 +543,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
 
     def _update_nodule_size(self, step, depth, axis='z'):
+        """Update nodules' sizes after xip operations.
+
+        This function updates nodules when xip operation is performed
+        is called after every xip operation.
+
+        Args:
+        - step: step of xip operation;
+        - depth: depth of xip operation;
+        - axis: axis along which xip operation is computed;
+        """
         if axis == 'z':
             size_inc = np.array([depth, 0, 0])
         elif axis == 'y':
