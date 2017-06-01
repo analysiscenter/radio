@@ -361,7 +361,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                            num_nodules, replace=True)
 
         offset = np.zeros((num_nodules, 3))
-        offset[:, 0] = self.lower_bounds
+        offset[:, 0] = self.lower_bounds[sampled_indices]
 
         data_shape = self.shape[sampled_indices, :]
         samples = np.random.rand(num_nodules, 3) * (data_shape - nodule_size)
