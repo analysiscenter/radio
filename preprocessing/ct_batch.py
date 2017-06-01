@@ -298,7 +298,7 @@ class CTImagesBatch(Batch):
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
         pat_data = self.get_image(patient)
-        return await self.dump_blosc_async(pat_data, patient, dst)
+        return await self.dump_blosc(pat_data, patient, dst)
 
     def __len__(self):
         return len(self.index)
@@ -315,6 +315,27 @@ class CTImagesBatch(Batch):
         """
         return self.get_image(index)
 
+    def _get_verified_pos(self, index):
+        """Get verified position of patient in batch by index.
+
+        Firstly, check if index is instance of str or int. If int
+        then it is supposed that index represents patient's position in Batch.
+        If fetched position is out of bounds then Exception is generated.
+        If str then position of patient is fetched.
+
+        args:
+            index - can be either position of patient in self._data
+                or index from self.index
+        """
+        if isinstance(index, int):
+            if index < len(self) and index >= 0:
+                pos = index
+            else:
+                raise IndexError("Index is out of range")
+        else:
+            pos = self.index.get_pos(index)
+        return pos
+
     def get_image(self, index):
         """
         get view on patient data
@@ -323,25 +344,8 @@ class CTImagesBatch(Batch):
             index - can be either position of patient in self._data
                 or index from self.index
         """
-        if isinstance(index, int):
-            if index < self._bounds.shape[0] - 1 and index >= 0:
-                pos = index
-            else:
-                raise IndexError("Index is out of range")
-        else:
-            pos = self.index.get_pos(index)
-
-        lower = self._bounds[pos]
-        upper = self._bounds[pos + 1]
-        return self._data[lower:upper, :, :]
-
-    @property
-    def batch_size(self):
-        """Get batch_size.
-
-        Just another alias for len(self).
-        """
-        return len(self)
+        pos = self._get_verified_pos(index)
+        return self._data[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
     @property
     def shape(self):
@@ -350,7 +354,7 @@ class CTImagesBatch(Batch):
         This property returns ndarray(n_patients, 3) containing
         shapes of data for each patient(first dimension).
         """
-        shapes = np.zeros((self.batch_size, 3), dtype=np.int)
+        shapes = np.zeros((len(self), 3), dtype=np.int)
         shapes[:, 0] = self.upper_bounds - self.lower_bounds
         shapes[:, 1], shapes[:, 2] = self.slice_shape
         return shapes
@@ -380,7 +384,7 @@ class CTImagesBatch(Batch):
         This property returns ndarray(2,) containing shape of scan slice
         in yx-plane.
         """
-        return np.asarray(self._data.shape[1:], np.int)
+        return np.asarray(self._data.shape[1:])
 
     def rescale(self, new_shape):
         """Rescale patients' spacing parameter after resise.
@@ -438,14 +442,14 @@ class CTImagesBatch(Batch):
         """
         if 'shape' in kwargs:
             num_slices, y, x = kwargs['shape']
-            new_bounds = num_slices * np.arange(self.batch_size + 1)
-            new_data = np.zeros((num_slices * self.batch_size, y, x))
+            new_bounds = num_slices * np.arange(len(self) + 1)
+            new_data = np.zeros((num_slices * len(self), y, x))
         else:
             new_bounds = self._bounds
             new_data = np.zeros_like(self._data)
 
         all_args = []
-        for i in range(self.batch_size):
+        for i in range(len(self)):
             out_patient = new_data[new_bounds[i]: new_bounds[i + 1], :, :]
             item_args = {'patient': self.get_image(i),
                          'out_patient': out_patient,
