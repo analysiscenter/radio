@@ -615,10 +615,13 @@ class CTImagesBatch(Batch):
 
         # calculate padding size
         overshoot = (img_shape - patch_shape + stride) % stride
-        pad_delta = 0 if overshoot == 0 else stride - overshoot
+
+        pad_delta = np.zeros(3)
+        for i in range(len(pad_delta)):
+            pad_delta[i] = 0 if overshoot[i] == 0 else stride[i] - overshoot[i]
 
         # pad each patient's data if necessary
-        if pad_delta > 0:
+        if np.any(pad_delta > 0):
             before_pad = pad_delta // 2
             after_pad = pad_delta - before_pad
             pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
