@@ -88,7 +88,7 @@ def assemble_patches(patches, stride, out_arr, fake):
                 slc_x = slice(ix * stride[0], ix * stride[0] + patch_shape[0])
                 slc_y = slice(iy * stride[1], iy * stride[1] + patch_shape[1])
                 slc_z = slice(iz * stride[2], iz * stride[2] + patch_shape[2])
-                img[slc_x, slc_y, slc_z] += patches[ctr, :, :, :]
+                out_arr[slc_x, slc_y, slc_z] += patches[ctr, :, :, :]
                 weights_inv[slc_x, slc_y, slc_z] += 1.0
                 ctr += 1
 
