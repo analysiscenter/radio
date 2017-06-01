@@ -593,7 +593,8 @@ class CTImagesBatch(Batch):
 
         return self
 
-    def get_patches(self, patch_shape, stride, padding='edge'):
+
+    def get_patches(self, patch_shape, stride, padding='edge', data_attr='_data'):
         """
         extract patches of size patch_shape with specified
             stride
@@ -606,6 +607,8 @@ class CTImagesBatch(Batch):
                 say, 3.6 windows of size=patch_shape with stride
                 can be exracted from each patient's data.
                 Then data will be padded s.t. 4 windows can be extracted 
+            data_attr: name of attribute where the data is stored
+                _data by default
         returns:
             4d-ndaray of patches; first dimension enumerates patches
         *Note: the shape of all patients is assumed to be the same
@@ -613,7 +616,7 @@ class CTImagesBatch(Batch):
 
         patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
         img_shape = self.shape[0]
-        data_4d = np.reshape(self._data, (-1, ) + tuple(img_shape))
+        data_4d = np.reshape(getattr(self, data_attr), (-1, ) + tuple(img_shape))
 
         # calculate padding size
         overshoot = (img_shape - patch_shape + stride) % stride
@@ -627,20 +630,20 @@ class CTImagesBatch(Batch):
             before_pad = (pad_delta // 2).astype('int')
             after_pad = (pad_delta - before_pad).astype('int')
             pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
-            print(pad_width)
             data_padded = np.pad(data_4d, pad_width, mode=padding)
         else:
             data_padded = data_4d
         
         # init tensor with patches
         num_sections = (img_shape - patch_shape) // stride + 1
-        print(num_sections)
         patches = np.zeros(shape = (len(self), 
                                     np.prod(num_sections)) + tuple(patch_shape))
-        print(patches.shape, data_padded.shape)
+
         # put patches into the tensor
         fake = np.zeros(len(self))
-        put_patches_numba(data_padded, patch_shape, stride, patches, fake)
+        put_patches_numba(data_padded, patch_shape, stride, patches, fake) 
+        patches = np.reshape(patches, (len(self) * \
+            np.prod(num_sections), ) + tuple(patch_shape))
         return patches
 
         
