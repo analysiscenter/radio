@@ -298,7 +298,7 @@ class CTImagesBatch(Batch):
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
         pat_data = self.get_image(patient)
-        return await self.dump_blosc_async(pat_data, patient, dst)
+        return await self.dump_blosc(pat_data, patient, dst)
 
     def __len__(self):
         return len(self.index)
