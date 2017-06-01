@@ -622,8 +622,8 @@ class CTImagesBatch(Batch):
 
         # pad each patient's data if necessary
         if np.any(pad_delta > 0):
-            before_pad = pad_delta // 2
-            after_pad = pad_delta - before_pad
+            before_pad = (pad_delta // 2).astype('int')
+            after_pad = (pad_delta - before_pad).astype('int')
             pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
             print(pad_width)
             data_4d = np.reshape(self._data, (-1, ) + tuple(img_shape))
