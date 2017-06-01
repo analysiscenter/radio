@@ -437,7 +437,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         margin = int(height * self[patient_pos].shape[0])
         if self.mask is not None:
             patch = (self.get_image(patient_pos)[margin, :, :],
-                     self.get_mask(patient_pos)[margin:, :, :])
+                     self.get_mask(patient_pos)[margin, :, :])
         else:
             patch = (self.get_image(patient_pos)[margin, :, :], None)
         return patch
