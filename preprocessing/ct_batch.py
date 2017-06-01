@@ -637,7 +637,7 @@ class CTImagesBatch(Batch):
         num_patches = np.prod(num_sections) * len(self)
         print(num_patches)
         patches = np.zeros(shape = (num_patches, ) + patch_shape)
-
+        print(patches.shape, data_padded.shape)
         # put patches into the tensor
         put_patches_numba(data_padded, patch_shape, stride, patches)
         return patches
