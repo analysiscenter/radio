@@ -17,6 +17,7 @@ from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
+from .patches import put_patches_numba
 
 
 AIR_HU = -2000
@@ -628,9 +629,19 @@ class CTImagesBatch(Batch):
             print(pad_width)
             data_4d = np.reshape(self._data, (-1, ) + tuple(img_shape))
             data_padded = np.pad(data_4d, pad_width, mode=padding)
+        else:
+            data_padded = data_4d
+        
+        # init tensor with patches
+        num_sections = (img_shape - patch_shape) // stride + 1
+        num_patches = np.prod(num_sections) * len(self)
+        patches = np.zeros(shape = (num_patches, ) + patch_shape)
 
-        return data_padded.shape
+        # put patches into the tensor
+        put_patches_numba(data_padded, patch_shape, stride, patches)
+        return patches
 
+        
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
         """
