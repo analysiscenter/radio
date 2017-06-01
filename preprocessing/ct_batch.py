@@ -613,6 +613,7 @@ class CTImagesBatch(Batch):
 
         patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
         img_shape = self.shape[0]
+        data_4d = np.reshape(self._data, (-1, ) + tuple(img_shape))
 
         # calculate padding size
         overshoot = (img_shape - patch_shape + stride) % stride
@@ -627,7 +628,6 @@ class CTImagesBatch(Batch):
             after_pad = (pad_delta - before_pad).astype('int')
             pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
             print(pad_width)
-            data_4d = np.reshape(self._data, (-1, ) + tuple(img_shape))
             data_padded = np.pad(data_4d, pad_width, mode=padding)
         else:
             data_padded = data_4d
@@ -635,6 +635,7 @@ class CTImagesBatch(Batch):
         # init tensor with patches
         num_sections = (img_shape - patch_shape) // stride + 1
         num_patches = np.prod(num_sections) * len(self)
+        print(num_patches)
         patches = np.zeros(shape = (num_patches, ) + patch_shape)
 
         # put patches into the tensor
