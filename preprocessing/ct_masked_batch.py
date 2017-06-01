@@ -5,11 +5,8 @@
 import os
 from binascii import hexlify
 import logging
-import shutil
-import blosc
 import numpy as np
 from numba import njit
-import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .resize import resize_patient_numba
@@ -519,12 +516,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         batch.nodules = self.nodules
         if projection == 'axial':
-            pr = 0
+            projection_int = 0
         elif projection == 'coronal':
-            pr = 1
+            projection_int = 1
         elif projection == 'sagital':
-            pr = 2
-        batch.nodules.nodule_size[:, pr] += depth * self.nodules.spacing[:, pr]
+            projection_int = 2
+        batch.nodules.nodule_size[:, pr] += depth * self.nodules.spacing[:, projection_int]
         batch.spacing = self.rescale(batch[0].shape)
         batch._rescale_spacing()
         if self.mask is not None:
