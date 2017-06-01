@@ -592,43 +592,6 @@ class CTImagesBatch(Batch):
 
         return self
 
-    def get_patches(self, patch_shape, stride, padding='edge'):
-        """
-        extract patches of size patch_shape with specified
-            stride
-        args:
-            patch_shape: tuple/list/ndarray of len=3 with needed 
-                patch shape
-            stride: tuple/list/ndarray of len=3 with stride that we 
-                use to slide over each patient's data
-            padding: type of padding (see doc of np.pad for available types)
-                say, 3.6 windows of size=patch_shape with stride
-                can be exracted from each patient's data.
-                Then data will be padded s.t. 4 windows can be extracted 
-        returns:
-            4d-ndaray of patches; first dimension enumerates patches
-
-        *Note: the shape of all patients is assumed to be the same
-        """
-
-        patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
-        img_shape = self.shape[0]
-
-        # calculate padding size
-        overshoot = (img_shape - patch_shape + stride) % stride
-        pad_delta = 0 if overshoot == 0 else stride - overshoot
-
-        # pad each patient's data if necessary
-        if pad_delta > 0:
-            before_pad = pad_delta // 2
-            after_pad = pad_delta - before_pad
-            pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
-
-            data_4d = np.reshape(self._data, (-1, ) + tuple(img_shape))
-            data_padded = np.pad(data_4d, pad_width, mode=padding)
-
-        return data_padded.shape
-
 
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
