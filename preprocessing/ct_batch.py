@@ -656,6 +656,44 @@ class CTImagesBatch(Batch):
                 of sections;
                 in case of overshoot we crop the padding out
         """
+        scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
+        patch_shape = np.asarray(patches.shape[1 : ])
+
+        # infer what padding was applied to scans when extracting patches
+        pad_width = calc_padding_size(scan_shape, patch_shape, stride)
+        print('pad width: ', pad_width)
+
+        # if padding is non-zero, adjust the shape of scan for applying 
+        # guvectorized function
+        if pad_width is not None:
+            shape_delta = np.asarray(
+                [before + after for before, after in pad_width[1 : ]])
+        else:
+            shape_delta = np.zeros(3)
+
+        scan_shape_adj = scan_shape + shape_delta
+        print('adjusted shape of scan: ', scan_shape_adj)
+
+        # init 4d tensor and put assembled scans into it
+        data_4d = np.zeros((len(self), ) + tuple(scan_shape_adj))
+        print('shape of possibly padded data-4d: ', data_4d.shape)
+        patches = np.reshape(patches, (len(self), -1) + tuple(patch_shape))
+        fake = np.zeros(len(self))
+        assemble_patches(patches, stride, data_4d, fake)
+
+        # crop (perform anti-padding) if necessary
+        if pad_width is not None:
+            slc_z = slice(pad_width[1][0], -pad_width[1][1])
+            slc_y = slice(pad_width[2][0], -pad_width[2][1])
+            slc_x = slice(pad_width[3][0], -pad_width[3][1])
+            data_4d = data_4d[:, slc_z, slc_y, slc_x]
+
+        print('shape of possibly unpadded data-4d: ', data_4d.shape)
+        # reshape 4d-data to skyscraper form and put it into needed attr
+        data_4d = data_4d.reshape(data_4d, (len(self), ) + tuple(scan_shape))
+        setattr(self, data_attr, data_4d)
+
+
         
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):

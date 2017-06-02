@@ -55,7 +55,7 @@ def assemble_patches(patches, stride, out_arr, fake):
             patches; other dims are spatial with order (z, y, x)
         stride: ndarray of len=3 with stride with which the patches
             were extracted
-        out_arr: array, where assembled scan is put
+        out_arr: 3d-array, where assembled scan is put
             should be filled with zeroes
             *note 1: out_arr.shape, stride, patch shape are used to infer 
                 the number of sections for each dimension.
@@ -64,6 +64,8 @@ def assemble_patches(patches, stride, out_arr, fake):
             *note 2: overlapping patches are allowed (stride != patch.shape).
                 In this case pixel values are averaged across overlapping
                     patches
+            *note 3: we assume that integer number of patches can be put into
+                out_arr using stride 
         fake: fake-result array
     """
     out_arr_shape = np.zeros(3)
