@@ -690,7 +690,7 @@ class CTImagesBatch(Batch):
 
         print('shape of possibly unpadded data-4d: ', data_4d.shape)
         # reshape 4d-data to skyscraper form and put it into needed attr
-        data_4d = data_4d.reshape(data_4d, (len(self), ) + tuple(scan_shape))
+        data_4d = data_4d.reshape((len(self), ) + tuple(scan_shape))
         setattr(self, data_attr, data_4d)
 
 
