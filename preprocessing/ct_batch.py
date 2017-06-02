@@ -626,7 +626,7 @@ class CTImagesBatch(Batch):
             data_padded = data_4d
         
         # init tensor with patches
-        num_sections = (img_shape - patch_shape) // stride + 1
+        num_sections = (np.asarray(data_padded.shape[1 : ]) - patch_shape) // stride + 1
         patches = np.zeros(shape = (len(self), 
                                     np.prod(num_sections)) + tuple(patch_shape))
 
@@ -661,7 +661,6 @@ class CTImagesBatch(Batch):
 
         # infer what padding was applied to scans when extracting patches
         pad_width = calc_padding_size(scan_shape, patch_shape, stride)
-        print('pad width: ', pad_width)
 
         # if padding is non-zero, adjust the shape of scan for applying 
         # guvectorized function
@@ -672,11 +671,9 @@ class CTImagesBatch(Batch):
             shape_delta = np.zeros(3).astype('int')
 
         scan_shape_adj = scan_shape + shape_delta
-        print('adjusted shape of scan: ', scan_shape_adj)
 
         # init 4d tensor and put assembled scans into it
         data_4d = np.zeros((len(self), ) + tuple(scan_shape_adj))
-        print('shape of possibly padded data-4d: ', data_4d.shape)
         patches = np.reshape(patches, (len(self), -1) + tuple(patch_shape))
         fake = np.zeros(len(self))
         assemble_patches(patches, stride, data_4d, fake)
@@ -688,7 +685,6 @@ class CTImagesBatch(Batch):
             slc_x = slice(pad_width[3][0], -pad_width[3][1])
             data_4d = data_4d[:, slc_z, slc_y, slc_x]
 
-        print('shape of possibly unpadded data-4d: ', data_4d.shape)
         # reshape 4d-data to skyscraper form and put it into needed attr
         data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + \
             tuple(scan_shape[1 : ]))
