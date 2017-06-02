@@ -17,7 +17,7 @@ from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
-from .patches import put_patches_numba
+from .patches import put_patches_numba, assemble_patches, calc_padding_size
 
 
 AIR_HU = -2000
@@ -618,18 +618,9 @@ class CTImagesBatch(Batch):
         img_shape = self.shape[0]
         data_4d = np.reshape(getattr(self, data_attr), (-1, ) + tuple(img_shape))
 
-        # calculate padding size
-        overshoot = (img_shape - patch_shape + stride) % stride
-
-        pad_delta = np.zeros(3)
-        for i in range(len(pad_delta)):
-            pad_delta[i] = 0 if overshoot[i] == 0 else stride[i] - overshoot[i]
-
-        # pad each patient's data if necessary
-        if np.any(pad_delta > 0):
-            before_pad = (pad_delta // 2).astype('int')
-            after_pad = (pad_delta - before_pad).astype('int')
-            pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
+        # add padding if necessary
+        pad_width = calc_padding_size(img_shape, patch_shape, stride)
+        if pad_width is not None:
             data_padded = np.pad(data_4d, pad_width, mode=padding)
         else:
             data_padded = data_4d
@@ -646,6 +637,25 @@ class CTImagesBatch(Batch):
             np.prod(num_sections), ) + tuple(patch_shape))
         return patches
 
+    def load_from_patches(self, patches, stride, scan_shape, data_attr='_data'):
+        """
+        assemble skyscraper from 4d-array of patches and 
+            put it into data_attr-attribute of batch
+        args:
+            patches: 4d-array of patches, first dim enumerates patches
+                others are spatial in order (z, y, x)
+            scan_shape: tuple/ndarray/list of len=3 with shape of scan-array
+                patches are assembled into; order of axis is (z, y, x)
+            stride: tuple/ndarray/list of len=3 with stride with which
+                patches are put into data_attr;
+                if stride != patch shape, averaging over overlapping regions
+                    is used
+            data_attr: the name of attribute, the assembled skyscraper should
+                be put into
+            *note: scan_shape, patches.shape, sride are used to infer the number
+                of sections;
+                in case of overshoot we crop the padding out
+        """
         
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):

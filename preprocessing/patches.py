@@ -94,3 +94,33 @@ def assemble_patches(patches, stride, out_arr, fake):
 
     # weight resulting image
     out_arr /= weights_inv
+
+def calc_padding_size(img_shape, patch_shape, stride):
+    """
+    calculate width of padding, that needs to be added to 3d-scan 
+        in order to fit integer number of patches;
+        in format needed for np.pad function
+    args:
+        img_shape: ndarray of len=3 with shape of 3d-scan
+        patch_shape: ndarray of len=3 with shape of a patch
+        stride: stride with which patch-window slides over scan
+    return: paddding size as list (len=4) of tuples of len=2
+        with pad widths in four dims; the first dim enumerates patients,
+            others are spatial axes
+        if no padding is needed, return None
+    """
+    overshoot = (img_shape - patch_shape + stride) % stride
+
+    pad_delta = np.zeros(3)
+    for i in range(len(pad_delta)):
+        pad_delta[i] = 0 if overshoot[i] == 0 else stride[i] - overshoot[i]
+
+    # calculate and return the padding if not zero
+    if np.any(pad_delta > 0):
+        before_pad = (pad_delta // 2).astype('int')
+        after_pad = (pad_delta - before_pad).astype('int')
+        pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
+        return pad_width
+    else:
+        return None
+
