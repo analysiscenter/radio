@@ -669,7 +669,7 @@ class CTImagesBatch(Batch):
             shape_delta = np.asarray(
                 [before + after for before, after in pad_width[1 : ]])
         else:
-            shape_delta = np.zeros(3)
+            shape_delta = np.zeros(3).astype('int')
 
         scan_shape_adj = scan_shape + shape_delta
         print('adjusted shape of scan: ', scan_shape_adj)
