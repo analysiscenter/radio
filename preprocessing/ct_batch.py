@@ -662,8 +662,7 @@ class CTImagesBatch(Batch):
         # infer what padding was applied to scans when extracting patches
         pad_width = calc_padding_size(scan_shape, patch_shape, stride)
 
-        # if padding is non-zero, adjust the shape of scan for applying 
-        # guvectorized function
+        # if padding is non-zero, adjust the shape of scan
         if pad_width is not None:
             shape_delta = np.asarray(
                 [before + after for before, after in pad_width[1 : ]])
@@ -680,9 +679,10 @@ class CTImagesBatch(Batch):
 
         # crop (perform anti-padding) if necessary
         if pad_width is not None:
-            slc_z = slice(pad_width[1][0], -pad_width[1][1])
-            slc_y = slice(pad_width[2][0], -pad_width[2][1])
-            slc_x = slice(pad_width[3][0], -pad_width[3][1])
+            data_shape = data_4d.shape
+            slc_z = slice(pad_width[1][0], data_shape[1] - pad_width[1][1])
+            slc_y = slice(pad_width[2][0], data_shape[2] - pad_width[2][1])
+            slc_x = slice(pad_width[3][0], data_shape[3] - pad_width[3][1])
             data_4d = data_4d[:, slc_z, slc_y, slc_x]
 
         # reshape 4d-data to skyscraper form and put it into needed attr

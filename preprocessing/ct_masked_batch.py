@@ -306,6 +306,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return (start_pix + self.nodules.offset).astype(np.int)
 
+
     @action
     def create_mask(self):
         """Load mask data for using nodule's info.
@@ -329,6 +330,45 @@ class CTImagesMaskedBatch(CTImagesBatch):
                         np.rint(self.nodules.nodule_size / self.nodules.spacing))
 
         return self
+
+    def fetch_mask_data(self, mask_shape):
+        """
+        create scaled mask using nodule info from self
+        args:
+            mask_shape: requiring shape of mask to be created
+        return:
+            3d-array with mask
+        # TODO: one part of code from here repeats create_mask function
+            better to unify these two func
+        """
+        if self.nodules is None:
+            logger.warning("Info about nodules location must " +
+                           "be loaded before calling this method. " +
+                           "Nothing happened.")
+        mask = np.zeros(shape=(len(self) * mask_shape[0], ) + tuple(mask_shape[1:]))
+
+        # infer scale factor; assume patients are already resized to equal shapes
+        scale_factor = np.asarray(mask_shape) / self.shape[0, :]
+
+        # get rescaled nodule-centers, nodule-sizes, offsets, locs of nod starts
+        center_scaled = np.abs(self.nodules.nodule_center - self.nodules.origin) / \
+                               self.nodules.spacing * scale_factor
+        start_scaled = (center_scaled - scale_factor * self.nodules.nodule_size / \
+                                        self.nodules.spacing / 2)
+        start_scaled = np.rint(start_scaled).astype(np.int)
+        offset_scaled = np.rint(self.nodules.offset * scale_factor).astype(np.int)
+        img_size_scaled = np.rint(self.nodules.img_size * scale_factor).astype(np.int)
+        nod_size_scaled = (np.rint(scale_factor * self.nodules.nodule_size / 
+                            self.nodules.spacing)).astype(np.int)
+        # put nodules into mask
+        make_mask_numba(mask, offset_scaled, img_size_scaled + offset_scaled,
+                        start_scaled, nod_size_scaled)
+        # return ndarray-mask
+        return mask
+
+
+
+
 
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size):
@@ -368,22 +408,29 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.asarray(samples + offset, dtype=np.int)
 
     @action
-    def sample_nodules(self, batch_size, nodule_size,
-                       share=0.8, variance=None) -> 'CTImagesBatchMasked':
+    def sample_nodules(self, batch_size, nodule_size, share=0.8,
+                       variance=None, mask_shape=None, if_tensor=False):
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
 
         Args:
         - nodules_df: dataframe of csv file with information
-        about nodules location;
+            about nodules location;
         - batch_size: number of nodules in the output batch. Must be int;
         - nodule_size: size of nodule along axes.
-        Must be list, tuple or nsystem pathdarray(3, ) of integer type;
-        (Note: using zyx ordering)
+            Must be list, tuple or ndarray(3, ) of integer type;
+            (Note: using zyx ordering)
         - share: share of cancer nodules in the batch.
-        If source CTImagesBatch contains less cancer
-        nodules than needed random nodules will be taken;
+            If source CTImagesBatch contains less cancer
+            nodules than needed random nodules will be taken;
+        - variance: variances of normally distributed random shifts of
+            nodules' first pixels
+        - mask_shape: needed shape of mask in (z, y, x)-order. If not None,
+            masks of nodules will be scaled to shape=mask_shape
+        - if_tensor: boolean flag. If set to True, return tuple (data, mask),
+            where data and mask are 4d-tensors; first dim enumerates nodules,
+            others are spatial
         """
         if self.nodules is None:
             raise AttributeError("Info about nodules location must " +
@@ -414,8 +461,29 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_indices = np.vstack([cancer_nodules,
                                      random_nodules]).astype(np.int)  # pylint: disable=no-member
 
+        # crop nodules' data
         data = get_nodules_numba(self.data, nodules_indices, nodule_size)
-        mask = get_nodules_numba(self.mask, nodules_indices, nodule_size)
+
+        # if mask_shape not None, compute scaled mask for the whole batch
+        # scale also nodules' starting positions and nodules' shapes
+        if mask_shape is not None:
+            scale_factor = np.asarray(mask_shape) / np.asarray(nodule_size)
+            batch_mask_shape = np.rint(scale_factor * self.shape[0, :]).astype(np.int)
+            batch_mask = self.fetch_mask_data(batch_mask_shape)
+            nodules_indices = np.rint(scale_factor * nodules_indices).astype(np.int)
+        else:
+            batch_mask = self.mask
+            mask_shape = nodule_size
+
+        # crop nodules' masks
+        mask = get_nodules_numba(batch_mask, nodules_indices, mask_shape)
+
+        # if if_tensor, reshape nodules' data and mask to 4d-shape and return tuple
+        if if_tensor:
+            data = data.reshape((batch_size, ) + tuple(nodule_size))
+            mask = mask.reshape((batch_size, ) + tuple(mask_shape))
+            return data, mask
+
         bounds = np.arange(batch_size + 1) * nodule_size[0]
 
         nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
