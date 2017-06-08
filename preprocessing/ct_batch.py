@@ -270,30 +270,28 @@ class CTImagesBatch(Batch):
             packed = await file.read()
         return blosc.unpack_array(packed)
 
-    @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_raw(self, patient_id, *args, **kwargs):  # pylint: disable=unused-argument
-        """Read, prepare and put 3d-scans in array from raw(mhd).
-
-        This method reads 3d-scans from mhd format
-        in CTImagesMaskedBatch object. This method additionaly
-        initializes origin and spacing attributes.
-
-        Args:
-        - patient_id: index of patient from batch, whose scans need to
-        be put in stack(skyscraper);
-
-        Return :
-        - ndarray(Nz, Ny, Nx) patient's data array;
+    def _load_raw(self, **kwargs):
         """
-        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
-        patient_pos = self.index.get_pos(patient_id)
+        read, prepare and put 3d-scans in list
 
-        # *.mhd files contain information about scans' origin and spacing;
-        # however the order of axes there is inversed:
-        # so, we just need to reverse arrays with spacing and origin.
-        self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
-        self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
-        return sitk.GetArrayFromImage(raw_data)
+            *no conversion to hu here
+        """
+        list_of_arrs = []
+        for patient_id in self.indices:
+            raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
+            patient_pos = self.index.get_pos(patient_id)
+            list_of_arrs.append(sitk.GetArrayFromImage(raw_data))
+            # *.mhd files contain information about scans' origin and spacing;
+            # however the order of axes there is inversed:
+            # so, we just need to reverse arrays with spacing and origin.
+            self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
+            self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
+        
+        new_data = np.concatenate(list_of_arrs, axis=0)
+        new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
+        self._data = new_data
+        self._bounds = new_bounds
+        return self
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
