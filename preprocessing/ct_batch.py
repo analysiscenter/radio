@@ -7,6 +7,7 @@ import shutil
 import numpy as np
 import aiofiles
 import blosc
+import pickle
 import dicom
 import SimpleITK as sitk
 
@@ -96,18 +97,25 @@ class CTImagesBatch(Batch):
     """
 
     @staticmethod
-    async def dump_blosc(data, patient_id, dst):
+    async def dump_data_attrs(data, attrs, patient_id, dst):
         packed = blosc.pack_array(data, cname='zstd', clevel=1)
+        serialized = pickle.dumps(attrs)           
 
         # remove directory if exists
         if os.path.exists(os.path.join(dst, patient_id)):
             shutil.rmtree(os.path.join(dst, patient_id))
 
-        # put blosc on disk
+        # put blosc data on disk
         os.makedirs(os.path.join(dst, patient_id))
         async with aiofiles.open(os.path.join(dst, patient_id,
                                               'data.blk'), mode='wb') as file:
             _ = await file.write(packed)
+
+        # put pickled attributes on disk
+        async with aiofiles.open(os.path.join(dst, patient_id,
+                                              'attrs.pkl'), mode='wb') as file:
+            _ = await file.write(serialized)
+
         return None
 
 
@@ -299,7 +307,8 @@ class CTImagesBatch(Batch):
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
         pat_data = self.get_image(patient)
-        return await self.dump_blosc(pat_data, patient, dst)
+        pat_attrs = self.get_attrs(patient)
+        return await self.dump_data_attrs(pat_data, pat_attrs, patient, dst)
 
     def __len__(self):
         return len(self.index)
@@ -347,6 +356,14 @@ class CTImagesBatch(Batch):
         """
         pos = self._get_verified_pos(index)
         return self._data[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
+
+
+    def get_attrs(self, index):
+        pos = self._get_verified_pos(index)
+        origin = self.origin[pos, :]
+        spacing = self.spacing[pos, :]
+        attrs = {'spacing': spacing, 'origin': origin}
+        return attrs
 
     @property
     def shape(self):
