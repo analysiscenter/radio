@@ -255,6 +255,17 @@ class CTImagesBatch(Batch):
             *no conversion to hu here
         """
         blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'data.blk')
+        attrs_path = os.path.join(self.index.get_fullpath(patient_id), 'attrs.pkl')
+
+        # read pickled attrs-dict and set origin and spacing for patient_id
+        async with aiofiles.open(attrs_path, mode='rb') as file:
+            serialized = await file.read()
+        attrs = pickle.loads(serialized)
+        patient_pos = self.index.get_pos(patient_id)
+        self.origin[patient_pos, :] = attrs['origin']
+        self.spacing[patient_pos, :] = attrs['spacing']
+
+        # read and return data
         async with aiofiles.open(blosc_dir_path, mode='rb') as file:
             packed = await file.read()
         return blosc.unpack_array(packed)
