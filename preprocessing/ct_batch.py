@@ -7,6 +7,7 @@ import shutil
 import numpy as np
 import aiofiles
 import blosc
+import pickle
 import dicom
 import SimpleITK as sitk
 
@@ -96,18 +97,25 @@ class CTImagesBatch(Batch):
     """
 
     @staticmethod
-    async def dump_blosc(data, patient_id, dst):
+    async def dump_data_attrs(data, attrs, patient_id, dst):
         packed = blosc.pack_array(data, cname='zstd', clevel=1)
+        serialized = pickle.dumps(attrs)           
 
         # remove directory if exists
         if os.path.exists(os.path.join(dst, patient_id)):
             shutil.rmtree(os.path.join(dst, patient_id))
 
-        # put blosc on disk
+        # put blosc data on disk
         os.makedirs(os.path.join(dst, patient_id))
         async with aiofiles.open(os.path.join(dst, patient_id,
                                               'data.blk'), mode='wb') as file:
             _ = await file.write(packed)
+
+        # put pickled attributes on disk
+        async with aiofiles.open(os.path.join(dst, patient_id,
+                                              'attrs.pkl'), mode='wb') as file:
+            _ = await file.write(serialized)
+
         return None
 
 
@@ -247,34 +255,43 @@ class CTImagesBatch(Batch):
             *no conversion to hu here
         """
         blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'data.blk')
+        attrs_path = os.path.join(self.index.get_fullpath(patient_id), 'attrs.pkl')
+
+        # read pickled attrs-dict and set origin and spacing for patient_id
+        async with aiofiles.open(attrs_path, mode='rb') as file:
+            serialized = await file.read()
+        attrs = pickle.loads(serialized)
+        patient_pos = self.index.get_pos(patient_id)
+        self.origin[patient_pos, :] = attrs['origin']
+        self.spacing[patient_pos, :] = attrs['spacing']
+
+        # read and return data
         async with aiofiles.open(blosc_dir_path, mode='rb') as file:
             packed = await file.read()
         return blosc.unpack_array(packed)
 
-    @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_raw(self, patient_id, *args, **kwargs):  # pylint: disable=unused-argument
-        """Read, prepare and put 3d-scans in array from raw(mhd).
-
-        This method reads 3d-scans from mhd format
-        in CTImagesMaskedBatch object. This method additionaly
-        initializes origin and spacing attributes.
-
-        Args:
-        - patient_id: index of patient from batch, whose scans need to
-        be put in stack(skyscraper);
-
-        Return :
-        - ndarray(Nz, Ny, Nx) patient's data array;
+    def _load_raw(self, **kwargs):
         """
-        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
-        patient_pos = self.index.get_pos(patient_id)
+        read, prepare and put 3d-scans in list
 
-        # *.mhd files contain information about scans' origin and spacing;
-        # however the order of axes there is inversed:
-        # so, we just need to reverse arrays with spacing and origin.
-        self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
-        self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
-        return sitk.GetArrayFromImage(raw_data)
+            *no conversion to hu here
+        """
+        list_of_arrs = []
+        for patient_id in self.indices:
+            raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
+            patient_pos = self.index.get_pos(patient_id)
+            list_of_arrs.append(sitk.GetArrayFromImage(raw_data))
+            # *.mhd files contain information about scans' origin and spacing;
+            # however the order of axes there is inversed:
+            # so, we just need to reverse arrays with spacing and origin.
+            self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
+            self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
+        
+        new_data = np.concatenate(list_of_arrs, axis=0)
+        new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
+        self._data = new_data
+        self._bounds = new_bounds
+        return self
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
@@ -299,7 +316,8 @@ class CTImagesBatch(Batch):
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
         pat_data = self.get_image(patient)
-        return await self.dump_blosc(pat_data, patient, dst)
+        pat_attrs = self.get_attrs(patient)
+        return await self.dump_data_attrs(pat_data, pat_attrs, patient, dst)
 
     def __len__(self):
         return len(self.index)
@@ -347,6 +365,14 @@ class CTImagesBatch(Batch):
         """
         pos = self._get_verified_pos(index)
         return self._data[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
+
+
+    def get_attrs(self, index):
+        pos = self._get_verified_pos(index)
+        origin = self.origin[pos, :]
+        spacing = self.spacing[pos, :]
+        attrs = {'spacing': spacing, 'origin': origin}
+        return attrs
 
     @property
     def shape(self):

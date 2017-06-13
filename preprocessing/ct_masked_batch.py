@@ -163,7 +163,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     @inbatch_parallel(init='indices', post='_post_default',
                       target='async', update=False)
-    async def dump(self, patient, dst, src="mask", fmt="blosc"):
+    async def dump(self, patient, dst, src="data", fmt="blosc"):
         """Dump mask or source data on specified path and format.mro.
 
         Dump data or mask in CTIMagesMaskedBatch on specified path and format.
@@ -187,9 +187,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                       'not implemented yet'.format(fmt))
         if src == 'data':
             data_to_dump = self.get_image(patient)
+            pat_attrs = self.get_attrs(patient)
         elif src == 'mask':
             data_to_dump = self.get_mask(patient)
-        return await self.dump_blosc_async(data_to_dump, patient, dst)
+            pat_attrs = self.get_attrs(patient)
+        return await self.dump_data_attrs(data_to_dump, pat_attrs, patient, dst)
 
     def get_mask(self, index):
         """Get view on patient data's mask.
