@@ -1,7 +1,10 @@
 """ contains class CTImagesMaskedBatch(CTImagesBatch) for storing masked Ct-scans """
+import os
+import shutil
 from concurrent.futures import ThreadPoolExecutor
 
 import numpy as np
+import blosc
 import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_patient
@@ -188,6 +191,74 @@ class CTImagesMaskedBatch(CTImagesBatch):
         super().resize(**args_res)
 
         return self
+
+    def dump_mask(self, dst, fmt='blosc'):
+        """Dump mask on hard drive.
+
+        dump mask on specified path and format
+            create folder corresponding to each patient
+
+        example:
+            # initialize batch and load data
+            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            batch = CTImagesMaskedBatch(ind)
+
+            batch.load_mask(...)
+
+            batch.dump_mask('./data/blosc_mask_preprocessed')
+        """
+        if fmt != 'blosc':
+            raise NotImplementedError(
+                'Dump to {} not implemented yet'.format(fmt))
+
+        for patient_id in self.indices:
+            # view on patient data
+            patient_num = self.index.get_pos(patient_id)
+            patient_mask = self.mask[self._lower_bounds[patient_num]:
+                                     self._upper_bounds[patient_num], :, :]
+            # pack the data
+            packed = blosc.pack_array(patient_mask, cname='zstd', clevel=1)
+
+            # remove directory if exists
+            if os.path.exists(os.path.join(dst, patient_id)):
+                shutil.rmtree(os.path.join(dst, patient_id))
+
+            # put blosc on disk
+            os.makedirs(os.path.join(dst, patient_id))
+
+            with open(os.path.join(dst, patient_id,
+                                   'data.blk'), mode='wb') as file:
+                file.write(packed)
+
+        # add info in self.history
+        info = {}
+        info['method'] = 'dump_mask'
+        info['params'] = {'path': dst}
+        self.history.append(info)
+
+        return self
+
+    def mask_by_index(self, patient_index):
+        """Get patient mask data by indexation.
+
+        Argument patient_index can be either number of patient in batch
+        and patient_id which is stored in self.index.
+        Returns view of data array which corresponds
+        to patient defined by index.
+        """
+        if isinstance(patient_index, int):
+            if patient_index < len(self) and patient_index >= 0:
+                lower = self._lower_bounds[patient_index]
+                upper = self._upper_bounds[patient_index]
+                return self.mask[lower: upper, :, :]
+            else:
+                raise IndexError("Index of patient in the batch" +
+                                 "is out of range")
+        else:
+            ind_pos = self.index.get_pos(patient_index)
+            lower = self._lower_bounds[ind_pos]
+            upper = self._upper_bounds[ind_pos]
+            return self.mask[lower: upper, :, :]
 
     def get_axial_slice(self, person_number, slice_height):
         """
