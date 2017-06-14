@@ -464,8 +464,10 @@ class CTImagesBatch(Batch):
         """
         args-fetcher for parallelization using decorator
             can be used when batch-data is rebuild from scratch
-        if shape is supplied as one of the args
-            assumes that data should be resizd
+        if shape is supplied as one of the args, assumes that data
+            should be resized, resize is performed
+        if spacing is supplied as one of the args, assumes that unify_spacing
+            is performed
         """
         if 'shape' in kwargs:
             num_slices, y, x = kwargs['shape']
@@ -481,6 +483,10 @@ class CTImagesBatch(Batch):
             item_args = {'patient': self.get_image(i),
                          'out_patient': out_patient,
                          'res': new_data}
+            # for unify_spacing
+            if 'spacing' in kwargs:
+                item_args['res_factor'] = self.spacing[i, :] / \
+                                          np.array(kwargs['spacing'])
 
             all_args += [item_args]
 
@@ -549,8 +555,7 @@ class CTImagesBatch(Batch):
         """
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
-            returns self
-        args:
+        Args:
             shape: needed shape after resize in order z, y, x
                 *note that the order of axes in data is z, y, x
                  that is, new patient shape = (shape[0], shape[1], shape[2])
@@ -559,11 +564,41 @@ class CTImagesBatch(Batch):
                 above
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
+        Returns: 
+            self
         example:
             shape = (128, 256, 256)
             Batch = Batch.resize(shape=shape, n_workers=20, order=2)
         """
         return resize_patient_numba
+
+    @action
+    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3):
+        """
+        Unify spacing of all patients using resize, then crop/pad resized array
+            to supplied shape
+        Args:
+            spacing: needed spacing in mm
+            shape: needed shape after crop/pad
+            order: order of interpolation (<=5)
+        Returns:
+            self
+        """
+        # recalculate origin
+        shape_after_resize = np.rint(self.shape * self.spacing / np.asarray(spacing))
+        overshoot = shape_after_resize - np.asarray(shape)
+        self.origin -= np.asarray(spacing) * overshoot
+
+        # execute resize;
+        self.resize(shape=shape, order=order, spacing=spacing)
+
+        # refresh spacing
+        for i in range(self):
+            self.spacing[i, :] = np.asarray(spacing)
+
+        return self
+
+
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
