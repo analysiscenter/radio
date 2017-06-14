@@ -111,8 +111,7 @@ class CTImagesBatch(Batch):
         self.spacing = spacing if spacing is not None else np.zeros((len(self), 3))
 
     def _rescale_spacing(self, shape):
-        slice_shape = self.get_image(0).shape[1:]
-        old_shapes = np.zeros((len(self._bounds) - 1, slice_shape[0], slice_shape[1]), dtype='int')
+        old_shapes = np.zeros(len(self), 3, dtype='int')
         old_shapes[2] = self._bounds[1:] - self._bounds[:-1]
         old_shapes[1] = slice_shape[1]
         old_shapes[0] = slice_shape[0]
