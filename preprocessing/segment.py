@@ -29,9 +29,8 @@ def largest_label_volume(image, background=-1):
 
 
 # segmentation of a patient sliced from skyscraper
-@jit('void(double[:,:,:], int64, int64, double[:,:,:], int64, int64)',
-     nogil=True)
-def get_mask_patient(chunk, start_from, end_from, res, start_to, erosion_radius):
+@jit('void(double[:,:,:], double[:,:,:], double[:,:,:], int64)', nogil=True)
+def calc_lung_mask_numba(patient, out_patient, res, erosion_radius=7):
     """
     computes lungs-segmenting mask for one patient
         args
@@ -45,7 +44,7 @@ def get_mask_patient(chunk, start_from, end_from, res, start_to, erosion_radius)
 
     # slice the patient out from the skyscraper
     # we use view for simplification
-    data = chunk[start_from:end_from, :, :]
+    data = patient
 
     binary_image = np.array(data > -320, dtype=np.int8) + 1
 
@@ -121,6 +120,7 @@ def get_mask_patient(chunk, start_from, end_from, res, start_to, erosion_radius)
     selem = morphology.disk(erosion_radius)
 
     # put the mask into the result
-    for i in range(end_from - start_from):
-        res[start_to + i, :,
-            :] = morphology.binary_erosion(binary_image[i, :, :], selem)
+    for i in range(patient.shape[0]):
+        out_patient[i, :, :] = morphology.binary_erosion(binary_image[i, :, :], selem)
+
+    return res, out_patient.shape
