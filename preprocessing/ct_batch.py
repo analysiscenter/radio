@@ -586,17 +586,17 @@ class CTImagesBatch(Batch):
         Returns:
             self
         """
-        # recalculate origin
+        # recalculate origin, spacing
         shape_after_resize = np.rint(self.shape * self.spacing / np.asarray(spacing))
         overshoot = shape_after_resize - np.asarray(shape)
-        self.origin += np.asarray(spacing) * (overshoot // 2)
+        new_spacing = self.rescale(new_shape=shape_after_resize)
+        self.origin += new_spacing * (overshoot // 2)
 
-        # execute resize;
+        # execute resize
         self.resize(shape=shape, order=order, spacing=spacing)
 
         # refresh spacing
-        for i in range(len(self)):
-            self.spacing[i, :] = np.asarray(spacing)
+        self.spacing = new_spacing
 
         return self
 
