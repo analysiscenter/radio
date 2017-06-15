@@ -573,7 +573,8 @@ class CTImagesBatch(Batch):
         return resize_patient_numba
 
     @action
-    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3):
+    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
+                      padding='edge'):
         """
         Unify spacing of all patients using resize, then crop/pad resized array
             to supplied shape
@@ -581,6 +582,7 @@ class CTImagesBatch(Batch):
             spacing: needed spacing in mm
             shape: needed shape after crop/pad
             order: order of interpolation (<=5)
+            padding: mode of padding, any of those supported by np.pad
         Returns:
             self
         """

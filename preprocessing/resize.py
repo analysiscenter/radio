@@ -12,7 +12,7 @@ import numpy as np
 
 @jit(nogil=True)
 def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
-                         res_factor=None, padding=None, spacing=None):
+                         res_factor=None, padding='edge', spacing=None):
     """
     resizes 3d-scan for one patient and puts it into out_patient array
         crops/pads it if necessary
@@ -53,7 +53,7 @@ def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
     return res, out_patient.shape
 
 
-def to_shape(data, shape, padding='edge'):
+def to_shape(data, shape, padding):
     """
     crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array
         of shape=shape
