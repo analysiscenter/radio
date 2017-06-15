@@ -589,7 +589,7 @@ class CTImagesBatch(Batch):
         # recalculate origin
         shape_after_resize = np.rint(self.shape * self.spacing / np.asarray(spacing))
         overshoot = shape_after_resize - np.asarray(shape)
-        self.origin -= np.asarray(spacing) * (overshoot // 2)
+        self.origin += np.asarray(spacing) * (overshoot // 2)
 
         # execute resize;
         self.resize(shape=shape, order=order, spacing=spacing)
