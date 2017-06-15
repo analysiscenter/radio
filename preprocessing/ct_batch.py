@@ -595,7 +595,7 @@ class CTImagesBatch(Batch):
         self.resize(shape=shape, order=order, spacing=spacing)
 
         # refresh spacing
-        for i in range(self):
+        for i in range(len(self)):
             self.spacing[i, :] = np.asarray(spacing)
 
         return self
