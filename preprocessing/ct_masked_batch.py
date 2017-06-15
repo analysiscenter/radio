@@ -558,7 +558,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return resize_patient_numba
 
-    @action    
+    # @action    
     def unify_spacing(self, **kwargs):
         """
         Unify spacing of all patients using resize, then crop/pad resized array

@@ -572,7 +572,7 @@ class CTImagesBatch(Batch):
         """
         return resize_patient_numba
 
-    @action
+    # @action
     def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
                       padding='edge'):
         """
