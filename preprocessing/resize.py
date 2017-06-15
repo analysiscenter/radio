@@ -45,15 +45,15 @@ def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
         out_patient[:, :, :] = scipy.ndimage.interpolation.zoom(patient, res_factor, order=order)
     else:
         out_patient[:, :, :] = to_shape(scipy.ndimage.interpolation.zoom(patient, res_factor, order=order),
-                                        shape=shape)
+                                        shape=shape, padding=padding)
 
 
     # return out-array for the whole batch
     # and shape of out_patient
     return res, out_patient.shape
 
-#@jit(nogil=True)
-def to_shape(data, shape, padding):
+
+def to_shape(data, shape, padding='edge'):
     """
     crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array
         of shape=shape
