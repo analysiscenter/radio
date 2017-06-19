@@ -558,6 +558,27 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return resize_patient_numba
 
+    @action    
+    def unify_spacing(self, **kwargs):
+        """
+        Unify spacing of all patients using resize, then crop/pad resized array
+            to supplied shape. Recalculates origin, spacing, so that nodules can be
+                constructed
+        Args:
+            spacing: needed spacing in mm
+            shape: needed shape after crop/pad
+            order: order of interpolation (<=5)
+            padding: mode of padding, any of those supported by np.pad
+        Returns:
+            self
+        """
+        super().unify_spacing(**kwargs)
+
+        # update nodules' params
+        self = self._rescale_spacing()
+        return self
+
+
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """Post-function for resize parallelization.
 
