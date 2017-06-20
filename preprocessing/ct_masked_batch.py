@@ -59,7 +59,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     In addition to batch itself, stores mask in
     self.mask as ndarray, origin and spacing dictionaries
     and list with information about nodules in batch.
-
+    
     new attrs:
         1. mask: ndarray of masks
         2. spacing: dict with keys = self.indices
@@ -68,6 +68,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         3. origin: dict with keys = self.indices
             stores world coords of [0, 0, 0]-pixel of data for
             all patients
+
         4. nodules_info: list with information about nodule; each nodule
             represented by instance of Nodule class
 

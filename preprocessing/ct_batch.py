@@ -23,16 +23,6 @@ AIR_HU = -2000
 DARK_HU = -2000
 
 
-def read_unpack_blosc(blosc_dir_path):
-    """
-    read, unpack blosc file
-    """
-    with open(blosc_dir_path, mode='rb') as file:
-        packed = file.read()
-
-    return blosc.unpack_array(packed)
-
-
 class CTImagesBatch(Batch):
 
     """
@@ -54,15 +44,15 @@ class CTImagesBatch(Batch):
             given base class Batch
 
         2. load(self, source, fmt, upper_bounds):
+
             builds skyscraper of patients
             from either 'dicom'|'raw'|'blosc'|'ndarray'
             returns self
 
-        2. resize(self, num_x_new, num_y_new, num_slices_new,
-                  order, num_threads):
+        2. resize(self, shape, order):
             transform the shape of all patients to new_sizes
             method is spline iterpolation(order = order)
-            the function is multithreaded in num_threads
+            the function is multithreaded
             returns self
 
         3. dump(self, dst)
@@ -70,14 +60,14 @@ class CTImagesBatch(Batch):
             in the path-folder
             returns self
 
-        4. get_mask(self, erosion_radius=7, num_threads=8)
+        4. calc_lungs_mask(self, erosion_radius=7)
             returns binary-mask for lungs segmentation
             the larger erosion_radius
             the lesser the resulting lungs will be
             * returns mask, not self
 
-        5. segment(self, erosion_radius=2, num_threads=8)
-            segments using mask from get_mask()
+        5. segment(self, erosion_radius=2)
+            segments using mask from calc_lungs_mask()
             that is, sets to hu = -2000 of pixels outside mask
             changes self, returns self
 
@@ -271,6 +261,7 @@ class CTImagesBatch(Batch):
         # *.mhd files contain information about scans' origin and spacing;
         # however the order of axes there is inversed:
         # so, we just need to reverse arrays with spacing and origin.
+
         self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
         self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
         return sitk.GetArrayFromImage(raw_data)

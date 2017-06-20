@@ -5,23 +5,23 @@ from numba import njit
 
 
 @njit(nogil=True)
-def insert_cropped(where, what, st_pos):
+def insert_cropped(where, what, origin):
     """
     where, what: arrays with same ndims=3
-    st_pos: ndarray of length=3
-        what-array should be put in where-array starting from st_pos
+    origin: ndarray of length=3
+        what-array should be put in where-array starting from origin
         what-array is cropped if
-            st_pos is negative or
+            origin is negative or
             what-array is too large to be put in where-array
-            starting from st_pos
+            starting from origin
 
     example:
         where = np.zeros(shape=(3, 3, 3), dtype='int')
         what = np.ones(shape=(2, 2, 2), dtype='int')
-        st_pos = np.asarray([2, 2, 2])
+        origin = np.asarray([2, 2, 2])
 
         # after execution
-        insert_cropped(where, what, st_pos)
+        insert_cropped(where, what, origin)
         # where[2, 2, 2] = 1, other elems = 0
     """
     # define crop boundaries
