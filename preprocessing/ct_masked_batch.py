@@ -2,8 +2,6 @@
 # pylint: disable=no-name-in-module
 # pylint: disable=arguments-differ
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
-import os
-from binascii import hexlify
 import logging
 import numpy as np
 from numba import njit
