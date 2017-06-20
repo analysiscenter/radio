@@ -259,8 +259,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             pat_pos = self.index.get_pos(pat_id)
             self.nodules.patient_pos[counter] = pat_pos
             self.nodules.nodule_center[counter, :] = np.array([coordz,
-                                                        coordy,
-                                                        coordx])
+                                                               coordy,
+                                                               coordx])
             self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
             counter += 1
 
