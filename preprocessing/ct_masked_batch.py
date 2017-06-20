@@ -525,34 +525,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch.nodules.nodule_size[:, _projection] += (depth
                                                       * self.nodules.spacing[:, _projection])
         batch.spacing = self.rescale(batch[0].shape)
-        batch._rescale_spacing()
+        batch._rescale_spacing()   # pylint: disable=protected-access
         if self.mask is not None:
             batch.create_mask()
         return batch
-
-
-    def _update_nodule_size(self, step, depth, axis='z'):
-        """Update nodules' sizes after xip operations.
-
-        This function updates nodules when xip operation is performed
-        is called after every xip operation.
-
-        Args:
-        - step: step of xip operation;
-        - depth: depth of xip operation;
-        - axis: axis along which xip operation is computed;
-        """
-        if axis == 'z':
-            size_inc = np.array([depth, 0, 0])
-        elif axis == 'y':
-            size_inc = np.array([0, depth, 0])
-        elif axis == 'x':
-            size_inc = np.array([0, 0, depth])
-        else:
-            raise ValueError("Argument axis must be instance " +
-                             "of type str and have one of the " +
-                             "following values ['z', 'y', 'x']")
-        self.nodules.nodule_size += size_inc * self.nodules.spacing
 
     def flip(self):
         logger.warning("There is no implementation of flip method for class " +
