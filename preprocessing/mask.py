@@ -25,12 +25,12 @@ def insert_cropped(where, what, origin):
         # where[2, 2, 2] = 1, other elems = 0
     """
     # define crop boundaries
-    st_what = -np.minimum(np.zeros_like(st_pos), st_pos)
-    end_what = np.minimum(np.array(where.shape) - st_pos,
+    st_what = -np.minimum(np.zeros_like(origin), origin)
+    end_what = np.minimum(np.array(where.shape) - origin,
                           np.array(what.shape))
 
-    st_where = np.maximum(st_pos, np.zeros_like(st_pos))
-    end_where = np.minimum(st_pos + np.array(what.shape),
+    st_where = np.maximum(origin, np.zeros_like(origin))
+    end_where = np.minimum(origin + np.array(what.shape),
                            np.array(where.shape))
 
     # perform insert
