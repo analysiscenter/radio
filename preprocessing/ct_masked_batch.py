@@ -498,7 +498,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # TODO: process errors
         batch = super()._post_rebuild(all_outputs, new_batch, **kwargs)
         batch.nodules = self.nodules
-        batch._rescale_spacing()
+        batch._rescale_spacing()  # pylint: disable=protected-access
         if self.mask is not None:
             batch.create_mask()
         return batch
