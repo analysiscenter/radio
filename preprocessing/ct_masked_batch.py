@@ -531,22 +531,3 @@ class CTImagesMaskedBatch(CTImagesBatch):
         logger.warning("There is no implementation of flip method for class " +
                        "CTIMagesMaskedBatch. Nothing happened")
         return self
-
-    @action
-    def visualize(self, index):
-        """Visualize masked CTImage with ipyvolume.
-
-        This method visualizes masked CTImages using ipyvolumne package.
-        Points where mask has 1 values are supposed to be brighter in
-        3d picture.
-
-        Args:
-        - index: int or str containing sample position
-        or index correspondingly.
-        """
-        import ipyvolume
-        data = self.get_image(index)
-        mask = self.get_mask(index)
-        return ipyvolume.quickvolshow(data + mask * 1000, level=[0.25, 0.75],
-                                      opacity=0.03, level_width=0.1,
-                                      data_min=0, data_max=1300)
