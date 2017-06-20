@@ -60,7 +60,7 @@ def numba_xip(arr, l, m, n, flag, fill_value):
 
 @njit(nogil=True)
 def make_xip(data, step, depth,
-             start= 0, stop=-1, func=0, fill_value=0):
+             start=0, stop=-1, func=0, fill_value=0):
     """Apply xip operation to CTImage scan of one patient.
 
     This function takes 3d picture represented by np.ndarray image,
