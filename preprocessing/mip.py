@@ -1,4 +1,4 @@
-#pylint disable=invalid-name
+# pylint: disable=invalid-name
 """ Numba-rized functions for MIP calculation """
 
 import numpy as np
