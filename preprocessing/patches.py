@@ -1,5 +1,7 @@
+# pylint: disable=invalid-name
+# pylint: disable=missing-docstring
 import numpy as np
-from numba import njit, jit
+from numba import njit
 
 
 @njit
