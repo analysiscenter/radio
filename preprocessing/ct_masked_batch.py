@@ -8,8 +8,7 @@ from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .resize import resize_patient_numba
-from .dataset_import import action, inbatch_parallel, any_action_failed
-# from .segment import calc_lung_mask_numba
+from .dataset_import import action, inbatch_parallel
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
