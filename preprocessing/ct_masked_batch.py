@@ -11,6 +11,7 @@ from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .resize import resize_patient_numba
 from .dataset_import import action, inbatch_parallel, any_action_failed
+# from .segment import calc_lung_mask_numba
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
@@ -59,7 +60,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     In addition to batch itself, stores mask in
     self.mask as ndarray, origin and spacing dictionaries
     and list with information about nodules in batch.
-    
+
     new attrs:
         1. mask: ndarray of masks
         2. spacing: dict with keys = self.indices
@@ -68,7 +69,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         3. origin: dict with keys = self.indices
             stores world coords of [0, 0, 0]-pixel of data for
             all patients
-
         4. nodules_info: list with information about nodule; each nodule
             represented by instance of Nodule class
 
@@ -517,12 +517,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         batch.nodules = self.nodules
         if projection == 'axial':
-            projection_int = 0
+            _projection = 0
         elif projection == 'coronal':
-            projection_int = 1
+            _projection = 1
         elif projection == 'sagital':
-            projection_int = 2
-        batch.nodules.nodule_size[:, pr] += depth * self.nodules.spacing[:, projection_int]
+            _projection = 2
+        batch.nodules.nodule_size[:, _projection] += (depth
+                                                      * self.nodules.spacing[:, _projection])
         batch.spacing = self.rescale(batch[0].shape)
         batch._rescale_spacing()
         if self.mask is not None:
@@ -558,6 +559,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                        "CTIMagesMaskedBatch. Nothing happened")
         return self
 
+    @action
     def visualize(self, index):
         """Visualize masked CTImage with ipyvolume.
 
