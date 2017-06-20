@@ -1,4 +1,5 @@
 # pylint: disable=invalid-name
+# pylint: disable=missing-docstring
 """ Numba-rized functions for MIP calculation """
 
 import numpy as np
