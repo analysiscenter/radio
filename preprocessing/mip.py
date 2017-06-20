@@ -116,7 +116,7 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
     def out_function(data, start=0, end=-1):
         data_tr = data.transpose(_projection)
         if _function == 0:
-            fill_value =np.finfo(data.dtype).min
+            fill_value = np.finfo(data.dtype).min
         elif _function == 1:
             fill_value = np.finfo(data.dtype).max
         else:
