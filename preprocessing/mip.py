@@ -1,6 +1,6 @@
+#pylint disable=invalid-name
 """ Numba-rized functions for MIP calculation """
 
-from functools import partial, wraps
 import numpy as np
 from numba import njit
 
@@ -17,7 +17,7 @@ _NUMBA_FUNC = {'max': 0, 'min': 1, 'mean': 2}
 
 
 @njit(nogil=True)
-def min_max_sum_fn(a: float, b: float, flag: int) -> float:
+def min_max_sum_fn(a, b, flag):
     """Apply njit binary opertaion to a, b.
 
     Binary operation defined by flag of type int.
@@ -58,8 +58,8 @@ def numba_xip(arr, l, m, n, flag, fill_value):
 
 
 @njit(nogil=True)
-def make_xip(data: np.ndarray, step: int, depth: int,
-             start: int = 0, stop: int = -1, func: int = 0, fill_value: int = 0):
+def make_xip(data, step, depth,
+             start= 0, stop=-1, func=0, fill_value=0):
     """Apply xip operation to CTImage scan of one patient.
 
     This function takes 3d picture represented by np.ndarray image,
@@ -113,7 +113,7 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
     _projection = _PROJECTIONS[projection]
     _reverse_projection = _REVERSE_PROJECTIONS[projection]
     _function = _NUMBA_FUNC[func]
-    def out_function(data: np.ndarray, start: int = 0, end: int = -1, *args, **kwargs):
+    def out_function(data, start=0, end=-1):
         data_tr = data.transpose(_projection)
         if _function == 0:
             fill_value =np.finfo(data.dtype).min
