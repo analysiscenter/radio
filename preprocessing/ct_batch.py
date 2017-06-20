@@ -588,15 +588,15 @@ class CTImagesBatch(Batch):
         extract patches of size patch_shape with specified
             stride
         args:
-            patch_shape: tuple/list/ndarray of len=3 with needed 
+            patch_shape: tuple/list/ndarray of len=3 with needed
                 patch shape
-            stride: tuple/list/ndarray of len=3 with stride that we 
+            stride: tuple/list/ndarray of len=3 with stride that we
                 use to slide over each patient's data
             padding: type of padding (see doc of np.pad for available types)
                 say, 3.6 windows of size=patch_shape with stride
                 can be exracted from each patient's data.
-                Then data will be padded s.t. 4 windows can be extracted 
-        returns:
+                Then data will be padded s.t. 4 windows can be extracted
+                returns:
             4d-ndaray of patches; first dimension enumerates patches
 
         *Note: the shape of all patients is assumed to be the same
