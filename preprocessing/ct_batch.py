@@ -96,29 +96,6 @@ class CTImagesBatch(Batch):
 
     """
 
-    @staticmethod
-    async def dump_data_attrs(data, attrs, patient_id, dst):
-        packed = blosc.pack_array(data, cname='zstd', clevel=1)
-        serialized = pickle.dumps(attrs)           
-
-        # remove directory if exists
-        if os.path.exists(os.path.join(dst, patient_id)):
-            shutil.rmtree(os.path.join(dst, patient_id))
-
-        # put blosc data on disk
-        os.makedirs(os.path.join(dst, patient_id))
-        async with aiofiles.open(os.path.join(dst, patient_id,
-                                              'data.blk'), mode='wb') as file:
-            _ = await file.write(packed)
-
-        # put pickled attributes on disk
-        async with aiofiles.open(os.path.join(dst, patient_id,
-                                              'attrs.pkl'), mode='wb') as file:
-            _ = await file.write(serialized)
-
-        return None
-
-
     def __init__(self, index):
         """
         common part of initialization from all formats:
@@ -293,6 +270,39 @@ class CTImagesBatch(Batch):
         self._bounds = new_bounds
         return self
 
+    @staticmethod
+    async def dump_data_attrs(data_dict, attrs, patient_id, dst):
+        """ dump data and attrs corresponding to one patient on disk in
+                folder = dst + patient_id
+
+        Args:
+            data_dict: dict of ndarrays for dump in form array_name : array
+                (e.g.: {'data.blk': data, 'mask.blk': mask})
+            attrs: dict of attrs to dump
+            patient_id: id of a patient to whom the data and attrs belong
+            dst: name of direcory in which the patient is dumped
+        """
+        serialized = pickle.dumps(attrs)           
+
+        # create directory if does not exist
+        if not os.path.exists(os.path.join(dst, patient_id)):
+            os.makedirs(os.path.join(dst, patient_id))
+
+        # compress with blosc and put all ndarrays from data_dict on disk
+        for dataname, data in data_dict.items():
+            packed = blosc.pack_array(data, cname='zstd', clevel=1)
+            async with aiofiles.open(os.path.join(dst, patient_id,
+                                                  dataname), mode='wb') as file:
+                _ = await file.write(packed)
+
+        # put pickled attributes on disk if attrs is supplied
+        if attrs is not None:
+            async with aiofiles.open(os.path.join(dst, patient_id,
+                                              'attrs.pkl'), mode='wb') as file:
+                _ = await file.write(serialized)
+
+        return None
+
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
     async def dump(self, patient, dst, fmt='blosc'):
@@ -315,7 +325,7 @@ class CTImagesBatch(Batch):
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
-        pat_data = self.get_image(patient)
+        pat_data = {'data.blk': self.get_image(patient)}
         pat_attrs = self.get_attrs(patient)
         return await self.dump_data_attrs(pat_data, pat_attrs, patient, dst)
 

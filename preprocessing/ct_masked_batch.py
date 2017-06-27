@@ -160,11 +160,31 @@ class CTImagesMaskedBatch(CTImagesBatch):
             super().load(fmt=fmt, **params)
         return self
 
+    @inbatch_parallel(init='indices', post='_post_mask', target='async')
+    async def load_mask(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
+        """ read, prepare and put 3d-mask in array from blosc,
+            return the array.
+
+        Args:
+            patient_id: index of patient from batch, whose scans we need to
+                stack
+        Return:
+            array with mask that corresponds to patient with supplied id
+        """
+        blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'mask.blk')
+        if not os.path.exists(blosc_dir_path):
+            raise FileExistsError("Cannot find mask.blk in the patient's folder")
+
+        # read and return data
+        async with aiofiles.open(blosc_dir_path, mode='rb') as file:
+            packed = await file.read()
+        return blosc.unpack_array(packed)
+
     @action
     @inbatch_parallel(init='indices', post='_post_default',
                       target='async', update=False)
-    async def dump(self, patient, dst, src="data", fmt="blosc"):
-        """Dump mask or source data on specified path and format.mro.
+    async def dump(self, patient, dst, src="data", fmt="blosc", dump_attrs=True):
+        """Dump mask or source data on specified path and format
 
         Dump data or mask in CTIMagesMaskedBatch on specified path and format.
         Create folder corresponing to each patient.
@@ -186,11 +206,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
             raise NotImplementedError('Dump to {} is ' +
                                       'not implemented yet'.format(fmt))
         if src == 'data':
-            data_to_dump = self.get_image(patient)
-            pat_attrs = self.get_attrs(patient)
+            data_dict = {'data.blk': self.get_image(patient)}
         elif src == 'mask':
-            data_to_dump = self.get_mask(patient)
-            pat_attrs = self.get_attrs(patient)
+            data_dict = {'mask.blk': self.get_mask(patient)}
+
+        # get patient attrs if dump of attrs is needed
+        pat_attrs = self.get_attrs(patient) if dump_attrs else None
         return await self.dump_data_attrs(data_to_dump, pat_attrs, patient, dst)
 
     def get_mask(self, index):
@@ -576,6 +597,21 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         # update nodules' params
         self = self._rescale_spacing()
+        return self
+
+    def _post_mask(self, list_of_arrs, **kwargs):    # pylint: disable=unused-argument
+        """ concatenate outputs of different workers and put the result in mask-attr
+        
+        Args:
+            list_of_arrs: list of ndarays, with each ndarray representing a
+                patient's mask
+        """
+        if any_action_failed(list_of_arrs):
+            raise ValueError("Failed while parallelizing")
+
+        new_mask = np.concatenate(list_of_arrs, axis=0)
+        self.mask = new_mask
+
         return self
 
 
