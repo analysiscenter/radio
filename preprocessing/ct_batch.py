@@ -272,7 +272,7 @@ class CTImagesBatch(Batch):
 
     @staticmethod
     async def dump_data_attrs(data_dict, attrs, patient_id, dst):
-        """ dump data and attrs corresponding to one patient on disk in
+        """ Dump data and attrs corresponding to one patient on disk in
                 folder = dst + patient_id
 
         Args:
@@ -306,21 +306,31 @@ class CTImagesBatch(Batch):
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
     async def dump(self, patient, dst, fmt='blosc'):
-        """
-        dump on specified path and format
-            create folder corresponding to each patient
+        """ Dump scans data (3d-array) on specified path in specified format
+
+        Args:
+            dst: general folder in which all patients' data should be put
+            fmt: format of dump. Currently only blosc-format is supported;
+                in this case folder for each patient is created, patient's data
+                is put into data.blk, attributes are put into dict attrs.pkl
+
 
         example:
             # initialize batch and load data
             ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-            batch = BatchCt(ind)
+            batch = CTImagesBatch(ind)
             batch.load(...)
             batch.dump(dst='./data/blosc_preprocessed')
             # the command above creates files
 
             # ./data/blosc_preprocessed/1ae34g90/data.blk
+            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
+
             # ./data/blosc_preprocessed/3hf82s76/data.blk
+            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
+
             # ./data/blosc_preprocessed/2ds38d04/data.blk
+            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
         """
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
@@ -330,17 +340,24 @@ class CTImagesBatch(Batch):
         return await self.dump_data_attrs(pat_data, pat_attrs, patient, dst)
 
     def __len__(self):
+        """ Get number of patients in self
+
+        Return:
+            number of patients in batch
+
+        """
         return len(self.index)
 
     def __getitem__(self, index):
-        """
-        indexation of patients by []
+        """ Indexation of patients by []
 
-        args:
+        Args:
             self
             index - can be either number (int) of patient
                          in self from [0,..,len(self.index) - 1]
                     or index from self.index
+        Return:
+            view on patient with index/number given by index
         """
         return self.get_image(index)
 
@@ -352,9 +369,13 @@ class CTImagesBatch(Batch):
         If fetched position is out of bounds then Exception is generated.
         If str then position of patient is fetched.
 
-        args:
+        Args:
             index - can be either position of patient in self._data
                 or index from self.index
+
+        Return:
+            if supplied index is int, return supplied number,
+            o\w return the position of patient with supplied index
         """
         if isinstance(index, int):
             if index < len(self) and index >= 0:
@@ -366,18 +387,29 @@ class CTImagesBatch(Batch):
         return pos
 
     def get_image(self, index):
-        """
-        get view on patient data
+        """ Get view on patient's data
 
-        args:
-            index - can be either position of patient in self._data
+        Args:
+            index: either position of patient in self._data
                 or index from self.index
+
+        Return:
+            ndarray(view) with the data of chosen patient
         """
         pos = self._get_verified_pos(index)
         return self._data[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
 
     def get_attrs(self, index):
+        """ Get attributes of a patient
+
+        Args:
+            index: either position of patient in self._data
+                or index from self.index 
+            
+        Return:
+            dict with attributes of chosen patient
+        """
         pos = self._get_verified_pos(index)
         origin = self.origin[pos, :]
         spacing = self.spacing[pos, :]
