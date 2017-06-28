@@ -3,9 +3,11 @@
 # pylint: disable=arguments-differ
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import os
+import shutil
+
+import aiofiles
 from binascii import hexlify
 import logging
-import shutil
 import blosc
 import numpy as np
 from numba import njit
@@ -212,7 +214,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         # get patient attrs if dump of attrs is needed
         pat_attrs = self.get_attrs(patient) if dump_attrs else None
-        return await self.dump_data_attrs(data_to_dump, pat_attrs, patient, dst)
+        return await self.dump_data_attrs(data_dict, pat_attrs, patient, dst)
 
     def get_mask(self, index):
         """Get view on patient data's mask.
