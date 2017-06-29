@@ -207,10 +207,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is ' +
                                       'not implemented yet'.format(fmt))
-        if src == 'data':
-            data_dict = {'data.blk': self.get_image(patient)}
-        elif src == 'mask':
-            data_dict = {'mask.blk': self.get_mask(patient)}
+
+        # convert src to iterable 1d-array
+        src = np.asarray(src).reshape(-1)
+        data_dict = dict()
+
+        for source in list(src):
+            if source == 'data':
+                data_dict.update({'data.blk': self.get_image(patient)})
+            elif source == 'mask':
+                data_dict.update({'mask.blk': self.get_mask(patient)})
 
         # get patient attrs if dump of attrs is needed
         pat_attrs = self.get_attrs(patient) if dump_attrs else None

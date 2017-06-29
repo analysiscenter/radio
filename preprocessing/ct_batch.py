@@ -616,7 +616,7 @@ class CTImagesBatch(Batch):
 
     @action
     def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
-                      padding='edge'):
+                      padding='edge', n_workers=6):
         """
         Unify spacing of all patients using resize, then crop/pad resized array
             to supplied shape
@@ -635,7 +635,7 @@ class CTImagesBatch(Batch):
         self.origin += new_spacing * (overshoot // 2)
 
         # execute resize
-        self.resize(shape=shape, order=order, spacing=spacing)
+        self.resize(shape=shape, order=order, spacing=spacing, n_workers=n_workers)
 
         # refresh spacing
         self.spacing = new_spacing
