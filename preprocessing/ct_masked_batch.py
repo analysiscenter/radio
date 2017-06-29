@@ -15,7 +15,7 @@ import SimpleITK as sitk
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .resize import resize_patient_numba
-from .dataset_import import action, inbatch_parallel, any_action_failed
+from .dataset_import import action, inbatch_parallel, any_action_failed, DatasetIndex
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
@@ -517,7 +517,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         bounds = np.arange(batch_size + 1) * nodule_size[0]
 
-        nodules_batch = CTImagesMaskedBatch(self.make_indices(batch_size))
+        ds_index = DatasetIndex(self.make_indices(batch_size))
+        nodules_batch = CTImagesMaskedBatch(ds_index)
         nodules_batch.load(source=data, fmt='ndarray',
                            bounds=bounds, spacing=self.spacing)
         # TODO add info about nodules by changing self.nodules
