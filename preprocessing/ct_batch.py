@@ -145,17 +145,24 @@ class CTImagesBatch(Batch):
         self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
 
     @action
-    def load(self, fmt='dicom', source=None,
-             bounds=None, origin=None, spacing=None):    # pylint: disable=arguments-differ
-        """
-        builds batch of patients
+    def load(self, fmt='dicom', source=None, bounds=None, 
+             origin=None, spacing=None, attrs_from_blosc=True):    # pylint: disable=arguments-differ
+        """ Loads 3d scans-data in batch
 
-        args:
-            source - source array with skyscraper, needed iff fmt = 'ndarray'
-            bounds - bound floors for patients
-            fmt - type of data.
-                Can be 'dicom'|'blosc'|'raw'|'ndarray'
+        Args:
+            fmt: type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
+            source: source array with skyscraper, needed iff fmt = 'ndarray'
+            bounds: bound floors for patients. Needed iff fmt='ndarray'
+            origin: ndarray [len(bounds) X 3] with world coords of each patient's
+                starting pixels. Needed only if fmt='ndarray'
+            spacing: ndarray [len(bounds) X 3] with spacings of patients.
+                Needed only if fmt='ndarray'
+            attrs_from_blosc: a flag indicating whether attributes should be uploaded
+                from attrs.pkl. Needed only fmt='blosc'
 
+        Return:
+            self
+ 
         Dicom example:
 
             # initialize batch for storing batch of 3 patients
@@ -173,13 +180,13 @@ class CTImagesBatch(Batch):
             batch.load(source=source_array, fmt='ndarray', bounds=bounds)
 
         """
-        # if ndarray. Might be better to put this into separate function
+        # if ndarray
         if fmt == 'ndarray':
             self._init_data(source, bounds, origin, spacing)
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
-            self._load_blosc()              # pylint: disable=no-value-for-parameter
+            self._load_blosc(attrs_from_blosc=attrs_from_blosc)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
         else:
@@ -234,13 +241,14 @@ class CTImagesBatch(Batch):
         blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'data.blk')
         attrs_path = os.path.join(self.index.get_fullpath(patient_id), 'attrs.pkl')
 
-        # read pickled attrs-dict and set origin and spacing for patient_id
-        async with aiofiles.open(attrs_path, mode='rb') as file:
-            serialized = await file.read()
-        attrs = pickle.loads(serialized)
-        patient_pos = self.index.get_pos(patient_id)
-        self.origin[patient_pos, :] = attrs['origin']
-        self.spacing[patient_pos, :] = attrs['spacing']
+        # read pickled attrs-dict and set origin and spacing for patient_id if needed
+        if kwargs[attrs_from_blosc]:            
+            async with aiofiles.open(attrs_path, mode='rb') as file:
+                serialized = await file.read()
+            attrs = pickle.loads(serialized)
+            patient_pos = self.index.get_pos(patient_id)
+            self.origin[patient_pos, :] = attrs['origin']
+            self.spacing[patient_pos, :] = attrs['spacing']
 
         # read and return data
         async with aiofiles.open(blosc_dir_path, mode='rb') as file:
@@ -298,14 +306,14 @@ class CTImagesBatch(Batch):
         # put pickled attributes on disk if attrs is supplied
         if attrs is not None:
             async with aiofiles.open(os.path.join(dst, patient_id,
-                                              'attrs.pkl'), mode='wb') as file:
+                                                  'attrs.pkl'), mode='wb') as file:
                 _ = await file.write(serialized)
 
         return None
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, fmt='blosc'):
+    async def dump(self, patient, dst, fmt='blosc', dump_attrs=True):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Args:
@@ -336,7 +344,10 @@ class CTImagesBatch(Batch):
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
         pat_data = {'data.blk': self.get_image(patient)}
-        pat_attrs = self.get_attrs(patient)
+
+        # get patient attrs if dump of attrs is needed
+        pat_attrs = self.get_attrs(patient) if dump_attrs else None
+
         return await self.dump_data_attrs(pat_data, pat_attrs, patient, dst)
 
     def __len__(self):
