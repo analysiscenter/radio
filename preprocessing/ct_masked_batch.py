@@ -134,7 +134,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def load(self, source=None, fmt='dicom', bounds=None,
-             origin=None, spacing=None, nodules=None, mask=None):
+             origin=None, spacing=None, nodules=None, mask=None,
+             attrs_from_blosc=True):
         """Load data in masked batch of patients.
 
         Args:
@@ -151,8 +152,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         >>> batch.load(src=source_array, fmt='ndarray', bounds=bounds,
         ...            origin=origin_dict, spacing=spacing_dict)
         """
-        params = dict(source=source, bounds=bounds,
-                      origin=origin, spacing=spacing)
+        params = dict(source=source, bounds=bounds, origin=origin,
+                      spacing=spacing, attrs_from_blosc=attrs_from_blosc)
         if fmt == 'ndarray':
             self._init_data(**params)
             self.nodules = nodules
