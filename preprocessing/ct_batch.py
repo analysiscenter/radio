@@ -242,7 +242,7 @@ class CTImagesBatch(Batch):
         attrs_path = os.path.join(self.index.get_fullpath(patient_id), 'attrs.pkl')
 
         # read pickled attrs-dict and set origin and spacing for patient_id if needed
-        if kwargs[attrs_from_blosc]:            
+        if kwargs['attrs_from_blosc']:
             async with aiofiles.open(attrs_path, mode='rb') as file:
                 serialized = await file.read()
             attrs = pickle.loads(serialized)
