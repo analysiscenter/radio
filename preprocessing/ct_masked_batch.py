@@ -153,14 +153,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
         ...            origin=origin_dict, spacing=spacing_dict)
         """
         params = dict(source=source, bounds=bounds, origin=origin,
-                      spacing=spacing, attrs_from_blosc=attrs_from_blosc)
+                      spacing=spacing)
         if fmt == 'ndarray':
             self._init_data(**params)
             self.nodules = nodules
             self.mask = mask
         else:
             # TODO check this
-            super().load(fmt=fmt, **params)
+            super().load(fmt=fmt, **params, attrs_from_blosc=attrs_from_blosc)
         return self
 
     @inbatch_parallel(init='indices', post='_post_mask', target='async')
