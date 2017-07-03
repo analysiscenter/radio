@@ -9,6 +9,7 @@ sys.path.append('..')
 from preprocessing import CTImagesBatch, CTImagesMaskedBatch
 from dataset import action, model
 from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
+from .layers import get_dice_loss
 
 # global constants
 # input shape of a nodule
@@ -100,6 +101,9 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         # normalize output to [0, 1]
         net = tf.nn.sigmoid(net, name='masks_predictions')
+
+        # loss
+        loss = get_dice_loss('train', net, masks_ground_truth)
 
         # optimization step
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
