@@ -561,13 +561,30 @@ class CTImagesBatch(Batch):
         # each worker returns the same ref to the whole res array
         new_data, _ = all_outputs[0]
 
+        # recalculate new_attrs of a batch
+
+        # for resize/unify_spacing: if shape is supplied, assume post
+        # is for resize or unify_spacing
         if 'shape' in kwargs:
             new_spacing = self.rescale(kwargs['shape'])
         else:
             new_spacing = self.spacing
 
+        # for unify_spacing: if spacing is supplied, assume post 
+        # is for unify_spacing
+        if 'spacing' in kwargs:
+            # recalculate origin, spacing
+            shape_after_resize = np.rint(self.shape * self.spacing /
+                                         np.asarray(kwargs['spacing']))
+            overshoot = shape_after_resize - np.asarray(kwargs['shape'])
+            new_spacing = self.rescale(new_shape=shape_after_resize)
+            new_origin = self.origin + new_spacing * (overshoot // 2)
+        else:
+            new_origin = self.origin
+
+        # build/update batch with new data and attrs
         params = dict(source=new_data, bounds=new_bounds,
-                      origin=self.origin, spacing=new_spacing)
+                      origin=new_origin, spacing=new_spacing)
         if new_batch:
             batch_res = type(self)(self.index)
             batch_res.load(fmt='ndarray', **params)
@@ -605,9 +622,8 @@ class CTImagesBatch(Batch):
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def resize(self, shape=(128, 256, 256), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-        """
-        performs resize (change of shape) of each CT-scan in the batch.
-            When called from Batch, changes Batch
+        """ Resize (change shape) each CT-scan in the batch.
+                When called from a batch, changes this batch.
         Args:
             shape: needed shape after resize in order z, y, x
                 *note that the order of axes in data is z, y, x
@@ -626,32 +642,20 @@ class CTImagesBatch(Batch):
         return resize_patient_numba
 
     @action
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
-                      padding='edge', n_workers=6):
-        """
-        Unify spacing of all patients using resize, then crop/pad resized array
-            to supplied shape
+                      padding='edge'):
+        """ Unify spacing of all patients using resize, then crop/pad resized array
+                to supplied shape.
         Args:
             spacing: needed spacing in mm
             shape: needed shape after crop/pad
             order: order of interpolation (<=5)
             padding: mode of padding, any of those supported by np.pad
-        Returns:
+        Return:
             self
         """
-        # recalculate origin, spacing
-        shape_after_resize = np.rint(self.shape * self.spacing / np.asarray(spacing))
-        overshoot = shape_after_resize - np.asarray(shape)
-        new_spacing = self.rescale(new_shape=shape_after_resize)
-        self.origin += new_spacing * (overshoot // 2)
-
-        # execute resize
-        self.resize(shape=shape, order=order, spacing=spacing, n_workers=n_workers)
-
-        # refresh spacing
-        self.spacing = new_spacing
-
-        return self
+        return resize_patient_numba
 
 
 
@@ -714,7 +718,7 @@ class CTImagesBatch(Batch):
         """
         extract patches of size patch_shape with specified
             stride
-        args:
+        Args:
             patch_shape: tuple/list/ndarray of len=3 with needed 
                 patch shape
             stride: tuple/list/ndarray of len=3 with stride that we 
@@ -725,7 +729,7 @@ class CTImagesBatch(Batch):
                 Then data will be padded s.t. 4 windows can be extracted 
             data_attr: name of attribute where the data is stored
                 _data by default
-        returns:
+        Return:
             4d-ndaray of patches; first dimension enumerates patches
         *Note: the shape of all patients is assumed to be the same
         """
@@ -755,9 +759,9 @@ class CTImagesBatch(Batch):
 
     def load_from_patches(self, patches, stride, scan_shape, data_attr='_data'):
         """
-        assemble skyscraper from 4d-array of patches and 
+        Assemble skyscraper from 4d-array of patches and 
             put it into data_attr-attribute of batch
-        args:
+        Args:
             patches: 4d-array of patches, first dim enumerates patches
                 others are spatial in order (z, y, x)
             scan_shape: tuple/ndarray/list of len=3 with shape of scan-array

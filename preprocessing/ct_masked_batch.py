@@ -441,7 +441,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def sample_nodules(self, batch_size, nodule_size, share=0.8,
-                       variance=None, mask_shape=None, if_tensor=False):
+                       variance=None, mask_shape=None):
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -460,9 +460,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             nodules' first pixels
         - mask_shape: needed shape of mask in (z, y, x)-order. If not None,
             masks of nodules will be scaled to shape=mask_shape
-        - if_tensor: boolean flag. If set to True, return tuple (data, mask),
-            where data and mask are 4d-tensors; first dim enumerates nodules,
-            others are spatial
         """
         if self.nodules is None:
             raise AttributeError("Info about nodules location must " +
@@ -510,18 +507,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # crop nodules' masks
         mask = get_nodules_numba(batch_mask, nodules_indices, mask_shape)
 
-        # if if_tensor, reshape nodules' data and mask to 4d-shape and return tuple
-        if if_tensor:
-            data = data.reshape((batch_size, ) + tuple(nodule_size))
-            mask = mask.reshape((batch_size, ) + tuple(mask_shape))
-            return data, mask
-
+        # build noudles' batch
         bounds = np.arange(batch_size + 1) * nodule_size[0]
-
         ds_index = DatasetIndex(self.make_indices(batch_size))
         nodules_batch = CTImagesMaskedBatch(ds_index)
         nodules_batch.load(source=data, fmt='ndarray',
                            bounds=bounds, spacing=self.spacing)
+
         # TODO add info about nodules by changing self.nodules
         nodules_batch.mask = mask
         return nodules_batch
@@ -589,25 +581,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return resize_patient_numba
 
-    @action    
-    def unify_spacing(self, **kwargs):
-        """
-        Unify spacing of all patients using resize, then crop/pad resized array
-            to supplied shape. Recalculates origin, spacing, so that nodules can be
-                constructed
-        Args:
-            spacing: needed spacing in mm
-            shape: needed shape after crop/pad
-            order: order of interpolation (<=5)
-            padding: mode of padding, any of those supported by np.pad
-        Returns:
-            self
-        """
-        super().unify_spacing(**kwargs)
-
-        # update nodules' params
-        self = self._rescale_spacing()
-        return self
 
     def _post_mask(self, list_of_arrs, **kwargs):    # pylint: disable=unused-argument
         """ concatenate outputs of different workers and put the result in mask-attr
@@ -626,7 +599,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
-        """Post-function for resize parallelization.
+        """ Post-function for resize parallelization.
 
         gatherer of outputs from different workers for
             ops, requiring complete rebuild of batch._data
