@@ -123,7 +123,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return [CTImagesMaskedBatch.make_filename() for i in range(size)]
 
-    def __init__(self, index):
+    def __init__(self, index. **kwargs):
         """Initialization of CTImagesMaskedBatch.
 
         Initialize CTImagesMaskedBatch with index.
