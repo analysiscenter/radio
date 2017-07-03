@@ -135,8 +135,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         loss, train_step = model[1]
 
         # reshape data in batch to tensor-shape
-        scans = batch._data.reshape((-1, ) + NOD_SHAPE + (1, ))
-        masks = batch.mask.reshape((-1, ) + NOD_SHAPE + (1, ))
+        scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
+        masks = self.mask.reshape((-1, ) + NOD_SHAPE + (1, ))
 
         # run train-step
         loss_value, _ = sess.run([loss, train_step], feed_dict={
