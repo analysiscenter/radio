@@ -22,7 +22,7 @@ class CTImagesModels(CTImagesMaskedBatch):
     Methods:
         1. selu_vnet_4:
             build vnet of depth = 4 using tensorflow,
-            return tensors necessary for training and evaluating
+            return tensors necessary for training, evaluating and inferencing
     """
 
     @model()
@@ -35,7 +35,7 @@ class CTImagesModels(CTImagesMaskedBatch):
                     (NOD_SHAPE[0], NOD_SHAPE[1], NOD_SHAPE[2], 1)
         Return:
             [[placeholder for input scans, p/h for input mask cancer],
-             [tensor = dice loss, train step]]
+             [dice loss, train step, predicted cancer masks]]
         """
 
         # input placeholder for scan patches
@@ -110,7 +110,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         with tf.control_dependencies(update_ops):
             train_step = tf.train.AdamOptimizer().minimize(loss)
 
-        return [[input_layer, masks_ground_truth], [loss, train_step]]
+        return [[input_layer, masks_ground_truth], [loss, train_step, net]]
 
 
     @action(model='selu_vnet_4')
@@ -132,7 +132,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             self
         """
         input_layer, input_masks = model[0]
-        loss, train_step = model[1]
+        loss, train_step, _ = model[1]
 
         # reshape data in batch to tensor-shape
         scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
@@ -155,17 +155,37 @@ class CTImagesModels(CTImagesMaskedBatch):
                 model-method of CTImagesModels-class
                 *NOTE: do not supply this arg, it's always output of 
                 selu_vnet_4 - method
-            sess: initialized tf-session with vars that need to be updated
+            sess: tf-session with trained (to an extent) weights
             stats: a list whith stats, in the end of which newly computed stats
                 are appended
         Return:
             self
 
-        *Note: as it is clear from the method definition, it is better to run
-            this action from test subset (dataset.test.p().update_test_stats(...))
+        *NOTE: as it is clear from the method definition, it is better to run
+            this action from test subset:
+
+            dataset.test.p().update_test_stats(...)
+
+        *NOTE: running this from a pipeline on batches of large size can be
+            time-consuming. Might be better to run the action directly from
+            precomputed test-batch:
+            
+            ind = FilesIndex(...)
+            ds = Dataset(index=ind, batch_class=CTImagesModels)
+            ds.cv_split([0.8, 0.2])
+            testflow = ds.test.p.load(...).load_mask()
+
+            # generate large batch
+            testbatch = testflow.next_batch(batch_size=500)
+
+            losses = []
+            # execute the action inside training cycle:
+            for i in range(num_iter):
+                testbatch.update_test_stats(sess, losses)
+            
         """
         input_layer, input_masks = model[0]
-        loss, _ = model[1]
+        loss, _, _ = model[1]
 
         # reshape data in batch to tensor-shape
         scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
@@ -179,6 +199,39 @@ class CTImagesModels(CTImagesMaskedBatch):
         stats.append(loss_value)
 
         return self
+
+    @action(model='selu_vnet_4')
+    def get_cancer_segmentation(self, model, sess, result):
+        """ Get cancer segmentation using trained weights stored in
+                tf-session sess
+
+        Args:
+            model: output of nn-model selu_vnet_4 returned by corresponding
+                model-method of CTImagesModels-class
+                *NOTE: do not supply this arg, it's always output of
+                selu_vnet_4 - method
+            sess: tf-session with trained weights
+            result: 4d-array for storing obtained segmentation
+                should have shape (len(self), NOD_SHAPE)
+
+        Return:
+            4darray with first dimension enumerating different batch-items
+        """
+        input_layer, _ = model[0]
+        _, _, masks_predictions = model[1]
+
+        # reshape data in batch to tensor-shape
+        scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
+
+        # compute predicted masks
+        predictions = sess.run(masks_predictions, feed_dict={input_layer: scans})
+
+        # put the masks into result-array
+        result[:, :, :, :] = predictions.reshape((-1, ) + NOD_SHAPE)
+
+        return self
+
+
 
 
 
