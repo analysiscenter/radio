@@ -146,6 +146,40 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         return self
 
+    @action(model='selu_vnet_4')
+    def update_test_stats(self, model, sess, stats):
+        """ Compute test stats and put them into list
+
+        Args:
+            model: output of nn-model selu_vnet_4 returned by corresponding
+                model-method of CTImagesModels-class
+                *NOTE: do not supply this arg, it's always output of 
+                selu_vnet_4 - method
+            sess: initialized tf-session with vars that need to be updated
+            stats: a list whith stats, in the end of which newly computed stats
+                are appended
+        Return:
+            self
+
+        *Note: as it is clear from the method definition, it is better to run
+            this action from test subset (dataset.test.p().update_test_stats(...))
+        """
+        loss, _ = model[1]
+
+        # reshape data in batch to tensor-shape
+        scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
+        masks = self.mask.reshape((-1, ) + NOD_SHAPE + (1, ))
+
+        # run loss-op on data from batch
+        loss_value = sess.run(loss, feed_dict={input_layer: scans, 
+                                               input_masks: masks})
+
+        # add computed number to list of stats:
+        stats.append(loss_value)
+
+        return self
+
+
 
 
 
