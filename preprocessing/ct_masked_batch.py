@@ -163,6 +163,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             super().load(fmt=fmt, **params, attrs_from_blosc=attrs_from_blosc)
         return self
 
+    @action
     @inbatch_parallel(init='indices', post='_post_mask', target='async')
     async def load_mask(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
         """ read, prepare and put 3d-mask in array from blosc,
