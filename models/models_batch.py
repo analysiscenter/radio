@@ -8,7 +8,7 @@ import tensorflow as tf
 sys.path.append('..')
 from preprocessing import CTImagesBatch, CTImagesMaskedBatch
 from dataset import action, model
-from layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
+from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
 
 # global constants
 # input shape of a nodule
