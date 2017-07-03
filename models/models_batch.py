@@ -164,6 +164,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         *Note: as it is clear from the method definition, it is better to run
             this action from test subset (dataset.test.p().update_test_stats(...))
         """
+        input_layer, input_masks = model[0]
         loss, _ = model[1]
 
         # reshape data in batch to tensor-shape
