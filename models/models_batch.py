@@ -24,7 +24,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             return tensors necessary for training and evaluating
     """
 
-    @model
+    @model()
     def selu_vnet_4():
         """ Describe vnet-model of depth = 4 with magic SELU activations
         Schematically:
@@ -41,6 +41,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         shape_inout = (None, ) + NOD_SHAPE + (1, )
         input_layer = tf.placeholder(tf.float32, shape=shape_inout,
                                      name='scans')
+        training = tf.placeholder(tf.bool, shape=[], name='mode')
 
         # input placeholder for masks
         masks_ground_truth = tf.placeholder(tf.float32, shape=shape_inout,
