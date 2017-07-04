@@ -7,6 +7,7 @@ import shutil
 import numpy as np
 import aiofiles
 import blosc
+import pickle
 import dicom
 import SimpleITK as sitk
 
@@ -17,6 +18,7 @@ from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
+from .patches import put_patches_numba, assemble_patches, calc_padding_size
 
 
 AIR_HU = -2000
@@ -84,22 +86,6 @@ class CTImagesBatch(Batch):
 
     """
 
-    @staticmethod
-    async def dump_blosc(data, patient_id, dst):
-        packed = blosc.pack_array(data, cname='zstd', clevel=1)
-
-        # remove directory if exists
-        if os.path.exists(os.path.join(dst, patient_id)):
-            shutil.rmtree(os.path.join(dst, patient_id))
-
-        # put blosc on disk
-        os.makedirs(os.path.join(dst, patient_id))
-        async with aiofiles.open(os.path.join(dst, patient_id,
-                                              'data.blk'), mode='wb') as file:
-            _ = await file.write(packed)
-        return None
-
-
     def __init__(self, index):
         """
         common part of initialization from all formats:
@@ -149,17 +135,24 @@ class CTImagesBatch(Batch):
         self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
 
     @action
-    def load(self, fmt='dicom', source=None,
-             bounds=None, origin=None, spacing=None):    # pylint: disable=arguments-differ
-        """
-        builds batch of patients
+    def load(self, fmt='dicom', source=None, bounds=None, 
+             origin=None, spacing=None, attrs_from_blosc=True):    # pylint: disable=arguments-differ
+        """ Loads 3d scans-data in batch
 
-        args:
-            source - source array with skyscraper, needed iff fmt = 'ndarray'
-            bounds - bound floors for patients
-            fmt - type of data.
-                Can be 'dicom'|'blosc'|'raw'|'ndarray'
+        Args:
+            fmt: type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
+            source: source array with skyscraper, needed iff fmt = 'ndarray'
+            bounds: bound floors for patients. Needed iff fmt='ndarray'
+            origin: ndarray [len(bounds) X 3] with world coords of each patient's
+                starting pixels. Needed only if fmt='ndarray'
+            spacing: ndarray [len(bounds) X 3] with spacings of patients.
+                Needed only if fmt='ndarray'
+            attrs_from_blosc: a flag indicating whether attributes should be uploaded
+                from attrs.pkl. Needed only fmt='blosc'
 
+        Return:
+            self
+ 
         Dicom example:
 
             # initialize batch for storing batch of 3 patients
@@ -177,13 +170,13 @@ class CTImagesBatch(Batch):
             batch.load(source=source_array, fmt='ndarray', bounds=bounds)
 
         """
-        # if ndarray. Might be better to put this into separate function
+        # if ndarray
         if fmt == 'ndarray':
             self._init_data(source, bounds, origin, spacing)
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
-            self._load_blosc()              # pylint: disable=no-value-for-parameter
+            self._load_blosc(attrs_from_blosc=attrs_from_blosc)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
         else:
@@ -236,73 +229,136 @@ class CTImagesBatch(Batch):
             *no conversion to hu here
         """
         blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'data.blk')
+        attrs_path = os.path.join(self.index.get_fullpath(patient_id), 'attrs.pkl')
+
+        # read pickled attrs-dict and set origin and spacing for patient_id if needed
+        if kwargs['attrs_from_blosc']:
+            async with aiofiles.open(attrs_path, mode='rb') as file:
+                serialized = await file.read()
+            attrs = pickle.loads(serialized)
+            patient_pos = self.index.get_pos(patient_id)
+            self.origin[patient_pos, :] = attrs['origin']
+            self.spacing[patient_pos, :] = attrs['spacing']
+
+        # read and return data
         async with aiofiles.open(blosc_dir_path, mode='rb') as file:
             packed = await file.read()
         return blosc.unpack_array(packed)
 
-    @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_raw(self, patient_id, *args, **kwargs):  # pylint: disable=unused-argument
-        """Read, prepare and put 3d-scans in array from raw(mhd).
+    def _load_raw(self, **kwargs):
+        """
+        read, prepare and put 3d-scans in list
 
-        This method reads 3d-scans from mhd format
-        in CTImagesMaskedBatch object. This method additionaly
-        initializes origin and spacing attributes.
+            *no conversion to hu here
+        """
+        list_of_arrs = []
+        for patient_id in self.indices:
+            raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
+            patient_pos = self.index.get_pos(patient_id)
+            list_of_arrs.append(sitk.GetArrayFromImage(raw_data))
+            # *.mhd files contain information about scans' origin and spacing;
+            # however the order of axes there is inversed:
+            # so, we just need to reverse arrays with spacing and origin.
+            self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
+            self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
+        
+        new_data = np.concatenate(list_of_arrs, axis=0)
+        new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
+        self._data = new_data
+        self._bounds = new_bounds
+        return self
+
+    @staticmethod
+    async def dump_data_attrs(data_dict, attrs, patient_id, dst):
+        """ Dump data and attrs corresponding to one patient on disk in
+                folder = dst + patient_id
 
         Args:
-        - patient_id: index of patient from batch, whose scans need to
-        be put in stack(skyscraper);
-
-        Return :
-        - ndarray(Nz, Ny, Nx) patient's data array;
+            data_dict: dict of ndarrays for dump in form array_name : array
+                (e.g.: {'data.blk': data, 'mask.blk': mask})
+            attrs: dict of attrs to dump
+            patient_id: id of a patient to whom the data and attrs belong
+            dst: name of direcory in which the patient is dumped
         """
-        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
-        patient_pos = self.index.get_pos(patient_id)
+        serialized = pickle.dumps(attrs)           
 
-        # *.mhd files contain information about scans' origin and spacing;
-        # however the order of axes there is inversed:
-        # so, we just need to reverse arrays with spacing and origin.
+        # create directory if does not exist
+        if not os.path.exists(os.path.join(dst, patient_id)):
+            os.makedirs(os.path.join(dst, patient_id))
 
-        self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
-        self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
-        return sitk.GetArrayFromImage(raw_data)
+        # compress with blosc and put all ndarrays from data_dict on disk
+        for dataname, data in data_dict.items():
+            packed = blosc.pack_array(data, cname='zstd', clevel=1)
+            async with aiofiles.open(os.path.join(dst, patient_id,
+                                                  dataname), mode='wb') as file:
+                _ = await file.write(packed)
+
+        # put pickled attributes on disk if attrs is supplied
+        if attrs is not None:
+            async with aiofiles.open(os.path.join(dst, patient_id,
+                                                  'attrs.pkl'), mode='wb') as file:
+                _ = await file.write(serialized)
+
+        return None
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, fmt='blosc'):
-        """
-        dump on specified path and format
-            create folder corresponding to each patient
+    async def dump(self, patient, dst, fmt='blosc', dump_attrs=True):
+        """ Dump scans data (3d-array) on specified path in specified format
+
+        Args:
+            dst: general folder in which all patients' data should be put
+            fmt: format of dump. Currently only blosc-format is supported;
+                in this case folder for each patient is created, patient's data
+                is put into data.blk, attributes are put into dict attrs.pkl
+
 
         example:
             # initialize batch and load data
             ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-            batch = BatchCt(ind)
+            batch = CTImagesBatch(ind)
             batch.load(...)
             batch.dump(dst='./data/blosc_preprocessed')
             # the command above creates files
 
             # ./data/blosc_preprocessed/1ae34g90/data.blk
+            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
+
             # ./data/blosc_preprocessed/3hf82s76/data.blk
+            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
+
             # ./data/blosc_preprocessed/2ds38d04/data.blk
+            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
         """
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
-        pat_data = self.get_image(patient)
-        return await self.dump_blosc(pat_data, patient, dst)
+        pat_data = {'data.blk': self.get_image(patient)}
+
+        # get patient attrs if dump of attrs is needed
+        pat_attrs = self.get_attrs(patient) if dump_attrs else None
+
+        return await self.dump_data_attrs(pat_data, pat_attrs, patient, dst)
 
     def __len__(self):
+        """ Get number of patients in self
+
+        Return:
+            number of patients in batch
+
+        """
         return len(self.index)
 
     def __getitem__(self, index):
-        """
-        indexation of patients by []
+        """ Indexation of patients by []
 
-        args:
+        Args:
             self
             index - can be either number (int) of patient
                          in self from [0,..,len(self.index) - 1]
                     or index from self.index
+        Return:
+            view on patient with index/number given by index
         """
         return self.get_image(index)
 
@@ -314,9 +370,13 @@ class CTImagesBatch(Batch):
         If fetched position is out of bounds then Exception is generated.
         If str then position of patient is fetched.
 
-        args:
+        Args:
             index - can be either position of patient in self._data
                 or index from self.index
+
+        Return:
+            if supplied index is int, return supplied number,
+            o\w return the position of patient with supplied index
         """
         if isinstance(index, int):
             if index < len(self) and index >= 0:
@@ -328,15 +388,34 @@ class CTImagesBatch(Batch):
         return pos
 
     def get_image(self, index):
-        """
-        get view on patient data
+        """ Get view on patient's data
 
-        args:
-            index - can be either position of patient in self._data
+        Args:
+            index: either position of patient in self._data
                 or index from self.index
+
+        Return:
+            ndarray(view) with the data of chosen patient
         """
         pos = self._get_verified_pos(index)
         return self._data[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
+
+
+    def get_attrs(self, index):
+        """ Get attributes of a patient
+
+        Args:
+            index: either position of patient in self._data
+                or index from self.index 
+            
+        Return:
+            dict with attributes of chosen patient
+        """
+        pos = self._get_verified_pos(index)
+        origin = self.origin[pos, :]
+        spacing = self.spacing[pos, :]
+        attrs = {'spacing': spacing, 'origin': origin}
+        return attrs
 
     @property
     def shape(self):
@@ -428,8 +507,10 @@ class CTImagesBatch(Batch):
         """
         args-fetcher for parallelization using decorator
             can be used when batch-data is rebuild from scratch
-        if shape is supplied as one of the args
-            assumes that data should be resizd
+        if shape is supplied as one of the args, assumes that data
+            should be resized, resize is performed
+        if spacing is supplied as one of the args, assumes that unify_spacing
+            is performed
         """
         if 'shape' in kwargs:
             num_slices, y, x = kwargs['shape']
@@ -445,6 +526,10 @@ class CTImagesBatch(Batch):
             item_args = {'patient': self.get_image(i),
                          'out_patient': out_patient,
                          'res': new_data}
+            # for unify_spacing
+            if 'spacing' in kwargs:
+                item_args['res_factor'] = self.spacing[i, :] / \
+                                          np.array(kwargs['spacing'])
 
             all_args += [item_args]
 
@@ -466,13 +551,30 @@ class CTImagesBatch(Batch):
         # each worker returns the same ref to the whole res array
         new_data, _ = all_outputs[0]
 
+        # recalculate new_attrs of a batch
+
+        # for resize/unify_spacing: if shape is supplied, assume post
+        # is for resize or unify_spacing
         if 'shape' in kwargs:
             new_spacing = self.rescale(kwargs['shape'])
         else:
             new_spacing = self.spacing
 
+        # for unify_spacing: if spacing is supplied, assume post 
+        # is for unify_spacing
+        if 'spacing' in kwargs:
+            # recalculate origin, spacing
+            shape_after_resize = np.rint(self.shape * self.spacing /
+                                         np.asarray(kwargs['spacing']))
+            overshoot = shape_after_resize - np.asarray(kwargs['shape'])
+            new_spacing = self.rescale(new_shape=shape_after_resize)
+            new_origin = self.origin + new_spacing * (overshoot // 2)
+        else:
+            new_origin = self.origin
+
+        # build/update batch with new data and attrs
         params = dict(source=new_data, bounds=new_bounds,
-                      origin=self.origin, spacing=new_spacing)
+                      origin=new_origin, spacing=new_spacing)
         if new_batch:
             batch_res = type(self)(self.index)
             batch_res.load(fmt='ndarray', **params)
@@ -510,11 +612,9 @@ class CTImagesBatch(Batch):
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def resize(self, shape=(128, 256, 256), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-        """
-        performs resize (change of shape) of each CT-scan in the batch.
-            When called from Batch, changes Batch
-            returns self
-        args:
+        """ Resize (change shape) each CT-scan in the batch.
+                When called from a batch, changes this batch.
+        Args:
             shape: needed shape after resize in order z, y, x
                 *note that the order of axes in data is z, y, x
                  that is, new patient shape = (shape[0], shape[1], shape[2])
@@ -523,11 +623,31 @@ class CTImagesBatch(Batch):
                 above
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
+        Returns: 
+            self
         example:
             shape = (128, 256, 256)
             Batch = Batch.resize(shape=shape, n_workers=20, order=2)
         """
         return resize_patient_numba
+
+    @action
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
+    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
+                      padding='edge'):
+        """ Unify spacing of all patients using resize, then crop/pad resized array
+                to supplied shape.
+        Args:
+            spacing: needed spacing in mm
+            shape: needed shape after crop/pad
+            order: order of interpolation (<=5)
+            padding: mode of padding, any of those supported by np.pad
+        Return:
+            self
+        """
+        return resize_patient_numba
+
+
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
@@ -583,44 +703,105 @@ class CTImagesBatch(Batch):
 
         return self
 
-    def get_patches(self, patch_shape, stride, padding='edge'):
+
+    def get_patches(self, patch_shape, stride, padding='edge', data_attr='_data'):
         """
         extract patches of size patch_shape with specified
             stride
-        args:
-            patch_shape: tuple/list/ndarray of len=3 with needed
+        Args:
+            patch_shape: tuple/list/ndarray of len=3 with needed 
                 patch shape
             stride: tuple/list/ndarray of len=3 with stride that we
                 use to slide over each patient's data
             padding: type of padding (see doc of np.pad for available types)
                 say, 3.6 windows of size=patch_shape with stride
                 can be exracted from each patient's data.
-                Then data will be padded s.t. 4 windows can be extracted
-                returns:
+                Then data will be padded s.t. 4 windows can be extracted 
+            data_attr: name of attribute where the data is stored
+                _data by default
+        Return:
             4d-ndaray of patches; first dimension enumerates patches
-
         *Note: the shape of all patients is assumed to be the same
         """
 
         patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
         img_shape = self.shape[0]
+        data_4d = np.reshape(getattr(self, data_attr), (-1, ) + tuple(img_shape))
 
-        # calculate padding size
-        overshoot = (img_shape - patch_shape + stride) % stride
-        pad_delta = 0 if overshoot == 0 else stride - overshoot
-
-        # pad each patient's data if necessary
-        if pad_delta > 0:
-            before_pad = pad_delta // 2
-            after_pad = pad_delta - before_pad
-            pad_width = [(0, 0)] + [(x, y) for x, y in zip(before_pad, after_pad)]
-
-            data_4d = np.reshape(self._data, (-1, ) + tuple(img_shape))
+        # add padding if necessary
+        pad_width = calc_padding_size(img_shape, patch_shape, stride)
+        if pad_width is not None:
             data_padded = np.pad(data_4d, pad_width, mode=padding)
+        else:
+            data_padded = data_4d
+        
+        # init tensor with patches
+        num_sections = (np.asarray(data_padded.shape[1 : ]) - patch_shape) // stride + 1
+        patches = np.zeros(shape = (len(self), 
+                                    np.prod(num_sections)) + tuple(patch_shape))
 
-        return data_padded.shape
+        # put patches into the tensor
+        fake = np.zeros(len(self))
+        put_patches_numba(data_padded, patch_shape, stride, patches, fake) 
+        patches = np.reshape(patches, (len(self) * \
+            np.prod(num_sections), ) + tuple(patch_shape))
+        return patches
+
+    def load_from_patches(self, patches, stride, scan_shape, data_attr='_data'):
+        """
+        Assemble skyscraper from 4d-array of patches and 
+            put it into data_attr-attribute of batch
+        Args:
+            patches: 4d-array of patches, first dim enumerates patches
+                others are spatial in order (z, y, x)
+            scan_shape: tuple/ndarray/list of len=3 with shape of scan-array
+                patches are assembled into; order of axis is (z, y, x)
+            stride: tuple/ndarray/list of len=3 with stride with which
+                patches are put into data_attr;
+                if stride != patch shape, averaging over overlapping regions
+                    is used
+            data_attr: the name of attribute, the assembled skyscraper should
+                be put into
+            *note: scan_shape, patches.shape, sride are used to infer the number
+                of sections;
+                in case of overshoot we crop the padding out
+        """
+        scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
+        patch_shape = np.asarray(patches.shape[1 : ])
+
+        # infer what padding was applied to scans when extracting patches
+        pad_width = calc_padding_size(scan_shape, patch_shape, stride)
+
+        # if padding is non-zero, adjust the shape of scan
+        if pad_width is not None:
+            shape_delta = np.asarray(
+                [before + after for before, after in pad_width[1 : ]])
+        else:
+            shape_delta = np.zeros(3).astype('int')
+
+        scan_shape_adj = scan_shape + shape_delta
+
+        # init 4d tensor and put assembled scans into it
+        data_4d = np.zeros((len(self), ) + tuple(scan_shape_adj))
+        patches = np.reshape(patches, (len(self), -1) + tuple(patch_shape))
+        fake = np.zeros(len(self))
+        assemble_patches(patches, stride, data_4d, fake)
+
+        # crop (perform anti-padding) if necessary
+        if pad_width is not None:
+            data_shape = data_4d.shape
+            slc_z = slice(pad_width[1][0], data_shape[1] - pad_width[1][1])
+            slc_y = slice(pad_width[2][0], data_shape[2] - pad_width[2][1])
+            slc_x = slice(pad_width[3][0], data_shape[3] - pad_width[3][1])
+            data_4d = data_4d[:, slc_z, slc_y, slc_x]
+
+        # reshape 4d-data to skyscraper form and put it into needed attr
+        data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + \
+            tuple(scan_shape[1 : ]))
+        setattr(self, data_attr, data_4d)
 
 
+        
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
         """
