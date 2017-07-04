@@ -1,6 +1,7 @@
+# pylint: disable=invalid-name
+# pylint: disable=missing-docstring
 """ Numba-rized functions for MIP calculation """
 
-from functools import partial
 import numpy as np
 from numba import njit
 
@@ -9,70 +10,59 @@ _PROJECTIONS = {"axial": [0, 1, 2],
                 "coronal": [1, 0, 2],
                 "sagital": [2, 0, 1]}
 
+_REVERSE_PROJECTIONS = {"axial": [0, 1, 2],
+                        "coronal": [1, 0, 2],
+                        "sagital": [1, 2, 0]}
+
 _NUMBA_FUNC = {'max': 0, 'min': 1, 'mean': 2}
 
 
 @njit(nogil=True)
-def numba_max(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
+def min_max_sum_fn(a, b, flag):
+    """Apply njit binary opertaion to a, b.
+
+    Binary operation defined by flag of type int.
+    Args:
+    - a: int or float, left operand;
+    - b: int or float, right operand;
+    - flag: int, one of [0, 1, 2] values.
+            0 value corresponds to max function;
+            1 value corresponds to min function;
+            2 value corresponds to sum function;
     """
-    Takes 3-dimension numpy ndarray view
-    with shape parameters as its arguments.
-    The function computes maximum
-    along 0-axis of the input ndarray view.
-    Code inside the body of function is precompiled
-    with numba.
+    if flag == 0:
+        return max(a, b)
+    elif flag == 1:
+        return min(a, b)
+    elif flag == 2:
+        return a + b
+    return 0
+
+@njit(nogil=True)
+def numba_xip(arr, l, m, n, flag, fill_value):
+    """Compute njit xip for given slice.
+
+    Args:
+    - arr: ndarray(l, m, n) with source slice's data;
+    - l: int;
+    - m: int;
+    - n: int;
+    - flag: int, each of [0, 1, 2] corresponds to max, min and average
+    functions for xip operation;
     """
-    res = np.full((m, n), -10000, dtype=arr.dtype)
+    res = np.full((m, n), fill_value, dtype=arr.dtype)
     for j in range(m):
         for k in range(n):
             for i in range(l):
-                if arr[i, j, k] > res[j, k]:
-                    res[j, k] = arr[i, j, k]
+                res[j, k] = min_max_sum_fn(res[j, k], arr[i, j, k], flag)
     return res
 
 
 @njit(nogil=True)
-def numba_min(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
-    """
-    Takes 3-dimension numpy ndarray view
-    with shape parameters as its arguments.
-    The function computes minimum
-    along 0-axis of the input ndarray view.
-    Code inside the body of function is precompiled
-    with numba.
-    """
-    res = np.full((m, n), 10000, dtype=arr.dtype)
-    for j in range(m):
-        for k in range(n):
-            for i in range(l):
-                if arr[i, j, k] < res[j, k]:
-                    res[j, k] = arr[i, j, k]
-    return res
+def make_xip(data, step, depth,
+             start=0, stop=-1, func=0, fill_value=0):
+    """Apply xip operation to CTImage scan of one patient.
 
-
-@njit(nogil=True)
-def numba_avg(arr: np.ndarray, l: int, m: int, n: int) -> np.ndarray:
-    """
-    Takes 3-dimension numpy ndarray view
-    with shape parameters as its arguments.
-    The function computes mean value
-    along 0-axis of the input ndarray view.
-    Code inside the body of function is precompiled
-    with numba.
-    """
-    res = np.zeros((m, n), np.float64)
-    for j in range(m):
-        for k in range(n):
-            for i in range(l):
-                res[j, k] += arr[i, j, k]
-            res[j, k] /= l
-    return res
-
-
-@njit(nogil=True)
-def make_xip(func: int, projection: list, step: int, depth: int,
-             patient: np.ndarray, start: int=0, stop: int=-1) -> np.ndarray:
-    """
     This function takes 3d picture represented by np.ndarray image,
     start position for 0-axis index, stop position for 0-axis index,
     step parameter which represents the step across 0-axis and, finally,
@@ -81,28 +71,22 @@ def make_xip(func: int, projection: list, step: int, depth: int,
     Code inside the body of function is precompiled
     with numba.
     """
-    p = patient.transpose(projection)
+    if data.shape[0] < depth:
+        depth = data.shape[0]
 
-    if p.shape[0] < depth:
-        depth = p.shape[0]
+    if stop < 0 or stop + depth > data.shape[0]:
+        stop = data.shape[0] - depth
 
-    if stop < 0 or stop + depth > p.shape[0]:
-        stop = p.shape[0] - depth
-
-    new_shape = p.shape
+    new_shape = [0, data.shape[1], data.shape[2]]
     new_shape[0] = (stop - start) // step + 1
-    out_array = np.zeros(new_shape, dtype=patient.dtype)
-
-    if func == 0:
-        xip_fn = numba_max
-    elif func == 1:
-        xip_fn = numba_min
-    else:
-        xip_fn = numba_avg
-
+    out_array = np.zeros((new_shape[0], new_shape[1], new_shape[2]), dtype=data.dtype)
     counter = 0
     for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = xip_fn(p[x: x + depth], depth, p.shape[1], p.shape[2])
+        out_array[counter, :, :] = numba_xip(data[x: x + depth],
+                                             depth,
+                                             data.shape[1],
+                                             data.shape[2],
+                                             func, fill_value)
         counter += 1
 
     return out_array
@@ -127,4 +111,20 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
     axises will be transposed as [x, z, y] and [y, z, x]
     for 'coronal' and 'sagital' projections correspondingly.
     """
-    return partial(make_xip, _NUMBA_FUNC[func], _PROJECTIONS[projection], step, depth)
+    _projection = _PROJECTIONS[projection]
+    _reverse_projection = _REVERSE_PROJECTIONS[projection]
+    _function = _NUMBA_FUNC[func]
+    def out_function(data, start=0, end=-1):
+        data_tr = data.transpose(_projection)
+        if _function == 0:
+            fill_value = np.finfo(data.dtype).min
+        elif _function == 1:
+            fill_value = np.finfo(data.dtype).max
+        else:
+            fill_value = 0
+        result = make_xip(data_tr, step=step, depth=depth,
+                          start=start, stop=end,
+                          func=_function, fill_value=fill_value)
+        result = result.transpose(_reverse_projection)
+        return result / depth if _function == 2 else result
+    return out_function
