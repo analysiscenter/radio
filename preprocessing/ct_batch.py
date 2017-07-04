@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module, undefined-variable
+# pylint: disable=no-name-in-module, undefined-variable, anomalous-backslash-in-string
 """ contains Batch class for storing Ct-scans """
 
 import os
