@@ -2,12 +2,11 @@
 """ contains Batch class for storing Ct-scans """
 
 import os
-import shutil
+import pickle
 
 import numpy as np
 import aiofiles
 import blosc
-import pickle
 import dicom
 import SimpleITK as sitk
 
@@ -25,7 +24,7 @@ AIR_HU = -2000
 DARK_HU = -2000
 
 
-class CTImagesBatch(Batch):
+class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     """
     class for storing batch of CT(computed tomography) 3d-scans.
@@ -135,7 +134,7 @@ class CTImagesBatch(Batch):
         self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
 
     @action
-    def load(self, fmt='dicom', source=None, bounds=None, 
+    def load(self, fmt='dicom', source=None, bounds=None,
              origin=None, spacing=None, attrs_from_blosc=True):    # pylint: disable=arguments-differ
         """ Loads 3d scans-data in batch
 
@@ -152,7 +151,7 @@ class CTImagesBatch(Batch):
 
         Return:
             self
- 
+
         Dicom example:
 
             # initialize batch for storing batch of 3 patients
@@ -245,7 +244,7 @@ class CTImagesBatch(Batch):
             packed = await file.read()
         return blosc.unpack_array(packed)
 
-    def _load_raw(self, **kwargs):
+    def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """
         read, prepare and put 3d-scans in list
 
@@ -261,7 +260,7 @@ class CTImagesBatch(Batch):
             # so, we just need to reverse arrays with spacing and origin.
             self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
             self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
-        
+
         new_data = np.concatenate(list_of_arrs, axis=0)
         new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
         self._data = new_data
@@ -280,7 +279,7 @@ class CTImagesBatch(Batch):
             patient_id: id of a patient to whom the data and attrs belong
             dst: name of direcory in which the patient is dumped
         """
-        serialized = pickle.dumps(attrs)           
+        serialized = pickle.dumps(attrs)      
 
         # create directory if does not exist
         if not os.path.exists(os.path.join(dst, patient_id)):
@@ -363,7 +362,7 @@ class CTImagesBatch(Batch):
         return self.get_image(index)
 
     def _get_verified_pos(self, index):
-        """Get verified position of patient in batch by index.
+        """Get verified position of patient in batch by index.       # pylint: disable=anomalous-backslash-in-string
 
         Firstly, check if index is instance of str or int. If int
         then it is supposed that index represents patient's position in Batch.
@@ -406,8 +405,8 @@ class CTImagesBatch(Batch):
 
         Args:
             index: either position of patient in self._data
-                or index from self.index 
-            
+                or index from self.index
+
         Return:
             dict with attributes of chosen patient
         """
@@ -560,7 +559,7 @@ class CTImagesBatch(Batch):
         else:
             new_spacing = self.spacing
 
-        # for unify_spacing: if spacing is supplied, assume post 
+        # for unify_spacing: if spacing is supplied, assume post
         # is for unify_spacing
         if 'spacing' in kwargs:
             # recalculate origin, spacing
@@ -623,7 +622,7 @@ class CTImagesBatch(Batch):
                 above
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
-        Returns: 
+        Returns:
             self
         example:
             shape = (128, 256, 256)
@@ -633,8 +632,8 @@ class CTImagesBatch(Batch):
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
-                      padding='edge'):
+    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,    # pylint: disable=unused-argument
+                      padding='edge'):                                            # pylint: disable=unused-argument
         """ Unify spacing of all patients using resize, then crop/pad resized array
                 to supplied shape.
         Args:
@@ -709,14 +708,14 @@ class CTImagesBatch(Batch):
         extract patches of size patch_shape with specified
             stride
         Args:
-            patch_shape: tuple/list/ndarray of len=3 with needed 
+            patch_shape: tuple/list/ndarray of len=3 with needed
                 patch shape
             stride: tuple/list/ndarray of len=3 with stride that we
                 use to slide over each patient's data
             padding: type of padding (see doc of np.pad for available types)
                 say, 3.6 windows of size=patch_shape with stride
                 can be exracted from each patient's data.
-                Then data will be padded s.t. 4 windows can be extracted 
+                Then data will be padded s.t. 4 windows can be extracted
             data_attr: name of attribute where the data is stored
                 _data by default
         Return:
@@ -734,22 +733,22 @@ class CTImagesBatch(Batch):
             data_padded = np.pad(data_4d, pad_width, mode=padding)
         else:
             data_padded = data_4d
-        
+
         # init tensor with patches
         num_sections = (np.asarray(data_padded.shape[1 : ]) - patch_shape) // stride + 1
-        patches = np.zeros(shape = (len(self), 
-                                    np.prod(num_sections)) + tuple(patch_shape))
+        patches = np.zeros(shape=(len(self),
+                                  np.prod(num_sections)) + tuple(patch_shape))
 
         # put patches into the tensor
         fake = np.zeros(len(self))
-        put_patches_numba(data_padded, patch_shape, stride, patches, fake) 
+        put_patches_numba(data_padded, patch_shape, stride, patches, fake)
         patches = np.reshape(patches, (len(self) * \
             np.prod(num_sections), ) + tuple(patch_shape))
         return patches
 
     def load_from_patches(self, patches, stride, scan_shape, data_attr='_data'):
         """
-        Assemble skyscraper from 4d-array of patches and 
+        Assemble skyscraper from 4d-array of patches and
             put it into data_attr-attribute of batch
         Args:
             patches: 4d-array of patches, first dim enumerates patches
@@ -801,7 +800,7 @@ class CTImagesBatch(Batch):
         setattr(self, data_attr, data_4d)
 
 
-        
+ 
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
         """

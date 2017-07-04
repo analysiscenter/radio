@@ -7,7 +7,7 @@ from numba import guvectorize, int64, float64
 @guvectorize([(float64[:, :, :], int64[:], int64[:], float64[:, :, :, :], int64[:])],
              '(n, m, k),(r),(r),(p, l, s, t)->()',
              nopython=True, target='parallel')
-def put_patches_numba(img, patch_shape, stride, out_arr, fake):
+def put_patches_numba(img, patch_shape, stride, out_arr, fake):      # pylint: disable=unused-argument
     """
     get all patches from padded 3d-img
             put them into array out_arr
@@ -48,7 +48,7 @@ def put_patches_numba(img, patch_shape, stride, out_arr, fake):
 @guvectorize([(float64[:, :, :, :], int64[:], float64[:, :, :], int64[:])],
              '(p, l, s, t),(q),(m, n, k)->()',
              nopython=True, target='parallel')
-def assemble_patches(patches, stride, out_arr, fake):
+def assemble_patches(patches, stride, out_arr, fake):      # pylint: disable=unused-argument
     """
     assemble patches into one 3d ct-scan with shape scan_shape
         put the scan into out_arr
@@ -59,15 +59,15 @@ def assemble_patches(patches, stride, out_arr, fake):
             were extracted
         out_arr: 3d-array, where assembled scan is put
             should be filled with zeroes
-            *note 1: out_arr.shape, stride, patch shape are used to infer 
+            *note 1: out_arr.shape, stride, patch shape are used to infer
                 the number of sections for each dimension.
-            We assume that the number of patches = len(patches) 
+            We assume that the number of patches = len(patches)
                 corresponds to num_sections
             *note 2: overlapping patches are allowed (stride != patch.shape).
                 In this case pixel values are averaged across overlapping
                     patches
             *note 3: we assume that integer number of patches can be put into
-                out_arr using stride 
+                out_arr using stride
         fake: fake-result array
     """
     out_arr_shape = np.zeros(3)
@@ -101,7 +101,7 @@ def assemble_patches(patches, stride, out_arr, fake):
 
 def calc_padding_size(img_shape, patch_shape, stride):
     """
-    calculate width of padding, that needs to be added to 3d-scan 
+    calculate width of padding, that needs to be added to 3d-scan
         in order to fit integer number of patches;
         in format needed for np.pad function
     args:
@@ -116,7 +116,7 @@ def calc_padding_size(img_shape, patch_shape, stride):
     overshoot = (img_shape - patch_shape + stride) % stride
 
     pad_delta = np.zeros(3)
-    for i in range(len(pad_delta)):
+    for i in range(len(pad_delta)):                                        # pylint: disable=consider-using-enumerate
         pad_delta[i] = 0 if overshoot[i] == 0 else stride[i] - overshoot[i]
 
     # calculate and return the padding if not zero

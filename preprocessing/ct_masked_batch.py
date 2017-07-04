@@ -1,13 +1,12 @@
 # pylint: disable=no-member
 # pylint: disable=no-name-in-module
 # pylint: disable=arguments-differ
+# pylint: disable=undefined-variable
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import os
-import shutil
+import logging
 
 import aiofiles
-from binascii import hexlify
-import logging
 import blosc
 import numpy as np
 from numba import njit
@@ -122,7 +121,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return [CTImagesMaskedBatch.make_filename() for i in range(size)]
 
-    def __init__(self, index, **kwargs):
+    def __init__(self, index, **kwargs):      # pylint: disable=unused-argument 
         """Initialization of CTImagesMaskedBatch.
 
         Initialize CTImagesMaskedBatch with index.
@@ -132,7 +131,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules = None
 
     @action
-    def load(self, source=None, fmt='dicom', bounds=None,
+    def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments
              origin=None, spacing=None, nodules=None, mask=None,
              attrs_from_blosc=True):
         """Load data in masked batch of patients.
@@ -206,7 +205,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.dump(dst='./data/blosc_preprocessed_mask', src='mask')
         """
         if fmt != 'blosc':
-            raise NotImplementedError('Dump to {} is ' +
+            raise NotImplementedError('Dump to {} is ' +                # pylint: disable=too-many-format-args
                                       'not implemented yet'.format(fmt))
 
         # convert src to iterable 1d-array
@@ -390,8 +389,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         start_scaled = np.rint(start_scaled).astype(np.int)
         offset_scaled = np.rint(self.nodules.offset * scale_factor).astype(np.int)
         img_size_scaled = np.rint(self.nodules.img_size * scale_factor).astype(np.int)
-        nod_size_scaled = (np.rint(scale_factor * self.nodules.nodule_size / 
-                            self.nodules.spacing)).astype(np.int)
+        nod_size_scaled = (np.rint(scale_factor * self.nodules.nodule_size /
+                                   self.nodules.spacing)).astype(np.int)
         # put nodules into mask
         make_mask_numba(mask, offset_scaled, img_size_scaled + offset_scaled,
                         start_scaled, nod_size_scaled)
@@ -584,7 +583,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     def _post_mask(self, list_of_arrs, **kwargs):    # pylint: disable=unused-argument
         """ concatenate outputs of different workers and put the result in mask-attr
-        
+
         Args:
             list_of_arrs: list of ndarays, with each ndarray representing a
                 patient's mask
@@ -635,7 +634,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif projection == 'sagital':
             _projection = 2
         batch.nodules.nodule_size[:, _projection] += (depth
-                                                      * self.nodules.spacing[:, _projection])
+                                                      * self.nodules.spacing[:, _projection])  # pylint: disable=unsubscriptable-object
         batch.spacing = self.rescale(batch[0].shape)
         batch._rescale_spacing()   # pylint: disable=protected-access
         if self.mask is not None:

@@ -1,6 +1,5 @@
 """Helper functions for creating layers """
 
-import sys
 import tensorflow as tf
 
 def selu(x):
@@ -16,7 +15,7 @@ def selu(x):
     return scale * tf.where(x >= 0.0, x, alpha * tf.nn.elu(x))
 
 def conv3d_bnorm_activation(inputs, training, add_bnorm=True,
-                            activation=tf.nn.relu, kernel=[7, 7, 7], channels=1,
+                            activation=tf.nn.relu, kernel=(7, 7, 7), channels=1,
                             initializer='xavier'):
     """
     form conv3d -> batch norm -> relu
@@ -55,7 +54,7 @@ def conv3d_bnorm_activation(inputs, training, add_bnorm=True,
 
 
 def deconv3d_bnorm_activation(inputs, training, add_bnorm=True,
-                              activation=tf.nn.relu, kernel=[5, 5, 5], channels=1,
+                              activation=tf.nn.relu, kernel=(5, 5, 5), channels=1,
                               initializer='xavier'):
     """
     form upsampling deconv3d -> batch norm -> relu
@@ -101,7 +100,7 @@ def deconv3d_bnorm_activation(inputs, training, add_bnorm=True,
                                     padding='SAME', name='deconvolution')
     # add bias, init by zeroes
     bias = tf.get_variable('bias', shape=[channels],
-                            initializer=tf.zeros_initializer())
+                           initializer=tf.zeros_initializer())
     deconv = tf.nn.bias_add(deconv, bias)
 
     # bnorm if needed
@@ -118,8 +117,8 @@ def deconv3d_bnorm_activation(inputs, training, add_bnorm=True,
         return activation(normed)
 
 
-def vnet_up(scope, net_up, net_down, training, add_bnorm=True, activation=tf.nn.relu,
-            kernel=[3, 3, 3], channels=1, initializer='xavier'):
+def vnet_up(scope, net_up, net_down, training, add_bnorm=True, activation=tf.nn.relu,  # pylint: disable=too-many-arguments
+            kernel=(3, 3, 3), channels=1, initializer='xavier'):
     """
     form upsampling vnet layer
 
@@ -143,15 +142,15 @@ def vnet_up(scope, net_up, net_down, training, add_bnorm=True, activation=tf.nn.
 
         Schematically:
 
-                                                output        
-                    ----                         ----                          
+                                                output
+                    ----                         ----
                       net_down               net_up   deconv(net_down & net_up) /|\
-                     --------    concat     --------    
-                      ------------ ... ------------ 
+                     --------    concat     --------
+                      ------------ ... ------------
                                    ...
     """
-    params = dict(training=training, add_bnorm=add_bnorm, activation=activation, 
-                   kernel=kernel, channels=channels, initializer=initializer)
+    params = dict(training=training, add_bnorm=add_bnorm, activation=activation,
+                  kernel=kernel, channels=channels, initializer=initializer)
 
     with tf.variable_scope(scope):
         concatted = tf.concat([net_up, net_down], 4)
@@ -160,7 +159,7 @@ def vnet_up(scope, net_up, net_down, training, add_bnorm=True, activation=tf.nn.
 
     return output
 
-def vnet_down(scope, net_down, training, pool_size=[2, 2, 2], strides=[2, 2, 2], **kwargs):
+def vnet_down(scope, net_down, training, pool_size=(2, 2, 2), strides=(2, 2, 2), **kwargs):
     """
     form downsampling vnet layer
 
@@ -200,13 +199,13 @@ def vnet_down(scope, net_down, training, pool_size=[2, 2, 2], strides=[2, 2, 2],
 
 def get_dice_loss(scope, masks_prediction, masks_ground_truth, epsilon=0):
     """
-    form loss = - dice given predicions for masks and true masks 
+    form loss = - dice given predicions for masks and true masks
 
     Args:
         scope: scope to create loss-op
-        masks_prediction: normalized to [0, 1] 5d-tensor output 
+        masks_prediction: normalized to [0, 1] 5d-tensor output
             of a net (one dim is fake)
-        masks_ground_truth: true cancer-masks, 5d-placeholder with 
+        masks_ground_truth: true cancer-masks, 5d-placeholder with
             last fake dim
         epsilon: add small epsilon to the denominator if problems with
             division on zero arise

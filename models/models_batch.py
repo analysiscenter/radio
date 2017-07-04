@@ -1,12 +1,11 @@
+# pylint: disable=import-error, redefined-outer-name
 """Child class of CTImagesBatch that incorporates nn-models """
 
-import os
 import sys
-import numpy as np
 import tensorflow as tf
 
 sys.path.append('..')
-from preprocessing import CTImagesBatch, CTImagesMaskedBatch
+from preprocessing import CTImagesMaskedBatch
 from dataset import action, model
 from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
 from .layers import get_dice_loss
@@ -25,7 +24,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             return tensors necessary for training, evaluating and inferencing
     """
 
-    @model()
+    @model() # pylint: disable=no-method-argument
     def selu_vnet_4():
         """ Describe vnet-model of depth = 4 with magic SELU activations
         Schematically:
@@ -79,7 +78,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         # up 1
         with tf.variable_scope('up_1'):
             net = deconv3d_bnorm_activation(net, training, kernel=[2, 2, 2],
-                                           channels=8, activation=selu, add_bnorm=False)
+                                            channels=8, activation=selu, add_bnorm=False)
 
         ups.append(net)
 
@@ -123,7 +122,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         Args:
             model: output of nn-model selu_vnet_4 returned by corresponding
                 model-method of CTImagesModels-class
-                *NOTE: do not supply this arg, it's always output of 
+                *NOTE: do not supply this arg, it's always output of
                 selu_vnet_4 - method
             sess: initialized tf-session with vars that need to be updated
             verbose: whether to print stats about learning process on training
@@ -140,7 +139,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         # run train-step
         loss_value, _ = sess.run([loss, train_step], feed_dict={
-                                 input_layer: scans, input_masks: masks})
+            input_layer: scans, input_masks: masks})
         if verbose:
             print('current loss on train batch: ', loss_value)
 
@@ -153,7 +152,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         Args:
             model: output of nn-model selu_vnet_4 returned by corresponding
                 model-method of CTImagesModels-class
-                *NOTE: do not supply this arg, it's always output of 
+                *NOTE: do not supply this arg, it's always output of
                 selu_vnet_4 - method
             sess: tf-session with trained (to an extent) weights
             stats: a list whith stats, in the end of which newly computed stats
@@ -169,7 +168,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         *NOTE: running this from a pipeline on batches of large size can be
             time-consuming. Might be better to run the action directly from
             precomputed test-batch:
-            
+
             ind = FilesIndex(...)
             ds = Dataset(index=ind, batch_class=CTImagesModels)
             ds.cv_split([0.8, 0.2])
@@ -182,7 +181,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             # execute the action inside training cycle:
             for i in range(num_iter):
                 testbatch.update_test_stats(sess, losses)
-            
+
         """
         input_layer, input_masks = model[0]
         loss, _, _ = model[1]
@@ -192,7 +191,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         masks = self.mask.reshape((-1, ) + NOD_SHAPE + (1, ))
 
         # run loss-op on data from batch
-        loss_value = sess.run(loss, feed_dict={input_layer: scans, 
+        loss_value = sess.run(loss, feed_dict={input_layer: scans,
                                                input_masks: masks})
 
         # add computed number to list of stats:

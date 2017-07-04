@@ -12,7 +12,7 @@ import numpy as np
 
 @jit(nogil=True)
 def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
-                         res_factor=None, padding='edge', spacing=None):
+                         res_factor=None, padding='edge', spacing=None):   # pylint: disable=unused-argument
     """ Resize 3d-scan for one patient and put it into out_patient array.
             If res_factor is supplied, use this arg for interpolation.
             O/w infer resize factor from out_patient.shape.
@@ -56,7 +56,7 @@ def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
 
 
 def to_shape(data, shape, padding):
-    """ Crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array
+    """ Crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array     # pylint: disable=anomalous-backslash-in-string
         of shape=shape
 
     Args:
@@ -72,7 +72,6 @@ def to_shape(data, shape, padding):
     overshoot = data_shape - shape
 
     # calclate crop params and perform crop
-    zeros = np.zeros_like(overshoot)
     crop_dims = np.maximum(overshoot, 0)
     crop_first = crop_dims // 2
     crop_trailing = crop_dims - crop_first
@@ -84,7 +83,7 @@ def to_shape(data, shape, padding):
     pad_dims = -np.minimum(overshoot, 0)
     pad_first = pad_dims // 2
     pad_trailing = pad_dims - pad_first
-    pad_params = [(first, trailing) 
+    pad_params = [(first, trailing)
                   for first, trailing in zip(pad_first, pad_trailing)]
     data = np.pad(data, pad_width=pad_params, mode=padding)
 
