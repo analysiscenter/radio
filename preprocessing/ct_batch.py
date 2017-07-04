@@ -279,7 +279,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             patient_id: id of a patient to whom the data and attrs belong
             dst: name of direcory in which the patient is dumped
         """
-        serialized = pickle.dumps(attrs)      
+        serialized = pickle.dumps(attrs)
 
         # create directory if does not exist
         if not os.path.exists(os.path.join(dst, patient_id)):
@@ -632,7 +632,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,    # pylint: disable=unused-argument
+    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,    # pylint: disable=unused-argument, no-self-use
                       padding='edge'):                                            # pylint: disable=unused-argument
         """ Unify spacing of all patients using resize, then crop/pad resized array
                 to supplied shape.
@@ -800,7 +800,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         setattr(self, data_attr, data_4d)
 
 
- 
+
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
         """

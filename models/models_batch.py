@@ -25,7 +25,7 @@ class CTImagesModels(CTImagesMaskedBatch):
     """
 
     @model() # pylint: disable=no-method-argument
-    def selu_vnet_4():
+    def selu_vnet_4(): # pylint: disable=no-method-argument
         """ Describe vnet-model of depth = 4 with magic SELU activations
         Schematically:
             input(NOD_SHAPE[0], NOD_SHAPE[1], NOD_SHAPE[2], 1) -> (... // 2, 2) ->

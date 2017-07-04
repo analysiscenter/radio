@@ -1,3 +1,4 @@
+# pylint: disable=anomalous-backslash-in-string
 """
 Module with auxillary
     jit-compiled functions
@@ -56,7 +57,7 @@ def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
 
 
 def to_shape(data, shape, padding):
-    """ Crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array     # pylint: disable=anomalous-backslash-in-string
+    """ Crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array
         of shape=shape
 
     Args:

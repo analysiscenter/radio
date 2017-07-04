@@ -121,7 +121,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return [CTImagesMaskedBatch.make_filename() for i in range(size)]
 
-    def __init__(self, index, **kwargs):      # pylint: disable=unused-argument 
+    def __init__(self, index, **kwargs):      # pylint: disable=unused-argument
         """Initialization of CTImagesMaskedBatch.
 
         Initialize CTImagesMaskedBatch with index.
@@ -205,8 +205,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.dump(dst='./data/blosc_preprocessed_mask', src='mask')
         """
         if fmt != 'blosc':
-            raise NotImplementedError('Dump to {} is ' +                # pylint: disable=too-many-format-args
-                                      'not implemented yet'.format(fmt))
+            raise NotImplementedError('Dump to {} is ' +                    # pylint: disable=too-many-format-args
+                                      'not implemented yet'.format(fmt))    # pylint: disable=too-many-format-args
 
         # convert src to iterable 1d-array
         src = np.asarray(src).reshape(-1)
