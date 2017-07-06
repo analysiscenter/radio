@@ -480,12 +480,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 int(0.7 * number of slices for patient) from
                 patient's scan and mask
         """
-        margin = int(height * self.images[patient_pos].shape[0])
+        margin = int(height * self.get(patient_pos, 'images').shape[0])
         if self.masks is not None:
-            patch = (self.images[patient_pos][margin, :, :],
-                     self.masks[patient_pos][margin, :, :])
+            patch = (self.get(patient_pos, 'images')[margin, :, :],
+                     self.get(patient_pos, 'masks')[margin, :, :])
         else:
-            patch = (self.images[patient_pos][margin, :, :], None)
+            patch = (self.get(patient_pos, 'images')[margin, :, :], None)
         return patch
 
     def _refresh_nodules_info(self):

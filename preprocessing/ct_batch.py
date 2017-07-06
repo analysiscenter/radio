@@ -894,6 +894,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                  # here self.index[5] usually smth like 'a1de03fz29kf6h2'
 
         """
-        margin = int(slice_height * self.images[person_number].shape[0])
-        patch = self.images[person_number][margin, :, :]
+        margin = int(slice_height * self.get(person_number, 'images').shape[0])
+        patch = self.get(person_number, 'images')[margin, :, :]
         return patch
