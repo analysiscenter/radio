@@ -385,20 +385,20 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         return len(self.index)
 
-    def __getitem__(self, index):
-        """ Indexation of patients by []
+    def get_pos(self, data, component, index):
+        """ Return a posiiton of a component in data for a given index
 
-        Args:
-            self
-            index - can be either number (int) of patient
-                         in self from [0,..,len(self.index) - 1]
-                    or index from self.index
-        Return:
-            components of patient's data with index/number given by index;
-            components are (scan, attrs, spacing, origin)
+        *NOTE: this is an overload of get_pos from base Batch-class,
+            see corresponding docstring for detailed explanation.
         """
-        return (self.get_image(index), self.spacing[self._get_verified_pos(index)],
-                self.origin[self._get_verified_pos(index)])
+        if data is None:
+            ind_pos = self.index.get_pos(index)
+            if component == 'images':
+                return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
+            else:
+                return ind_pos
+        else:
+            return index
 
     def _get_verified_pos(self, index):
         """Get verified position of patient in batch by index.       # pylint: disable=anomalous-backslash-in-string

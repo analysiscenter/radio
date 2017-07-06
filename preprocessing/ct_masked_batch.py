@@ -195,6 +195,21 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return 'images', 'masks', 'spacing', 'origin'
 
+    def get_pos(self, data, component, index):
+        """ Return a posiiton of a component in data for a given index
+
+        *NOTE: this is an overload of get_pos from base Batch-class,
+            see corresponding docstring for detailed explanation.
+        """
+        if data is None:
+            ind_pos = self.index.get_pos(index)
+            if component in ['images', 'masks']:
+                return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
+            else:
+                return ind_pos
+        else:
+            return index
+
     @property
     def num_nodules(self):
         """Get number of nodules in CTImagesMaskedBatch.
