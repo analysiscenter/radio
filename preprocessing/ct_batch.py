@@ -306,7 +306,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 byted = blosc.pack_array(data, cname='zstd', clevel=1)
             elif ext == 'pkl':
                 byted = pickle.dumps(data)
-            async with aiofiles.open(os.path.join(folder, dataname),
+            async with aiofiles.open(os.path.join(folder, filename),
                                      mode='wb') as file:
                 _ = await file.write(byted)
 
