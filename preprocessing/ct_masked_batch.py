@@ -173,22 +173,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self.masks[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
 
 
-    def __getitem__(self, index):
-        """ Indexation of patients by []
-
-        Args:
-            self
-            index - can be either number (int) of patient
-                         in self from [0,..,len(self.index) - 1]
-                    or index from self.index
-        Return:
-            components of patient's data with index/number given by index;
-            components are (scan, mask, attrs, spacing, origin)
-        """
-        return (self.get_image(index), self.get_mask(index),
-                self.spacing[self._get_verified_pos(index)],
-                self.origin[self._get_verified_pos(index)])
-
     @property
     def components(self):
         """ Names for components of tuple returned from __getitem__
