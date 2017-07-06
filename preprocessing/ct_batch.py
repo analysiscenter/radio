@@ -260,6 +260,10 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             # de-byte it with the chosen tool
             component = unpacker(byted)
 
+            # perform additional reshape to (1, 3) if spacing/origin
+            if source in ['spacing', 'origin']:
+                component = component.reshape(1, 3)
+
             # add it components dict
             worker_res.update({source: component})
 
@@ -558,16 +562,16 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                           origin=self.origin, spacing=self.spacing)
             self._init_data(**params)
 
+
         # loop over other components that we need to update
         for component in list_of_dicts[0]:
             if component == 'images':
                 pass
             else:
-                # loop over indices and update comps for each item in batch
-                for i in range(len(list_of_dicts)):
-                    ix = self.indices[i]
-                    comp_pos = self.get_pos(None, component, ix)
-                    getattr(self, component)[comp_pos] = list_of_dicts[i][component]
+                # concatenate comps-ouputs for different scans and update self      
+                list_of_component = [worker_res[component] for worker_res in list_of_dicts]
+                new_comp = np.concatenate(list_of_component, axis=0)
+                setattr(self, component, new_comp)
 
         return self
 
