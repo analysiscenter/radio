@@ -546,7 +546,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             Return:
                 self
         """
-        if any_action_failed(list_of_arrs):
+        if any_action_failed(list_of_dicts):
             raise ValueError("Failed while parallelizing")
 
         # if images is in dict, update bounds
