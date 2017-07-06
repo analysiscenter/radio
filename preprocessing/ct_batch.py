@@ -563,10 +563,11 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             if component == 'images':
                 pass
             else:
-                # concatenate comps-ouputs for different scans and update self
-                list_of_component = [worker_res[component] for worker_res in list_of_dicts]
-                new_comp = np.concatenate(list_of_component, axis=0)
-                setattr(self, component, new_comp)
+                # loop over indices and update comps for each item in batch
+                for i in range(len(list_of_dicts)):
+                    ix = self.indices[i]
+                    comp_pos = self.get_pos(None, component, ix)
+                    getattr(self, component)[comp_pos] = list_of_dicts[i][component]
 
         return self
 
