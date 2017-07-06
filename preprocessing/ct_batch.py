@@ -221,7 +221,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
-    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
+    @inbatch_parallel(init='indices', post='_post_components', target='async')
     async def _load_blosc(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
         """
         Read, prepare scans from blosc and put them into the right place in the
@@ -237,6 +237,9 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         # convert src to iterable 1d-array
         src = np.asarray(kwargs['src']).reshape(-1)
+
+        # result of worker's execution is put into this dict
+        worker_res = dict()
 
         for source in src:
             # set correct extension for each component and choose a tool
@@ -257,20 +260,17 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             # de-byte it with the chosen tool
             component = unpacker(byted)
 
-            # determine position in data of source-component for the patient
-            comp_pos = self.get_pos(None, source, patient_id)
+            # add it components dict
+            worker_res.update({source: component})
 
-            # put the component in needed place in batch
-            getattr(self, source)[comp_pos] = component
-
-        return None
+        return worker_res
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw (.mhd)
 
             *NOTE1: no conversion to hu here (assume densities are already in hu)
             *NOTE2: no multithreading here, as SimpleITK (sitk)-library does not seem
-                to work correcly with multithreading 
+                to work correcly with multithreading
         """
         list_of_arrs = []
         for patient_id in self.indices:
@@ -537,6 +537,42 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             else:
                 self._init_data(**params)
         return res
+
+    def _post_components(self, list_of_dicts, **kwargs):
+        """ Gather outputs of different workers, update self. Assume each
+                output corresponds to a scan (one batch item) and is a dict of format
+                {component: what_should_be_put_into_component}.
+
+            Return:
+                self
+        """
+        if any_action_failed(list_of_arrs):
+            raise ValueError("Failed while parallelizing")
+
+        # if images is in dict, update bounds
+        if 'images' in list_of_dicts[0]:
+            list_of_images = [worker_res['images'] for worker_res in list_of_dicts]
+            new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_images]))
+            new_data = np.concatenate(list_of_images, axis=0)
+            params = dict(source=new_data, bounds=new_bounds,
+                          origin=self.origin, spacing=self.spacing)
+            self._init_data(**params)
+
+        # loop over other components that we need to update
+        for component in list_of_dicts[0]:
+            if component == 'images':
+                pass
+            else:
+                # concatenate comps-ouputs for different scans and update self
+                list_of_component = [worker_res[component] for worker_res in list_of_dicts]
+                new_comp = np.concatenate(list_of_component, axis=0)
+                setattr(self, component, new_comp)
+
+        return self
+
+
+
+
 
     def _init_images(self, **kwargs):               # pylint: disable=unused-argument
         return [self.get_image(patient_id) for patient_id in self.indices]
