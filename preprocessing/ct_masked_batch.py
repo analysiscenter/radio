@@ -297,7 +297,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     def create_mask(self):
         """Load mask data for using nodule's info.
 
-        Load mask into self.mask using info in attribute self.nodules_info.
+        Load mask into self.masks using info in attribute self.nodules_info.
         *Note: nodules info must be loaded before the call of this method.
         """
         if self.nodules is None:
@@ -481,7 +481,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 int(0.7 * number of slices for patient) from
                 patient's scan and mask
         """
-        margin = int(height * self[patient_pos].shape[0])
+        margin = int(height * self.images[patient_pos].shape[0])
         if self.masks is not None:
             patch = (self.images[patient_pos][margin, :, :],
                      self.masks[patient_pos][margin, :, :])
