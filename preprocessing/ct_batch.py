@@ -109,7 +109,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             index: index of type DatasetIndex
         """
 
-        super().__init__(index, args, kwargs)
+        super().__init__(index, *args, **kwargs)
         self._init_data()
 
         self._crop_centers = np.array([], dtype=np.int32)

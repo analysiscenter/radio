@@ -118,7 +118,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Initialize CTImagesMaskedBatch with index.
         """
-        super().__init__(index, args, kwargs)
+        super().__init__(index, *args, **kwargs)
         self.masks = None
         self.nodules = None
 
