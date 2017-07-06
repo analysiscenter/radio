@@ -98,7 +98,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     """
 
-    def __init__(self, index):
+    def __init__(self, index, *args, **kwargs):
         """
         common part of initialization from all formats:
             -execution of Batch construction
@@ -109,7 +109,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             index: index of type DatasetIndex
         """
 
-        super().__init__(index)
+        super().__init__(index, args, kwargs)
         self._init_data()
 
         self._crop_centers = np.array([], dtype=np.int32)

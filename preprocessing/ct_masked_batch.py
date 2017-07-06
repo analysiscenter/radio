@@ -113,12 +113,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return [CTImagesMaskedBatch.make_filename() for i in range(size)]
 
-    def __init__(self, index, **kwargs):      # pylint: disable=unused-argument
+    def __init__(self, index, *args, **kwargs):      # pylint: disable=unused-argument
         """Initialization of CTImagesMaskedBatch.
 
         Initialize CTImagesMaskedBatch with index.
         """
-        super().__init__(index)
+        super().__init__(index, args, kwargs)
         self.masks = None
         self.nodules = None
 
