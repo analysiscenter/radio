@@ -135,7 +135,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     def load(self, fmt='dicom', source=None, bounds=None,
-             origin=None, spacing=None, attrs_from_blosc=True):    # pylint: disable=arguments-differ
+             origin=None, spacing=None, src_blosc=('data', 'attrs')):    # pylint: disable=arguments-differ
         """ Loads 3d scans-data in batch
 
         Args:
@@ -146,8 +146,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 starting pixels. Needed only if fmt='ndarray'
             spacing: ndarray [len(bounds) X 3] with spacings of patients.
                 Needed only if fmt='ndarray'
-            attrs_from_blosc: a flag indicating whether attributes should be uploaded
-                from attrs.pkl. Needed only fmt='blosc'
+            src_blosc: iterable with components of batch that should be loaded from blosc
 
         Return:
             self
@@ -175,7 +174,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
-            self._load_blosc(attrs_from_blosc=attrs_from_blosc)              # pylint: disable=no-value-for-parameter
+            self._load_blosc(src=src_blosc)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
         else:
@@ -215,34 +214,46 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
-    @inbatch_parallel(init='indices', post='_post_default', target='async')
+    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
     async def _load_blosc(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
         """
-        read, prepare and put 3d-scans in array from blosc
-            return the array
+        Read, prepare scans from blosc and put them into the right place in the
+            skyscraper
 
-        args:
-            patient_id - index of patient from batch, whose scans we need to
-            stack
+        Args:
+            patient_id: index of patient from batch, whose scans we need to
+                stack
+            src: components of data that should be loaded into self
+
 
             *no conversion to hu here
         """
-        blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'data.blk')
-        attrs_path = os.path.join(self.index.get_fullpath(patient_id), 'attrs.pkl')
+        # convert src to iterable 1d-array
+        src = np.asarray(kwargs['src']).reshape(-1)
 
-        # read pickled attrs-dict and set origin and spacing for patient_id if needed
-        if kwargs['attrs_from_blosc']:
-            async with aiofiles.open(attrs_path, mode='rb') as file:
-                serialized = await file.read()
-            attrs = pickle.loads(serialized)
-            patient_pos = self.index.get_pos(patient_id)
-            self.origin[patient_pos, :] = attrs['origin']
-            self.spacing[patient_pos, :] = attrs['spacing']
+        for source in src:
+            # set correct extension for each component and choose a tool
+            # for debyting it
+            if source in ['attrs', 'spacing', 'origin']:
+                ext = '.pkl'
+                unpacker = pickle.loads
+            else:
+                ext = '.blk'
+                unpacker = blosc.unpack_array
 
-        # read and return data
-        async with aiofiles.open(blosc_dir_path, mode='rb') as file:
-            packed = await file.read()
-        return blosc.unpack_array(packed)
+            comp_path = os.path.join(self.index.get_fullpath(patient_id), source + ext)
+
+            # read the component
+            async with aiofiles.open(comp_path, mode='rb') as file:
+                byted = await file.read()
+
+            # de-byte it with the chosen tool
+            component = unpacker(byted)
+
+            # put the component in batch
+            getattr(self, source)[patient_id] = component
+
+        return None
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """
@@ -268,41 +279,42 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return self
 
     @staticmethod
-    async def dump_data_attrs(data_dict, attrs, patient_id, dst):
-        """ Dump data and attrs corresponding to one patient on disk in
-                folder = dst + patient_id
+    async def dump_data(data_items, folder):
+        """ Dump data that contains in data_items on disk in
+                specified folder
 
         Args:
-            data_dict: dict of ndarrays for dump in form array_name : array
-                (e.g.: {'data.blk': data, 'mask.blk': mask})
-            attrs: dict of attrs to dump
-            patient_id: id of a patient to whom the data and attrs belong
-            dst: name of direcory in which the patient is dumped
+            data_items: dict of data items for dump in form item_name.ext: item
+                (e.g.: {'data.blk': data, 'mask.blk': mask, 'attrs.pkl': attrs})
+            folder: folder to dump data-items in
+
+        Return:
+            ____
+
+        *NOTE: depending on supplied format, each data-item will be either
+            serialized (if .pkl) or blosc-packed (if .blk)
         """
-        serialized = pickle.dumps(attrs)
 
         # create directory if does not exist
-        if not os.path.exists(os.path.join(dst, patient_id)):
-            os.makedirs(os.path.join(dst, patient_id))
+        if not os.path.exists(folder):
+            os.makedirs(folder)
 
-        # compress with blosc and put all ndarrays from data_dict on disk
-        for dataname, data in data_dict.items():
-            packed = blosc.pack_array(data, cname='zstd', clevel=1)
-            async with aiofiles.open(os.path.join(dst, patient_id,
-                                                  dataname), mode='wb') as file:
-                _ = await file.write(packed)
-
-        # put pickled attributes on disk if attrs is supplied
-        if attrs is not None:
-            async with aiofiles.open(os.path.join(dst, patient_id,
-                                                  'attrs.pkl'), mode='wb') as file:
-                _ = await file.write(serialized)
+        # infer extension of each item, serialize/blosc-pack and dump the item
+        for filename, data in data_items.items():
+            ext = filename.split('.')[-1]
+            if ext == 'blk':
+                byted = blosc.pack_array(data, cname='zstd', clevel=1)
+            elif ext == 'pkl':
+                byted = pickle.dumps(data)
+            async with aiofiles.open(os.path.join(folder, dataname),
+                                     mode='wb') as file:
+                _ = await file.write(byted)
 
         return None
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, fmt='blosc', dump_attrs=True):
+    async def dump(self, patient, dst, src='data', fmt='blosc'):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Args:
@@ -332,12 +344,28 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
-        pat_data = {'data.blk': self.get_image(patient)}
+        # convert src to iterable 1d-array
+        src = np.asarray(src).reshape(-1)
+        data_items = dict()
 
-        # get patient attrs if dump of attrs is needed
-        pat_attrs = self.get_attrs(patient) if dump_attrs else None
+        # set correct extension to each component and add it to items-dict
+        for source in list(src):
+            if source in ['attrs', 'spacing', 'origin']:
+                ext = '.pkl'
+            else:
+                ext = '.blk'
+            data_items.update({source + ext: getattr(self, source)[patient]})
 
-        return await self.dump_data_attrs(pat_data, pat_attrs, patient, dst)
+        # set patient-specific folder
+        folder = os.path.join(dst, patient)
+
+        return await self.dump_data(data_items, folder)
+
+    @property
+    def components(self):
+        """ Names for components of tuple returned from __getitem__
+        """
+        return 'data', 'attrs', 'spacing', 'origin'
 
     def __len__(self):
         """ Get number of patients in self
@@ -357,9 +385,12 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                          in self from [0,..,len(self.index) - 1]
                     or index from self.index
         Return:
-            view on patient with index/number given by index
+            components of patient's data with index/number given by index;
+            components are (scan, attrs, spacing, origin)
         """
-        return self.get_image(index)
+        return (self.get_image(index), self.get_attrs(index),
+                self.spacing[self._get_verified_pos(index)],
+                self.origin[self._get_verified_pos(index)])
 
     def _get_verified_pos(self, index):
         """Get verified position of patient in batch by index.       # pylint: disable=anomalous-backslash-in-string

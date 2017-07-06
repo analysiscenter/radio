@@ -133,7 +133,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments
              origin=None, spacing=None, nodules=None, mask=None,
-             attrs_from_blosc=True):
+             src_blosc=('data', 'attrs', 'mask')):
         """Load data in masked batch of patients.
 
         Args:
@@ -158,69 +158,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.mask = mask
         else:
             # TODO check this
-            super().load(fmt=fmt, **params, attrs_from_blosc=attrs_from_blosc)
+            super().load(fmt=fmt, **params, src_blosc=src_blosc)
         return self
 
-    @action
-    @inbatch_parallel(init='indices', post='_post_mask', target='async')
-    async def load_mask(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
-        """ read, prepare and put 3d-mask in array from blosc,
-            return the array.
-
-        Args:
-            patient_id: index of patient from batch, whose scans we need to
-                stack
-        Return:
-            array with mask that corresponds to patient with supplied id
-        """
-        blosc_dir_path = os.path.join(self.index.get_fullpath(patient_id), 'mask.blk')
-        if not os.path.exists(blosc_dir_path):
-            raise FileExistsError("Cannot find mask.blk in the patient's folder")
-
-        # read and return data
-        async with aiofiles.open(blosc_dir_path, mode='rb') as file:
-            packed = await file.read()
-        return blosc.unpack_array(packed)
-
-    @action
-    @inbatch_parallel(init='indices', post='_post_default',
-                      target='async', update=False)
-    async def dump(self, patient, dst, src="data", fmt="blosc", dump_attrs=True):
-        """Dump mask or source data on specified path and format
-
-        Dump data or mask in CTIMagesMaskedBatch on specified path and format.
-        Create folder corresponing to each patient.
-
-        example:
-            # initialize batch and load data
-            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
-            batch.load(...)
-            batch.create_mask(...)
-            batch.dump(dst='./data/blosc_preprocessed', src='data')
-            # the command above creates files
-
-            # ./data/blosc_preprocessed/1ae34g90/data.blk
-            # ./data/blosc_preprocessed/3hf82s76/data.blk
-            # ./data/blosc_preprocessed/2ds38d04/data.blk
-            batch.dump(dst='./data/blosc_preprocessed_mask', src='mask')
-        """
-        if fmt != 'blosc':
-            raise NotImplementedError('Dump to {} is ' +                    # pylint: disable=too-many-format-args
-                                      'not implemented yet'.format(fmt))    # pylint: disable=too-many-format-args
-
-        # convert src to iterable 1d-array
-        src = np.asarray(src).reshape(-1)
-        data_dict = dict()
-
-        for source in list(src):
-            if source == 'data':
-                data_dict.update({'data.blk': self.get_image(patient)})
-            elif source == 'mask':
-                data_dict.update({'mask.blk': self.get_mask(patient)})
-
-        # get patient attrs if dump of attrs is needed
-        pat_attrs = self.get_attrs(patient) if dump_attrs else None
-        return await self.dump_data_attrs(data_dict, pat_attrs, patient, dst)
 
     def get_mask(self, index):
         """Get view on patient data's mask.
@@ -239,6 +179,29 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return None
         pos = self._get_verified_pos(index)
         return self.mask[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
+
+
+    def __getitem__(self, index):
+        """ Indexation of patients by []
+
+        Args:
+            self
+            index - can be either number (int) of patient
+                         in self from [0,..,len(self.index) - 1]
+                    or index from self.index
+        Return:
+            components of patient's data with index/number given by index;
+            components are (scan, mask, attrs, spacing, origin)
+        """
+        return (self.get_image(index), self.get_mask(index), self.get_attrs(index),
+                self.spacing[self._get_verified_pos(index)],
+                self.origin[self._get_verified_pos(index)])
+
+    @property
+    def components(self):
+        """ Names for components of tuple returned from __getitem__
+        """
+        return 'data', 'mask', 'attrs', 'spacing', 'origin'
 
     @property
     def num_nodules(self):
