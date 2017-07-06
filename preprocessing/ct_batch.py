@@ -257,8 +257,11 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             # de-byte it with the chosen tool
             component = unpacker(byted)
 
+            # determine position in data of source-component for the patient
+            comp_pos = self.get_pos(None, source, patient_id)
+
             # put the component in needed place in batch
-            getattr(self, source)[patient_id] = component
+            getattr(self, source)[comp_pos] = component
 
         return None
 
@@ -363,7 +366,10 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 ext = '.pkl'
             else:
                 ext = '.blk'
-            data_items.update({source + ext: getattr(self, source)[patient]})
+
+            # determine position in data of source-component for the patient
+            comp_pos = self.get_pos(None, source, patient)
+            data_items.update({source + ext: getattr(self, source)[comp_pos]})
 
         # set patient-specific folder
         folder = os.path.join(dst, patient)
@@ -392,7 +398,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             see corresponding docstring for detailed explanation.
         """
         if data is None:
-            ind_pos = self.index.get_pos(index)
+            ind_pos = self._get_verified_pos(index)
             if component == 'images':
                 return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
             else:

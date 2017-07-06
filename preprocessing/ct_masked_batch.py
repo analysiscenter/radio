@@ -186,7 +186,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             see corresponding docstring for detailed explanation.
         """
         if data is None:
-            ind_pos = self.index.get_pos(index)
+            ind_pos = self._get_verified_pos(index)
             if component in ['images', 'masks']:
                 return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
             else:
