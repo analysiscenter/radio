@@ -395,15 +395,16 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         # whenever images are to be dumped, shape should also be dumped
         if 'images' in src and 'shape' not in src:
-            src = tuple() ('shape', )
+            src = tuple() + ('shape', )
 
+        print('ok here 1')
         # set correct extension to each component and add it to items-dict
         for source in list(src):
             if source in ['spacing', 'origin', 'shape']:
                 ext = '.pkl'
             else:
                 ext = '.blk'
-
+            print('ok here 2')
             # determine position in data of source-component for the patient
             comp_pos = self.get_pos(None, source, patient)
             data_items.update({source + ext: getattr(self, source)[comp_pos]})
