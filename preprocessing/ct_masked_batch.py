@@ -125,12 +125,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments
              origin=None, spacing=None, nodules=None, masks=None,
-             src_blosc=('images', 'masks', 'spacing', 'origin')):
+             src_blosc=None):
         """Load data in masked batch of patients.
 
         Args:
         - source: source array with skyscraper, needed if fmt is 'ndarray';
         - fmt: type of source data; possible values are 'raw' and 'ndarray';
+        - src_blosc: iterable with components of batch that should be loaded from blosc.
+                Needed only if fmt='blosc'. If None, all components are loaded;
         Returns:
         - self;
 
@@ -549,6 +551,22 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.masks = new_masks
 
         return self
+
+    def _init_load_blosc(self, **kwargs):
+        """ Init-func for load from blosc. Overload of corresponding method from
+                CTImagesBatch.
+        Args:
+            src_blosc: iterable of components that need to be loaded
+        Return
+            list of ids of batch-items
+        """
+        args = super()._init_load_blosc(**kwargs)
+
+        # init mask-attr by zeroes if mask-comp is to be loaded
+        if 'masks' in kwargs['src']:
+            self.masks = np.zeros_like(self.images)
+
+        return args
 
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):

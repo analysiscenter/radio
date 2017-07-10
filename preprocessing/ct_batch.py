@@ -141,7 +141,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     def load(self, fmt='dicom', source=None, bounds=None,
-             origin=None, spacing=None, src_blosc=('images', 'spacing', 'origin')):    # pylint: disable=arguments-differ
+             origin=None, spacing=None, src_blosc=None):    # pylint: disable=arguments-differ
         """ Loads 3d scans-data in batch
 
         Args:
@@ -152,7 +152,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 starting pixels. Needed only if fmt='ndarray'
             spacing: ndarray [len(bounds) X 3] with spacings of patients.
                 Needed only if fmt='ndarray'
-            src_blosc: iterable with components of batch that should be loaded from blosc
+            src_blosc: iterable with components of batch that should be loaded from blosc.
+                Needed only if fmt='blosc'. If None, all components are loaded.
 
         Return:
             self
@@ -180,6 +181,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
+            src_blosc = self.components if src_blosc is None else src_blosc
             self._load_blosc(src=src_blosc)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
@@ -221,7 +223,35 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
-    @inbatch_parallel(init='indices', post='_post_components', target='async')
+    def _init_load_blosc(self, **kwargs):
+        """ Init-func for load from blosc.
+
+        Args:
+            src_blosc: iterable of components that need to be loaded
+        Return
+            list of ids of batch-items
+        """
+        # set images-component to 3d-array of zeroes if the component is to be updated
+        if 'images' in kwargs['src']: 
+            shapes = np.zeros(len(self), 3)
+            for ix in self.indices:
+                filename = os.path.join(self.index.get_fullpath(ix), 'shape.pkl')
+                ix_pos = self._get_verified_pos(ix)
+
+                # read shape and put it into shapes
+                with open(filename, 'rb') as file:
+                    shape[ix_pos, :] = pickle.load(file)
+
+            # initialize the images-attr with 3d-array of zeroes of needed shape
+            self.images = np.zeros((np.sum(shapes[:, 0]), shapes[0, 1], shapes[0, 2]))
+
+            # update bounds of items
+            self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0))
+
+        return self.indices
+
+
+    @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async')
     async def _load_blosc(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
         """
         Read, prepare scans from blosc and put them into the right place in the
@@ -260,14 +290,9 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             # de-byte it with the chosen tool
             component = unpacker(byted)
 
-            # perform additional reshape to (1, 3) if spacing/origin
-            if source in ['spacing', 'origin']:
-                component = component.reshape(1, 3)
-
-            # add it components dict
-            worker_res.update({source: component})
-
-        return worker_res
+            # update needed slice(s) of component
+            comp_pos = self.get_pos(None, source, patient)
+            getattr(self, source)[comp_pos] = component
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw (.mhd)
@@ -568,7 +593,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             if component == 'images':
                 pass
             else:
-                # concatenate comps-ouputs for different scans and update self      
+                # concatenate comps-outputs for different scans and update self      
                 list_of_component = [worker_res[component] for worker_res in list_of_dicts]
                 new_comp = np.concatenate(list_of_component, axis=0)
                 setattr(self, component, new_comp)
