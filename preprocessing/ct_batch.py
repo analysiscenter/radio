@@ -387,7 +387,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             src = self.components + ('shape', )
 
         # whenever images are to be dumped, shape should also be dumped
-        if images in src and 'shape' not in src:
+        if 'images' in src and 'shape' not in src:
             src += ('shape', )
 
         if fmt != 'blosc':
