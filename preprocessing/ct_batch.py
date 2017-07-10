@@ -386,10 +386,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         if src is None:
             src = self.components + ('shape', )
 
-        # whenever images are to be dumped, shape should also be dumped
-        if 'images' in src and 'shape' not in src:
-            src += ('shape', )
-
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
@@ -397,9 +393,13 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         src = np.asarray(src).reshape(-1)
         data_items = dict()
 
+        # whenever images are to be dumped, shape should also be dumped
+        if 'images' in src and 'shape' not in src:
+            src = tuple() ('shape', )
+
         # set correct extension to each component and add it to items-dict
         for source in list(src):
-            if source in ['spacing', 'origin']:
+            if source in ['spacing', 'origin', 'shape']:
                 ext = '.pkl'
             else:
                 ext = '.blk'
