@@ -355,7 +355,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, src=('images', 'spacing', 'origin'), fmt='blosc'):
+    async def dump(self, patient, dst, src=None, fmt='blosc'):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Args:
@@ -382,6 +382,14 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             # ./data/blosc_preprocessed/2ds38d04/data.blk
             # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
         """
+        # if src is not supplied, dump all components and shapes
+        if src is None:
+            src = self.components + ('shape', )
+
+        # whenever images are to be dumped, shape should also be dumped
+        if images in src and 'shape' not in src:
+            src += ('shape', )
+
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
