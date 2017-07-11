@@ -240,7 +240,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
                 # read shape and put it into shapes
                 with open(filename, 'rb') as file:
-                    shape[ix_pos, :] = pickle.load(file)
+                    shapes[ix_pos, :] = pickle.load(file)
 
             # initialize the images-attr with 3d-array of zeroes of needed shape
             self.images = np.zeros((np.sum(shapes[:, 0]), shapes[0, 1], shapes[0, 2]))
