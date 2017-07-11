@@ -243,7 +243,9 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                     shapes[ix_pos, :] = pickle.load(file)
 
             # initialize the images-attr with 3d-array of zeroes of needed shape
-            self.images = np.zeros((np.sum(shapes[:, 0]), shapes[0, 1], shapes[0, 2]))
+            skysc_shape = np.asarray((np.sum(shapes[:, 0]), shapes[0, 1], shapes[0, 2]),
+                                     dtype=np.int)
+            self.images = np.zeros(skysc_shape)
 
             # update bounds of items
             self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0))
