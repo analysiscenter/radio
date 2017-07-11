@@ -22,9 +22,16 @@ class CTImagesModels(CTImagesMaskedBatch):
         1. selu_vnet_4:
             build vnet of depth = 4 using tensorflow,
             return tensors necessary for training, evaluating and inferencing
+        2. train_vnet_4:
+            train selu_vnet_4 on images and masks, that are contained in batch
+        3. update_test_stats:
+            method for evaluation of the model on test-batch (test-dataset) during
+            training
+        4. get_cancer_segmentation:
+            method for performing inference on images of batch using trained model
     """
 
-    @model() # pylint: disable=no-method-argument
+    @model()
     def selu_vnet_4(): # pylint: disable=no-method-argument
         """ Describe vnet-model of depth = 4 with magic SELU activations
         Schematically:
@@ -39,13 +46,11 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         # input placeholder for scan patches
         shape_inout = (None, ) + NOD_SHAPE + (1, )
-        input_layer = tf.placeholder(tf.float32, shape=shape_inout,
-                                     name='scans')
+        input_layer = tf.placeholder(tf.float32, shape=shape_inout, name='scans')
         training = tf.placeholder(tf.bool, shape=[], name='mode')
 
         # input placeholder for masks
-        masks_ground_truth = tf.placeholder(tf.float32, shape=shape_inout,
-                                            name='masks')
+        masks_ground_truth = tf.placeholder(tf.float32, shape=shape_inout, name='masks')
 
         # vnet of depth = 4
         downs = []
@@ -134,8 +139,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         loss, train_step, _ = model[1]
 
         # reshape data in batch to tensor-shape
-        scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
-        masks = self.mask.reshape((-1, ) + NOD_SHAPE + (1, ))
+        scans = self.images.reshape((-1, ) + NOD_SHAPE + (1, ))
+        masks = self.masks.reshape((-1, ) + NOD_SHAPE + (1, ))
 
         # run train-step
         loss_value, _ = sess.run([loss, train_step], feed_dict={
@@ -187,12 +192,11 @@ class CTImagesModels(CTImagesMaskedBatch):
         loss, _, _ = model[1]
 
         # reshape data in batch to tensor-shape
-        scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
-        masks = self.mask.reshape((-1, ) + NOD_SHAPE + (1, ))
+        scans = self.images.reshape((-1, ) + NOD_SHAPE + (1, ))
+        masks = self.masks.reshape((-1, ) + NOD_SHAPE + (1, ))
 
         # run loss-op on data from batch
-        loss_value = sess.run(loss, feed_dict={input_layer: scans,
-                                               input_masks: masks})
+        loss_value = sess.run(loss, feed_dict={input_layer: scans, input_masks: masks})
 
         # add computed number to list of stats:
         stats.append(loss_value)
@@ -220,7 +224,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         _, _, masks_predictions = model[1]
 
         # reshape data in batch to tensor-shape
-        scans = self._data.reshape((-1, ) + NOD_SHAPE + (1, ))
+        scans = self.images.reshape((-1, ) + NOD_SHAPE + (1, ))
 
         # compute predicted masks
         predictions = sess.run(masks_predictions, feed_dict={input_layer: scans})

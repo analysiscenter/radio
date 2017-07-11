@@ -191,7 +191,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_dicom(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
+    def _load_dicom(self, patient_id, *args, **kwargs):
         """
         Read, prepare and put stacked 3d-scans in an array
             return the array
@@ -254,7 +254,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
 
     @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async', update=False)
-    async def _load_blosc(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
+    async def _load_blosc(self, patient_id, *args, **kwargs):
         """
         Read, prepare scans from blosc and put them into the right place in the
             skyscraper
@@ -556,7 +556,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         return (self.spacing * self.shape) / new_shape
 
-    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):    # pylint: disable=unused-argument
+    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
         """
         gatherer of outputs of different workers
             assumes that output of each worker corresponds to patient data
@@ -615,10 +615,10 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
 
 
-    def _init_images(self, **kwargs):               # pylint: disable=unused-argument
+    def _init_images(self, **kwargs):
         return [self.get_image(patient_id) for patient_id in self.indices]
 
-    def _post_crop(self, list_of_arrs, **kwargs):   # pylint: disable=unused-argument
+    def _post_crop(self, list_of_arrs, **kwargs):
         # TODO: check for errors
         crop_array = np.array(list_of_arrs)
         self._crop_centers = crop_array[:, :, 2]
@@ -649,14 +649,13 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                          'res': new_data}
             # for unify_spacing
             if 'spacing' in kwargs:
-                item_args['res_factor'] = self.spacing[i, :] / \
-                                          np.array(kwargs['spacing'])
+                item_args['res_factor'] = self.spacing[i, :] / np.array(kwargs['spacing'])
 
             all_args += [item_args]
 
         return all_args
 
-    def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):   # pylint: disable=unused-argument
+    def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """
         gatherer of outputs from different workers for
             ops, requiring complete rebuild of batch.images
@@ -685,8 +684,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         # is for unify_spacing
         if 'spacing' in kwargs:
             # recalculate origin, spacing
-            shape_after_resize = np.rint(self.shape * self.spacing /
-                                         np.asarray(kwargs['spacing']))
+            shape_after_resize = np.rint(self.shape * self.spacing / np.asarray(kwargs['spacing']))
             overshoot = shape_after_resize - np.asarray(kwargs['shape'])
             new_spacing = self.rescale(new_shape=shape_after_resize)
             new_origin = self.origin + new_spacing * (overshoot // 2)
@@ -724,7 +722,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
 
     @inbatch_parallel(init='_init_images', post='_post_crop', target='nogil')
-    def _crop_params_patients(self, *args, **kwargs):                    # pylint: disable=unused-argument,no-self-use
+    def _crop_params_patients(self, *args, **kwargs):
         """
         calculate params for crop, calling return_black_border_array
         """
@@ -732,30 +730,27 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def resize(self, shape=(128, 256, 256), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+    def resize(self, shape=(128, 256, 256), order=3, *args, **kwargs):
         """ Resize (change shape) each CT-scan in the batch.
                 When called from a batch, changes this batch.
         Args:
             shape: needed shape after resize in order z, y, x
                 *note that the order of axes in data is z, y, x
                  that is, new patient shape = (shape[0], shape[1], shape[2])
-            n_workers: number of threads used (degree of parallelism)
-                *note: available in the result of decoration of the function
-                above
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
         Returns:
             self
         example:
             shape = (128, 256, 256)
-            Batch = Batch.resize(shape=shape, n_workers=20, order=2)
+            Batch = Batch.resize(shape=shape, order=2)
         """
         return resize_patient_numba
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,    # pylint: disable=unused-argument, no-self-use
-                      padding='edge'):                                            # pylint: disable=unused-argument
+    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
+                      padding='edge'):
         """ Unify spacing of all patients using resize, then crop/pad resized array
                 to supplied shape.
         Args:
@@ -772,7 +767,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
-    def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+    def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):
         """
         This function takes 3d picture represented by np.ndarray image,
         start position for 0-axis index, stop position for 0-axis index,
@@ -826,9 +821,9 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
 
     def get_patches(self, patch_shape, stride, padding='edge', data_attr='images'):
-        """
-        extract patches of size patch_shape with specified
-            stride
+        """ Extract patches of size patch_shape with specified
+                stride
+
         Args:
             patch_shape: tuple/list/ndarray of len=3 with needed
                 patch shape
@@ -840,9 +835,10 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 Then data will be padded s.t. 4 windows can be extracted
             data_attr: name of attribute where the data is stored
                 images by default
+
         Return:
             4d-ndaray of patches; first dimension enumerates patches
-        *Note: the shape of all patients is assumed to be the same
+        *NOTE: the shape of all patients is assumed to be the same
         """
 
         patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
@@ -858,20 +854,18 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         # init tensor with patches
         num_sections = (np.asarray(data_padded.shape[1 : ]) - patch_shape) // stride + 1
-        patches = np.zeros(shape=(len(self),
-                                  np.prod(num_sections)) + tuple(patch_shape))
+        patches = np.zeros(shape=(len(self), np.prod(num_sections)) + tuple(patch_shape))
 
         # put patches into the tensor
         fake = np.zeros(len(self))
         put_patches_numba(data_padded, patch_shape, stride, patches, fake)
-        patches = np.reshape(patches, (len(self) * \
-            np.prod(num_sections), ) + tuple(patch_shape))
+        patches = np.reshape(patches, (len(self) * np.prod(num_sections), ) + tuple(patch_shape))
         return patches
 
     def load_from_patches(self, patches, stride, scan_shape, data_attr='images'):
-        """
-        Assemble skyscraper from 4d-array of patches and
-            put it into data_attr-attribute of batch
+        """ Assemble skyscraper from 4d-array of patches and
+                put it into data_attr-attribute of batch
+
         Args:
             patches: 4d-array of patches, first dim enumerates patches
                 others are spatial in order (z, y, x)
@@ -883,9 +877,12 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                     is used
             data_attr: the name of attribute, the assembled skyscraper should
                 be put into
-            *note: scan_shape, patches.shape, sride are used to infer the number
+            *NOTE: scan_shape, patches.shape, sride are used to infer the number
                 of sections;
                 in case of overshoot we crop the padding out
+
+        Return:
+            ___
         """
         scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
         patch_shape = np.asarray(patches.shape[1 : ])
@@ -895,8 +892,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         # if padding is non-zero, adjust the shape of scan
         if pad_width is not None:
-            shape_delta = np.asarray(
-                [before + after for before, after in pad_width[1 : ]])
+            shape_delta = np.asarray([before + after for before, after in pad_width[1 : ]])
         else:
             shape_delta = np.zeros(3).astype('int')
 
@@ -917,20 +913,20 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             data_4d = data_4d[:, slc_z, slc_y, slc_x]
 
         # reshape 4d-data to skyscraper form and put it into needed attr
-        data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + \
-            tuple(scan_shape[1 : ]))
+        data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + tuple(scan_shape[1 : ]))
         setattr(self, data_attr, data_4d)
 
 
 
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
-        """
-        normalizes hu-densities to interval [0, 255]:
-            trims hus outside range [min_hu, max_hu]
-            then scales to [0, 255]
+        """ Normalize hu-densities to interval [0, 255]:
+                trim hus outside range [min_hu, max_hu], then scale to [0, 255].
 
-        example:
+        Args:
+                        
+
+        Example:
             batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
         """
 

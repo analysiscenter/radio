@@ -113,7 +113,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return [CTImagesMaskedBatch.make_filename() for i in range(size)]
 
-    def __init__(self, index, *args, **kwargs):      # pylint: disable=unused-argument
+    def __init__(self, index, *args, **kwargs):
         """Initialization of CTImagesMaskedBatch.
 
         Initialize CTImagesMaskedBatch with index.
@@ -318,13 +318,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def fetch_mask_data(self, mask_shape):
-        """
-        create scaled mask using nodule info from self
-        args:
-            mask_shape: requiring shape of mask to be created
-        return:
-            3d-array with mask
+    def fetch_mask(self, shape):
+        """Create scaled mask using nodule info from self
+
+        Args:
+            shape: requiring shape of mask to be created
+
+        Return:
+            3d-array with mask in form of skyscraper
+
         # TODO: one part of code from here repeats create_mask function
             better to unify these two func
         """
@@ -332,10 +334,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
             logger.warning("Info about nodules location must " +
                            "be loaded before calling this method. " +
                            "Nothing happened.")
-        mask = np.zeros(shape=(len(self) * mask_shape[0], ) + tuple(mask_shape[1:]))
+        mask = np.zeros(shape=(len(self) * shape[0], ) + tuple(shape[1:]))
 
         # infer scale factor; assume patients are already resized to equal shapes
-        scale_factor = np.asarray(mask_shape) / self.shape[0, :]
+        scale_factor = np.asarray(shape) / self.shape[0, :]
 
         # get rescaled nodule-centers, nodule-sizes, offsets, locs of nod starts
         center_scaled = np.abs(self.nodules.nodule_center - self.nodules.origin) / \
@@ -395,8 +397,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.asarray(samples + offset, dtype=np.int)
 
     @action
-    def sample_nodules(self, batch_size, nodule_size, share=0.8,
-                       variance=None, mask_shape=None):
+    def sample_nodules(self, batch_size, nodule_size, share=0.8, variance=None, mask_shape=None):
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -453,7 +454,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if mask_shape is not None:
             scale_factor = np.asarray(mask_shape) / np.asarray(nodule_size)
             batch_mask_shape = np.rint(scale_factor * self.shape[0, :]).astype(np.int)
-            batch_mask = self.fetch_mask_data(batch_mask_shape)
+            batch_mask = self.fetch_mask(batch_mask_shape)
             nodules_indices = np.rint(scale_factor * nodules_indices).astype(np.int)
         else:
             batch_mask = self.masks
@@ -514,13 +515,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     @inbatch_parallel(init='_init_rebuild',
                       post='_post_rebuild', target='nogil')
-    def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
-        """Perform resize of each CT-scan.
+    def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):
+        """ Perform resize of each CT-scan.
 
         performs resize (change of shape) of each CT-scan in the batch.
             When called from Batch, changes Batch
-            returns self
-        args:
+
+        Args:
             shape: needed shape after resize in order x, y, z
                 *note that the order of axes in data is z, y, x
                  that is, new patient shape = (shape[2], shape[1], shape[0])
@@ -529,6 +530,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 above
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
+
+        Return:
+            resized self
+
         example:
             shape = (256, 256, 128)
             Batch = Batch.resize(shape=shape, n_workers=20, order=2)
@@ -536,7 +541,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return resize_patient_numba
 
 
-    def _post_mask(self, list_of_arrs, **kwargs):    # pylint: disable=unused-argument
+    def _post_mask(self, list_of_arrs, **kwargs):
         """ concatenate outputs of different workers and put the result in mask-attr
 
         Args:
@@ -587,7 +592,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def make_xip(self, step=2, depth=10, func='max',
-                 projection='axial', *args, **kwargs):    # pylint: disable=unused-argument, no-self-use
+                 projection='axial', *args, **kwargs):
         """Compute xip of source CTImage along given x with given step and depth.
 
         Call parent variant of make_xip then change nodules sizes'

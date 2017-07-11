@@ -197,9 +197,9 @@ def vnet_down(scope, net_down, training, pool_size=(2, 2, 2), strides=(2, 2, 2),
     return output
 
 
-def get_dice_loss(scope, masks_prediction, masks_ground_truth, epsilon=0):
-    """
-    form loss = - dice given predicions for masks and true masks
+def tf_dice_loss(scope, masks_prediction, masks_ground_truth, epsilon=0):
+    """ Form loss = - dice given predicions for masks and true masks. Resulting
+            loss is given by tf-tensor.
 
     Args:
         scope: scope to create loss-op
@@ -226,13 +226,3 @@ def get_dice_loss(scope, masks_prediction, masks_ground_truth, epsilon=0):
 
     return loss
 
-
-def get_cancer_share(mask):
-    """
-    get cancer share in masks
-    Args:
-        mask: tensor with batch of masks
-    Returns: zero-d tf tensor with mean
-
-    """
-    return tf.reduce_mean(mask)
