@@ -233,7 +233,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
         if 'images' in kwargs['src']: 
-            shapes = np.zeros(len(self), 3)
+            shapes = np.zeros((len(self), 3))
             for ix in self.indices:
                 filename = os.path.join(self.index.get_fullpath(ix), 'shape.pkl')
                 ix_pos = self._get_verified_pos(ix)
