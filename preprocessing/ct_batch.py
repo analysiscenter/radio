@@ -293,7 +293,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             component = unpacker(byted)
 
             # update needed slice(s) of component
-            comp_pos = self.get_pos(None, source, patient)
+            comp_pos = self.get_pos(None, source, patient_id)
             getattr(self, source)[comp_pos] = component
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
