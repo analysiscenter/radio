@@ -445,8 +445,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_indices = np.vstack([cancer_nodules,
                                      random_nodules]).astype(np.int)  # pylint: disable=no-member
 
-        # crop nodules' data
-        data = get_nodules_numba(self.data, nodules_indices, nodule_size)
+        # obtain nodules' scans by cropping from self.images
+        images = get_nodules_numba(self.images, nodules_indices, nodule_size)
 
         # if mask_shape not None, compute scaled mask for the whole batch
         # scale also nodules' starting positions and nodules' shapes
@@ -460,17 +460,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
             mask_shape = nodule_size
 
         # crop nodules' masks
-        mask = get_nodules_numba(batch_mask, nodules_indices, mask_shape)
+        masks = get_nodules_numba(batch_mask, nodules_indices, mask_shape)
 
         # build noudles' batch
         bounds = np.arange(batch_size + 1) * nodule_size[0]
         ds_index = DatasetIndex(self.make_indices(batch_size))
         nodules_batch = CTImagesMaskedBatch(ds_index)
-        nodules_batch.load(source=data, fmt='ndarray',
-                           bounds=bounds, spacing=self.spacing)
+        nodules_batch.load(source=images, fmt='ndarray', bounds=bounds)
 
         # TODO add info about nodules by changing self.nodules
-        nodules_batch.mask = mask
+        nodules_batch.masks = mask
         return nodules_batch
 
     def get_axial_slice(self, patient_pos, height):
