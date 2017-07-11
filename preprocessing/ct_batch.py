@@ -253,7 +253,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return self.indices
 
 
-    @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async')
+    @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async', update=False)
     async def _load_blosc(self, patient_id, *args, **kwargs):                # pylint: disable=unused-argument
         """
         Read, prepare scans from blosc and put them into the right place in the
@@ -295,6 +295,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             # update needed slice(s) of component
             comp_pos = self.get_pos(None, source, patient_id)
             getattr(self, source)[comp_pos] = component
+
+        return None
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw (.mhd)
