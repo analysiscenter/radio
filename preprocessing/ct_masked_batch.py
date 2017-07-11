@@ -469,7 +469,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch.load(source=images, fmt='ndarray', bounds=bounds)
 
         # TODO add info about nodules by changing self.nodules
-        nodules_batch.masks = mask
+        nodules_batch.masks = masks
         return nodules_batch
 
     def get_axial_slice(self, patient_pos, height):
