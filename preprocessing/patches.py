@@ -7,39 +7,37 @@ from numba import guvectorize, int64, float64
 @guvectorize([(float64[:, :, :], int64[:], int64[:], float64[:, :, :, :], int64[:])],
              '(n, m, k),(r),(r),(p, l, s, t)->()',
              nopython=True, target='parallel')
-def put_patches_numba(img, patch_shape, stride, out_arr, fake):      # pylint: disable=unused-argument
-    """
-    get all patches from padded 3d-img
-            put them into array out_arr
-    args:
-            img: input 3d-image (ct-scan for one patient)
-                    assume img is already padded
-            patch_shape: ndarray of len=3 with
-                    needed shape of patch
-            stride: ndarray of len=3 with stride
-                    of patch-window
-                    (*if not equal to patch_shape, patches will overlap)
-            out_arr: resulting 4d-array, where all patches are put
-                    new dimension (first) enumerates patches
-            fake: fake-result array
+def put_patches_numba(img, shape, stride, out_arr, fake):
+    """ Get all patches from padded 3d-img, put them into array out_arr
+
+    Args:
+        img: input 3d-image (ct-scan for one patient); assume img is already padded
+        shape: ndarray of len=3 with needed shape of patch
+        stride: ndarray of len=3 with stride of patch-window
+            (*if not equal to patch_shape, patches will overlap)
+        out_arr: resulting 4d-array, where all patches are put. New dimension (first)
+            enumerates patches
+        fake: fake-result array
+
+    Return:
+        ___
     """
 
     # for convenience put img.shape in ndarray
     img_shape = np.zeros(3)
-    for i in range(3):
-        img_shape[i] = img.shape[i]
+    img_shape[:] = img.shape[:]
 
     # compute number of patches along all axes
-    num_sections = (img_shape - patch_shape) // stride + 1
+    num_sections = (img_shape - shape) // stride + 1
 
     # iterate over patches, put them into out_arr
     ctr = 0
     for ix in range(int(num_sections[0])):
         for iy in range(int(num_sections[1])):
             for iz in range(int(num_sections[2])):
-                slc_x = slice(ix * stride[0], ix * stride[0] + patch_shape[0])
-                slc_y = slice(iy * stride[1], iy * stride[1] + patch_shape[1])
-                slc_z = slice(iz * stride[2], iz * stride[2] + patch_shape[2])
+                slc_x = slice(ix * stride[0], ix * stride[0] + shape[0])
+                slc_y = slice(iy * stride[1], iy * stride[1] + shape[1])
+                slc_z = slice(iz * stride[2], iz * stride[2] + shape[2])
                 out_arr[ctr, :, :, :] = img[slc_x, slc_y, slc_z]
                 ctr += 1
 
@@ -48,27 +46,29 @@ def put_patches_numba(img, patch_shape, stride, out_arr, fake):      # pylint: d
 @guvectorize([(float64[:, :, :, :], int64[:], float64[:, :, :], int64[:])],
              '(p, l, s, t),(q),(m, n, k)->()',
              nopython=True, target='parallel')
-def assemble_patches(patches, stride, out_arr, fake):      # pylint: disable=unused-argument
-    """
-    assemble patches into one 3d ct-scan with shape scan_shape
-        put the scan into out_arr
-    args:
+def assemble_patches(patches, stride, out_arr, fake):
+    """ Assemble patches into one 3d ct-scan with shape scan_shape,
+            put the scan into out_arr
+
+    Args:
         patches: 4d-array of patches, first dim enumerates
             patches; other dims are spatial with order (z, y, x)
         stride: ndarray of len=3 with stride with which the patches
             were extracted
         out_arr: 3d-array, where assembled scan is put
             should be filled with zeroes
-            *note 1: out_arr.shape, stride, patch shape are used to infer
+            *NOTE 1: out_arr.shape, stride, patch shape are used to infer
                 the number of sections for each dimension.
             We assume that the number of patches = len(patches)
                 corresponds to num_sections
-            *note 2: overlapping patches are allowed (stride != patch.shape).
-                In this case pixel values are averaged across overlapping
-                    patches
-            *note 3: we assume that integer number of patches can be put into
+            *NOTE 2: overlapping patches are allowed (stride != patch.shape).
+                In this case pixel values are averaged across overlapping patches
+            *NOTE 3: we assume that integer number of patches can be put into
                 out_arr using stride
         fake: fake-result array
+
+    Return:
+        ___
     """
     out_arr_shape = np.zeros(3)
     for i in range(3):
@@ -100,15 +100,16 @@ def assemble_patches(patches, stride, out_arr, fake):      # pylint: disable=unu
     out_arr /= weights_inv
 
 def calc_padding_size(img_shape, patch_shape, stride):
-    """
-    calculate width of padding, that needs to be added to 3d-scan
-        in order to fit integer number of patches;
-        in format needed for np.pad function
-    args:
+    """ Calculate width of padding, that needs to be added to 3d-scan
+            in order to fit integer number of patches; in format needed for
+            np.pad function.
+
+    Args:
         img_shape: ndarray of len=3 with shape of 3d-scan
         patch_shape: ndarray of len=3 with shape of a patch
         stride: stride with which patch-window slides over scan
-    return: paddding size as list (len=4) of tuples of len=2
+
+    Return: paddding size as list (len=4) of tuples of len=2
         with pad widths in four dims; the first dim enumerates patients,
             others are spatial axes
         if no padding is needed, return None
@@ -127,4 +128,3 @@ def calc_padding_size(img_shape, patch_shape, stride):
         return pad_width
     else:
         return None
-
