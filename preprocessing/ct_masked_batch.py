@@ -3,11 +3,8 @@
 # pylint: disable=arguments-differ
 # pylint: disable=undefined-variable
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
-import os
 import logging
 
-import aiofiles
-import blosc
 import numpy as np
 from numba import njit
 from .ct_batch import CTImagesBatch

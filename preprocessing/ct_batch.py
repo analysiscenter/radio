@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module, undefined-variable, anomalous-backslash-in-string
+# pylint: disable=no-name-in-module, undefined-variable, anomalous-backslash-in-string, attribute-defined-outside-init, arguments-differ
 """ contains Batch class for storing Ct-scans """
 
 import os
@@ -140,8 +140,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
 
     @action
-    def load(self, fmt='dicom', source=None, bounds=None,
-             origin=None, spacing=None, src_blosc=None):    # pylint: disable=arguments-differ
+    def load(self, fmt='dicom', source=None, bounds=None,           # pylint: disable=arguments-differ
+             origin=None, spacing=None, src_blosc=None):
         """ Loads 3d scans-data in batch
 
         Args:
@@ -232,7 +232,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             list of ids of batch-items
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
-        if 'images' in kwargs['src']: 
+        if 'images' in kwargs['src']:
             shapes = np.zeros((len(self), 3), dtype=np.int)
             for ix in self.indices:
                 filename = os.path.join(self.index.get_fullpath(ix), 'shape.pkl')
@@ -439,7 +439,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         if data is None:
             ind_pos = self._get_verified_pos(index)
-            if component == 'images':
+            if component == 'images':                                                # pylint: disable=duplicate-code
                 return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
             else:
                 return ind_pos
@@ -604,7 +604,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             if component == 'images':
                 pass
             else:
-                # concatenate comps-outputs for different scans and update self      
+                # concatenate comps-outputs for different scans and update self
                 list_of_component = [worker_res[component] for worker_res in list_of_dicts]
                 new_comp = np.concatenate(list_of_component, axis=0)
                 setattr(self, component, new_comp)
@@ -924,7 +924,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 trim hus outside range [min_hu, max_hu], then scale to [0, 255].
 
         Args:
-                        
+
 
         Example:
             batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
@@ -956,7 +956,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
     def get_axial_slice(self, person_number, slice_height):
         """ Get axial slice (e.g., for plots)
 
-        Args: 
+        Args:
             person_number - can be either number of person in the batch
                 or index of the person whose axial slice we need
             slice_height: e.g. 0.7 means that we take slice with number

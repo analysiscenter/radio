@@ -4,11 +4,11 @@
 import sys
 import tensorflow as tf
 
-sys.path.append('..')
-from preprocessing import CTImagesMaskedBatch
-from dataset import action, model
+sys.path.append('../..')
+from lung_cancer import CTImagesMaskedBatch
+from ..dataset import action, model
 from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
-from .layers import get_dice_loss
+from .layers import tf_dice_loss
 
 # global constants
 # input shape of a nodule
@@ -81,7 +81,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         downs.append(net)
 
         # up 1
-        with tf.variable_scope('up_1'):
+        with tf.variable_scope('up_1'):                                                 # pylint: disable=not-context-manager
             net = deconv3d_bnorm_activation(net, training, kernel=[2, 2, 2],
                                             channels=8, activation=selu, add_bnorm=False)
 
