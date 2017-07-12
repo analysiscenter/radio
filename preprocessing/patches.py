@@ -71,13 +71,11 @@ def assemble_patches(patches, stride, out_arr, fake):
         ___
     """
     out_arr_shape = np.zeros(3)
-    for i in range(3):
-        out_arr_shape[i] = out_arr.shape[i]
+    out_arr_shape[:] = out_arr.shape[:]
 
     # cast patch.shape to ndarray
     patch_shape = np.zeros(3)
-    for i in range(3):
-        patch_shape[i] = patches.shape[i + 1]
+    patch_shape[:] = patches.shape[1:]
 
     # compute the number of sections
     num_sections = (out_arr_shape - patch_shape) // stride + 1
