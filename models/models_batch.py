@@ -107,7 +107,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         net = tf.nn.sigmoid(net, name='masks_predictions')
 
         # loss
-        loss = get_dice_loss('train', net, masks_ground_truth)
+        loss = tf_dice_loss('train', net, masks_ground_truth)
 
         # optimization step
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -233,11 +233,3 @@ class CTImagesModels(CTImagesMaskedBatch):
         result[:, :, :, :] = predictions.reshape((-1, ) + NOD_SHAPE)
 
         return self
-
-
-
-
-
-
-
-
