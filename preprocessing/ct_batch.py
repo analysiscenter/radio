@@ -10,7 +10,7 @@ import blosc
 import dicom
 import SimpleITK as sitk
 
-from .dataset_import import Batch, action, inbatch_parallel, any_action_failed
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed
 
 from .resize import resize_patient_numba
 from .segment import calc_lung_mask_numba

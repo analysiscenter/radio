@@ -13,7 +13,7 @@ from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .resize import resize_patient_numba
-from .dataset_import import action, inbatch_parallel, any_action_failed, DatasetIndex
+from ..dataset import action, inbatch_parallel, any_action_failed, DatasetIndex
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
