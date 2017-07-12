@@ -439,7 +439,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         if data is None:
             ind_pos = self._get_verified_pos(index)
-            if component == 'images':                                                # pylint: disable=duplicate-code
+            if component == 'images':
                 return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
             else:
                 return ind_pos
