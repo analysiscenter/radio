@@ -463,7 +463,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # build noudles' batch
         bounds = np.arange(batch_size + 1) * nodule_size[0]
         ds_index = DatasetIndex(self.make_indices(batch_size))
-        nodules_batch = CTImagesMaskedBatch(ds_index)
+        nodules_batch = type(self)(ds_index)
         nodules_batch.load(source=images, fmt='ndarray', bounds=bounds)
 
         # TODO add info about nodules by changing self.nodules
