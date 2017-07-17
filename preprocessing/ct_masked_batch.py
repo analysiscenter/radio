@@ -119,6 +119,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.masks = None
         self.nodules = None
 
+    @property
+    def components(self):
+        """ Components-property. See doc of base batch from dataset for information.
+                In short, these are names for components of tuple returned from __getitem__.
+        """
+        return 'images', 'masks', 'spacing', 'origin'
+
     @action
     def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments
              origin=None, spacing=None, nodules=None, masks=None,
@@ -151,32 +158,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             # TODO check this
             super().load(fmt=fmt, **params, src_blosc=src_blosc)
         return self
-
-
-    def get_mask(self, index):
-        """Get view on patient data's mask.
-
-        This method takes position of patient in self or his index
-        and returns view on patient data's mask.
-
-        Args:
-        - index: can be either position of patient in self._data
-        or index from self.index;
-
-        Return:
-        - ndarray(Nz, Ny, Nz): view on patient data's mask array;
-        """
-        if self.masks is None:
-            return None
-        pos = self._get_verified_pos(index)
-        return self.masks[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
-
-
-    @property
-    def components(self):
-        """ Names for components of tuple returned from __getitem__
-        """
-        return 'images', 'masks', 'spacing', 'origin'
 
     def get_pos(self, data, component, index):
         """ Return a posiiton of a component in data for a given index
@@ -509,34 +490,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self._refresh_nodules_info()
         return self
 
-    @action
-    @inbatch_parallel(init='_init_rebuild',
-                      post='_post_rebuild', target='nogil')
-    def resize(self, shape=(256, 256, 128), order=3, *args, **kwargs):
-        """ Perform resize of each CT-scan.
-
-        performs resize (change of shape) of each CT-scan in the batch.
-            When called from Batch, changes Batch
-
-        Args:
-            shape: needed shape after resize in order x, y, z
-                *note that the order of axes in data is z, y, x
-                 that is, new patient shape = (shape[2], shape[1], shape[0])
-            n_workers: number of threads used (degree of parallelism)
-                *note: available in the result of decoration of the function
-                above
-            order: the order of interpolation (<= 5)
-                large value improves precision, but slows down the computaion
-
-        Return:
-            resized self
-
-        example:
-            shape = (256, 256, 128)
-            Batch = Batch.resize(shape=shape, n_workers=20, order=2)
-        """
-        return resize_patient_numba
-
 
     def _post_mask(self, list_of_arrs, **kwargs):
         """ concatenate outputs of different workers and put the result in mask-attr
@@ -554,20 +507,24 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     def _init_load_blosc(self, **kwargs):
-        """ Init-func for load from blosc. Overload of corresponding method from
-                CTImagesBatch.
+        """ Init-func for load from blosc. Fills images/masks-components with zeroes
+                if the components are to be updated.
+
         Args:
-            src_blosc: iterable of components that need to be loaded
+            src: iterable of components that need to be loaded
         Return
             list of ids of batch-items
         """
-        args = super()._init_load_blosc(**kwargs)
+        # read shapes, fill the components with zeroes if masks, images need to be updated
+        if 'masks' in kwargs['src'] or 'images' in kwargs['src']:
+            slice_shape = self._preload_shapes()
+            skysc_shape = (self._bounds[-1], ) + slice_shape
 
-        # init mask-attr by zeroes if mask-comp is to be loaded
-        if 'masks' in kwargs['src']:
-            self.masks = np.zeros_like(self.images)
+            # fill needed comps with zeroes
+            for source in {'images', 'masks'} & kwargs['src']:
+                setattr(self, source, np.zeroes(skysc_shape))
 
-        return args
+        return self.indices
 
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):

@@ -4,8 +4,7 @@
 import sys
 import tensorflow as tf
 
-sys.path.append('../..')
-from lung_cancer import CTImagesMaskedBatch
+from ..ct_masked_batch import CTImagesMaskedBatch
 from ..dataset import action, model
 from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
 from .layers import tf_dice_loss
@@ -44,20 +43,28 @@ class CTImagesModels(CTImagesMaskedBatch):
              [dice loss, train step, predicted cancer masks]]
         """
 
-        # input placeholder for scan patches
-        shape_inout = (None, ) + NOD_SHAPE + (1, )
-        input_layer = tf.placeholder(tf.float32, shape=shape_inout, name='scans')
+        # input placeholder for scan patches in skyscraper-form
+        sky_shape = (None, ) + NOD_SHAPE[1:]
+        input_layer = tf.placeholder(tf.float32, shape=sky_shape, name='scans')
+
+        # input placeholder for masks in skyscraper-form
+        masks_ground_truth = tf.placeholder(tf.float32, shape=sky_shape, name='masks')
+
+        # input placeholder for phase-variable (e.g. needed for nets with batch-norm)
         training = tf.placeholder(tf.bool, shape=[], name='mode')
 
-        # input placeholder for masks
-        masks_ground_truth = tf.placeholder(tf.float32, shape=shape_inout, name='masks')
+        # reshape inputs to tensor shape
+        t_shape = (None, ) + NOD_SHAPE + (1, )
+        input_tshaped = tf.reshape(input_layer, t_shape)
+        masks_tshaped = tf.reshape(masks_ground_truth, t_shape)
+
 
         # vnet of depth = 4
         downs = []
         ups = []
 
         # down 1
-        net = vnet_down('down_1', input_layer, training, pool_size=[2, 2, 2],
+        net = vnet_down('down_1', input_tshaped, training, pool_size=[2, 2, 2],
                         strides=[2, 2, 2], channels=2, kernel=[7, 7, 7],
                         activation=selu, add_bnorm=False)
         downs.append(net)
@@ -106,8 +113,11 @@ class CTImagesModels(CTImagesMaskedBatch):
         # normalize output to [0, 1]
         net = tf.nn.sigmoid(net, name='masks_predictions')
 
-        # loss
-        loss = tf_dice_loss('train', net, masks_ground_truth)
+        # loss computed on t-shaped data
+        loss = tf_dice_loss('train', net, masks_tshaped)
+
+        # reshape vnet-output to skyscraper-shape
+        net = tf.reshape(net, sky_shape)
 
         # optimization step
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
@@ -138,13 +148,9 @@ class CTImagesModels(CTImagesMaskedBatch):
         input_layer, input_masks = model[0]
         loss, train_step, _ = model[1]
 
-        # reshape data in batch to tensor-shape
-        scans = self.images.reshape((-1, ) + NOD_SHAPE + (1, ))
-        masks = self.masks.reshape((-1, ) + NOD_SHAPE + (1, ))
-
         # run train-step
         loss_value, _ = sess.run([loss, train_step], feed_dict={
-            input_layer: scans, input_masks: masks})
+            input_layer: self.images, input_masks: self.masks})
         if verbose:
             print('current loss on train batch: ', loss_value)
 
@@ -191,12 +197,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         input_layer, input_masks = model[0]
         loss, _, _ = model[1]
 
-        # reshape data in batch to tensor-shape
-        scans = self.images.reshape((-1, ) + NOD_SHAPE + (1, ))
-        masks = self.masks.reshape((-1, ) + NOD_SHAPE + (1, ))
-
         # run loss-op on data from batch
-        loss_value = sess.run(loss, feed_dict={input_layer: scans, input_masks: masks})
+        loss_value = sess.run(loss, feed_dict={input_layer: self.images, input_masks: self.masks})
 
         # add computed number to list of stats:
         stats.append(loss_value)
@@ -214,22 +216,20 @@ class CTImagesModels(CTImagesMaskedBatch):
                 *NOTE: do not supply this arg, it's always output of
                 selu_vnet_4 - method
             sess: tf-session with trained weights
-            result: 4d-array for storing obtained segmentation
-                should have shape (len(self), NOD_SHAPE)
+            result: 3d-array for storing obtained segmentation
+                should have skyscraper-shape =
+                (len(self) * NOD_SHAPE[0], NOD_SHAPE[1], NOD_SHAPE[2])
 
         Return:
-            4darray with first dimension enumerating different batch-items
+            self
         """
         input_layer, _ = model[0]
         _, _, masks_predictions = model[1]
 
-        # reshape data in batch to tensor-shape
-        scans = self.images.reshape((-1, ) + NOD_SHAPE + (1, ))
-
         # compute predicted masks
-        predictions = sess.run(masks_predictions, feed_dict={input_layer: scans})
+        predictions = sess.run(masks_predictions, feed_dict={input_layer: self.images})
 
         # put the masks into result-array
-        result[:, :, :, :] = predictions.reshape((-1, ) + NOD_SHAPE)
+        result[:, :, :] = predictions
 
         return self

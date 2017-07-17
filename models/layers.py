@@ -216,10 +216,9 @@ def tf_dice_loss(scope, masks_prediction, masks_ground_truth, epsilon=0):
     """
     # compute dice = 2 |A*B| / (|A| + |B| + epsilon)
     with tf.variable_scope(scope):
-        sum_preds = tf.reduce_sum(masks_prediction, axis=[0, 1, 2, 3, 4])
-        sum_truth = tf.reduce_sum(masks_ground_truth, axis=[0, 1, 2, 3, 4])
-        sum_intersection = tf.reduce_sum(
-            masks_ground_truth * masks_prediction, axis=[0, 1, 2, 3, 4])
+        sum_preds = tf.reduce_sum(masks_prediction)
+        sum_truth = tf.reduce_sum(masks_ground_truth)
+        sum_intersection = tf.reduce_sum(masks_ground_truth * masks_prediction)
         dice = 2 * (sum_intersection + epsilon) / (sum_truth + sum_preds + 2 * epsilon)
 
         # loss = -dice

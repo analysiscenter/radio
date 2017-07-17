@@ -2,7 +2,7 @@
 """ contains Batch class for storing Ct-scans """
 
 import os
-import pickle
+import cloudpickle
 
 import numpy as np
 import aiofiles
@@ -115,6 +115,13 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self._crop_centers = np.array([], dtype=np.int32)
         self._crop_sizes = np.array([], dtype=np.int32)
 
+    @property
+    def components(self):
+        """ Components-property. See doc of base batch from dataset for information.
+                In short, these are names for components of tuple returned from __getitem__.
+        """
+        return 'images', 'spacing', 'origin'
+
     def _init_data(self, source=None, bounds=None, origin=None, spacing=None):
         """Initialize images, _bounds, _crop_centers, _crop_sizes atteributes.
 
@@ -152,7 +159,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 starting pixels. Needed only if fmt='ndarray'
             spacing: ndarray [len(bounds) X 3] with spacings of patients.
                 Needed only if fmt='ndarray'
-            src_blosc: iterable with components of batch that should be loaded from blosc.
+            src_blosc: list/tuple/string with component(s) of batch that should be loaded from blosc.
                 Needed only if fmt='blosc'. If None, all components are loaded.
 
         Return:
@@ -182,6 +189,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
             src_blosc = self.components if src_blosc is None else src_blosc
+            # convert src_blosc to iterable 1d-array
+            src_blosc = np.asarray(src_blosc).reshape(-1)
             self._load_blosc(src=src_blosc)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
@@ -223,32 +232,44 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
+    def _preload_shapes(self):
+        """ Read shapes of scans dumped with blosc, update
+                self._bounds. The method is used in _init_load_blosc.
+
+            Args:
+                __
+            Return:
+                y, x - components of scan-shape
+        """
+        shapes = np.zeros((len(self), 3), dtype=np.int)
+        for ix in self.indices:
+            filename = os.path.join(self.index.get_fullpath(ix), 'shape.cpkl')
+            ix_pos = self._get_verified_pos(ix)
+
+            # read shape and put it into shapes
+            with open(filename, 'rb') as file:
+                shapes[ix_pos, :] = pickle.load(file)
+
+        # update bounds of items
+        self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
+
+        # return shape of slices
+        return shapes[0, 1], shapes[0, 2]
+
+
     def _init_load_blosc(self, **kwargs):
         """ Init-func for load from blosc.
 
         Args:
-            src_blosc: iterable of components that need to be loaded
+            src: iterable of components that need to be loaded
         Return
             list of ids of batch-items
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
         if 'images' in kwargs['src']:
-            shapes = np.zeros((len(self), 3), dtype=np.int)
-            for ix in self.indices:
-                filename = os.path.join(self.index.get_fullpath(ix), 'shape.pkl')
-                ix_pos = self._get_verified_pos(ix)
-
-                # read shape and put it into shapes
-                with open(filename, 'rb') as file:
-                    shapes[ix_pos, :] = pickle.load(file)
-
-            # initialize the images-attr with 3d-array of zeroes of needed shape
-            skysc_shape = np.asarray((np.sum(shapes[:, 0]), shapes[0, 1], shapes[0, 2]),
-                                     dtype=np.int)
+            slice_shape = self._preload_shapes()
+            skysc_shape = (self._bounds[-1], ) + slice_shape
             self.images = np.zeros(skysc_shape)
-
-            # update bounds of items
-            self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
 
         return self.indices
 
@@ -262,14 +283,11 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         Args:
             patient_id: index of patient from batch, whose scans we need to
                 stack
-            src: components of data that should be loaded into self
-
+            src: components of data that should be loaded into self,
+                1d-array
 
             *no conversion to hu here
         """
-        # convert src to iterable 1d-array
-        src = np.asarray(kwargs['src']).reshape(-1)
-
         # result of worker's execution is put into this dict
         worker_res = dict()
 
@@ -277,8 +295,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             # set correct extension for each component and choose a tool
             # for debyting it
             if source in ['spacing', 'origin']:
-                ext = '.pkl'
-                unpacker = pickle.loads
+                ext = '.cpkl'
+                unpacker = cloudpickle.loads
             else:
                 ext = '.blk'
                 unpacker = blosc.unpack_array
@@ -349,8 +367,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             ext = filename.split('.')[-1]
             if ext == 'blk':
                 byted = blosc.pack_array(data, cname='zstd', clevel=1)
-            elif ext == 'pkl':
-                byted = pickle.dumps(data)
+            elif ext == 'cpkl':
+                byted = cloudpickle.dumps(data)
             async with aiofiles.open(os.path.join(folder, filename),
                                      mode='wb') as file:
                 _ = await file.write(byted)
@@ -364,27 +382,30 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         Args:
             dst: general folder in which all patients' data should be put
+            src: components that we need to dump. If not supplied, dump all
+                components + shapes of scans
             fmt: format of dump. Currently only blosc-format is supported;
                 in this case folder for each patient is created, patient's data
-                is put into data.blk, attributes are put into dict attrs.pkl
-
+                is put into images.blk, attributes are put into files attr_name.cpkl
+                (e.g., spacing.cpkl)
 
         example:
             # initialize batch and load data
-            ind = ['1ae34g90', '3hf82s76', '2ds38d04']
+            ind = ['1ae34g90', '3hf82s76']
             batch = CTImagesBatch(ind)
             batch.load(...)
             batch.dump(dst='./data/blosc_preprocessed')
             # the command above creates files
 
-            # ./data/blosc_preprocessed/1ae34g90/data.blk
-            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
+            # ./data/blosc_preprocessed/1ae34g90/images.blk
+            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+            # ./data/blosc_preprocessed/1ae34g90/origin.cpkl
+            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl
 
-            # ./data/blosc_preprocessed/3hf82s76/data.blk
-            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
-
-            # ./data/blosc_preprocessed/2ds38d04/data.blk
-            # ./data/blosc_preprocessed/1ae34g90/attrs.pkl
+            # ./data/blosc_preprocessed/3hf82s76/images.blk
+            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+            # ./data/blosc_preprocessed/3hf82s76/origin.cpkl
+            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl
         """
         # if src is not supplied, dump all components and shapes
         if src is None:
@@ -404,7 +425,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         # set correct extension to each component and add it to items-dict
         for source in list(src):
             if source in ['spacing', 'origin', 'shape']:
-                ext = '.pkl'
+                ext = '.cpkl'
             else:
                 ext = '.blk'
             # determine position in data of source-component for the patient
@@ -415,21 +436,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         folder = os.path.join(dst, patient)
 
         return await self.dump_data(data_items, folder)
-
-    @property
-    def components(self):
-        """ Names for components of tuple returned from __getitem__
-        """
-        return 'images', 'spacing', 'origin'
-
-    def __len__(self):
-        """ Get number of patients in self
-
-        Return:
-            number of patients in batch
-
-        """
-        return len(self.index)
 
     def get_pos(self, data, component, index):
         """ Return a posiiton of a component in data for a given index
@@ -470,20 +476,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         else:
             pos = self.index.get_pos(index)
         return pos
-
-    def get_image(self, index):
-        """ Get view on patient's data
-
-        Args:
-            index: either position of patient in self.images
-                or index from self.index
-
-        Return:
-            ndarray(view) with the data of chosen patient
-        """
-        pos = self._get_verified_pos(index)
-        return self.images[self.lower_bounds[pos]: self.upper_bounds[pos], :, :]
-
 
     def get_attrs(self, index):
         """ Get attributes of a patient
@@ -598,7 +590,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                           origin=self.origin, spacing=self.spacing)
             self._init_data(**params)
 
-
         # loop over other components that we need to update
         for component in list_of_dicts[0]:
             if component == 'images':
@@ -611,12 +602,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         return self
 
-
-
-
-
     def _init_images(self, **kwargs):
-        return [self.get_image(patient_id) for patient_id in self.indices]
+        return [self.get(patient_id, 'images') for patient_id in self.indices]
 
     def _post_crop(self, list_of_arrs, **kwargs):
         # TODO: check for errors
@@ -644,7 +631,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         all_args = []
         for i in range(len(self)):
             out_patient = new_data[new_bounds[i]: new_bounds[i + 1], :, :]
-            item_args = {'patient': self.get_image(i),
+            item_args = {'patient': self.get(i, 'images'),
                          'out_patient': out_patient,
                          'res': new_data}
             # for unify_spacing
