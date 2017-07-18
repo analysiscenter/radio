@@ -1,7 +1,6 @@
 # pylint: disable=import-error, redefined-outer-name
 """Child class of CTImagesBatch that incorporates nn-models """
 
-import sys
 import tensorflow as tf
 
 from ..preprocessing import CTImagesMaskedBatch
