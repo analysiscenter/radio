@@ -291,7 +291,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         # result of worker's execution is put into this dict
         worker_res = dict()
 
-        for source in src:
+        for source in kwargs['src']:
             # set correct extension for each component and choose a tool
             # for debyting it
             if source in ['spacing', 'origin']:
