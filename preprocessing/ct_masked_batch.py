@@ -9,8 +9,7 @@ import numpy as np
 from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
-from .resize import resize_patient_numba
-from ..dataset import action, inbatch_parallel, any_action_failed, DatasetIndex
+from ..dataset import action, any_action_failed, DatasetIndex
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
@@ -179,7 +178,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         # convert src to iterable 1d-array
         src = np.asarray(src).reshape(-1)
-        data_items = dict()
 
         if 'masks' in src and 'images_shape' not in src:
             src = tuple(src) + ('images_shape', )
