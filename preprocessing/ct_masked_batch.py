@@ -552,7 +552,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
             # fill needed comps with zeroes
             for source in {'images', 'masks'} & set(kwargs['src']):
-                setattr(self, source, np.zeroes(skysc_shape))
+                setattr(self, source, np.zeros(skysc_shape))
 
         return self.indices
 
