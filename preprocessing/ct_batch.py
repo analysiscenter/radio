@@ -348,14 +348,14 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         Args:
             data_items: dict of data items for dump in form item_name.ext: item
-                (e.g.: {'data.blk': data, 'mask.blk': mask, 'spacing.pkl': spacing})
+                (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing})
             folder: folder to dump data-items in
 
         Return:
             ____
 
         *NOTE: depending on supplied format, each data-item will be either
-            serialized (if .pkl) or blosc-packed (if .blk)
+            cloudpickle-serialized (if .cpkl) or blosc-packed (if .blk)
         """
 
         # create directory if does not exist
@@ -382,8 +382,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         Args:
             dst: general folder in which all patients' data should be put
-            src: components that we need to dump. If not supplied, dump all
-                components + shapes of scans
+            src: component(s) that we need to dump (smth iterable or string). If not
+                supplied, dump all components + shapes of scans
             fmt: format of dump. Currently only blosc-format is supported;
                 in this case folder for each patient is created, patient's data
                 is put into images.blk, attributes are put into files attr_name.cpkl

@@ -159,6 +159,37 @@ class CTImagesMaskedBatch(CTImagesBatch):
             super().load(fmt=fmt, **params, src_blosc=src_blosc)
         return self
 
+    @action
+    def dump(self, dst, src=None, fmt='blosc'):
+        """ Dump scans data (3d-array) on specified path in specified format
+
+        Args:
+            dst: general folder in which all patients' data should be put
+            src: component(s) that we need to dump (smth iterable or string). If not
+                supplied, dump all components + shapes of scans
+            fmt: format of dump. Currently only blosc-format is supported;
+                in this case folder for each patient is created, patient's data
+                is put into images.blk, attributes are put into files attr_name.cpkl
+                (e.g., spacing.cpkl)
+
+        See docstring of parent-batch for examples.
+        """
+        # if src is not supplied, dump all components and shapes
+        if src is None:
+            src = self.components + ('shape', )
+
+        # convert src to iterable 1d-array
+        src = np.asarray(src).reshape(-1)
+        data_items = dict()
+
+        if 'masks' in src and 'shape' not in src:
+            src = tuple(src) + ('shape', )
+
+        # execute parent-method
+        super().dump(dst=dst, src=src, fmr=fmt)
+
+        return self
+
     def get_pos(self, data, component, index):
         """ Return a posiiton of a component in data for a given index
 
