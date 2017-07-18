@@ -400,7 +400,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         offset = np.zeros((num_nodules, 3))
         offset[:, 0] = self.lower_bounds[sampled_indices]
 
-        data_shape = self.shape[sampled_indices, :]
+        data_shape = self.images_shape[sampled_indices, :]
         samples = np.random.rand(num_nodules, 3) * (data_shape - nodule_size)
         return np.asarray(samples + offset, dtype=np.int)
 
@@ -461,7 +461,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # scale also nodules' starting positions and nodules' shapes
         if mask_shape is not None:
             scale_factor = np.asarray(mask_shape) / np.asarray(nodule_size)
-            batch_mask_shape = np.rint(scale_factor * self.shape[0, :]).astype(np.int)
+            batch_mask_shape = np.rint(scale_factor * self.images_shape[0, :]).astype(np.int)
             batch_mask = self.fetch_mask(batch_mask_shape)
             nodules_indices = np.rint(scale_factor * nodules_indices).astype(np.int)
         else:
@@ -508,7 +508,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
-        self.nodules.img_size = self.shape[self.nodules.patient_pos, :]
+        self.nodules.img_size = self.images_shape[self.nodules.patient_pos, :]
 
     def _rescale_spacing(self):
         """Rescale spacing values and update nodules_info.
