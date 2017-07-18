@@ -248,7 +248,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
             # read shape and put it into shapes
             with open(filename, 'rb') as file:
-                shapes[ix_pos, :] = pickle.load(file)
+                shapes[ix_pos, :] = cloudpickle.load(file)
 
         # update bounds of items
         self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
