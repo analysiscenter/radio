@@ -409,7 +409,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         # if src is not supplied, dump all components and shapes
         if src is None:
-            src = self.components + ('shape', )
+            src = self.components + ('images_shape', )
 
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
