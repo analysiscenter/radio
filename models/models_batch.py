@@ -4,7 +4,7 @@
 import sys
 import tensorflow as tf
 
-from ..ct_masked_batch import CTImagesMaskedBatch
+from ..preprocessing import CTImagesMaskedBatch
 from ..dataset import action, model
 from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
 from .layers import tf_dice_loss
