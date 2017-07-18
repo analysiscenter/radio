@@ -243,7 +243,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         shapes = np.zeros((len(self), 3), dtype=np.int)
         for ix in self.indices:
-            filename = os.path.join(self.index.get_fullpath(ix), 'shape.cpkl')
+            filename = os.path.join(self.index.get_fullpath(ix), 'images_shape.cpkl')
             ix_pos = self._get_verified_pos(ix)
 
             # read shape and put it into shapes
@@ -419,12 +419,12 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         data_items = dict()
 
         # whenever images are to be dumped, shape should also be dumped
-        if 'images' in src and 'shape' not in src:
-            src = tuple(src) + ('shape', )
+        if 'images' in src and 'images_shape' not in src:
+            src = tuple(src) + ('images_shape', )
 
         # set correct extension to each component and add it to items-dict
         for source in list(src):
-            if source in ['spacing', 'origin', 'shape']:
+            if source in ['spacing', 'origin', 'images_shape']:
                 ext = '.cpkl'
             else:
                 ext = '.blk'
@@ -477,24 +477,9 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             pos = self.index.get_pos(index)
         return pos
 
-    def get_attrs(self, index):
-        """ Get attributes of a patient
-
-        Args:
-            index: either position of patient in self.images
-                or index from self.index
-
-        Return:
-            dict with attributes of chosen patient
-        """
-        pos = self._get_verified_pos(index)
-        origin = self.origin[pos, :]
-        spacing = self.spacing[pos, :]
-        attrs = {'spacing': spacing, 'origin': origin}
-        return attrs
 
     @property
-    def shape(self):
+    def images_shape(self):
         """Get CTImages shapes for all patients in CTImagesBatch.
 
         This property returns ndarray(n_patients, 3) containing
@@ -546,7 +531,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         - new_spacing: ndarray(n_patients, 3) with spacing values for each
         patient along z, y, x axes.
         """
-        return (self.spacing * self.shape) / new_shape
+        return (self.spacing * self.images_shape) / new_shape
 
     def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
         """
@@ -671,7 +656,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         # is for unify_spacing
         if 'spacing' in kwargs:
             # recalculate origin, spacing
-            shape_after_resize = np.rint(self.shape * self.spacing / np.asarray(kwargs['spacing']))
+            shape_after_resize = np.rint(self.images_shape * self.spacing / np.asarray(kwargs['spacing']))
             overshoot = shape_after_resize - np.asarray(kwargs['shape'])
             new_spacing = self.rescale(new_shape=shape_after_resize)
             new_origin = self.origin + new_spacing * (overshoot // 2)
@@ -792,13 +777,12 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         example:
             batch = batch.segment(erosion_radius=4, num_threads=20)
         """
-        # get mask with specified params
-        # reverse it and set not-lungs to DARK_HU
-
+        # get mask with specified params, apply it to scans
         mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius)
         lungs_mask = mask_batch.images
         self.images *= lungs_mask
 
+        # reverse the mask and set not-lungs to DARK_HU
         result_mask = 1 - lungs_mask
         result_mask *= DARK_HU
 
@@ -829,7 +813,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
 
         patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
-        img_shape = self.shape[0]
+        img_shape = self.images_shape[0]
         data_4d = np.reshape(getattr(self, data_attr), (-1, ) + tuple(img_shape))
 
         # add padding if necessary

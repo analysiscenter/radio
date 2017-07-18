@@ -148,8 +148,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         >>> batch.load(src=source_array, fmt='ndarray', bounds=bounds,
         ...            origin=origin_dict, spacing=spacing_dict)
         """
-        params = dict(source=source, bounds=bounds, origin=origin,
-                      spacing=spacing)
+        params = dict(source=source, bounds=bounds, origin=origin, spacing=spacing)
         if fmt == 'ndarray':
             self._init_data(**params)
             self.nodules = nodules
@@ -176,14 +175,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         # if src is not supplied, dump all components and shapes
         if src is None:
-            src = self.components + ('shape', )
+            src = self.components + ('images_shape', )
 
         # convert src to iterable 1d-array
         src = np.asarray(src).reshape(-1)
         data_items = dict()
 
-        if 'masks' in src and 'shape' not in src:
-            src = tuple(src) + ('shape', )
+        if 'masks' in src and 'images_shape' not in src:
+            src = tuple(src) + ('images_shape', )
 
         # execute parent-method
         super().dump(dst=dst, src=src, fmr=fmt)
@@ -346,7 +345,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         mask = np.zeros(shape=(len(self) * shape[0], ) + tuple(shape[1:]))
 
         # infer scale factor; assume patients are already resized to equal shapes
-        scale_factor = np.asarray(shape) / self.shape[0, :]
+        scale_factor = np.asarray(shape) / self.images_shape[0, :]
 
         # get rescaled nodule-centers, nodule-sizes, offsets, locs of nod starts
         center_scaled = np.abs(self.nodules.nodule_center - self.nodules.origin) / \
@@ -552,7 +551,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             skysc_shape = (self._bounds[-1], ) + slice_shape
 
             # fill needed comps with zeroes
-            for source in {'images', 'masks'} & kwargs['src']:
+            for source in {'images', 'masks'} & set(kwargs['src']):
                 setattr(self, source, np.zeroes(skysc_shape))
 
         return self.indices
