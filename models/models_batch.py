@@ -54,7 +54,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         training = tf.placeholder(tf.bool, shape=[], name='mode')
 
         # reshape inputs to tensor shape
-        t_shape = (None, ) + NOD_SHAPE + (1, )
+        t_shape = (-1, ) + NOD_SHAPE + (1, )
         input_tshaped = tf.reshape(input_layer, t_shape)
         masks_tshaped = tf.reshape(masks_ground_truth, t_shape)
 
@@ -117,6 +117,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         loss = tf_dice_loss('train', net, masks_tshaped)
 
         # reshape vnet-output to skyscraper-shape
+        sky_shape = (-1, ) + NOD_SHAPE[1:]
         net = tf.reshape(net, sky_shape)
 
         # optimization step
