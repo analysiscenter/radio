@@ -701,14 +701,17 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return rbba
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def resize(self, shape=(128, 256, 256), order=3, *args, **kwargs):
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
+               order=3, *args, **kwargs):
         """ Resize (change shape) each CT-scan in the batch.
                 When called from a batch, changes this batch.
         Args:
             shape: needed shape after resize in order z, y, x
                 *note that the order of axes in data is z, y, x
                  that is, new patient shape = (shape[0], shape[1], shape[2])
+            method: interpolation package to be used. Can be either 'pil-simd'
+                or 'scipy'
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
         Returns:
@@ -717,7 +720,13 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             shape = (128, 256, 256)
             Batch = Batch.resize(shape=shape, order=2)
         """
-        return resize_patient_numba
+        if method == 'scipy':
+            args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
+            return resize_patient_numba(**args_resize)
+        elif method == 'pil-simd':
+            # args_resize = ...
+            # return ...
+            pass
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')

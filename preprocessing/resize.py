@@ -8,36 +8,35 @@ Module with auxillary
 
 from numba import jit
 import scipy.ndimage
+from PIL import Image
 import numpy as np
 
 
 @jit(nogil=True)
-def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
-                         res_factor=None, padding='edge', spacing=None):   # pylint: disable=unused-argument
+def resize_patient_numba(patient, out_patient, res, order=3, res_factor=None, padding='edge'):   # pylint: disable=unused-argument
     """ Resize 3d-scan for one patient and put it into out_patient array.
             If res_factor is supplied, use this arg for interpolation.
-            O/w infer resize factor from out_patient.shape.
+            O/w infer resize factor from out_patient.shape and then crop/pad
+            resized array to shape=shape.
 
     Args
         patient: ndarray with patient data
         out_patient: ndarray, in which patient data
             after resize should be put
-        order: order of interpolation
         res: out array for the whole batch
             not needed here, will be used later by post default
+        order: order of interpolation
         res_factor: resize factor that has to used for the interpolation
             when not None, can yield array of shape != out_patient.shape.
             In this case crop/pad is used
         padding: mode of padding, can be any of the modes used by np.pad
-        spacing: not needed here, included because of technical reasons
     Return:
         tuple (res, out_patient.shape)
 
     * shape of resized array has to be inferred
         from out_patient
     """
-    # an actual shape is inferred from out_patient
-    _ = shape
+    # resize-shape is inferred from out_patient
     shape = out_patient.shape
 
     # define resize factor, perform resizing and put the result into out_patient
@@ -54,6 +53,61 @@ def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
     # return out-array for the whole batch
     # and shape of out_patient
     return res, out_patient.shape
+
+@jit(nogil=True)
+def _seq_resize(input_array, output_array, axes):
+    """ Calculates 3d-resize based on sequence of 2d-resizes performed on slices
+            and adds the result into supplied output-array
+
+    Args:
+        input_array: 3d-array to be resized
+        output_array: 3d-array in which the result should be put, used for inferring
+            the shape of resizing
+        axes: tuple/ndarray/list of len=2 that contains axes that are used for slicing.
+            E.g., output_array.shape = (sh0, sh1, sh2) and axes = (0, 1). We first loop over
+            2d-slices [i, :, :] and reshape the input to shape = (input_array.shape[0], sh1, sh2).
+            We then loop over slices [:, i, :] and reshape the result to shape = (sh0, sh1, sh2).
+    Return:
+        ____
+    """
+    out_shape = np.array(output_array.shape[:])    
+    result = input_array
+
+    # loop over axes
+    for axis in axes:
+        slice_shape = np.delete(out_shape, axis)
+        result = _slice_and_resize(result, axis, slice_shape)
+
+    # add the result into supplied array
+    output_array[:, :, :] += result
+
+@jit(nogil=True)
+def _slice_and_resize(input_array, axis, slice_shape):
+    """ Slice 3d-array along the axis given by axis-arg and resize each slice to
+            shape=slice_shape
+
+        Args:
+            input_array: 3d-array to be resized
+            axis: axis along which slices are taken
+            slice_shape: ndarray/tuple/list of len=2, shape of each slice after resize
+
+        Return:
+            3d-array in which each slice along chosen axis is resized
+    """
+    # init the resulting array
+    result_shape = np.insert(np.array(slice_shape), axis, input_array.shape[axis])
+    result = np.zeros(shape=result_shape)
+
+    # loop over the axis given by axis
+    for i in range(result.shape[axis]):
+        slices = np.array([slice(None), slice(None), slice(None)])
+        slices[axis] = i
+        slices = tuple(slices)
+
+        # resize the slice and put the result in result-array
+        result[slices] = np.array(Image.fromarray(input_array[slices]).resize(slice_shape))
+
+    return result
 
 
 def to_shape(data, shape, padding):
@@ -90,5 +144,3 @@ def to_shape(data, shape, padding):
 
     # return cropped/padded array
     return data
-
-
