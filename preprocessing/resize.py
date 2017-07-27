@@ -13,8 +13,9 @@ import numpy as np
 
 
 @jit(nogil=True)
-def resize_patient_numba(patient, out_patient, res, order=3, res_factor=None, padding='edge'):   # pylint: disable=unused-argument
+def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='edge'):   # pylint: disable=unused-argument
     """ Resize 3d-scan for one patient and put it into out_patient array.
+            Resize engine is scipy.ndimage.interpolation.zoom
             If res_factor is supplied, use this arg for interpolation.
             O/w infer resize factor from out_patient.shape and then crop/pad
             resized array to shape=shape.
@@ -53,6 +54,17 @@ def resize_patient_numba(patient, out_patient, res, order=3, res_factor=None, pa
     # return out-array for the whole batch
     # and shape of out_patient
     return res, out_patient.shape
+
+@jit(nogil=True)
+def resize_pil(input_array, output_array, res, axes_pairs=None):
+    """ Resize 3d-scan for an item given by input_array and put the result in output_array.
+            ...
+    """
+    # if axes_pairs not supplied, set the arg to two default axes pairs
+    axes_pairs = ((0, 1), (1, 2)) if axes_pairs is None else axes_pairs
+
+    # 
+
 
 @jit(nogil=True)
 def _seq_resize(input_array, output_array, axes):
@@ -97,6 +109,9 @@ def _slice_and_resize(input_array, axis, slice_shape):
     # init the resulting array
     result_shape = np.insert(np.array(slice_shape), axis, input_array.shape[axis])
     result = np.zeros(shape=result_shape)
+
+    # invert slice shape for PIL.resize
+    slice_shape = slice_shape[::-1]
 
     # loop over the axis given by axis
     for i in range(result.shape[axis]):

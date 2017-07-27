@@ -714,7 +714,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 or 'scipy'
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
-        Returns:
+        Return:
             self
         example:
             shape = (128, 256, 256)
@@ -722,16 +722,16 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         if method == 'scipy':
             args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
-            return resize_patient_numba(**args_resize)
+            return resize_scipy(**args_resize)
         elif method == 'pil-simd':
             # args_resize = ...
             # return ...
             pass
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
-                      padding='edge'):
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    def unify_spacing(self, patient, out_patient, res, spacing=(1, 1, 1), shape=(128, 256, 256),
+                      method='pil-simd', order=3, padding='edge', *args, **kwargs):
         """ Unify spacing of all patients using resize, then crop/pad resized array
                 to supplied shape.
         Args:
@@ -742,9 +742,12 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         Return:
             self
         """
-        return resize_patient_numba
-
-
+        if method == 'scipy':
+            args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
+            return resize_scipy(**args_resize)
+        elif method == 'pil-simd':
+            # args_resize = ..
+            # return ..
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
