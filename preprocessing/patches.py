@@ -1,3 +1,5 @@
+""" Auxiliary jit-decorated functions for splitting/assembling arrays into/from patches """
+
 import numpy as np
 from numba import guvectorize, int64, float64
 
