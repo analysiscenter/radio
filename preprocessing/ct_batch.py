@@ -1,3 +1,4 @@
+# pylint: disable=undefined-variable
 """ contains Batch class for storing Ct-scans """
 
 import os
@@ -16,7 +17,7 @@ from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
-from .patches import put_patches_numba, assemble_patches, calc_padding_size
+from .patches import get_patches_numba, assemble_patches, calc_padding_size
 
 
 AIR_HU = -2000

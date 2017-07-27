@@ -1,3 +1,4 @@
+# pylint: disable=redefined-outer-name
 """Child class of CTImagesBatch that incorporates nn-models """
 
 import tensorflow as tf
