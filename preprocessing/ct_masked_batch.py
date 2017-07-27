@@ -1,7 +1,4 @@
 # pylint: disable=no-member
-# pylint: disable=no-name-in-module
-# pylint: disable=arguments-differ
-# pylint: disable=undefined-variable
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import logging
 
