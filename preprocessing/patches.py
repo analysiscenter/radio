@@ -1,5 +1,3 @@
-# pylint: disable=invalid-name
-# pylint: disable=missing-docstring
 import numpy as np
 from numba import guvectorize, int64, float64
 
@@ -7,7 +5,7 @@ from numba import guvectorize, int64, float64
 @guvectorize([(float64[:, :, :], int64[:], int64[:], float64[:, :, :, :], int64[:])],
              '(n, m, k),(r),(r),(p, l, s, t)->()',
              nopython=True, target='parallel')
-def put_patches_numba(img, shape, stride, out_arr, fake):
+def get_patches_numba(img, shape, stride, out_arr, fake):
     """ Get all patches from padded 3d-img, put them into array out_arr
 
     Args:

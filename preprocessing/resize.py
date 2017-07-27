@@ -1,4 +1,3 @@
-# pylint: disable=anomalous-backslash-in-string
 """
 Module with auxillary
     jit-compiled functions
@@ -13,7 +12,7 @@ import numpy as np
 
 @jit(nogil=True)
 def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
-                         res_factor=None, padding='edge', spacing=None):   # pylint: disable=unused-argument
+                         res_factor=None, padding='edge', spacing=None):
     """ Resize 3d-scan for one patient and put it into out_patient array.
             If res_factor is supplied, use this arg for interpolation.
             O/w infer resize factor from out_patient.shape.
@@ -36,6 +35,7 @@ def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
     * shape of resized array has to be inferred
         from out_patient
     """
+    _ = spacing
     # an actual shape is inferred from out_patient
     _ = shape
     shape = out_patient.shape

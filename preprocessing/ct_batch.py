@@ -1,4 +1,3 @@
-# pylint: disable=no-name-in-module, undefined-variable, anomalous-backslash-in-string, attribute-defined-outside-init, arguments-differ
 """ contains Batch class for storing Ct-scans """
 
 import os
@@ -288,8 +287,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
             *no conversion to hu here
         """
-        # result of worker's execution is put into this dict
-        worker_res = dict()
 
         for source in kwargs['src']:
             # set correct extension for each component and choose a tool
@@ -829,7 +826,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         # put patches into the tensor
         fake = np.zeros(len(self))
-        put_patches_numba(data_padded, patch_shape, stride, patches, fake)
+        get_patches_numba(data_padded, patch_shape, stride, patches, fake)
         patches = np.reshape(patches, (len(self) * np.prod(num_sections), ) + tuple(patch_shape))
         return patches
 

@@ -1,4 +1,3 @@
-# pylint: disable=not-context-manager
 """Helper functions for creating layers """
 
 import tensorflow as tf
@@ -153,7 +152,7 @@ def vnet_up(scope, net_up, net_down, training, add_bnorm=True, activation=tf.nn.
     params = dict(training=training, add_bnorm=add_bnorm, activation=activation,
                   kernel=kernel, channels=channels, initializer=initializer)
 
-    with tf.variable_scope(scope):
+    with tf.variable_scope(scope):   # pylint: disable=not-context-manager
         concatted = tf.concat([net_up, net_down], 4)
         output = deconv3d_bnorm_activation(inputs=concatted, **params)
         output = tf.identity(output, name='output')
@@ -190,7 +189,7 @@ def vnet_down(scope, net_down, training, pool_size=(2, 2, 2), strides=(2, 2, 2),
                       ------------ ... ------------
                                    ...
     """
-    with tf.variable_scope(scope):
+    with tf.variable_scope(scope):                     # pylint: disable=not-context-manager
         conv = conv3d_bnorm_activation(inputs=net_down, training=training, **kwargs)
         output = tf.layers.max_pooling3d(conv, pool_size, strides)
         output = tf.identity(output, name='output')
@@ -215,7 +214,7 @@ def tf_dice_loss(scope, masks_prediction, masks_ground_truth, epsilon=0):
             name = 'scope/loss'
     """
     # compute dice = 2 |A*B| / (|A| + |B| + epsilon)
-    with tf.variable_scope(scope):
+    with tf.variable_scope(scope):                    # pylint: disable=not-context-manager
         sum_preds = tf.reduce_sum(masks_prediction)
         sum_truth = tf.reduce_sum(masks_ground_truth)
         sum_intersection = tf.reduce_sum(masks_ground_truth * masks_prediction)
