@@ -57,7 +57,7 @@ def resize_patient_numba(patient, out_patient, res, shape=None, order=3,
 
 
 def to_shape(data, shape, padding):
-    """ Crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array
+    """ Crop/pad 3d-array of arbitrary shape s.t. it be a 3d-array
         of shape=shape
 
     Args:
