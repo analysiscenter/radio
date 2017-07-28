@@ -1,4 +1,3 @@
-# pylint: disable=undefined-variable
 """ contains Batch class for storing Ct-scans """
 
 import os
