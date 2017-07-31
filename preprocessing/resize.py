@@ -77,6 +77,8 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
     # normalize result of resize (average over resizes with different pairs of axes)
     output_array[:, :, :] /= len(axes_pairs)
 
+    # for post-function
+    return res, output_array.shape
 
 @jit(nogil=True)
 def _seq_resize(input_array, shape, axes):
