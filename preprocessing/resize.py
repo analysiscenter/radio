@@ -30,6 +30,7 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
         res_factor: resize factor that has to used for the interpolation
             when not None, can yield array of shape != out_patient.shape.
             In this case crop/pad is used
+        shape: needed here for correct work
         padding: mode of padding, can be any of the modes used by np.pad
     Return:
         tuple (res, out_patient.shape)
@@ -56,42 +57,50 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
     return res, out_patient.shape
 
 @jit(nogil=True)
-def resize_pil(input_array, output_array, res, axes_pairs=None):
+def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=None, padding='edge'):
     """ Resize 3d-scan for an item given by input_array and put the result in output_array.
             ...
     """
     # if axes_pairs not supplied, set the arg to two default axes pairs
     axes_pairs = ((0, 1), (1, 2)) if axes_pairs is None else axes_pairs
 
-    # 
+    # if shape is not supplied, infer it from output_array
+    shape_resize = shape_resize if shape_resize is not None else output_array.shape
+
+    if shape_resize == output_array.shape:
+        for axes in axes_pairs:
+            output_array[:, :, :] += _seq_resize(input_array, shape_resize, axes)
+    else:
+        for axes in axes_pairs:
+            output_array[:, :, :] += to_shape(_seq_resize(input_array, shape_resize, axes), shape=output_array.shape,
+                                              padding=padding)
+
+    # normalize result of resize (average over resizes with different pairs of axes)
+    output_array[:, :, :] /= len(axes_pairs)
 
 
 @jit(nogil=True)
-def _seq_resize(input_array, output_array, axes):
+def _seq_resize(input_array, shape, axes):
     """ Calculates 3d-resize based on sequence of 2d-resizes performed on slices
-            and adds the result into supplied output-array
 
     Args:
         input_array: 3d-array to be resized
-        output_array: 3d-array in which the result should be put, used for inferring
-            the shape of resizing
+        shape: shape of resizing, tuple/list/ndarray of len=3
         axes: tuple/ndarray/list of len=2 that contains axes that are used for slicing.
             E.g., output_array.shape = (sh0, sh1, sh2) and axes = (0, 1). We first loop over
             2d-slices [i, :, :] and reshape the input to shape = (input_array.shape[0], sh1, sh2).
             We then loop over slices [:, i, :] and reshape the result to shape = (sh0, sh1, sh2).
     Return:
-        ____
+        resized 3d-array
     """
-    out_shape = np.array(output_array.shape[:])    
     result = input_array
 
     # loop over axes
     for axis in axes:
-        slice_shape = np.delete(out_shape, axis)
+        slice_shape = np.delete(shape, axis)
         result = _slice_and_resize(result, axis, slice_shape)
 
-    # add the result into supplied array
-    output_array[:, :, :] += result
+    return result
 
 @jit(nogil=True)
 def _slice_and_resize(input_array, axis, slice_shape):

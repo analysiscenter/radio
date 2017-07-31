@@ -12,7 +12,7 @@ import SimpleITK as sitk
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed
 
-from .resize import resize_patient_numba
+from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
@@ -621,7 +621,9 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                          'res': new_data}
             # for unify_spacing
             if 'spacing' in kwargs:
+                shape_after_resize = np.rint(self.images_shape * self.spacing / np.asarray(kwargs['spacing']))
                 item_args['res_factor'] = self.spacing[i, :] / np.array(kwargs['spacing'])
+                item_args['shape_resize'] = shape_after_resize[i, :]
 
             all_args += [item_args]
 
@@ -703,8 +705,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
     def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
-               order=3, *args, **kwargs):
-        """ Resize (change shape) each CT-scan in the batch.
+               axes_pairs=None, order=3, *args, **kwargs):
+        """ Resize (change shape of) each CT-scan in the batch.
                 When called from a batch, changes this batch.
         Args:
             shape: needed shape after resize in order z, y, x
@@ -712,6 +714,11 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                  that is, new patient shape = (shape[0], shape[1], shape[2])
             method: interpolation package to be used. Can be either 'pil-simd'
                 or 'scipy'
+            axes_pairs: pairs of axes that will be used for performing resize.
+                If None, set to ((0, 1), (1, 2)). In general, this arg has to be
+                a list/tuple of tuples of len=2 (pairs). The more pairs one use,
+                the more precise will be the result (while computation will take more time).
+                Min number of pairs to use is 1, while at max there can be 3 * 2 = 6 pairs.
             order: the order of interpolation (<= 5)
                 large value improves precision, but slows down the computaion
         Return:
@@ -724,14 +731,13 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
             return resize_scipy(**args_resize)
         elif method == 'pil-simd':
-            # args_resize = ...
-            # return ...
-            pass
+            args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs)
+            return resize_pil(**args_resize)
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def unify_spacing(self, patient, out_patient, res, spacing=(1, 1, 1), shape=(128, 256, 256),
-                      method='pil-simd', order=3, padding='edge', *args, **kwargs):
+    def unify_spacing(self, patient, out_patient, res, res_factor, shape_resize, spacing=(1, 1, 1),
+                      shape=(128, 256, 256), method='pil-simd', order=3, padding='edge', *args, **kwargs):
         """ Unify spacing of all patients using resize, then crop/pad resized array
                 to supplied shape.
         Args:
@@ -743,11 +749,13 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             self
         """
         if method == 'scipy':
-            args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
+            args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order,
+                               res_factor=res_factor, padding=padding)
             return resize_scipy(**args_resize)
         elif method == 'pil-simd':
-            # args_resize = ..
-            # return ..
+            args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs,
+                               shape_resize=shape_resize, padding=padding)
+            return resize_pil(**args_resize)
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
