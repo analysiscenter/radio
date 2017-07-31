@@ -56,10 +56,14 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
     return res, out_patient.shape
 
 @jit(nogil=True)
-def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=None, padding='edge'):
+def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=None,
+               resample=None, padding='edge'):
     """ Resize 3d-scan for an item given by input_array and put the result in output_array.
             ...
     """
+    # if resample not given, set to billinear
+    resample = Image.BILINEAR if resample is None else resample
+
     # if axes_pairs not supplied, set the arg to two default axes pairs
     axes_pairs = ((0, 1), (1, 2)) if axes_pairs is None else axes_pairs
 
@@ -68,10 +72,10 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
 
     if shape_resize == output_array.shape:
         for axes in axes_pairs:
-            output_array[:, :, :] += _seq_resize(input_array, shape_resize, axes)
+            output_array[:, :, :] += _seq_resize(input_array, shape_resize, axes, resample)
     else:
         for axes in axes_pairs:
-            output_array[:, :, :] += to_shape(_seq_resize(input_array, shape_resize, axes), shape=output_array.shape,
+            output_array[:, :, :] += to_shape(_seq_resize(input_array, shape_resize, axes, resample), shape=output_array.shape,
                                               padding=padding)
 
     # normalize result of resize (average over resizes with different pairs of axes)
@@ -81,7 +85,7 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
     return res, output_array.shape
 
 @jit(nogil=True)
-def _seq_resize(input_array, shape, axes):
+def _seq_resize(input_array, shape, axes, resample):
     """ Calculates 3d-resize based on sequence of 2d-resizes performed on slices
 
     Args:
@@ -99,22 +103,22 @@ def _seq_resize(input_array, shape, axes):
     # loop over axes
     for axis in axes:
         slice_shape = np.delete(shape, axis)
-        result = _slice_and_resize(result, axis, slice_shape)
+        result = _slice_and_resize(result, axis, slice_shape, resample)
 
     return result
 
 @jit(nogil=True)
-def _slice_and_resize(input_array, axis, slice_shape):
+def _slice_and_resize(input_array, axis, slice_shape, resample):
     """ Slice 3d-array along the axis given by axis-arg and resize each slice to
             shape=slice_shape
 
-        Args:
-            input_array: 3d-array to be resized
-            axis: axis along which slices are taken
-            slice_shape: ndarray/tuple/list of len=2, shape of each slice after resize
+    Args:
+        input_array: 3d-array to be resized
+        axis: axis along which slices are taken
+        slice_shape: ndarray/tuple/list of len=2, shape of each slice after resize
 
-        Return:
-            3d-array in which each slice along chosen axis is resized
+    Return:
+        3d-array in which each slice along chosen axis is resized
     """
     # init the resulting array
     result_shape = np.insert(np.array(slice_shape), axis, input_array.shape[axis])
@@ -130,7 +134,7 @@ def _slice_and_resize(input_array, axis, slice_shape):
         slices = tuple(slices)
 
         # resize the slice and put the result in result-array
-        result[slices] = np.array(Image.fromarray(input_array[slices]).resize(slice_shape))
+        result[slices] = np.array(Image.fromarray(input_array[slices]).resize(slice_shape, resample=resample))
 
     return result
 

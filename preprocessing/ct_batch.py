@@ -9,6 +9,7 @@ import aiofiles
 import blosc
 import dicom
 import SimpleITK as sitk
+from PIL import Image
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed
 
@@ -708,7 +709,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
     def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
-               axes_pairs=None, order=3, *args, **kwargs):
+               axes_pairs=None, resample=None, order=3, *args, **kwargs):
         """ Resize (change shape of) each CT-scan in the batch.
                 When called from a batch, changes this batch.
         Args:
@@ -734,7 +735,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
             return resize_scipy(**args_resize)
         elif method == 'pil-simd':
-            args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs)
+            args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs,
+                               resample=resample)
             return resize_pil(**args_resize)
 
     @action
