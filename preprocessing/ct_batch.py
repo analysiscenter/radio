@@ -1,4 +1,4 @@
-# pylint: disable=no-name-in-module, undefined-variable, anomalous-backslash-in-string, attribute-defined-outside-init, arguments-differ
+# pylint: disable=undefined-variable
 """ contains Batch class for storing Ct-scans """
 
 import os
@@ -17,7 +17,7 @@ from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
-from .patches import put_patches_numba, assemble_patches, calc_padding_size
+from .patches import get_patches_numba, assemble_patches, calc_padding_size
 
 
 AIR_HU = -2000
@@ -110,6 +110,12 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
 
         super().__init__(index, *args, **kwargs)
+
+        # init all attrs
+        self.images = None
+        self._bounds = None
+        self.origin = None
+        self.spacing = None
         self._init_data()
 
         self._crop_centers = np.array([], dtype=np.int32)
@@ -140,7 +146,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self.spacing attribute representing patients spacings in world coordinate
         system. None value will be converted to ones-array.
         """
-        # pylint: disable=attribute-defined-outside-init
         self.images = source
         self._bounds = bounds if bounds is not None else np.array([], dtype='int')
         self.origin = origin if origin is not None else np.zeros((len(self), 3))
@@ -288,8 +293,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
             *no conversion to hu here
         """
-        # result of worker's execution is put into this dict
-        worker_res = dict()
 
         for source in kwargs['src']:
             # set correct extension for each component and choose a tool
@@ -453,7 +456,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             return index
 
     def _get_verified_pos(self, index):
-        """Get verified position of patient in batch by index.       # pylint: disable=anomalous-backslash-in-string
+        """Get verified position of patient in batch by index.
 
         Firstly, check if index is instance of str or int. If int
         then it is supposed that index represents patient's position in Batch.
@@ -466,7 +469,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         Return:
             if supplied index is int, return supplied number,
-            o\w return the position of patient with supplied index
+            o/w return the position of patient with supplied index
         """
         if isinstance(index, int):
             if index < len(self) and index >= 0:
@@ -849,7 +852,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         # put patches into the tensor
         fake = np.zeros(len(self))
-        put_patches_numba(data_padded, patch_shape, stride, patches, fake)
+        get_patches_numba(data_padded, patch_shape, stride, patches, fake)
         patches = np.reshape(patches, (len(self) * np.prod(num_sections), ) + tuple(patch_shape))
         return patches
 

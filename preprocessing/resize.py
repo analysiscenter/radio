@@ -1,4 +1,3 @@
-# pylint: disable=anomalous-backslash-in-string
 """
 Module with auxillary
     jit-compiled functions
@@ -135,7 +134,7 @@ def _slice_and_resize(input_array, axis, slice_shape):
 
 
 def to_shape(data, shape, padding):
-    """ Crop\pad 3d-array of arbitrary shape s.t. it be a 3d-array
+    """ Crop/pad 3d-array of arbitrary shape s.t. it be a 3d-array
         of shape=shape
 
     Args:

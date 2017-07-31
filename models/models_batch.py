@@ -1,4 +1,3 @@
-# pylint: disable=import-error, redefined-outer-name
 """Child class of CTImagesBatch that incorporates nn-models """
 
 import tensorflow as tf
@@ -128,7 +127,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
 
     @action(model='selu_vnet_4')
-    def train_vnet(self, model, sess, verbose=False):
+    def train_vnet(self, model_outs, sess, verbose=False):
         """ Run iteration of training of selu_vnet_4
 
         model correseponding to selu_vnet_4 defined under @model decorator
@@ -145,8 +144,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         Return:
             self
         """
-        input_layer, input_masks = model[0]
-        loss, train_step, _ = model[1]
+        input_layer, input_masks = model_outs[0]
+        loss, train_step, _ = model_outs[1]
 
         # run train-step
         loss_value, _ = sess.run([loss, train_step], feed_dict={
@@ -157,7 +156,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         return self
 
     @action(model='selu_vnet_4')
-    def update_test_stats(self, model, sess, stats):
+    def update_test_stats(self, model_outs, sess, stats):
         """ Compute test stats and put them into list
 
         Args:
@@ -194,8 +193,8 @@ class CTImagesModels(CTImagesMaskedBatch):
                 testbatch.update_test_stats(sess, losses)
 
         """
-        input_layer, input_masks = model[0]
-        loss, _, _ = model[1]
+        input_layer, input_masks = model_outs[0]
+        loss, _, _ = model_outs[1]
 
         # run loss-op on data from batch
         loss_value = sess.run(loss, feed_dict={input_layer: self.images, input_masks: self.masks})
@@ -206,7 +205,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         return self
 
     @action(model='selu_vnet_4')
-    def get_cancer_segmentation(self, model, sess, result):
+    def get_cancer_segmentation(self, model_outs, sess, result):
         """ Get cancer segmentation using trained weights stored in
                 tf-session sess
 
@@ -223,8 +222,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         Return:
             self
         """
-        input_layer, _ = model[0]
-        _, _, masks_predictions = model[1]
+        input_layer, _ = model_outs[0]
+        _, _, masks_predictions = model_outs[1]
 
         # compute predicted masks
         predictions = sess.run(masks_predictions, feed_dict={input_layer: self.images})

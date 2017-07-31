@@ -1,7 +1,4 @@
 # pylint: disable=no-member
-# pylint: disable=no-name-in-module
-# pylint: disable=arguments-differ
-# pylint: disable=undefined-variable
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import logging
 
@@ -126,7 +123,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return 'images', 'masks', 'spacing', 'origin'
 
     @action
-    def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments
+    def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments, arguments-differ
              origin=None, spacing=None, nodules=None, masks=None,
              src_blosc=None):
         """Load data in masked batch of patients.
@@ -158,7 +155,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def dump(self, dst, src=None, fmt='blosc'):
+    def dump(self, dst, src=None, fmt='blosc'):                # pylint: disable=arguments-differ
         """ Dump scans data (3d-array) on specified path in specified format
 
         Args:
