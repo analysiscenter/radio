@@ -7,6 +7,8 @@ from ..dataset import action, model
 from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
 from .layers import tf_dice_loss
 
+from .keras_unet import KerasUnet
+
 # global constants
 # input shape of a nodule
 NOD_SHAPE = (32, 64, 64)
@@ -27,6 +29,63 @@ class CTImagesModels(CTImagesMaskedBatch):
         4. get_cancer_segmentation:
             method for performing inference on images of batch using trained model
     """
+
+    @model()
+    def unet_pretrained():
+        """ Get pretrained keras unet model. """
+        pretrained_unet = KerasUnet('pretrained_unet')
+        pretrained_unet.load_model(PRETRAINED_UNET_PATH)
+        return pretrained_unet
+
+    @action(model='unet_pretrained')
+    def unet_pretrained_predict(self, model, strides=(16, 32, 32), batch_size=20):
+        """ Get predictions of keras pretrained unet model. """
+        patches_arr = self.get_patches(patch_shape=(32, 64, 64), stride=strides, padding='reflect')
+        patches_arr = patches_arr.reshape(-1, 32, 64, 64)
+        patches_arr = patches_arr[:, np.newaxis, ...]
+
+        predictions = []
+        for i in range(0, patches_arr.shape[0], batch_size):
+            patch_mask = model.predict(data[i: i + 20])
+            predictions.append(patch_mask)
+
+        self.load_from_patches(stride=strides,
+                               scan_shape=(self.images_shape[0, :]),
+                               data_attr='masks')
+        return self
+
+    @model()
+    def unet():
+        """ Get unet model implemented in keras. """
+        return KerasUnet('unet')
+
+    @action(model='unet')
+    def unet_predict(self, model, strides=(16, 32, 32), batch_size=20):
+        # XXX May be it's possible to set model argument of action decorator by list of models?
+        """ Get predictions of keras pretrained unet model.
+
+        This method get predictions of unet model on batch and put
+        predicted masks in masks component of CTIMagesMaskedBatch.
+
+        Args:
+        - strides: tuple of int with 3 components containing strides for get_patches method.
+        - batch_size: int, batch_size for prediction.
+        Returns:
+        - CTIMagesMaskedBatch with masks loaded;
+        """
+        patches_arr = self.get_patches(patch_shape=(32, 64, 64), stride=strides, padding='reflect')
+        patches_arr = patches_arr.reshape(-1, 32, 64, 64)
+        patches_arr = patches_arr[:, np.newaxis, ...]
+
+        predictions = []
+        for i in range(0, patches_arr.shape[0], batch_size):
+            patch_mask = model.predict(data[i: i + 20])
+            predictions.append(patch_mask)
+
+        self.load_from_patches(stride=strides,
+                               scan_shape=(self.images_shape[0, :]),
+                               data_attr='masks')
+        return self
 
     @model()
     def selu_vnet_4(): # pylint: disable=no-method-argument
