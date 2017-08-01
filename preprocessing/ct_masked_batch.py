@@ -151,7 +151,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             answer = -dice_coef(y_true, y_pred)
             return answer
 
-        obj_dict = {'dice_coef':dice_coef,'dice_coef_loss':dice_coef_loss}
+        obj_dict = {'dice_coef': dice_coef,
+                    'dice_coef_loss': dice_coef_loss}
         unet = KerasModel('unet')
         unet.load_model(PRETRAINED_UNET_PATH, **obj_dict)
         return unet
