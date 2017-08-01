@@ -601,13 +601,15 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self._crop_sizes = crop_array[:, :, : 2]
 
     def _init_rebuild(self, **kwargs):
-        """
-        args-fetcher for parallelization using decorator
-            can be used when batch-data is rebuild from scratch
-        if shape is supplied as one of the args, assumes that data
-            should be resized, resize is performed
-        if spacing is supplied as one of the args, assumes that unify_spacing
-            is performed
+        """ Args-fetcher for parallelization using inbatch-parallel, used when 'images'-attr
+                is rebuild from scratch.
+        Args:
+            shape: if supplied, assume that images-component will be of this shape
+                in the result of action execution
+            spacing: if supplied, assume that unify_spacing is performed
+
+        Return:
+            list of arg-dicts for different workers
         """
         if 'shape' in kwargs:
             num_slices, y, x = kwargs['shape']
@@ -623,6 +625,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             item_args = {'patient': self.get(i, 'images'),
                          'out_patient': out_patient,
                          'res': new_data}
+
             # for unify_spacing
             if 'spacing' in kwargs:
                 shape_after_resize = np.rint(self.images_shape * self.spacing / np.asarray(kwargs['spacing']))
@@ -634,12 +637,14 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return all_args
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
-        """
-        gatherer of outputs from different workers for
-            ops, requiring complete rebuild of batch.images
-        args:
-            new_batch: if True, returns new batch with data
-                agregated from workers_ouputs
+        """ Gather outputs of different workers for actions, which
+                require complete rebuild of images-comp.
+
+        Args:
+            all_outputs: list of workers' outputs. Each item is given by tuple
+                (ref on new images-comp for whole batch, specific scan's shape)
+            new_batch: if True, returns new batch with data agregated
+                from all_ouputs. O\w changes self.
         """
         if any_action_failed(all_outputs):
             raise ValueError("Failed while parallelizing")
@@ -742,7 +747,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
     def unify_spacing(self, patient, out_patient, res, res_factor, shape_resize, spacing=(1, 1, 1),
-                      shape=(128, 256, 256), method='pil-simd', order=3, padding='edge', *args, **kwargs):
+                      shape=(128, 256, 256), method='pil-simd', order=3, padding='edge',
+                      axes_pairs=None, resample=None, *args, **kwargs):
         """ Unify spacing of all patients using resize, then crop/pad resized array
                 to supplied shape.
         Args:
@@ -759,7 +765,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             return resize_scipy(**args_resize)
         elif method == 'pil-simd':
             args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs,
-                               shape_resize=shape_resize, padding=padding)
+                               resample=resample, shape_resize=shape_resize, padding=padding)
             return resize_pil(**args_resize)
 
     @action
