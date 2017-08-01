@@ -359,9 +359,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return mask
 
 
-
-
-
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size):
         """Sample random nodules from CTImagesBatchMasked skyscraper.
