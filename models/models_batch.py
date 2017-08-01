@@ -31,11 +31,43 @@ class CTImagesModels(CTImagesMaskedBatch):
     """
 
     @model()
+    def unet():
+        """ Get unet model implemented in keras. """
+        return KerasUnet('unet')
+
+    @model()
     def unet_pretrained():
         """ Get pretrained keras unet model. """
         pretrained_unet = KerasUnet('pretrained_unet')
         pretrained_unet.load_model(PRETRAINED_UNET_PATH)
         return pretrained_unet
+
+    @model()
+    def keras_resnet():
+        """ Get resnet model implemented in keras. """
+        return KerasResNet('keras_resnet', 0.3)
+
+    @action(model='keras_resnet')
+    def resnet_train_on_crop(self, model):
+        """ Train resnet model on batch. """
+        x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
+        y = np.zeros(len(self), dtype=np.float)
+        for i in range(len(self)):
+            _x, _y = self.get(i, 'images'), self.get(i, 'masks')
+            x[i, ...] = _x
+            y[i] = int(np.sum(_y) > 10)
+        model.train_on_batch(x[..., np.newaxis], y)
+        return self
+
+    @action(model='keras_resnet')
+    def resnet_predict_on_crop(self, model, dst_dict):
+        """ Get predictions of resnet model on crops. """
+        x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
+        for i in range(len(self)):
+            x[i, ...] = self.get(i, 'images')
+        predictions = model.predict_on_batch(x)
+        dst_dict.update(zip(self.indices, predictions))
+        return self
 
     @action(model='unet_pretrained')
     def unet_pretrained_predict(self, model, strides=(16, 32, 32), batch_size=20):
@@ -53,11 +85,6 @@ class CTImagesModels(CTImagesMaskedBatch):
                                scan_shape=(self.images_shape[0, :]),
                                data_attr='masks')
         return self
-
-    @model()
-    def unet():
-        """ Get unet model implemented in keras. """
-        return KerasUnet('unet')
 
     @action(model='unet')
     def unet_predict(self, model, strides=(16, 32, 32), batch_size=20):
