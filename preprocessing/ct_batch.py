@@ -718,23 +718,28 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """ Resize (change shape of) each CT-scan in the batch.
                 When called from a batch, changes this batch.
         Args:
-            shape: needed shape after resize in order z, y, x
-                *note that the order of axes in data is z, y, x
-                 that is, new patient shape = (shape[0], shape[1], shape[2])
+            shape: needed shape after resize in order z, y, x.
+                NOTE: the order of axes in images is z, y, x. That is,
+                shape of each scan after resize is (shape[0], shape[1], shape[2])
             method: interpolation package to be used. Can be either 'pil-simd'
-                or 'scipy'
-            axes_pairs: pairs of axes that will be used for performing resize.
+                or 'scipy'. Pil-simd ensures better quality and speed on configurations
+                with average number of cores. On the contrary, scipy is better scaled and
+                can show better performance on systems with large number of cores
+            axes_pairs: pairs of axes that will be used for performing pil-simd resize.
                 If None, set to ((0, 1), (1, 2)). In general, this arg has to be
-                a list/tuple of tuples of len=2 (pairs). The more pairs one use,
+                a list/tuple of tuples of len=2 (pairs). The more pairs one uses,
                 the more precise will be the result (while computation will take more time).
                 Min number of pairs to use is 1, while at max there can be 3 * 2 = 6 pairs.
-            order: the order of interpolation (<= 5)
+            resample: filter of pil-simd resize. By default set to bilinear. Can be of filters
+                supported by PIL.Image
+            order: the order of scipy-interpolation (<= 5)
                 large value improves precision, but slows down the computaion
         Return:
             self
         example:
             shape = (128, 256, 256)
-            Batch = Batch.resize(shape=shape, order=2)
+            Batch = Batch.resize(shape=shape, order=2, method='scipy')
+            Bacch = Batch.resize(shape=shape, resample=PIL.Image.BILINEAR)
         """
         if method == 'scipy':
             args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
