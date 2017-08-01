@@ -7,6 +7,12 @@ from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from ..dataset import action, any_action_failed, DatasetIndex
+from ..dataset import model
+
+from .keras_model import KerasModel
+
+
+PRETRAINED_UNET_PATH = '/notebooks/segm/analysis/conf/model_best_segm_float_900_2017-7-25-19-48.hdf5'
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
@@ -121,6 +127,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 In short, these are names for components of tuple returned from __getitem__.
         """
         return 'images', 'masks', 'spacing', 'origin'
+
+    @model()
+    def unet_pretrained():
+        """ Get pretrained keras unet model. """
+        unet = KerasModel('unet')
+        unet.load_model(PRETRAINED_UNET_PATH)
+        return unet
 
     @action
     def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments, arguments-differ
