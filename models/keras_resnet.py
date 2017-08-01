@@ -222,5 +222,6 @@ class KerasResNet(KerasModel):
 
     @classmethod
     def initialize_model(cls, dropout_rate, input_tensor):
+        """ Initialize ResNet model. """
         output_tensor = build_resnet_II(input_tensor, dropout_rate)
         return keras.models.Model(input_tensor, output_tensor)
