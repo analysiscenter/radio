@@ -24,8 +24,8 @@ class KerasModel(BaseModel):
         self.model = self.initialize_model(**kwargs)
         self.log.info("Keras model was build")
 
-    @classmethod
-    def initialize_model(cls):
+    @statimethod
+    def initialize_model(*args, **kwargs):
         """ Initialize inner keras model. """
         return None
 
