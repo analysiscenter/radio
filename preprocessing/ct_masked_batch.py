@@ -12,9 +12,6 @@ from ..dataset import model
 from .keras_model import KerasModel
 
 
-PRETRAINED_UNET_PATH = '/notebooks/segm/analysis/conf/model_best_segm_float_900_2017-7-25-19-48.hdf5'
-
-
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
 logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
@@ -127,52 +124,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 In short, these are names for components of tuple returned from __getitem__.
         """
         return 'images', 'masks', 'spacing', 'origin'
-
-    @model()
-    def unet_pretrained():
-        """ Get pretrained keras unet model. """
-        from keras import backend as K
-        def dice_coef(y_true, y_pred):
-            smooth = 1e-6
-            y_true_f = K.flatten(y_true)
-            y_pred_f = K.flatten(y_pred)
-            intersection = K.sum(y_true_f * y_pred_f)
-            answer = (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-            return answer
-
-        def dice_coef_np(y_true, y_pred, smooth=1e-6):
-            y_true_f = y_true.flatten()
-            y_pred_f = y_pred.flatten()
-            intersection = np.sum(y_true_f * y_pred_f)
-            return (2. * intersection + smooth) / (np.sum(y_true_f) +  \
-            + np.sum(y_pred_f) + smooth)
-
-        def dice_coef_loss(y_true, y_pred):
-            answer = -dice_coef(y_true, y_pred)
-            return answer
-
-        obj_dict = {'dice_coef': dice_coef,
-                    'dice_coef_loss': dice_coef_loss}
-        unet = KerasModel('unet')
-        unet.load_model(PRETRAINED_UNET_PATH, **obj_dict)
-        return unet
-
-    @action(model='unet_pretrained')
-    def unet_pretrained_predict(self, model, strides=(16, 32, 32), batch_size=20):
-        """ Get predictions of keras pretrained unet model. """
-        patches_arr = self.get_patches(patch_shape=(32, 64, 64), stride=strides, padding='reflect')
-        patches_arr = patches_arr.reshape(-1, 32, 64, 64)
-        patches_arr = patches_arr[:, np.newaxis, ...]
-
-        predictions = []
-        for i in range(0, patches_arr.shape[0], batch_size):
-            patch_mask = model.predict(data[i: i + 20])
-            predictions.append(patch_mask)
-
-        self.load_from_patches(stride=strides,
-                               scan_shape=(self.images_shape[0, :]),
-                               data_attr='masks')
-        return self
 
     @action
     def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments, arguments-differ
