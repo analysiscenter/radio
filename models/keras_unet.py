@@ -25,6 +25,7 @@ from .keras_model import KerasModel
 
 
 def get_custom_unet():
+    """ Build custom unet model. """
     with K.tf.device('/gpu:0'):
         inputs = Input((1, 32, 64, 64))
         conv1 = Conv3D(32, (3, 3, 3), data_format="channels_first", padding="same")(inputs)
