@@ -113,6 +113,7 @@ def get_custom_unet():
 
 
 def dice_coef(y_true, y_pred):
+    """ Compute dice coefficient via tf. """
     smooth = 1e-6
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
@@ -122,6 +123,7 @@ def dice_coef(y_true, y_pred):
 
 
 def dice_coef_np(y_true, y_pred, smooth=1e-6):
+    """ Compute dice coefficient via numpy. """
     y_true_f = y_true.flatten()
     y_pred_f = y_pred.flatten()
     intersection = np.sum(y_true_f * y_pred_f)
@@ -130,6 +132,7 @@ def dice_coef_np(y_true, y_pred, smooth=1e-6):
 
 
 def dice_coef_loss(y_true, y_pred):
+    """ Compute dice loss. """
     answer = -dice_coef(y_true, y_pred)
     return answer
 
@@ -142,7 +145,9 @@ class KerasUnet(KerasModel):
     """ KerasUnet model for 3D scans implemented in keras. """
     @staticmethod
     def initialize_model():
+        """ Model initializer that builds the model. """
         return get_custom_unet()
 
     def load_model(self, path):
+        """ Override load_model method. """
         super().load_model(path, *obj_dict)
