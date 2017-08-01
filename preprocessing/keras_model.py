@@ -3,6 +3,7 @@ import sys
 import shutil
 from functools import wraps, partial
 import logging
+from logging.handlers import SMTPHandler
 import keras
 from keras.models import model_from_json
 from .model import BaseModel
@@ -33,6 +34,12 @@ class KerasModel(BaseModel):
         """ Get logger for this model. """
         return self.log
 
+    def add_log_file(self, filename):
+        """ Add file handler to logger. """
+        file_handler = logging.FileHandler(filename)
+        file_handler.setLevel(logging.DEBUG)
+        self.log.addHandler(file_handler)
+
     @wraps(keras.models.Model.compile)
     def compile(self, *args, **kwargs):
         """ Compile keras model. """
@@ -61,11 +68,11 @@ class KerasModel(BaseModel):
             model = model_from_json(f.read())
         self.model = model
         self.model.load_weights(os.path.join(dir_path, 'model.h5'))
-        self.log.info("Loaded model from %s" % dir_path)
+        self.log.info("Loaded %s model from %s" % (self.name, dir_path))
 
     def load_model(self, path, **kwargs):
         """ Load weights and description of keras model. """
-        self.log.info("Loading keras model...")
+        self.log.info("Loading %s model..." % self.name)
         self.model = keras.models.load_model(path, custom_objects=kwargs)
         self.log.info("Loaded model from %s" % path)
 
@@ -74,4 +81,4 @@ class KerasModel(BaseModel):
         with open(os.path.join(dir_path, 'model.json'), 'w') as f:
             f.write(self.model.to_json())
         self.model.save_weights(os.path.join(dir_path, 'model.h5'))
-        self.log.info("Saved model in %s" % dir_path)
+        self.log.info("Saved %s model in %s" % (self.name, dir_path))
