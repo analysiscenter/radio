@@ -147,6 +147,7 @@ class KerasUnet(KerasModel):
     @staticmethod
     def initialize_model():
         """ Model initializer that builds the model. """
+        # XXX Add compile here
         return get_custom_unet()
 
     def load_model(self, path):
