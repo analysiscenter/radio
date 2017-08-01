@@ -628,7 +628,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
             # for unify_spacing
             if 'spacing' in kwargs:
-                shape_after_resize = np.rint(self.images_shape * self.spacing / np.asarray(kwargs['spacing']))
+                shape_after_resize = self.images_shape * self.spacing / np.asarray(kwargs['spacing'])
+                shape_after_resize = np.rint(shape_after_resize).astype(np.int)
                 item_args['res_factor'] = self.spacing[i, :] / np.array(kwargs['spacing'])
                 item_args['shape_resize'] = shape_after_resize[i, :]
 

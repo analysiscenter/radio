@@ -70,7 +70,7 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
     # if shape is not supplied, infer it from output_array
     shape_resize = shape_resize if shape_resize is not None else output_array.shape
 
-    if shape_resize == output_array.shape:
+    if tuple(shape_resize) == output_array.shape:
         for axes in axes_pairs:
             output_array[:, :, :] += _seq_resize(input_array, shape_resize, axes, resample)
     else:

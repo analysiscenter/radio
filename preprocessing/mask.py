@@ -6,14 +6,18 @@ from numba import njit
 
 @njit(nogil=True)
 def insert_cropped(where, what, origin):
-    """
-    where, what: arrays with same ndims=3
-    origin: ndarray of length=3
-        what-array should be put in where-array starting from origin
-        what-array is cropped if
-            origin is negative or
-            what-array is too large to be put in where-array
-            starting from origin
+    """ Insert one array in another starting from selected position taking care of
+            boundary cases
+    Args:
+        where: 3d-array where insertion is performed
+        what: 3d-array which is inserted
+        origin: starting position of insertion
+
+        NOTE: what-array is cropped if origin is negative or
+            what-array is too large to be put in where-array starting from origin
+
+    Return:
+        ____
 
     example:
         where = np.zeros(shape=(3, 3, 3), dtype='int')
@@ -24,14 +28,20 @@ def insert_cropped(where, what, origin):
         insert_cropped(where, what, origin)
         # where[2, 2, 2] = 1, other elems = 0
     """
+    # shapes to arrays for convenience
+    what_shape = np.array(what.shape)
+    where_shape = np.array(where.shape)
+
+    # check if there is anything to insert
+    if np.any(what_shape + origin <= 0) or np.any(origin >= where_shape):
+        return
+
     # define crop boundaries
     st_what = -np.minimum(np.zeros_like(origin), origin)
-    end_what = np.minimum(np.array(where.shape) - origin,
-                          np.array(what.shape))
+    end_what = np.minimum(where_shape - origin, what_shape)
 
     st_where = np.maximum(origin, np.zeros_like(origin))
-    end_where = np.minimum(origin + np.array(what.shape),
-                           np.array(where.shape))
+    end_where = np.minimum(origin + what_shape, where_shape)
 
     # perform insert
     where[st_where[0]: end_where[0],
