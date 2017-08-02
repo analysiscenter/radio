@@ -1,4 +1,4 @@
-# pylint: disable=undefined-variable
+# pylint: disable=undefined-variable, no-member
 """ contains Batch class for storing Ct-scans """
 
 import os
@@ -9,7 +9,6 @@ import aiofiles
 import blosc
 import dicom
 import SimpleITK as sitk
-from PIL import Image
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed
 
@@ -645,7 +644,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             all_outputs: list of workers' outputs. Each item is given by tuple
                 (ref on new images-comp for whole batch, specific scan's shape)
             new_batch: if True, returns new batch with data agregated
-                from all_ouputs. O\w changes self.
+                from all_ouputs. O/w changes self.
         """
         if any_action_failed(all_outputs):
             raise ValueError("Failed while parallelizing")
@@ -714,7 +713,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
+    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',     # pylint: disable=too-many-arguments
                axes_pairs=None, resample=None, order=3, *args, **kwargs):
         """ Resize (change shape of) each CT-scan in the batch.
                 When called from a batch, changes this batch.
@@ -731,10 +730,10 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 a list/tuple of tuples of len=2 (pairs). The more pairs one uses,
                 the more precise will be the result (while computation will take more time).
                 Min number of pairs to use is 1, while at max there can be 3 * 2 = 6 pairs.
-            resample: filter of pil-simd resize. By default set to bilinear. Can be of filters
-                supported by PIL.Image
+            resample: filter of pil-simd resize. By default set to bilinear. Can be any of filters
+                supported by PIL.Image.
             order: the order of scipy-interpolation (<= 5)
-                large value improves precision, but slows down the computaion
+                large value improves precision, but slows down the computaion.
         Return:
             self
         example:
@@ -752,7 +751,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def unify_spacing(self, patient, out_patient, res, res_factor, shape_resize, spacing=(1, 1, 1),
+    def unify_spacing(self, patient, out_patient, res, res_factor, shape_resize, spacing=(1, 1, 1),    # pylint: disable=too-many-arguments
                       shape=(128, 256, 256), method='pil-simd', order=3, padding='edge',
                       axes_pairs=None, resample=None, *args, **kwargs):
         """ Unify spacing of all patients using resize, then crop/pad resized array
@@ -760,8 +759,14 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         Args:
             spacing: needed spacing in mm
             shape: needed shape after crop/pad
-            order: order of interpolation (<=5)
+            method: interpolation package to be used for resize ('pil-simd' | resize). See doc of
+                CTImagesBatch.resize for more information
+            order: order of scipy-interpolation (<=5)
             padding: mode of padding, any of those supported by np.pad
+            axes_pairs: pairs of axes that will be used for performing pil-simd resize
+            resample: filter of pil-simd resize
+
+            NOTE: see doc of CTImagesBatch.resize for more info about methods' params.
         Return:
             self
         """

@@ -12,32 +12,28 @@ import numpy as np
 
 
 @jit(nogil=True)
-def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='edge'):   # pylint: disable=unused-argument
+def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='edge'):
     """ Resize 3d-scan for one patient and put it into out_patient array.
-            Resize engine is scipy.ndimage.interpolation.zoom
-            If res_factor is supplied, use this arg for interpolation.
-            O/w infer resize factor from out_patient.shape and then crop/pad
-            resized array to shape=shape.
+            Resize engine is scipy.ndimage.interpolation.zoom.
+            If res_factor is not supplied, infer resize factor from out_patient.shape.
+            O/w, use res_factor for resize and then crop/pad resized array to out_patient.shape.
 
     Args
         patient: ndarray with patient data
-        out_patient: ndarray, in which patient data
-            after resize should be put
-        res: out array for the whole batch
-            not needed here, will be used later by post default
+        out_patient: ndarray, in which patient data after resize should be put
+        res: out array for the whole batch. Not needed here, will be used later by post-func
         order: order of interpolation
-        res_factor: resize factor that has to used for the interpolation
-            when not None, can yield array of shape != out_patient.shape.
+        res_factor: resize factor that has to used for the interpolation.
+            If not None, can yield array of shape != out_patient.shape.
             In this case crop/pad is used
-        shape: needed here for correct work
         padding: mode of padding, can be any of the modes used by np.pad
     Return:
         tuple (res, out_patient.shape)
 
-    * shape of resized array has to be inferred
+    * shape of resulting array has to be inferred
         from out_patient
     """
-    # resize-shape is inferred from out_patient
+    # infer shape of resulting array
     shape = out_patient.shape
 
     # define resize factor, perform resizing and put the result into out_patient
@@ -50,7 +46,6 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
                                          zoom(patient, res_factor, order=order)),
                                         shape=shape, padding=padding)
 
-
     # return out-array for the whole batch
     # and shape of out_patient
     return res, out_patient.shape
@@ -58,8 +53,17 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
 @jit(nogil=True)
 def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=None,
                resample=None, padding='edge'):
-    """ Resize 3d-scan for an item given by input_array and put the result in output_array.
-            ...
+    """ Resize 3d-scan. Use _seq_resize over a specific pair of axes for applying 2d-resize to
+            3d-situation, then average over different pairs for obtaining more precise results.
+            If shape_resize is not supplied, infer shape of resize from ouput_array.shape. O/w,
+            use shape_resize and then crop/pad resized array to output_arrray.shape.
+
+    Args:
+        input_array: 3d-array to be resized.
+        ouput_array: 3d-array, where the result should be put.
+        res: out array for the whole batch. Not needed here, will be used later by post-func.
+        axes_pairs: pairs of axes over which the averaging is performed. Tuple/list of tuples
+            of len=2.
     """
     # if resample not given, set to billinear
     resample = Image.BILINEAR if resample is None else resample
@@ -75,8 +79,8 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
             output_array[:, :, :] += _seq_resize(input_array, shape_resize, axes, resample)
     else:
         for axes in axes_pairs:
-            output_array[:, :, :] += to_shape(_seq_resize(input_array, shape_resize, axes, resample), shape=output_array.shape,
-                                              padding=padding)
+            output_array[:, :, :] += to_shape(_seq_resize(input_array, shape_resize, axes, resample),
+                                              shape=output_array.shape, padding=padding)
 
     # normalize result of resize (average over resizes with different pairs of axes)
     output_array[:, :, :] /= len(axes_pairs)
@@ -86,7 +90,7 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
 
 @jit(nogil=True)
 def _seq_resize(input_array, shape, axes, resample):
-    """ Calculates 3d-resize based on sequence of 2d-resizes performed on slices
+    """ Calculate 3d-resize based on sequence of 2d-resizes performed on slices
 
     Args:
         input_array: 3d-array to be resized
