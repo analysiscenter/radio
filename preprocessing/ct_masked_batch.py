@@ -213,7 +213,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df, update=False):
+    def fetch_nodules_info(self, nodules_df, update=False, shapes_loaded=True):
         """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
@@ -256,7 +256,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
             counter += 1
 
-        self._refresh_nodules_info()
+        if shapes_loaded:
+            self._refresh_nodules_info()
         return self
 
     # TODO think about another name of method
@@ -497,6 +498,36 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # TODO add info about nodules by changing self.nodules
         nodules_batch.masks = masks
         return nodules_batch
+
+    @action
+    def update_nodules_histo(self, histo):
+        """ Update histogram of nodules' locations in pixel coords using info
+                about cancer nodules from batch.
+
+        Args:
+            histo: list of len=2, where the first item contains histogram bins: array of
+                shape=(number of bins X number of bins) with number of elems in bins, while the
+                second item contains edges of histogram bins: list of 3 1darrays of shape=(number of bins + 1).
+                NOTE: this is almost np.histogram format. The only difference is that np.histogram
+                returns tuple of len=2, not list.
+
+        Return:
+            self
+
+        NOTE: execute this action only after fetch_nodules_info.
+        """
+        # infer bins' bounds from histo
+        bins = histo[1]
+
+        # get cancer_nodules' centers in pixel coords
+        center_pix = np.abs(self.nodules.nodule_center - self.nodules.origin) / self.nodules.spacing
+
+        # update bins of histo
+        histo_delta = np.histogramdd(center_pix, bins=bins)
+        histo[0] += histo_delta[0]
+
+        return self
+
 
     def get_axial_slice(self, patient_pos, height):
         """Get tuple of slices (data slice, mask slice).
