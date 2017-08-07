@@ -6,6 +6,8 @@ import numpy as np
 from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
+from .histo import sample_histo3d
+
 from ..dataset import action, any_action_failed, DatasetIndex
 
 
@@ -364,7 +366,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
 
     # TODO rename function to sample_random_nodules_positions
-    def sample_random_nodules(self, num_nodules, nodule_size):
+    def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
         """Sample random nodules from CTImagesBatchMasked skyscraper.
 
         Samples random num_nodules' lower_bounds coordinates
@@ -379,6 +381,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
         - num_nodules: number of random nodules to sample from BatchCt data;
         - nodule_size: ndarray(3, ) nodule size in number of pixels;
+        - histo: 3d-histogram, represented by tuple (bins, edges) - format of
+            np.histogramdd;
 
         return
         - ndarray(l, 3) of int that contains information
@@ -390,19 +394,28 @@ class CTImagesMaskedBatch(CTImagesBatch):
         *Note: [zyx]-ordering is used;
         """
         all_indices = np.arange(len(self))
-        sampled_indices = np.random.choice(all_indices,
-                                           num_nodules, replace=True)
+        sampled_indices = np.random.choice(all_indices, num_nodules, replace=True)
 
         offset = np.zeros((num_nodules, 3))
         offset[:, 0] = self.lower_bounds[sampled_indices]
-
         data_shape = self.images_shape[sampled_indices, :]
-        samples = np.random.rand(num_nodules, 3) * (data_shape - nodule_size)
+
+        # if supplied, use histogram as the sampler
+        if histo is None:
+            sampler = lambda size: np.random.rand(size, 3)
+        else:
+            sampler = lambda size: sample_histo3d(histo, size)
+
+        samples = sampler(size) * (data_shape - nodule_size)
+
+        if histo is not None:
+            samples /= data_shape
+
         return np.asarray(samples + offset, dtype=np.int)
 
     @action
     def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,
-                       variance=None, mask_shape=None):
+                       variance=None, mask_shape=None, histo=None):
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -424,6 +437,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             nodules' first pixels
         - mask_shape: needed shape of mask in (z, y, x)-order. If not None,
             masks of nodules will be scaled to shape=mask_shape
+        - histo: 3d-histogram in np-histogram format, that is used for sampling
+            non-cancerous crops
 
         Return:
             A batch with cancerous and non-cancerous nodules in a proportion defined by
@@ -467,7 +482,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # if non-cancerous nodules are needed, add random starting pos
         if batch_size - cancer_n > 0:
             # sample starting positions for (most-likely) non-cancerous crops
-            random_nodules = self.sample_random_nodules(batch_size - cancer_n, nodule_size)
+            random_nodules = self.sample_random_nodules(batch_size - cancer_n, nodule_size, histo=histo)
 
             # concat non-cancerous and cancerous crops' starting positions
             nodules_st_pos = np.vstack([nodules_st_pos, random_nodules]).astype(np.int)  # pylint: disable=no-member
