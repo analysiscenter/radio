@@ -406,7 +406,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             sampler = lambda size: sample_histo3d(histo, size)
 
-        samples = sampler(size) * (data_shape - nodule_size)
+        samples = sampler(size=num_nodules) * (data_shape - nodule_size)
 
         if histo is not None:
             samples /= data_shape
