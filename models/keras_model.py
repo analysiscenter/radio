@@ -6,7 +6,7 @@ import logging
 from logging.handlers import SMTPHandler
 import keras
 from keras.models import model_from_json
-from .model import BaseModel
+from .base_model import BaseModel
 
 
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
@@ -20,11 +20,12 @@ class KerasModel(BaseModel):
         super().__init__(name, *args, **kwargs)
         self.log = logging.getLogger(name)
         self.name = name
+
         self.log.info("Building keras model...")
         self.model = self.initialize_model(**kwargs)
         self.log.info("Keras model was build")
 
-    @statimethod
+    @staticmethod
     def initialize_model(*args, **kwargs):
         """ Initialize inner keras model. """
         return None
@@ -47,16 +48,17 @@ class KerasModel(BaseModel):
         self.model.compile(*args, **kwargs)
         self.log.info('Model was compiled')
 
-    @wraps(keras.models.Model.train_on_batch)
-    def fit(self, *args, **kwargs):
-        """ Fit model on input batch and true labels. """
-#        self.model.train_on_batch(*args, **kwargs)
-        self.model.fit(*args, **kwargs)
+    def train_on_batch(self, x, y_true, **kwargs):
+        """ Train model on batch. """
+        self.model.train_on_batch(x, y_true)
 
-    @wraps(keras.models.Model.predict_on_batch)
-    def predict(self, *args, **kwargs):
+    def test_on_batch(self, x, y_true, **kwargs):
+        """ Test model on batch. """
+        y_pred = self.model.predict_on_batch(x)
+
+    def predict_on_batch(self, x, **kwargs):
         """ Get predictions on batch x. """
-        return self.model.predict_on_batch(*args, **kwargs)
+        return self.model.predict_on_batch(x)
 
     def load(self, dir_path, *args, **kwargs):
         """ Load model. """
@@ -69,12 +71,6 @@ class KerasModel(BaseModel):
         self.model = model
         self.model.load_weights(os.path.join(dir_path, 'model.h5'))
         self.log.info("Loaded %s model from %s" % (self.name, dir_path))
-
-    def load_model(self, path, **kwargs):
-        """ Load weights and description of keras model. """
-        self.log.info("Loading %s model..." % self.name)
-        self.model = keras.models.load_model(path, custom_objects=kwargs)
-        self.log.info("Loaded model from %s" % path)
 
     def save(self, dir_path, *args, **kwargs):
         """ Save model. """
