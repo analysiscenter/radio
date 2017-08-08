@@ -215,7 +215,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df, update=False, shapes_loaded=True):
+    def fetch_nodules_info(self, nodules_df, update=False, images_loaded=True):
         """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
@@ -258,8 +258,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
             counter += 1
 
-        if shapes_loaded:
-            self._refresh_nodules_info()
+        self._refresh_nodules_info(images_loaded)
         return self
 
     # TODO think about another name of method
@@ -415,7 +414,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,
-                       variance=None, mask_shape=None, histo=None):
+                       variance=None, mask_shape=None, histo=None):                                # pylint: too-many-locals
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -561,17 +560,23 @@ class CTImagesMaskedBatch(CTImagesBatch):
             patch = (self.get(patient_pos, 'images')[margin, :, :], None)
         return patch
 
-    def _refresh_nodules_info(self):
+    def _refresh_nodules_info(self, images_loaded=True):
         """Refresh self.nodules attributes [spacing, origin, img_size, bias].
 
         This method should be called when it is needed to make
         [spacing, origin, img_size, bias] attributes of self.nodules
         to correspond the structure of batch's inner data.
+
+        Args:
+            images_loaded: if set to True, assume that _bounds-attr is loaded
+                and images are already loaded.
         """
-        self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
+        if images_loaded:
+            self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
+            self.nodules.img_size = self.images_shape[self.nodules.patient_pos, :]
+
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
-        self.nodules.img_size = self.images_shape[self.nodules.patient_pos, :]
 
     def _rescale_spacing(self):
         """Rescale spacing values and update nodules_info.
