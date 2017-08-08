@@ -24,9 +24,34 @@ from keras import regularizers
 from .keras_model import KerasModel
 
 
-def get_custom_unet():
-    """ Build custom unet model. """
-    with K.tf.device('/gpu:0'):
+def dice_coef(y_true, y_pred):
+    smooth = 1e-6
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    answer = (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+    return answer
+
+def dice_coef_np(y_true, y_pred, smooth=1e-6):
+    y_true_f = y_true.flatten()
+    y_pred_f = y_pred.flatten()
+    intersection = np.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (np.sum(y_true_f) +  \
+    + np.sum(y_pred_f) + smooth)
+
+def dice_coef_loss(y_true, y_pred):
+    answer = -dice_coef(y_true, y_pred)
+    return answer
+
+
+class KerasUnet(KerasModel):
+    """ KerasUnet model for 3D scans implemented in keras. """
+    def __init__(self, name, **kwargs):
+        super().__init__(name, **kwargs)
+
+    @staticmethod
+    def build_unet():
+        """ Build 3D unet implemented in keras. """
         inputs = Input((1, 32, 64, 64))
         conv1 = Conv3D(32, (3, 3, 3), data_format="channels_first", padding="same")(inputs)
         conv1 = BatchNormalization(axis = 1, momentum=0.1, scale=True)(conv1)
@@ -112,44 +137,19 @@ def get_custom_unet():
 
         return model
 
-
-def dice_coef(y_true, y_pred):
-    """ Compute dice coefficient via tf. """
-    smooth = 1e-6
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    answer = (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-    return answer
-
-
-def dice_coef_np(y_true, y_pred, smooth=1e-6):
-    """ Compute dice coefficient via numpy. """
-    y_true_f = y_true.flatten()
-    y_pred_f = y_pred.flatten()
-    intersection = np.sum(y_true_f * y_pred_f)
-    return (2. * intersection + smooth) / (np.sum(y_true_f) +  \
-    + np.sum(y_pred_f) + smooth)
-
-
-def dice_coef_loss(y_true, y_pred):
-    """ Compute dice loss. """
-    answer = -dice_coef(y_true, y_pred)
-    return answer
-
-
-obj_dict = {'dice_coef': dice_coef,
-            'dice_coef_loss': dice_coef_loss}
-
-
-class KerasUnet(KerasModel):
-    """ KerasUnet model for 3D scans implemented in keras. """
-    @staticmethod
-    def initialize_model():
-        """ Model initializer that builds the model. """
-        # XXX Add compile here
-        return get_custom_unet()
+    @classmethod
+    def initialize_model(cls):
+        """ Initialize unet mode. """
+        unet_model = cls.build_unet()
+        return unet_model
 
     def load_model(self, path):
-        """ Override load_model method. """
-        super().load_model(path, *obj_dict)
+        """ Load weights and description of keras model. """
+        self.log.info("Loading %s model..." % self.name)
+        self.model = keras.models.load_model(path, custom_objects={'dice_coef':dice_coef,
+                                                                   'dice_coef_loss':dice_coef_loss})
+        self.log.info("Loaded model from %s" % path)
+
+    @property
+    def default_loss(self):
+        return dice_coef_loss
