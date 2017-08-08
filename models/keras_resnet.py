@@ -1,5 +1,5 @@
 import keras
-from keras.models import Model as KerasModel
+from keras.models import Model as Model
 from keras.layers import Input
 from keras import layers
 from keras.models import load_model
@@ -18,6 +18,7 @@ from keras.layers import AveragePooling2D
 from keras.layers import GlobalAveragePooling2D
 from keras.layers import GlobalMaxPooling2D
 from keras.layers import BatchNormalization
+from keras import backend as K
 
 from .keras_model import KerasModel
 
