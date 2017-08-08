@@ -22,6 +22,7 @@ from keras import backend as K
 
 from .keras_model import KerasModel
 
+
 def identity_block(input_tensor, kernel_size, filters, stage, block):
     """ The identity block is the block that has no conv layer at shortcut. """
     filters1, filters2, filters3 = filters
@@ -95,104 +96,81 @@ def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 
     return x
 
 
-def build_resnet_I(input_tensor, dropout_rate):
-    x = conv_block_I(x, 3, [16, 16, 64], stage=2, block='a', strides=(1, 1, 1))
-    x = identity_block_I(x, 3, [16, 16, 64], stage=2, block='b')
-    x = identity_block_I(x, 3, [16, 16, 64], stage=2, block='c')
-
-    x = conv_block_I(x, 3, [32, 32, 128], stage=3, block='a')
-    x = identity_block_I(x, 3, [32, 32, 128], stage=3, block='b')
-    x = identity_block_I(x, 3, [32, 32, 128], stage=3, block='c')
-    x = identity_block_I(x, 3, [32, 32, 128], stage=3, block='d')
-
-    x = conv_block_I(x, 3, [64, 64, 256], stage=4, block='a')
-    x = identity_block_I(x, 3, [64, 64, 256], stage=4, block='b')
-    x = identity_block_I(x, 3, [64, 64, 256], stage=4, block='c')
-    x = identity_block_I(x, 3, [64, 64, 256], stage=4, block='d')
-    x = identity_block_I(x, 3, [64, 64, 256], stage=4, block='e')
-    x = identity_block_I(x, 3, [64, 64, 256], stage=4, block='f')
-
-    x = conv_block_I(x, 3, [128, 128, 512], stage=5, block='a')
-    x = identity_block_I(x, 3, [128, 128, 512], stage=5, block='b')
-    x = identity_block_I(x, 3, [128, 128, 512], stage=5, block='c')
-
-    y = Flatten()(x)
-
-    y = Dense(512, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(256, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(128, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(64, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(32, activation='relu')(y)
-
-    output_layer = Dense(2, activation='softmax', name='output')(y)
-    return output_layer
-
-def build_resnet_II(input_tensor, dropout_rate):
-    x = Conv3D(filters=32, kernel_size=(7, 3, 3),
-               strides=(2, 2, 2), name='initial_conv', padding='same',
-               use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
-    x = BatchNormalization(axis=4, name='initial_batch_norm')(x)
-    x = Activation('relu')(x)
-
-    x = conv_block_II(x, 3, [16, 16, 64], stage=2, block='a', strides=(1, 1, 1))
-    x = identity_block_II(x, 3, [16, 16, 64], stage=2, block='b')
-    x = identity_block_II(x, 3, [16, 16, 64], stage=2, block='c')
-
-    x = conv_block_II(x, 3, [32, 32, 128], stage=3, block='a')
-    x = identity_block_II(x, 3, [32, 32, 128], stage=3, block='b')
-    x = identity_block_II(x, 3, [32, 32, 128], stage=3, block='c')
-    x = identity_block_II(x, 3, [32, 32, 128], stage=3, block='d')
-
-    x = conv_block_II(x, 3, [64, 64, 256], stage=4, block='a')
-    x = identity_block_II(x, 3, [64, 64, 256], stage=4, block='b')
-    x = identity_block_II(x, 3, [64, 64, 256], stage=4, block='c')
-    x = identity_block_II(x, 3, [64, 64, 256], stage=4, block='d')
-    x = identity_block_II(x, 3, [64, 64, 256], stage=4, block='e')
-    x = identity_block_II(x, 3, [64, 64, 256], stage=4, block='f')
-
-    x = conv_block_II(x, 3, [128, 128, 512], stage=5, block='a', strides=(1, 2, 2))
-    x = identity_block_II(x, 3, [128, 128, 512], stage=5, block='b')
-    x = identity_block_II(x, 3, [128, 128, 512], stage=5, block='c')
-
-    y = Flatten()(x)
-
-    y = Dense(512, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(256, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(128, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(64, activation='relu')(y)
-    y = Dropout(rate=dropout_rate)(y)
-
-    y = Dense(32, activation='relu')(y)
-
-    output_layer = Dense(1, activation='sigmoid', name='output')(y)
-    return output_layer
-
-
 class KerasResNet(KerasModel):
     """ ResNet model for 3D scans implemented in keras. """
+
     def __init__(self, name, dropout_rate=0.3, **kwargs):
         self.dropout_rate = dropout_rate
         self.input_tensor = Input(shape=(32, 64, 64, 1))
         super().__init__(name, dropout_rate=dropout_rate, input_tensor=self.input_tensor, **kwargs)
 
+    def compile(self, optimizer='adam', loss='binary_crossentropy'):
+        super().compile(optimizer=optimizer, loss=loss)
+
+    @staticmethod
+    def build_resnet(input_tensor, dropout_rate):
+        """ Build resnet model implemented in keras.
+
+        Args:
+        - input_tensor: keras Input layer;
+        - dropout_rate: float, dropout_rate for dense layers;
+
+        Returns:
+        - keras tensor of the last dense layer;
+        """
+        x = Conv3D(filters=32, kernel_size=(7, 3, 3),
+                   strides=(2, 2, 2), name='initial_conv', padding='same',
+                   use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
+        x = BatchNormalization(axis=4, name='initial_batch_norm')(x)
+        x = Activation('relu')(x)
+
+        x = conv_block(x, 3, [16, 16, 64], stage=2, block='a', strides=(1, 1, 1))
+        x = identity_block(x, 3, [16, 16, 64], stage=2, block='b')
+        x = identity_block(x, 3, [16, 16, 64], stage=2, block='c')
+
+        x = conv_block(x, 3, [32, 32, 128], stage=3, block='a')
+        x = identity_block(x, 3, [32, 32, 128], stage=3, block='b')
+        x = identity_block(x, 3, [32, 32, 128], stage=3, block='c')
+        x = identity_block(x, 3, [32, 32, 128], stage=3, block='d')
+
+        x = conv_block(x, 3, [64, 64, 256], stage=4, block='a')
+        x = identity_block(x, 3, [64, 64, 256], stage=4, block='b')
+        x = identity_block(x, 3, [64, 64, 256], stage=4, block='c')
+        x = identity_block(x, 3, [64, 64, 256], stage=4, block='d')
+        x = identity_block(x, 3, [64, 64, 256], stage=4, block='e')
+        x = identity_block(x, 3, [64, 64, 256], stage=4, block='f')
+
+        x = conv_block(x, 3, [128, 128, 512], stage=5, block='a', strides=(1, 2, 2))
+        x = identity_block(x, 3, [128, 128, 512], stage=5, block='b')
+        x = identity_block(x, 3, [128, 128, 512], stage=5, block='c')
+
+        y = Flatten()(x)
+
+        y = Dense(512, activation='relu')(y)
+        y = Dropout(rate=dropout_rate)(y)
+
+        y = BatchNormalization(axis=-1)(y)
+        y = Dense(256, activation='relu')(y)
+        y = Dropout(rate=dropout_rate)(y)
+
+        y = BatchNormalization(axis=-1)(y)
+        y = Dense(128, activation='relu')(y)
+        y = Dropout(rate=dropout_rate)(y)
+
+        y = BatchNormalization(axis=-1)(y)
+        y = Dense(64, activation='relu')(y)
+        y = Dropout(rate=dropout_rate)(y)
+
+        y = BatchNormalization(axis=-1)(y)
+        y = Dense(32, activation='relu')(y)
+
+        output_layer = Dense(1, activation='sigmoid', name='output')(y)
+
+        model = Model(input_tensor, output_layer, name='resnet')
+        return model
+
     @classmethod
     def initialize_model(cls, dropout_rate, input_tensor):
         """ Initialize ResNet model. """
-        output_tensor = build_resnet_II(input_tensor, dropout_rate)
-        resnet_model = keras.models.Model(input_tensor, output_tensor)
-        resnet_model.compile(optimizer='rmsprop', loss='binary_crossentropy')
-        return resnet_model
+        # resnet_model.compile(optimizer='rmsprop', loss='binary_crossentropy')
+        return cls.build_resnet(input_tensor, dropout_rate)
