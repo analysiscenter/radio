@@ -19,10 +19,14 @@ class BaseModel(object):
         """ Save model. """
         raise NotImplementedError
 
-    def fit(self, *args, **kwargs):
-        """ Fit model. """
+    def train_on_batch(self, x, y_true, **kwargs):
+        """ Train model on batch. """
         raise NotImplementedError
 
-    def predict(self, *args, **kwargs):
-        """ Get model prediction. """
+    def test_on_batch(self, x, y_true, **kwargs):
+        """ Test model on batch. """
+        raise NotImplementedError
+
+    def predict_on_batch(self, x, **kwargs):
+        """ Predict on batch. """
         raise NotImplementedError
