@@ -13,6 +13,10 @@ from .keras_unet import KerasUnet
 # input shape of a nodule
 NOD_SHAPE = (32, 64, 64)
 
+PRETRAINED_UNET_PATH = ''
+PRETRAINED_RESNET_PATH = ''
+PRETRAINED_VGG16_PATH = ''
+
 class CTImagesModels(CTImagesMaskedBatch):
     """ Сlass for describing, training nn-models of segmentation/classification;
             inference using models is also supported.
@@ -40,28 +44,71 @@ class CTImagesModels(CTImagesMaskedBatch):
         """ Get pretrained keras unet model. """
         pretrained_unet = KerasUnet('pretrained_unet')
         pretrained_unet.load_model(PRETRAINED_UNET_PATH)
+        pretrained_unet.compile()
         return pretrained_unet
 
     @model()
-    def keras_resnet():
+    def resnet():
         """ Get resnet model implemented in keras. """
-        return KerasResNet('keras_resnet', 0.3)
+        model = KerasResNet('resnet')
+        model.compile(optimizer='adam', loss='binary_crossentropy')
+        return model
 
-    @action(model='keras_resnet')
-    def resnet_train_on_crop(self, model):
-        """ Train resnet model on batch. """
+    @model()
+    def resnet_pretrained():
+        """ Get pretrained resnet model. """
+        model = KerasModel('pretrained_resnet')
+        model.load(PRETRAINED_RESNET_PATH)
+        model.compile(optimizer='adam', loss='binary_crossentropy')
+        return model
+
+    @model()
+    def vgg16():
+        """ Get vgg16 model implemented in keras. """
+        model = KerasVGG16('vgg16')
+        model.compile(optimizer='adam', loss='binary_crossentropy')
+        return model
+
+    @model
+    def vgg16_pretrained():
+        """ Get pretrained vgg16 model. """
+        model = KerasModel('pretrained_vgg16')
+        model.load(PRETRAINED_VGG16_PATH)
+        model.compile(optimizer='adam', loss='binary_crossentropy')
+        return model
+
+    @ds.action
+    def classification_train(self, model_name):
+        """ Train model for classification task.
+
+        Args:
+        - model_name: str, name of the model;
+
+        Returns:
+        - self, unchanged batch;
+        """
+        model = self.get_model_by_name(model_name)
         x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
         y = np.zeros(len(self), dtype=np.float)
         for i in range(len(self)):
             _x, _y = self.get(i, 'images'), self.get(i, 'masks')
             x[i, ...] = _x
             y[i] = int(np.sum(_y) > 10)
-        model.train_on_batch(x[..., np.newaxis], y)
+        model.train_on_batch(x[..., np.newaxis], y[: , np.newaxis])
         return self
 
-    @action(model='keras_resnet')
-    def resnet_predict_on_crop(self, model, dst_dict):
-        """ Get predictions of resnet model on crops. """
+    @ds.action
+    def classification_predict_on_crop(self, model_name, dst_dict):
+        """ Get predictions on crops of model trained for classification task.
+
+        Args:
+        - model_name: str, name of the model;
+        - dst_dict: dict, this dict is updated with model's predictions;
+
+        Returns:
+        - self, unchanged batch;
+        """
+        model = self.get_model_by_name(model_name)
         x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
         for i in range(len(self)):
             x[i, ...] = self.get(i, 'images')
@@ -69,16 +116,59 @@ class CTImagesModels(CTImagesMaskedBatch):
         dst_dict.update(zip(self.indices, predictions))
         return self
 
-    @action(model='unet_pretrained')
-    def unet_pretrained_predict(self, model, strides=(16, 32, 32), batch_size=20):
-        """ Get predictions of keras pretrained unet model. """
+    @ds.action
+    def segmentation_train(self, model_name):
+        """ Train model for segmentation task.
+
+        Args:
+        - model_name: str, name of the model;
+
+        Returns:
+        - self, unchanged batch;
+        """
+        model = self.get_model_by_name(model_name)
+        x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
+        y = np.zeros((len(self), 32, 64, 64), dtype=np.float)
+        for i in range(len(self)):
+            x[i, ...], y[i, ...] = self.get(i, 'images'), self.get(i, 'masks')
+        model.train_on_batch(x[: , np.newaxis, ...], y[: , np.newaxis, ...])
+        y_pred = model.predict_on_batch(x[: , np.newaxis, ...])
+        print("Dice on train: ", dice(y_pred, y))
+        return self
+
+
+    @ds.action
+    def segmentation_predict_on_crop(self, model_name, dst_dict):
+        """ Get predictions on crops of model trained for segmentation task. """
+        model = self.get_model_by_name(model_name)
+        x = np.zeros((len(self), 32, 64, 64))
+        for i in range(len(self)):
+            x[i, ...] = self.get(i, 'images')
+        predictions = model.predict_on_batch(x[:, np.newaxis, ...])
+        dst_dict.update(zip(self.indices, predictions))
+        return self
+
+    @ds.action
+    def segmentation_predict_patient(self, model_name, strides=(16, 32, 32), batch_size=20):
+        """ Get predictions on patient of model trained for segmentation task.
+
+        Args:
+        - model_name: str, name of model;
+        - strides: tuple(int) of size 3, strides
+        for get_patches and load_from_patches methods;
+        - batch_size: int, size of batch to use for feeding data in model;
+
+        Returns:
+        - self, batched with predicted masks loaded;
+        """
+        model = self.get_model_by_name(model_name)
         patches_arr = self.get_patches(patch_shape=(32, 64, 64), stride=strides, padding='reflect')
         patches_arr = patches_arr.reshape(-1, 32, 64, 64)
-        patches_arr = patches_arr[:, np.newaxis, ...]
+        patches_arr = patches_arr[: , np.newaxis, ...]
 
         predictions = []
         for i in range(0, patches_arr.shape[0], batch_size):
-            patch_mask = model.predict(data[i: i + 20])
+            patch_mask = model.predict_on_batch(data[i: i + 20])
             predictions.append(patch_mask)
 
         self.load_from_patches(stride=strides,
@@ -86,32 +176,54 @@ class CTImagesModels(CTImagesMaskedBatch):
                                data_attr='masks')
         return self
 
-    @action(model='unet')
-    def unet_predict(self, model, strides=(16, 32, 32), batch_size=20):
-        # XXX May be it's possible to set model argument of action decorator by list of models?
-        """ Get predictions of keras pretrained unet model.
-
-        This method get predictions of unet model on batch and put
-        predicted masks in masks component of CTIMagesMaskedBatch.
+    @action
+    def classification_test_on_dataset(self, model_name, dataset, callbacks=None):
+        """ Get predictions on crops of model trained for classification task.
 
         Args:
-        - strides: tuple of int with 3 components containing strides for get_patches method.
-        - batch_size: int, batch_size for prediction.
-        Returns:
-        - CTIMagesMaskedBatch with masks loaded;
+        - model_name: str, name of the model;
+        - dataset: Dataset containing test samples;
+        - callbacks: list of callables for evaluation of metrics
+        on test dataset(each callable corresponds to metric);
+
+        Retruns:
+        - self, unchanged batch;
         """
-        patches_arr = self.get_patches(patch_shape=(32, 64, 64), stride=strides, padding='reflect')
-        patches_arr = patches_arr.reshape(-1, 32, 64, 64)
-        patches_arr = patches_arr[:, np.newaxis, ...]
+        model = self.get_model_by_name(model_name)
+        for batch in dataset.gen_batch(8):
+            batch = batch.load(fmt='blosc')
 
-        predictions = []
-        for i in range(0, patches_arr.shape[0], batch_size):
-            patch_mask = model.predict(data[i: i + 20])
-            predictions.append(patch_mask)
+            x = np.zeros((len(batch), 32, 64, 64), dtype=np.float)
+            y = np.zeros(len(batch), dtype=np.float)
+            for i in range(len(batch)):
+                _x, _y = batch.get(i, 'images'), batch.get(i, 'masks')
+                x[i, ...] = _x
+                y[i] = int(np.sum(_y) > 10)
+            model.test_on_batch(x[..., np.newaxis], y[:, np.newaxis])
+        return self
 
-        self.load_from_patches(stride=strides,
-                               scan_shape=(self.images_shape[0, :]),
-                               data_attr='masks')
+    @action
+    def segmentation_test_on_dataset(self, model_name, dataset, callbacks=None):
+        """ Get predictions on crops of model trained for segmentation task.
+
+        Args:
+        - model_name: str, name of the model;
+        - dataset: Dataset containing test samples;
+        - callbacks: list of callables for evaluation of metrics
+        on test dataset(each callable corresponds to metric);
+
+        Retruns:
+        - self, unchanged batch;
+        """
+        model = self.get_model_by_name(model_name)
+        for batch in dataset.gen_batch(8):
+            batch = batch.load(fmt='blosc')
+
+            x = np.zeros((len(batch), 32, 64, 64), dtype=np.float)
+            y = np.zeros((len(batch), 32, 64, 64), dtype=np.float)
+            for i in range(len(batch)):
+                 x[i, ...], y[i, ...] = self.get(i, 'images'), self.get(i, 'masks')
+            model.test_on_batch(x[: , np.newaxis, ...], y[:, np.newaxis, ...])
         return self
 
     @model()
