@@ -4,7 +4,7 @@ import pandas as pd
 
 def log_loss(y_pred, y_true, epsilon=10e-7):
     """ Compute log-loss. """
-    return np.mean(y_true * np.log(y_pred  + epsilon) + (1 - y_true) * np.log(1 - y_pred + epsilon))
+    return -np.mean(y_true * np.log(y_pred  + epsilon) + (1 - y_true) * np.log(1 - y_pred + epsilon))
 
 
 def mse(y_pred, y_true):
