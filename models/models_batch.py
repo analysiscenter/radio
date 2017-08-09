@@ -77,7 +77,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         model.compile(optimizer='adam', loss='binary_crossentropy')
         return model
 
-    @ds.action
+    @action
     def classification_train(self, model_name):
         """ Train model for classification task.
 
@@ -97,7 +97,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         model.train_on_batch(x[..., np.newaxis], y[: , np.newaxis])
         return self
 
-    @ds.action
+    @action
     def classification_predict_on_crop(self, model_name, dst_dict):
         """ Get predictions on crops of model trained for classification task.
 
@@ -116,7 +116,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         dst_dict.update(zip(self.indices, predictions))
         return self
 
-    @ds.action
+    @action
     def segmentation_train(self, model_name):
         """ Train model for segmentation task.
 
@@ -137,7 +137,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         return self
 
 
-    @ds.action
+    @action
     def segmentation_predict_on_crop(self, model_name, dst_dict):
         """ Get predictions on crops of model trained for segmentation task. """
         model = self.get_model_by_name(model_name)
@@ -148,7 +148,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         dst_dict.update(zip(self.indices, predictions))
         return self
 
-    @ds.action
+    @action
     def segmentation_predict_patient(self, model_name, strides=(16, 32, 32), batch_size=20):
         """ Get predictions on patient of model trained for segmentation task.
 
