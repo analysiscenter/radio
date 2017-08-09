@@ -64,7 +64,7 @@ def sym_dice(y_pred, y_true, alpha, epsilon=10e-7):
     - y_true: np.ndarray(batch_size, ...)
     numpy array containing true target values;
     """
-    return 2 * (dice(y_pred, y_true, epsilon) + alpha * dice(1 - y_pred, 1 - y_true))
+    return (1 - alpha) * dice(y_pred, y_true, epsilon) + alpha * dice(1 - y_pred, 1 - y_true, epsilon)
 
 
 def tp(y_pred, y_true, threshold=0.5):
