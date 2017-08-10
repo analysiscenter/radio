@@ -90,18 +90,22 @@ class TFModel(BaseModel):
         instance = super(TFModel, cls).__new__(cls)
 
         instance.name = name
-        instance.phase = True
-        instance.train_op = None
 
         graph = tf.Graph()
         instance._graph = graph
         with graph.as_default():
             with tf.variable_scope(name):
                 instance._phase_placeholder = tf.placeholder(tf.bool)
-        return instance
+                instance._sess = None
 
-    def __init__(self, name, *args, **kwargs):
-        self.phase = True
+                instance.phase = True
+                instance.train_op = None
+                instance.loss = None
+                instance.x = None
+                instance.y_pred = None
+                instance.y_true = None
+
+        return instance
 
     @property
     def graph(self):
@@ -109,9 +113,9 @@ class TFModel(BaseModel):
         return self._graph
 
     @property
-    def session(self):
+    def sess(self):
         """ Get tensorflow session. """
-        return self._session
+        return self._sess
 
     @property
     def learning_phase(self):
@@ -267,14 +271,29 @@ class TFModel(BaseModel):
         """ Add dropout layer with given dropout rate to the input tensor. """
         return tf.layers.dropout(input_tensor, rate=rate, training=self.learning_phase)
 
-    def train_on_batch(self, x, y, callbacks=None, **kwargs):
-        raise NotImplementedError
+    def train_on_batch(self, x, y_true, return_loss=False, callbacks=None, **kwargs):
+        self.phase = True
+        feed_dict = {self.x: x, self.y_true: y_true, self.learning_phase: self.phase}
+        _, loss, y_pred = self.sess.run([self.train_op, self.loss, self.y_pred], feed_dict=feed_dict)
+        if return_loss:
+            return y_pred, loss
+        else:
+            return y_pred
 
-    def test_on_batch(self, x, y, callbacks=None, **kwargs):
-        raise NotImplementedError
+    def test_on_batch(self, x, y_true, return_loss=False, callbacks=None, **kwargs):
+        self.phase = False
+        feed_dict = {self.x: x, self.learning_phase: self.phase}
+        _, loss, y_pred = self.sess.run([self.train_op, self.loss, self.y_pred], feed_dict=feed_dict)
+        if return_loss:
+            return y_pred, loss
+        else:
+            return y_pred
 
     def predict_on_batch(self, x, **kwargs):
-        raise NotImplementedError
+        self.phase = False
+        feed_dict = {self.x: x, self.learning_phase: self.phase}
+        _, y_pred = self.sess.run([self.train_op, self.y_pred], feed_dict=feed_dict)
+        return y_pred
 
     def save(self, dir_path, *args, **kwargs):
         raise NotImplementedError
@@ -287,14 +306,20 @@ class TFModel(BaseModel):
         _loss = get_loss(loss)
         _optimizer = get_optimizer(optimizer)
 
-        model_dict = self.build_model()
-        tf_loss = _loss(model_dict.get('y_true'), model_dict.get('y_pred'))
+        model_dsc = self.build_model()
+        y_true, y_pred = model_dsc.get('y_true'), model_dsc.get('y_pred')
+        tf_loss = _loss(y_true, y_pred)
 
+        self.x = model_dsc.get('x')
+        self.loss = tf_loss
+        self.y_pred = y_pred
+        self.y_true = y_true
 
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         with tf.control_dependencies(update_ops):
             train_op = _optimizer.minimize(tf_loss)
 
-        model_dict['train_op'] = train_op
-        model_dict['loss'] = tf_loss
-        return model_dict
+        self._sess = tf.Session()
+        self.sess.run(tf.global_variables_initializer())
+        self.train_op = train_op
+        return self
