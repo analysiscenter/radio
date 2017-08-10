@@ -9,8 +9,6 @@ from .mask import make_mask_numba
 from ..dataset import action, any_action_failed, DatasetIndex
 from ..dataset import model
 
-from .keras_model import KerasModel
-
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
