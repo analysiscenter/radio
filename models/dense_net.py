@@ -45,7 +45,7 @@ class DenseNet(TFModel):
         return output_tensor
 
     @model
-    def build_densenet(self):
+    def build_model(self):
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='x')
         y_true = tf.placeholder(shape=(None, 1), dtype=tf.float32, name='y_true')
 
@@ -72,4 +72,4 @@ class DenseNet(TFModel):
 
         y_pred = self.dense(y_pred, units=1, name='dense32_1', activation='linear')
         y_pred = tf.identity(y_pred, name='y_pred')
-        return {input_tensor, y_true, y_pred}
+        return {'x': input_tensor, 'y_true': y_true, 'y_pred': y_pred}
