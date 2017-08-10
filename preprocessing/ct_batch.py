@@ -266,6 +266,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             Return:
                 (new_batch, rest_batch)
         """
+        pass
 
 
 
