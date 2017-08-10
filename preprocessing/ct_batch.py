@@ -10,7 +10,7 @@ import blosc
 import dicom
 import SimpleITK as sitk
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
@@ -240,7 +240,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         # set non-none components in the large batch
         for component in batches[0].components:
             comps = None
-            if batches[0].component is not None:
+            if getattr(batches[0], component) is not None:
                 comps = np.concatenate([getattr(batch, component) for batch in batches])
             setattr(large_batch, component, comps)
 
@@ -253,6 +253,21 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         large_batch._bounds = np.cumsum(np.insert(n_slices, 0, 0), dtype=np.int)
         return large_batch
+
+    @classmethod
+    def merge(cls, batches, batch_size=None):
+        """ Concatenate list of batches and then split the result in two batches of sizes
+                (batch_size, sum(lens of batches) - batch_size)
+
+            Args:
+                batches: list of batches
+                batch_size: size of first resulting batch
+
+            Return:
+                (new_batch, rest_batch)
+        """
+
+
 
     @action
     def load(self, fmt='dicom', source=None, bounds=None,           # pylint: disable=arguments-differ
