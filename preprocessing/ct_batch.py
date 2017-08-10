@@ -151,6 +151,109 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self.origin = origin if origin is not None else np.zeros((len(self), 3))
         self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
 
+    @classmethod
+    def split(cls, batch, batch_size):
+        """ Split batch in two batches of lens=(batch_size, len(batch) - batch_size)
+
+        Args:
+            batch: batch to be splitted
+            batch_size: len of first half. If batch_size >= len(batch), return None instead
+                of a second batch
+
+        Return:
+            (first_half, second_half)
+
+        NOTE: the method does not change the structure of batch.index. Indices of created
+            batches are simply subsets of batch.index.
+        """
+        if batch_size == 0:
+            return (None, batch)
+
+        if batch_size >= len(batch):
+            return (batch, None)
+
+        # form indices fo both batches
+        size_first, _ = batch_size, len(batch) - batch_size
+        ix_first = batch.index.create_subset(batch.indices[:size_first])
+        ix_second = batch.index.create_subset(batch.indices[size_first:])
+
+        # init batches
+        batches = cls(ix_first), cls(ix_second)
+
+        # put non-None components in batch-parts
+        for batch_part in batches:
+            for component in batch.components:
+                if getattr(batch, component) is not None:
+                    comps = []
+                    for ix in batch_part.indices:
+                        # get component for a specific item defined by ix and put into the list
+                        comp_pos = batch.get_pos(None, component, ix)
+                        comp = getattr(batch, component)[comp_pos]
+                        comps.append(comp)
+
+                    # set the component for the whole batch-part
+                    source = np.concatenate(comps)
+                    setattr(batch_part, component, source)
+                else:
+                    setattr(batch_part, component, None)
+
+        # set _bounds attrs if filled in batch
+        if len(batch._bounds) >= 2:
+            for batch_part in batches:
+                n_slices = []
+                for ix in batch_part.indices:
+                    ix_pos_initial = batch.index.get_pos(ix)
+                    n_slices.append(batch.upper_bounds[ix_pos_initial] - batch.lower_bounds[ix_pos_initial])
+
+                # update _bounds in new batches
+                batch_part._bounds = np.cumsum([0] + n_slices, dtype=np.int)
+
+        return batches
+
+    @classmethod
+    def concat(cls, batches):
+        """ Concatenate several batches in one large batch. Assume that
+                the same components are filled in all supplied batches.
+
+        Args:
+            batches: sequence of batches to be concatenated
+
+        Return:
+            large batch with len = sum of lens of batches
+
+        NOTE: batches' index is dropped. New large batch has new np-arange
+            index
+        NOTE: None-entries or batches of len=0 can be included in the list of batches.
+            They are simply dropped
+        """
+        # leave only non-empty batches
+        batches = [batch for batch in batches if batch is not None]
+        batches = [batch for batch in batches if len(batch) > 0]
+
+        if len(batches) == 0:
+            return None
+
+        # create index for the large batch and init batch
+        ixbatch = DatasetIndex(np.arange(np.sum([len(batch) for batch in batches])))
+        large_batch = cls(ixbatch)
+
+        # set non-none components in the large batch
+        for component in batches[0].components:
+            comps = None
+            if batches[0].component is not None:
+                comps = np.concatenate([getattr(batch, component) for batch in batches])
+            setattr(large_batch, component, comps)
+
+        # set _bounds-attr in large batch
+        n_slices = np.zeros(shape=len(large_batch))
+        ctr = 0
+        for batch in batches:
+            n_slices[ctr: ctr + len(batch)] = batch.upper_bounds - batch.lower_bounds
+            ctr += len(batch)
+
+        large_batch._bounds = np.cumsum(np.insert(n_slices, 0, 0), dtype=np.int)
+        return large_batch
+
     @action
     def load(self, fmt='dicom', source=None, bounds=None,           # pylint: disable=arguments-differ
              origin=None, spacing=None, src_blosc=None):
@@ -451,7 +554,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             if component == 'images':
                 return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
             else:
-                return ind_pos
+                return slice(ind_pos, ind_pos + 1)
         else:
             return index
 
