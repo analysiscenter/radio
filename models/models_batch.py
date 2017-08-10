@@ -8,7 +8,9 @@ from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
 from .layers import tf_dice_loss
 
 from .keras_unet import KerasUnet
-
+from .keras_resnet import KerasResNet
+from .keras_vgg16 import KerasVGG16
+from .keras_model import KerasModel
 # global constants
 # input shape of a nodule
 NOD_SHAPE = (32, 64, 64)
