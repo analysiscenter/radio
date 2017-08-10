@@ -8,12 +8,32 @@ import tensorflow as tf
 from .base_model import BaseModel
 
 
+def log_loss(y_true, y_pred, epsilon=10e-7):
+    return -tf.reduce_mean(y_true * tf.log(y_pred + epsilon) + (1 - y_true) * tf.log(1 - y_pred + epsilon))
+
+
+def mse(y_true, y_pred):
+    return 0.5 * tf.reduce_mean((y_pred - y_true) ** 2)
+
+
+def mae(y_true, y_pred):
+    return tf.reduce_mean(tf.abs(y_pred - y_true))
+
+
 ACTIVATIONS = {'relu': tf.nn.relu,
                'selu': tf.identity,
                'linear': tf.identity,
                'sigmoid': tf.nn.sigmoid,
                'softmax': tf.nn.softmax,
                'tanh': tf.nn.tanh}
+
+
+OPTIMIZERS = {'adam': tf.train.AdamOptimizer(),
+              'rmsprop': tf.train.RMSPropOptimizer(0.005),
+              'momentum': tf.train.MomentumOptimizer(0.005, 0.1)}
+
+
+LOSSES = {'log_loss': log_loss, 'mse': mse}
 
 
 def get_activation(activation_str):
@@ -35,6 +55,22 @@ def get_shape(input_tensor):
     return input_tensor.get_shape().as_list()
 
 
+def get_optimizer(optimizer_name):
+    """ Get optimizer by name. """
+    if isinstance(optimizer_name, str):
+        return OPTIMIZERS[optimizer_name]
+    else:
+        return optimizer_name
+
+
+def get_loss(loss_name):
+    """ Get loss by name. """
+    if isinstance(loss_name, str):
+        return LOSSES[loss_name]
+    else:
+        return loss_name
+
+
 def model(method):
     """ Wrap method of TFModel to apply all ops in context of model's graph and scope. """
     @wraps(method)
@@ -54,6 +90,7 @@ class TFModel(BaseModel):
 
         instance.name = name
         instance.phase = True
+        instance.train_op = None
 
         graph = tf.Graph()
         instance._graph = graph
@@ -244,5 +281,19 @@ class TFModel(BaseModel):
     def load(self, dir_path, *args, **kwargs):
         raise NotImplementedError
 
-    def compile(self, *args, **kwargs):
-        raise NotImplementedError
+    @model
+    def compile(self, optimizer, loss):
+        _loss = get_loss(loss)
+        _optimizer = get_optimizer(optimizer)
+
+        model_dict = self.build_model()
+        tf_loss = _loss(model_dict.get('y_true'), model_dict.get('y_pred'))
+
+
+        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+        with tf.control_dependencies(update_ops):
+            train_op = _optimizer.minimize(tf_loss)
+
+        model_dict['train_op'] = train_op
+        model_dict['loss'] = tf_loss
+        return model_dict
