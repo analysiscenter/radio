@@ -172,7 +172,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         if batch_size >= len(batch):
             return (batch, None)
 
-        # form indices fo both batches
+        # form indices for both batches
         size_first, _ = batch_size, len(batch) - batch_size
         ix_first = batch.index.create_subset(batch.indices[:size_first])
         ix_second = batch.index.create_subset(batch.indices[size_first:])
@@ -259,16 +259,36 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """ Concatenate list of batches and then split the result in two batches of sizes
                 (batch_size, sum(lens of batches) - batch_size)
 
-            Args:
-                batches: list of batches
-                batch_size: size of first resulting batch
+        Args:
+            batches: list of batches
+            batch_size: size of first resulting batch
 
-            Return:
-                (new_batch, rest_batch)
+        Return:
+            (new_batch, rest_batch)
+
+        NOTE: we perform split(of middle-batch) and then two concats because of speed considerations;
+            even though the code is slightly lengthier than it'd be if the order was concat->split.
         """
-        pass
+        if np.sum([len(batch) for batch in batches]) <= batch_size:
+            return (cls.concat(batches), None)
 
+        # find a batch that needs to be splitted (middle batch)
+        cum_len = 0
+        middle = None
+        for pos, batch in enumerate(batches):
+            cum_len += len(batch)
+            if cum_len >= batch_size:
+                middle = batch
+                break
 
+        # split middle batch
+        left_middle, right_middle = cls.split(middle, len(middle) - cum_len + batch_size)
+
+        # form merged and rest-batches
+        merged = cls.concat(batches[:pos] + [left_middle])
+        rest = cls.concat([right_middle] + batches[pos + 1:])
+
+        return merged, rest
 
     @action
     def load(self, fmt='dicom', source=None, bounds=None,           # pylint: disable=arguments-differ
