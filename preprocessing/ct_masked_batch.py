@@ -361,9 +361,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return mask
 
 
-
-
-
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
         """Sample random nodules from CTImagesBatchMasked skyscraper.
@@ -410,7 +407,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if histo is not None:
             samples /= data_shape
 
-        return np.asarray(samples + offset, dtype=np.int)
+        return np.asarray(samples + offset, dtype=np.int), sampled_indices
 
     @action
     def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals
@@ -461,6 +458,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if not all_cancerous and batch_size is None:
             raise ValueError('Either supply batch_size or set all_cancerous to True')
 
+        # pos of batch-items that correspond crops
+        crops_indices = np.zeros(0)
+
         # choose cancerous nodules' starting positions
         nodule_size = np.asarray(nodule_size, dtype=np.int)
         batch_size = self.num_nodules if all_cancerous else batch_size
@@ -476,15 +476,23 @@ class CTImagesMaskedBatch(CTImagesBatch):
             sample_indices = np.random.choice(np.arange(self.num_nodules), size=cancer_n, replace=False)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
+            # store scans-indices for chosen crops
+            cancerous_indices = self.nodules.patient_pos[sample_indices].reshape(-1)
+            crops_indices = np.concatenate([crops_indices, cancerous_indices])
+
         nodules_st_pos = cancer_nodules
 
         # if non-cancerous nodules are needed, add random starting pos
         if batch_size - cancer_n > 0:
             # sample starting positions for (most-likely) non-cancerous crops
-            random_nodules = self.sample_random_nodules(batch_size - cancer_n, nodule_size, histo=histo)
+            random_nodules, random_indices = self.sample_random_nodules(batch_size - cancer_n,
+                                                                        nodule_size, histo=histo)
 
             # concat non-cancerous and cancerous crops' starting positions
             nodules_st_pos = np.vstack([nodules_st_pos, random_nodules]).astype(np.int)  # pylint: disable=no-member
+
+            # store scan-indices for randomly chose crops
+            crops_indices = np.concatenate([crops_indices, random_indices])
 
         # obtain nodules' scans by cropping from self.images
         images = get_nodules_numba(self.images, nodules_st_pos, nodule_size)
@@ -503,11 +511,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # crop nodules' masks
         masks = get_nodules_numba(batch_mask, nodules_st_pos, mask_shape)
 
-        # build noudles' batch
+        # build nodules' batch
         bounds = np.arange(batch_size + 1) * nodule_size[0]
+        crops_spacing = self.spacing[crops_indices]
+        crops_origin = self.origin[crops_indices] + crops_spacing * nodules_st_pos
         ds_index = DatasetIndex(self.make_indices(batch_size))
         nodules_batch = type(self)(ds_index)
-        nodules_batch.load(source=images, fmt='ndarray', bounds=bounds)
+        nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
 
         # TODO add info about nodules by changing self.nodules
         nodules_batch.masks = masks
