@@ -458,8 +458,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if not all_cancerous and batch_size is None:
             raise ValueError('Either supply batch_size or set all_cancerous to True')
 
-        # pos of batch-items that correspond crops
-        crops_indices = np.zeros(0)
+        # pos of batch-items that correspond to crops
+        crops_indices = np.zeros(0, dtype=np.int16)
 
         # choose cancerous nodules' starting positions
         nodule_size = np.asarray(nodule_size, dtype=np.int)
