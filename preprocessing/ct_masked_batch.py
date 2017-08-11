@@ -215,7 +215,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df, update=False, images_loaded=True):
+    def fetch_nodules_info(self, nodules_df=None, nodules_records=None, update=False,
+                           images_loaded=True, filter_nodules=True):
         """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
@@ -237,26 +238,37 @@ class CTImagesMaskedBatch(CTImagesBatch):
             logger.warning("Nodules have already been extracted. " +
                            "Put update argument as True for refreshing")
             return self
-        nodules_df = nodules_df.set_index('seriesuid')
 
-        unique_indices = nodules_df.index.unique()
-        inter_index = np.intersect1d(unique_indices, self.indices)
-        nodules_df = nodules_df.loc[inter_index,
-                                    ["coordZ", "coordY",
-                                     "coordX", "diameter_mm"]]
+        if nodules_records is not None:
+            # load from record-array
+            self.nodules = nodules_records
 
-        num_nodules = nodules_df.shape[0]
-        self.nodules = np.rec.array(np.zeros(num_nodules,
-                                             dtype=self.nodules_dtype))
-        counter = 0
-        for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
-            pat_pos = self.index.get_pos(pat_id)
-            self.nodules.patient_pos[counter] = pat_pos
-            self.nodules.nodule_center[counter, :] = np.array([coordz,
-                                                               coordy,
-                                                               coordx])
-            self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
-            counter += 1
+        else:
+            # assume that nodules_df is supplied and load from it
+            nodules_df = nodules_df.set_index('seriesuid')
+
+            unique_indices = nodules_df.index.unique()
+            inter_index = np.intersect1d(unique_indices, self.indices)
+            nodules_df = nodules_df.loc[inter_index,
+                                        ["coordZ", "coordY",
+                                         "coordX", "diameter_mm"]]
+
+            num_nodules = nodules_df.shape[0]
+            self.nodules = np.rec.array(np.zeros(num_nodules,
+                                                 dtype=self.nodules_dtype))
+            counter = 0
+            for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
+                pat_pos = self.index.get_pos(pat_id)
+                self.nodules.patient_pos[counter] = pat_pos
+                self.nodules.nodule_center[counter, :] = np.array([coordz,
+                                                                   coordy,
+                                                                   coordx])
+                self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
+                counter += 1
+
+        # leave out nodules that have zero intersection with scan-boxes
+        if filter_nodules:
+            pass
 
         self._refresh_nodules_info(images_loaded)
         return self
@@ -519,8 +531,14 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch = type(self)(ds_index)
         nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
 
-        # TODO add info about nodules by changing self.nodules
+        # set masks
         nodules_batch.masks = masks
+
+        # set nodules info in nodules' batch
+        unique_ixs = np.unique(crops_indices)
+        nod_records = self.nodules[np.in1d(self.nodules.patient_pos, unique_ixs)]
+        nodules_batch.fetch_nodules_info(nodules_records=nod_records, filter_nodules=True)
+
         return nodules_batch
 
     @action
