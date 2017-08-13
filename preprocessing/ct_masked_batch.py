@@ -524,9 +524,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         crops_spacing = self.spacing[crops_indices]
         crops_origin = self.origin[crops_indices] + crops_spacing * nodules_st_pos
         names_gen = zip(self.indices[crops_indices], self.make_indices(batch_size))
-        ix_batch = ['_'.join(prefix, random_str) for prefix, random_str in names_gen]
-        ds_index = DatasetIndex(ix_batch)
-        nodules_batch = type(self)(ds_index)
+        ix_batch = ['_'.join([prefix, random_str]) for prefix, random_str in names_gen]
+        nodules_batch = type(self)(DatasetIndex(ix_batch))
         nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
 
         # set masks
