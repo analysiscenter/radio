@@ -523,7 +523,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         bounds = np.arange(batch_size + 1) * nodule_size[0]
         crops_spacing = self.spacing[crops_indices]
         crops_origin = self.origin[crops_indices] + crops_spacing * nodules_st_pos
-        ix_batch = self.indices[crops_indices] + '_' + self.make_indices(batch_size)
+        names_gen = zip(self.indices[crops_indices], self.make_indices(batch_size))
+        ix_batch = ['_'.join(prefix, random_str) for prefix, random_str in names_gen]
         ds_index = DatasetIndex(ix_batch)
         nodules_batch = type(self)(ds_index)
         nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
