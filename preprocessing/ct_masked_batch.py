@@ -106,7 +106,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
         - size: size of list with indices;
         """
-        return [CTImagesMaskedBatch.make_filename() for i in range(size)]
+        return np.array([CTImagesMaskedBatch.make_filename() for i in range(size)])
 
     def __init__(self, index, *args, **kwargs):
         """Initialization of CTImagesMaskedBatch.
@@ -523,7 +523,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         bounds = np.arange(batch_size + 1) * nodule_size[0]
         crops_spacing = self.spacing[crops_indices]
         crops_origin = self.origin[crops_indices] + crops_spacing * nodules_st_pos
-        ds_index = DatasetIndex(self.make_indices(batch_size))
+        ix_batch = self.indices[crops_indices] + '_' + self.make_indices(batch_size)
+        ds_index = DatasetIndex(ix_batch)
         nodules_batch = type(self)(ds_index)
         nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
 
