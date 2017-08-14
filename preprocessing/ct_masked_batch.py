@@ -417,7 +417,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.asarray(samples + offset, dtype=np.int), sampled_indices
 
     @action
-    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals
+    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals, too-many-statements
                        variance=None, mask_shape=None, histo=None):
         """Fetch random cancer and non-cancer nodules from batch.
 
@@ -542,7 +542,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch.fetch_nodules_info(nodules_records=nodules_records)
 
         # leave out nodules with zero-intersection with crops' boxes
-        nodules_batch._filter_nodules_info()
+        nodules_batch._filter_nodules_info()                                                     # pylint: disable=protected-access
 
         return nodules_batch
 
