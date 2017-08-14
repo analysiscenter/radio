@@ -198,7 +198,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                     setattr(batch_part, component, None)
 
         # set _bounds attrs if filled in batch
-        if len(batch._bounds) >= 2:
+        if len(batch._bounds) >= 2:                                                                           # pylint: disable=protected-access
             for batch_part in batches:
                 n_slices = []
                 for ix in batch_part.indices:
@@ -206,7 +206,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                     n_slices.append(batch.upper_bounds[ix_pos_initial] - batch.lower_bounds[ix_pos_initial])
 
                 # update _bounds in new batches
-                batch_part._bounds = np.cumsum([0] + n_slices, dtype=np.int)
+                batch_part._bounds = np.cumsum([0] + n_slices, dtype=np.int)                                  # pylint: disable=protected-access
 
         return batches
 
@@ -251,7 +251,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             n_slices[ctr: ctr + len(batch)] = batch.upper_bounds - batch.lower_bounds
             ctr += len(batch)
 
-        large_batch._bounds = np.cumsum(np.insert(n_slices, 0, 0), dtype=np.int)
+        large_batch._bounds = np.cumsum(np.insert(n_slices, 0, 0), dtype=np.int)                   # pylint: disable=protected-access
         return large_batch
 
     @classmethod
@@ -275,18 +275,20 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         # find a batch that needs to be splitted (middle batch)
         cum_len = 0
         middle = None
+        middle_pos = None
         for pos, batch in enumerate(batches):
             cum_len += len(batch)
             if cum_len >= batch_size:
                 middle = batch
+                middle_pos = pos
                 break
 
         # split middle batch
         left_middle, right_middle = cls.split(middle, len(middle) - cum_len + batch_size)
 
         # form merged and rest-batches
-        merged = cls.concat(batches[:pos] + [left_middle])
-        rest = cls.concat([right_middle] + batches[pos + 1:])
+        merged = cls.concat(batches[:middle_pos] + [left_middle])
+        rest = cls.concat([right_middle] + batches[middle_pos + 1:])
 
         return merged, rest
 
