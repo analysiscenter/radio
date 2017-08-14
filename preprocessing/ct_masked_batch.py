@@ -215,8 +215,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df=None, nodules_records=None, update=False,
-                           images_loaded=True, filter_nodules=True):
+    def fetch_nodules_info(self, nodules_df=None, nodules_records=None, ix_mapping=None,
+                           update=False, images_loaded=True, filter_nodules=True):
         """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
@@ -532,9 +532,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_batch.masks = masks
 
         # set nodules info in nodules' batch
-        unique_ixs = np.unique(crops_indices)
-        nod_records = self.nodules[np.in1d(self.nodules.patient_pos, unique_ixs)]
-        nodules_batch.fetch_nodules_info(nodules_records=nod_records, filter_nodules=True)
+        nodules_records = [self.nodules[self.nodules.patient_pos == crop_pos] for crop_pos in crops_indices]
+        new_patient_pos = []
+        for i, records in enumerate(nodules_records):
+            new_patient_pos += [i] * len(records)
+        new_patient_pos = np.array(new_patient_pos)
+        nodules_records = np.concatenate(nodules_records)
+        nodules_records = nodules_records.view(np.recarray)
+        nodules_records.patient_pos = new_patient_pos
+        nodules_batch.fetch_nodules_info(nodules_records=nodules_records, filter_nodules=True)
 
         return nodules_batch
 
