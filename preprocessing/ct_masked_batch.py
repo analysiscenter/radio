@@ -215,8 +215,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df=None, nodules_records=None, ix_mapping=None,
-                           update=False, images_loaded=True, filter_nodules=True):
+    def fetch_nodules_info(self, nodules_df=None, nodules_records=None, update=False, images_loaded=True):
         """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
@@ -266,7 +265,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
                 counter += 1
 
-        self._refresh_nodules_info(images_loaded, filter_nodules)
+        self._refresh_nodules_info(images_loaded)
         return self
 
     # TODO think about another name of method
@@ -540,7 +539,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_records = np.concatenate(nodules_records)
         nodules_records = nodules_records.view(np.recarray)
         nodules_records.patient_pos = new_patient_pos
-        nodules_batch.fetch_nodules_info(nodules_records=nodules_records, filter_nodules=True)
+        nodules_batch.fetch_nodules_info(nodules_records=nodules_records)
+
+        # leave out nodules with zero-intersection with crops' boxes
+        nodules_batch._filter_nodules_info()
 
         return nodules_batch
 
@@ -591,7 +593,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             patch = (self.get(patient_pos, 'images')[margin, :, :], None)
         return patch
 
-    def _refresh_nodules_info(self, images_loaded=True, filter_nodules=True):
+    def _refresh_nodules_info(self, images_loaded=True):
         """Refresh self.nodules attributes [spacing, origin, img_size, bias].
 
         This method should be called when it is needed to make
@@ -601,8 +603,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
             images_loaded: if set to True, assume that _bounds-attr is loaded
                 and images are already loaded.
-            filter_nodules: if True, leave out the nodules that have zero-intersection with
-                scan-boxes
+
+        Return:
+            ____
         """
         if images_loaded:
             self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
@@ -611,21 +614,26 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
 
-        if filter_nodules:
-            # nodules start and trailing pixel-coords
-            center_pix = np.abs(self.nodules.nodule_center - self.nodules.origin) / self.nodules.spacing
-            start_pix = center_pix - np.rint(self.nodules.nodule_size / self.nodules.spacing / 2)
-            start_pix = np.rint(start_pix).astype(np.int)
-            end_pix = start_pix + np.rint(self.nodules.nodule_size / self.nodules.spacing)
+    def _filter_nodules_info(self):
+        """ Filter record-array self.nodules s.t. only records about cancerous nodules
+                that have non-zero intersection with scan-boxes be present.
 
-            # find nodules with no intersection with scan-boxes
-            nods_images_shape = self.images_shape[self.nodules.patient_pos]
-            start_mask = np.any(start_pix >= nods_images_shape, axis=1)
-            end_mask = np.any(end_pix <= 0, axis=1)
-            zero_mask = start_mask | end_mask
+        NOTE: can be called only after execution of fetch_nodules_info and _refresh_nodules_info
+        """
+        # nodules start and trailing pixel-coords
+        center_pix = (self.nodules.nodule_center - self.nodules.origin) / self.nodules.spacing
+        start_pix = center_pix - np.rint(self.nodules.nodule_size / self.nodules.spacing / 2)
+        start_pix = np.rint(start_pix).astype(np.int)
+        end_pix = start_pix + np.rint(self.nodules.nodule_size / self.nodules.spacing)
 
-            # filter out such nodules
-            self.nodules = self.nodules[~zero_mask]
+        # find nodules with no intersection with scan-boxes
+        nods_images_shape = self.images_shape[self.nodules.patient_pos]
+        start_mask = np.any(start_pix >= nods_images_shape, axis=1)
+        end_mask = np.any(end_pix <= 0, axis=1)
+        zero_mask = start_mask | end_mask
+
+        # filter out such nodules
+        self.nodules = self.nodules[~zero_mask]
 
     def _rescale_spacing(self):
         """Rescale spacing values and update nodules_info.
