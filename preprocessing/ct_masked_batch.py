@@ -6,6 +6,8 @@ import numpy as np
 from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
+from .histo import sample_histo3d
+
 from ..dataset import action, any_action_failed, DatasetIndex
 
 
@@ -213,7 +215,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df, update=False):
+    def fetch_nodules_info(self, nodules_df, update=False, images_loaded=True):
         """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
@@ -256,7 +258,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
             counter += 1
 
-        self._refresh_nodules_info()
+        self._refresh_nodules_info(images_loaded)
         return self
 
     # TODO think about another name of method
@@ -363,7 +365,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
 
     # TODO rename function to sample_random_nodules_positions
-    def sample_random_nodules(self, num_nodules, nodule_size):
+    def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
         """Sample random nodules from CTImagesBatchMasked skyscraper.
 
         Samples random num_nodules' lower_bounds coordinates
@@ -378,6 +380,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
         - num_nodules: number of random nodules to sample from BatchCt data;
         - nodule_size: ndarray(3, ) nodule size in number of pixels;
+        - histo: 3d-histogram, represented by tuple (bins, edges) - format of
+            np.histogramdd;
 
         return
         - ndarray(l, 3) of int that contains information
@@ -389,18 +393,28 @@ class CTImagesMaskedBatch(CTImagesBatch):
         *Note: [zyx]-ordering is used;
         """
         all_indices = np.arange(len(self))
-        sampled_indices = np.random.choice(all_indices,
-                                           num_nodules, replace=True)
+        sampled_indices = np.random.choice(all_indices, num_nodules, replace=True)
 
         offset = np.zeros((num_nodules, 3))
         offset[:, 0] = self.lower_bounds[sampled_indices]
-
         data_shape = self.images_shape[sampled_indices, :]
-        samples = np.random.rand(num_nodules, 3) * (data_shape - nodule_size)
+
+        # if supplied, use histogram as the sampler
+        if histo is None:
+            sampler = lambda size: np.random.rand(size, 3)
+        else:
+            sampler = lambda size: sample_histo3d(histo, size)
+
+        samples = sampler(size=num_nodules) * (data_shape - nodule_size)
+
+        if histo is not None:
+            samples /= data_shape
+
         return np.asarray(samples + offset, dtype=np.int)
 
     @action
-    def sample_nodules(self, batch_size, nodule_size, share=0.8, variance=None, mask_shape=None):
+    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals
+                       variance=None, mask_shape=None, histo=None):
         """Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -408,7 +422,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
         - nodules_df: dataframe of csv file with information
             about nodules location;
-        - batch_size: number of nodules in the output batch. Must be int;
+        - all_cancerous: if True, resulting batch will contain only cancerous
+            nodules. Arg batch_size in this case is not needed.
+        - batch_size: number of nodules in the output batch. Must be supplied
+            whenever all_cancerous=False.
         - nodule_size: size of nodule along axes.
             Must be list, tuple or ndarray(3, ) of integer type;
             (Note: using zyx ordering)
@@ -419,7 +436,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
             nodules' first pixels
         - mask_shape: needed shape of mask in (z, y, x)-order. If not None,
             masks of nodules will be scaled to shape=mask_shape
+        - histo: 3d-histogram in np-histogram format, that is used for sampling
+            non-cancerous crops
+
+        Return:
+            A batch with cancerous and non-cancerous nodules in a proportion defined by
+                share with total batch_size nodules. If all_cancerous set to True, args
+                share and batch_size are ignored and resulting batch consists of all
+                cancerous nodules stored in batch.
         """
+        # make sure that nodules' info is fetched and args are OK
         if self.nodules is None:
             raise AttributeError("Info about nodules location must " +
                                  "be loaded before calling this method")
@@ -431,26 +457,37 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                'and has shape (3,). ' +
                                'Would be used no-scale-shift.')
                 variance = None
+
+        if not all_cancerous and batch_size is None:
+            raise ValueError('Either supply batch_size or set all_cancerous to True')
+
+        # choose cancerous nodules' starting positions
         nodule_size = np.asarray(nodule_size, dtype=np.int)
-        cancer_n = int(share * batch_size)
+        batch_size = self.num_nodules if all_cancerous else batch_size
+        cancer_n = int(share * batch_size) if not all_cancerous else self.num_nodules
         cancer_n = self.num_nodules if cancer_n > self.num_nodules else cancer_n
         if self.num_nodules == 0:
             cancer_nodules = np.zeros((0, 3))
         else:
-            sample_indices = np.random.choice(np.arange(self.num_nodules),
-                                              size=cancer_n, replace=False)
-            cancer_nodules = self._fit_into_bounds(nodule_size,
-                                                   variance=variance)
+            # adjust cancer nodules' starting positions s.t. nodules fit into scan-boxes
+            cancer_nodules = self._fit_into_bounds(nodule_size, variance=variance)
+
+            # randomly select needed number of cancer nodules (their starting positions)
+            sample_indices = np.random.choice(np.arange(self.num_nodules), size=cancer_n, replace=False)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
-        random_nodules = self.sample_random_nodules(batch_size - cancer_n,
-                                                    nodule_size)
+        nodules_st_pos = cancer_nodules
 
-        nodules_indices = np.vstack([cancer_nodules,
-                                     random_nodules]).astype(np.int)  # pylint: disable=no-member
+        # if non-cancerous nodules are needed, add random starting pos
+        if batch_size - cancer_n > 0:
+            # sample starting positions for (most-likely) non-cancerous crops
+            random_nodules = self.sample_random_nodules(batch_size - cancer_n, nodule_size, histo=histo)
+
+            # concat non-cancerous and cancerous crops' starting positions
+            nodules_st_pos = np.vstack([nodules_st_pos, random_nodules]).astype(np.int)  # pylint: disable=no-member
 
         # obtain nodules' scans by cropping from self.images
-        images = get_nodules_numba(self.images, nodules_indices, nodule_size)
+        images = get_nodules_numba(self.images, nodules_st_pos, nodule_size)
 
         # if mask_shape not None, compute scaled mask for the whole batch
         # scale also nodules' starting positions and nodules' shapes
@@ -458,13 +495,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
             scale_factor = np.asarray(mask_shape) / np.asarray(nodule_size)
             batch_mask_shape = np.rint(scale_factor * self.images_shape[0, :]).astype(np.int)
             batch_mask = self.fetch_mask(batch_mask_shape)
-            nodules_indices = np.rint(scale_factor * nodules_indices).astype(np.int)
+            nodules_st_pos = np.rint(scale_factor * nodules_st_pos).astype(np.int)
         else:
             batch_mask = self.masks
             mask_shape = nodule_size
 
         # crop nodules' masks
-        masks = get_nodules_numba(batch_mask, nodules_indices, mask_shape)
+        masks = get_nodules_numba(batch_mask, nodules_st_pos, mask_shape)
 
         # build noudles' batch
         bounds = np.arange(batch_size + 1) * nodule_size[0]
@@ -475,6 +512,36 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # TODO add info about nodules by changing self.nodules
         nodules_batch.masks = masks
         return nodules_batch
+
+    @action
+    def update_nodules_histo(self, histo):
+        """ Update histogram of nodules' locations in pixel coords using info
+                about cancer nodules from batch.
+
+        Args:
+            histo: list of len=2, where the first item contains histogram bins: array of
+                shape=(number of bins X number of bins) with number of elems in bins, while the
+                second item contains edges of histogram bins: list of 3 1darrays of shape=(number of bins + 1).
+                NOTE: this is almost np.histogram format. The only difference is that np.histogram
+                returns tuple of len=2, not list.
+
+        Return:
+            self
+
+        NOTE: execute this action only after fetch_nodules_info.
+        """
+        # infer bins' bounds from histo
+        bins = histo[1]
+
+        # get cancer_nodules' centers in pixel coords
+        center_pix = np.abs(self.nodules.nodule_center - self.nodules.origin) / self.nodules.spacing
+
+        # update bins of histo
+        histo_delta = np.histogramdd(center_pix, bins=bins)
+        histo[0] += histo_delta[0]
+
+        return self
+
 
     def get_axial_slice(self, patient_pos, height):
         """Get tuple of slices (data slice, mask slice).
@@ -493,17 +560,23 @@ class CTImagesMaskedBatch(CTImagesBatch):
             patch = (self.get(patient_pos, 'images')[margin, :, :], None)
         return patch
 
-    def _refresh_nodules_info(self):
+    def _refresh_nodules_info(self, images_loaded=True):
         """Refresh self.nodules attributes [spacing, origin, img_size, bias].
 
         This method should be called when it is needed to make
         [spacing, origin, img_size, bias] attributes of self.nodules
         to correspond the structure of batch's inner data.
+
+        Args:
+            images_loaded: if set to True, assume that _bounds-attr is loaded
+                and images are already loaded.
         """
-        self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
+        if images_loaded:
+            self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
+            self.nodules.img_size = self.images_shape[self.nodules.patient_pos, :]
+
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
-        self.nodules.img_size = self.images_shape[self.nodules.patient_pos, :]
 
     def _rescale_spacing(self):
         """Rescale spacing values and update nodules_info.
