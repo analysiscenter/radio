@@ -2,12 +2,12 @@ import numpy as np
 import pandas as pd
 
 
-def log_loss(y_pred, y_true, epsilon=10e-7):
+def log_loss(y_true, y_pred, epsilon=10e-7):
     """ Compute log-loss. """
     return -np.mean(y_true * np.log(y_pred  + epsilon) + (1 - y_true) * np.log(1 - y_pred + epsilon))
 
 
-def mse(y_pred, y_true):
+def mse(y_true, y_pred):
     """ Compute MSE metric.
 
     Args:
@@ -19,7 +19,7 @@ def mse(y_pred, y_true):
     return np.mean((y_pred - y_true) ** 2)
 
 
-def rmse(y_pred, y_true):
+def rmse(y_true, y_pred):
     """ Compute RMSE metric.
 
     Args:
@@ -31,7 +31,7 @@ def rmse(y_pred, y_true):
     return np.sqrt(np.mean(y_pred - y_true) ** 2)
 
 
-def mae(y_pred, y_true):
+def mae(y_true, y_pred):
     """ Compute MAE metric.
 
     Args:
@@ -43,7 +43,7 @@ def mae(y_pred, y_true):
     return np.mean(np.abs(y_pred - y_true))
 
 
-def dice(y_pred, y_true, epsilon=10e-7):
+def dice(y_true, y_pred, epsilon=10e-7):
     """ Compute Dice coefficient.
 
     Args:
@@ -55,7 +55,7 @@ def dice(y_pred, y_true, epsilon=10e-7):
     return 2 * np.sum(y_pred * y_true) / (np.sum(y_pred) + np.sum(y_true) + epsilon)
 
 
-def sym_dice(y_pred, y_true, alpha, epsilon=10e-7):
+def sym_dice(y_true, y_pred, alpha, epsilon=10e-7):
     """ Symmetric dice coefficient.
 
     Args:
@@ -67,7 +67,7 @@ def sym_dice(y_pred, y_true, alpha, epsilon=10e-7):
     return (1 - alpha) * dice(y_pred, y_true, epsilon) + alpha * dice(1 - y_pred, 1 - y_true, epsilon)
 
 
-def tp(y_pred, y_true, threshold=0.5):
+def tp(y_true, y_pred, threshold=0.5):
     """ Get number of True Positive values.
 
     Args:
@@ -83,7 +83,7 @@ def tp(y_pred, y_true, threshold=0.5):
     return float(np.sum(np.asarray(y_pred > threshold, dtype=np.int) * y_true))
 
 
-def fp(y_pred, y_true, threshold=0.5):
+def fp(y_true, y_pred, threshold=0.5):
     """ Get number of False Positive values.
 
     Args:
@@ -99,7 +99,7 @@ def fp(y_pred, y_true, threshold=0.5):
     return float(np.sum(np.asarray(y_pred > threshold, dtype=np.int) * (1. - y_true)))
 
 
-def tn(y_pred, y_true, threshold=0.5):
+def tn(y_true, y_pred, threshold=0.5):
     """ Get number of True Negative values.
 
     Args:
@@ -115,7 +115,7 @@ def tn(y_pred, y_true, threshold=0.5):
     return float(np.sum(np.asarray(y_pred <= threshold, dtype=np.int) * (1. - y_true)))
 
 
-def fn(y_pred, y_true, threshold=0.5):
+def fn(y_true, y_pred, threshold=0.5):
     """ Get number of False Negative values.
 
     Args:
@@ -131,7 +131,7 @@ def fn(y_pred, y_true, threshold=0.5):
     return float(np.sum(np.asarray(y_pred <= threshold, dtype=np.int) * y_true))
 
 
-def tpr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
+def tpr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """ True positive rate.
 
     Args:
@@ -150,7 +150,7 @@ def tpr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
     return tp_value / (tp_value + fn_value + epsilon)
 
 
-def tnr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
+def tnr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """ True negative rate.
 
     Args:
@@ -169,7 +169,7 @@ def tnr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
     return tn_value / (tn_value + fp_value + epsilon)
 
 
-def fpr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
+def fpr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """ False positive rate.
 
     Args:
@@ -186,7 +186,7 @@ def fpr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
     return 1. - tpr(y_pred, y_true, threshold, epsilon)
 
 
-def fnr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
+def fnr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """ False negative rate.
 
     Args:
@@ -203,7 +203,7 @@ def fnr(y_pred, y_true, threshold=0.5, epsilon=10e-7):
     return 1. - tnr(y_pred, y_true, threshold, epsilon)
 
 
-def precision(y_pred, y_true, threshold=0.5, epsilon=10e-7):
+def precision(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """ Compute precision metric.
 
     Args:
@@ -221,7 +221,7 @@ def precision(y_pred, y_true, threshold=0.5, epsilon=10e-7):
     fp_value = fp(y_pred, y_true, threshold)
     return tp_value / (tp_value + fp_value + epsilon)
 
-def recall(y_pred, y_true, threshold=0.5, epsilon=10e-7):
+def recall(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """ Compute recall metric.
 
     Args:
@@ -237,7 +237,7 @@ def recall(y_pred, y_true, threshold=0.5, epsilon=10e-7):
     """
     return tpr(y_pred, y_true, threshold=threshold, epsilon=epsilon)
 
-def accuracy(y_pred, y_true):
+def accuracy(y_true, y_pred, threshold=0.5):
     """ Compute accuracy on input batched y_pred and y_true.
 
     Args:
@@ -246,12 +246,11 @@ def accuracy(y_pred, y_true):
     - y_true: np.ndarray(batch_size, ...)
     numpy array containing true target values;
     - threshold: float, threshold for mapping probabilities into class;
-    - epsilon: small float for avoiding division by zero error;
 
     Returns:
     - float, accuracy metric value;
     """
-    result = np.mean(np.abs(np.around(y_pred) - y_true))
+    result = np.mean(np.abs(np.asarray(y_pred > threshold, dtype=np.int) - y_true))
     return 1. - result
 
 
