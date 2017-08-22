@@ -598,3 +598,127 @@ class CTImagesMaskedBatch(CTImagesBatch):
         logger.warning("There is no implementation of flip method for class " +
                        "CTIMagesMaskedBatch. Nothing happened")
         return self
+
+    @action
+    def create_labels_by_mask(self, threshold):
+        """ Create labels attribute that containes labels corresponding to masks.
+
+        Args:
+        - threshold: int, threshold for number of 1 pixel for considering
+        item having cancer;
+
+        Returns:
+        - self, unchanged batch;
+        """
+        self.labels = np.asarray([np.sum(self.get(i, 'masks')) > threshold
+                                 for i in range(len(self))], dtype=np.float)
+        return self
+
+    def unpack_data(self, y_component, dim_ordering='channels_last', **kwargs):
+        """ Unpack data contained in batch for feeding in model.
+
+        Args:
+        - y_component: str, name of y_component to fetch, can be 'masks' or 'labels';
+        - dim_ordering: str, can be 'channels_last' or 'channels_first';
+
+        Returns:
+        - x, y ndarrays;
+        """
+        x, y = [], [] if y_component is not None else None
+        for i in range(len(self)):
+            x.append(self.get(i, 'images'))
+            if y_component == 'masks':
+                y.append(self.get(i, 'masks'))
+            if y_component == 'labels':
+                y.append(self.labels[i])
+        x, y = np.stack(x), np.stack(y)
+        if dim_ordering == 'channels_last':
+            x, y = x[..., np.newaxis], y[..., np.newaxis]
+        elif dim_ordering == 'channels_first':
+            x = x[:, np.newaxis, ...]
+            if y_component == 'masks':
+                y = y[:, np.newaxis, ...]
+        return x, y
+
+    @action
+    def train_on_crop(self, model_name, y_component='labels', dim_ordering='channels_last', **kwargs):
+        """ Train model on crops of CT-scans contained in batch.
+
+        Args:
+        - model_name: str, name of classification model;
+        - y_component: str, name of y component, can be 'masks' or 'labels';
+        - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last';
+
+        Returns:
+        - self, unchanged CTImagesMaskedBatch;
+        """
+        model = self.get_model_by_name(model_name)
+        x, y_true = self.unpack_data(dim_ordering='channels_last',
+                                     y_component=y_component, **kwargs)
+        model.train_on_batch(x, y_true)
+        return self
+
+    @action
+    def predict_on_crop(self, model_name, dst_dict, y_component='labels', dim_ordering='channels_last', **kwargs):
+        """ Get predictions of model on crops of CT-scans contained in batch.
+
+        Args:
+        - model_name: str, name of classification model;
+        - dst_dict: dictionary that will be updated by predictions;
+
+        - y_component: str, name of y component, can be 'masks' or 'labels';
+        - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last';
+
+        Returns:
+        - self, unchanged CTImagesMaskedBatch;
+        """
+        model = self.get_model_by_name(model_name)
+        x, _ = self.unpack_data(dim_ordering=dim_ordering,
+                                y_component=y_component, **kwargs)
+        predicted_labels = model.predict_on_batch(x)
+        dst_dict.update(zip(self.indices, predicted_labels))
+        return self
+
+    @action
+    def predict_on_scan(self, model_name, strides=(16, 32, 32), batch_size=4, y_component='labels', dim_ordering='channels_last'):
+        """ Get predictions of the model on data contained in batch.
+
+        Transforms scan data into patches of shape CROP_SHAPE and then feed
+        this patches sequentially into model with name specified by
+        argument 'model_name'; after that loads predicted masks or probabilities
+        into 'masks' component of the current batch and returns it.
+
+        Args:
+        - model_name: str, name of model;
+        - strides: tuple(int, int, int) strides for patching operation;
+        - batch_size: int, number of patches to feed in model in one iteration;
+        - y_component: str, name of y component, can be 'masks' or labels;
+        - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last'
+
+        Returns:
+        - self, uncahnged CTImagesMaskedBatch;
+        """
+        model = self.get_model_by_name(model_name)
+        x, _ = self.unpack_data(y_component=y_component, dim_ordering=dim_ordering)
+
+        patches_arr = self.get_patches(patch_shape=CROP_SHAPE, stride=strides, padding='reflect')
+        if dim_ordering == 'channels_first':
+            patches_arr = patches_arr[:, np.newaxis, ...]
+        elif dim_ordering == 'channels_last':
+            patches_arr = patches_arr[..., np.newaxis]
+
+        predictions = []
+        for i in range(0, patches_arr.shape[0], batch_size):
+            current_prediction = np.asarray(model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
+
+            if y_component == 'labels':
+                current_prediction = np.stack([np.ones(shape=(CROP_SHAPE))
+                                               * prob for prob in current_prediction.ravel()])
+            current_prediction = current_prediction.reshape(patches_arr[i: i + batch_size, ...].shape[0], *CROP_SHAPE)
+            predictions.append(current_prediction)
+
+        patches_mask = np.concatenate(predictions, axis=0)
+        self.load_from_patches(patches_mask, stride=strides,
+                               scan_shape=tuple(self.images_shape[0, :]),
+                               data_attr='masks')
+        return self
