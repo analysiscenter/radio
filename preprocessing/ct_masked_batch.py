@@ -10,6 +10,9 @@ from ..dataset import action, any_action_failed, DatasetIndex
 from ..dataset import model
 
 
+CROP_SHAPE = (32, 64, 64)
+
+
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
 logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
