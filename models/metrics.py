@@ -165,7 +165,7 @@ def tnr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     - float, tnr metric value;
     """
     tn_value = tn(y_pred, y_true, threshold)
-    fn_value = fn(y_pred, y_true, threshold)
+    fp_value = fp(y_pred, y_true, threshold)
     return tn_value / (tn_value + fp_value + epsilon)
 
 
