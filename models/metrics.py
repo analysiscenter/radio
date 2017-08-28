@@ -1,5 +1,4 @@
 import numpy as np
-import pandas as pd
 
 
 def log_loss(y_true, y_pred, epsilon=10e-7):
