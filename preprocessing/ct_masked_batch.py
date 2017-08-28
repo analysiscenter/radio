@@ -6,6 +6,7 @@ import numpy as np
 from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
+from .rotate import rotate_3D
 from ..dataset import action, any_action_failed, DatasetIndex
 from ..dataset import model
 
@@ -596,6 +597,32 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if self.masks is not None:
             batch.create_mask()
         return batch
+
+    def _init_mask(self, **kwargs):
+        """ Init method for rotation action.
+
+        *NOTE: required by inbatch_parallel decorator as argument;
+        """
+        return [self.get(i, 'masks') for i in range(len(self))]
+
+    @inbatch_parallel(init='_init_mask', post='_post_mask', target='nogil')
+    def rotate_masks(self, degree, axes):
+        """ Rotate 3D masks contatined in batch. """
+        return rotate_3D
+
+    @action
+    def rotate(self, degree, axes=(1, 2), rotate_mask=True):
+        """ Rotate 3D images and masks in batch.
+
+        Args:
+        - degree: float, angle of rotation;
+        - axes: tuple(int, int), axes that specify plane of rotation;
+        - rotate_mask: bool, whether rotate mask or not
+        """
+        super().rotate(degree, axes)
+        if rotate_mask and self.masks is not None:
+            self.rotate_masks(degree, axes)
+        return self
 
     def flip(self):
         logger.warning("There is no implementation of flip method for class " +
