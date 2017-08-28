@@ -7,7 +7,7 @@ import scipy.ndimage
 
 @jit(nogil=True)
 def rotate_3D(image, degree, axes=(1, 2)):
-    """ Rotate 3D image along two axes.
+    """ Rotate 3D image in plane specified by two axes.
 
     Args:
     - image: ndarray(l, k, m), 3D image;
@@ -19,5 +19,22 @@ def rotate_3D(image, degree, axes=(1, 2)):
 
     *NOTE: zero padding automatically added after rotation;
     """
-    rotated_image = scipy.ndimage.interpolation.rotate(data, degree, axes)
-    return rotated_image
+    return scipy.ndimage.interpolation.rotate(image, degree, axes)
+
+
+@jit(nogil=True)
+def random_rotate_3D(image, max_degree, axes=(1, 2)):
+    """ Perform random rotation of input image in plane specified by two axes.
+
+    Args:
+    - image: ndarray(l, k, m), 3D image;
+    - max_degree: float, max_degree that can be reached by random rotation;
+    - axes: tuple(int, int), axes that specify rotation plane;
+
+    Returns:
+    - ndarray(l, k, m), 3D rotated image;
+
+    *NOTE: zero padding automatically added after rotation;
+    """
+    angle = np.random.rand(1) * max_degree
+    return scipy.ndimage.interpolation.rotate(image, angle[0], axes)
