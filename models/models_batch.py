@@ -68,17 +68,17 @@ class CTImagesModels(CTImagesMaskedBatch):
     @model()
     def vgg16():
         """ Get vgg16 model implemented in keras. """
-        model = KerasVGG16('vgg16')
-        model.compile(optimizer='adam', loss='binary_crossentropy')
-        return model
+        vgg16_model = KerasVGG16('vgg16')
+        vgg16_model.compile(optimizer='adam', loss='binary_crossentropy')
+        return vgg16_model
 
     @model
     def vgg16_pretrained():
         """ Get pretrained vgg16 model. """
-        model = KerasModel('pretrained_vgg16')
-        model.load(PRETRAINED_VGG16_PATH)
-        model.compile(optimizer='adam', loss='binary_crossentropy')
-        return model
+        vgg16_model = KerasModel('pretrained_vgg16')
+        vgg16_model.load(PRETRAINED_VGG16_PATH)
+        vgg16_model.compile(optimizer='adam', loss='binary_crossentropy')
+        return vgg16_model
 
     @model()
     def selu_vnet_4(): # pylint: disable=no-method-argument
