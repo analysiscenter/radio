@@ -17,7 +17,7 @@ def rotate_3D(image, degree, axes=(1, 2)):
     Returns:
     - ndarray(l, k, m), 3D rotated image;
 
-    *Note: zero padding automatically added after rotation;
+    *NOTE: zero padding automatically added after rotation;
     """
     rotated_image = scipy.ndimage.interpolation.rotate(data, degree, axes)
     return rotated_image
