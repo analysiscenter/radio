@@ -610,6 +610,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """ Rotate 3D masks contatined in batch. """
         return rotate_3D
 
+    @inbatch_parallel(init='_init_mask', post='_post_mask', target='nogil')
+    def random_rotate_masks(self, max_degree, axes):
+        """ Rotate 3D masks contained in batch on random angle. """
+        return random_rotate_3D
+
     @action
     def rotate(self, degree, axes=(1, 2), rotate_mask=True):
         """ Rotate 3D images and masks in batch.
@@ -622,6 +627,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
         super().rotate(degree, axes)
         if rotate_mask and self.masks is not None:
             self.rotate_masks(degree, axes)
+        return self
+
+    @action
+    def random_rotate(self, max_degree, axes, rotate_mask=True):
+        """ Rotate 3D images and masks in batch on random angle.
+
+        Args:
+        - max_degree: float, max degree that can be reached by random rotation;
+        - axes: tuple(int, int), axes that specify rotation plane;
+        - rotate_mask: bool, whether rotate mask or not;
+        """
+        super().random_rotate(max_degree, axes)
+        if rotate_mask and self.masks is not None:
+            self.rotate_masks(max_degree, axes)
         return self
 
     def flip(self):
