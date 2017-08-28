@@ -96,7 +96,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             _x, _y = self.get(i, 'images'), self.get(i, 'masks')
             x[i, ...] = _x
             y[i] = int(np.sum(_y) > 10)
-        model.train_on_batch(x[..., np.newaxis], y[: , np.newaxis])
+        model.train_on_batch(x[..., np.newaxis], y[:, np.newaxis])
         return self
 
     @action
@@ -133,8 +133,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         y = np.zeros((len(self), 32, 64, 64), dtype=np.float)
         for i in range(len(self)):
             x[i, ...], y[i, ...] = self.get(i, 'images'), self.get(i, 'masks')
-        model.train_on_batch(x[: , np.newaxis, ...], y[: , np.newaxis, ...])
-        y_pred = model.predict_on_batch(x[: , np.newaxis, ...])
+        model.train_on_batch(x[:, np.newaxis, ...], y[:, np.newaxis, ...])
+        y_pred = model.predict_on_batch(x[:, np.newaxis, ...])
         print("Dice on train: ", dice(y_pred, y))
         return self
 
@@ -166,7 +166,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         model = self.get_model_by_name(model_name)
         patches_arr = self.get_patches(patch_shape=(32, 64, 64), stride=strides, padding='reflect')
         patches_arr = patches_arr.reshape(-1, 32, 64, 64)
-        patches_arr = patches_arr[: , np.newaxis, ...]
+        patches_arr = patches_arr[:, np.newaxis, ...]
 
         predictions = []
         for i in range(0, patches_arr.shape[0], batch_size):
