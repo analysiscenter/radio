@@ -1,5 +1,6 @@
 """Child class of CTImagesBatch that incorporates nn-models """
 
+import numpy as np
 import tensorflow as tf
 
 from ..preprocessing import CTImagesMaskedBatch
@@ -52,17 +53,17 @@ class CTImagesModels(CTImagesMaskedBatch):
     @model()
     def resnet():
         """ Get resnet model implemented in keras. """
-        model = KerasResNet('resnet')
-        model.compile(optimizer='adam', loss='binary_crossentropy')
-        return model
+        resnet_model = KerasResNet('resnet')
+        resnet_model.compile(optimizer='adam', loss='binary_crossentropy')
+        return resnet_model
 
     @model()
     def resnet_pretrained():
         """ Get pretrained resnet model. """
-        model = KerasModel('pretrained_resnet')
-        model.load(PRETRAINED_RESNET_PATH)
-        model.compile(optimizer='adam', loss='binary_crossentropy')
-        return model
+        resnet_model = KerasModel('pretrained_resnet')
+        resnet_model.load(PRETRAINED_RESNET_PATH)
+        resnet_model.compile(optimizer='adam', loss='binary_crossentropy')
+        return resnet_model
 
     @model()
     def vgg16():
@@ -78,155 +79,6 @@ class CTImagesModels(CTImagesMaskedBatch):
         model.load(PRETRAINED_VGG16_PATH)
         model.compile(optimizer='adam', loss='binary_crossentropy')
         return model
-
-    @action
-    def classification_train(self, model_name):
-        """ Train model for classification task.
-
-        Args:
-        - model_name: str, name of the model;
-
-        Returns:
-        - self, unchanged batch;
-        """
-        model = self.get_model_by_name(model_name)
-        x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
-        y = np.zeros(len(self), dtype=np.float)
-        for i in range(len(self)):
-            _x, _y = self.get(i, 'images'), self.get(i, 'masks')
-            x[i, ...] = _x
-            y[i] = int(np.sum(_y) > 10)
-        model.train_on_batch(x[..., np.newaxis], y[:, np.newaxis])
-        return self
-
-    @action
-    def classification_predict_on_crop(self, model_name, dst_dict):
-        """ Get predictions on crops of model trained for classification task.
-
-        Args:
-        - model_name: str, name of the model;
-        - dst_dict: dict, this dict is updated with model's predictions;
-
-        Returns:
-        - self, unchanged batch;
-        """
-        model = self.get_model_by_name(model_name)
-        x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
-        for i in range(len(self)):
-            x[i, ...] = self.get(i, 'images')
-        predictions = model.predict_on_batch(x)
-        dst_dict.update(zip(self.indices, predictions))
-        return self
-
-    @action
-    def segmentation_train(self, model_name):
-        """ Train model for segmentation task.
-
-        Args:
-        - model_name: str, name of the model;
-
-        Returns:
-        - self, unchanged batch;
-        """
-        model = self.get_model_by_name(model_name)
-        x = np.zeros((len(self), 32, 64, 64), dtype=np.float)
-        y = np.zeros((len(self), 32, 64, 64), dtype=np.float)
-        for i in range(len(self)):
-            x[i, ...], y[i, ...] = self.get(i, 'images'), self.get(i, 'masks')
-        model.train_on_batch(x[:, np.newaxis, ...], y[:, np.newaxis, ...])
-        y_pred = model.predict_on_batch(x[:, np.newaxis, ...])
-        print("Dice on train: ", dice(y_pred, y))
-        return self
-
-
-    @action
-    def segmentation_predict_on_crop(self, model_name, dst_dict):
-        """ Get predictions on crops of model trained for segmentation task. """
-        model = self.get_model_by_name(model_name)
-        x = np.zeros((len(self), 32, 64, 64))
-        for i in range(len(self)):
-            x[i, ...] = self.get(i, 'images')
-        predictions = model.predict_on_batch(x[:, np.newaxis, ...])
-        dst_dict.update(zip(self.indices, predictions))
-        return self
-
-    @action
-    def segmentation_predict_patient(self, model_name, strides=(16, 32, 32), batch_size=20):
-        """ Get predictions on patient of model trained for segmentation task.
-
-        Args:
-        - model_name: str, name of model;
-        - strides: tuple(int) of size 3, strides
-        for get_patches and load_from_patches methods;
-        - batch_size: int, size of batch to use for feeding data in model;
-
-        Returns:
-        - self, batched with predicted masks loaded;
-        """
-        model = self.get_model_by_name(model_name)
-        patches_arr = self.get_patches(patch_shape=(32, 64, 64), stride=strides, padding='reflect')
-        patches_arr = patches_arr.reshape(-1, 32, 64, 64)
-        patches_arr = patches_arr[:, np.newaxis, ...]
-
-        predictions = []
-        for i in range(0, patches_arr.shape[0], batch_size):
-            patch_mask = model.predict_on_batch(data[i: i + 20])
-            predictions.append(patch_mask)
-
-        self.load_from_patches(stride=strides,
-                               scan_shape=(self.images_shape[0, :]),
-                               data_attr='masks')
-        return self
-
-    @action
-    def classification_test_on_dataset(self, model_name, dataset, callbacks=None):
-        """ Get predictions on crops of model trained for classification task.
-
-        Args:
-        - model_name: str, name of the model;
-        - dataset: Dataset containing test samples;
-        - callbacks: list of callables for evaluation of metrics
-        on test dataset(each callable corresponds to metric);
-
-        Retruns:
-        - self, unchanged batch;
-        """
-        model = self.get_model_by_name(model_name)
-        for batch in dataset.gen_batch(8):
-            batch = batch.load(fmt='blosc')
-
-            x = np.zeros((len(batch), 32, 64, 64), dtype=np.float)
-            y = np.zeros(len(batch), dtype=np.float)
-            for i in range(len(batch)):
-                _x, _y = batch.get(i, 'images'), batch.get(i, 'masks')
-                x[i, ...] = _x
-                y[i] = int(np.sum(_y) > 10)
-            model.test_on_batch(x[..., np.newaxis], y[:, np.newaxis])
-        return self
-
-    @action
-    def segmentation_test_on_dataset(self, model_name, dataset, callbacks=None):
-        """ Get predictions on crops of model trained for segmentation task.
-
-        Args:
-        - model_name: str, name of the model;
-        - dataset: Dataset containing test samples;
-        - callbacks: list of callables for evaluation of metrics
-        on test dataset(each callable corresponds to metric);
-
-        Retruns:
-        - self, unchanged batch;
-        """
-        model = self.get_model_by_name(model_name)
-        for batch in dataset.gen_batch(8):
-            batch = batch.load(fmt='blosc')
-
-            x = np.zeros((len(batch), 32, 64, 64), dtype=np.float)
-            y = np.zeros((len(batch), 32, 64, 64), dtype=np.float)
-            for i in range(len(batch)):
-                 x[i, ...], y[i, ...] = self.get(i, 'images'), self.get(i, 'masks')
-            model.test_on_batch(x[: , np.newaxis, ...], y[:, np.newaxis, ...])
-        return self
 
     @model()
     def selu_vnet_4(): # pylint: disable=no-method-argument
