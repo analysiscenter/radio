@@ -26,6 +26,15 @@ from .keras_model import KerasModel
 
 
 def dice_coef(y_true, y_pred):
+    """ Dice coefficient required by keras model as a part of loss function.
+
+    Args:
+    - y_true: keras tensor with targets;
+    - y_pred: keras tensor with predictions;
+
+    Returns:
+    - keras tensor with dice coefficient value;
+    """
     smooth = 1e-6
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
@@ -34,6 +43,15 @@ def dice_coef(y_true, y_pred):
     return answer
 
 def dice_coef_np(y_true, y_pred, smooth=1e-6):
+    """ Dice coefficient for two input arrays.
+
+    Args:
+    - y_true: numpy array containing target values;
+    - y_pred: numpy array containing predicted values;
+
+    Returns:
+    - float, dice coefficient value;
+    """
     y_true_f = y_true.flatten()
     y_pred_f = y_pred.flatten()
     intersection = np.sum(y_true_f * y_pred_f)
@@ -41,6 +59,15 @@ def dice_coef_np(y_true, y_pred, smooth=1e-6):
     + np.sum(y_pred_f) + smooth)
 
 def dice_coef_loss(y_true, y_pred):
+    """ Dice loss function.
+
+    Args:
+    - y_true: keras tensor containing target values;
+    - y_pred: keras tensor containing predicted values;
+
+    Returns:
+    - keras tensor containing dice loss;
+    """
     answer = -dice_coef(y_true, y_pred)
     return answer
 
