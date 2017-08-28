@@ -665,7 +665,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def predict_on_crop(self, model_name, dst_dict, y_component='labels', dim_ordering='channels_last', **kwargs):
+    def predict_on_crop(self, model_name, dst_dict, y_component='labels',
+                        dim_ordering='channels_last', **kwargs):
         """ Get predictions of model on crops of CT-scans contained in batch.
 
         Args:
