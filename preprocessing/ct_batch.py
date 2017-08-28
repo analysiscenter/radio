@@ -738,7 +738,21 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         """
         return resize_patient_numba
 
+    @action
+    @inbatch_parallel(init='_init_images', post='_post_default', target='nogil')
+    def rotate(self, degree, axes=(1, 2)):
+        """ Rotate 3D images in batch on specific angle in plane.
 
+        Args:
+        - degree: float, degree of rotation;
+        - axes: tuple(int, int), plane of rotation specified by two axes;
+
+        Returns:
+        - ndarray(l, k, m), 3D rotated image;
+
+        *NOTE: zero padding automatically added after rotation;
+        """
+        return rotate_3D
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
