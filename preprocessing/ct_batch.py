@@ -18,6 +18,7 @@ from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
+from .rotate import rotate_3D
 
 
 AIR_HU = -2000
