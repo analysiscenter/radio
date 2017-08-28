@@ -846,7 +846,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self.images = np.concatenate(cropped_images, axis=0)
         return self
 
-
     def get_patches(self, patch_shape, stride, padding='edge', data_attr='images'):
         """ Extract patches of size patch_shape with specified
                 stride
