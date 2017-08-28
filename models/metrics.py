@@ -1,3 +1,5 @@
+""" Contain different metrics functions. """
+
 import numpy as np
 
 
