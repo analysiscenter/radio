@@ -630,9 +630,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         x, y = [], [] if y_component is not None else None
         for i in range(len(self)):
             x.append(self.get(i, 'images'))
-            if y_component == 'masks':
+            if y_component == 'no_y':
+                y.append(np.nan)
+                continue
+            elif y_component == 'masks':
                 y.append(self.get(i, 'masks'))
-            if y_component == 'labels':
+            elif y_component == 'labels':
                 y.append(self.labels[i])
         x, y = np.stack(x), np.stack(y)
         if dim_ordering == 'channels_last':
@@ -702,7 +705,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - self, uncahnged CTImagesMaskedBatch;
         """
         model = self.get_model_by_name(model_name)
-        x, _ = self.unpack_data(y_component=y_component, dim_ordering=dim_ordering)
+        x, _ = self.unpack_data(y_component='no_y', dim_ordering=dim_ordering)
 
         patches_arr = self.get_patches(patch_shape=CROP_SHAPE, stride=strides, padding='reflect')
         if dim_ordering == 'channels_first':
