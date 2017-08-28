@@ -134,7 +134,6 @@ class KerasUnet(KerasModel):
         conv10 = Conv3D(1, (1, 1, 1), activation='sigmoid', data_format="channels_first", padding='same')(conv9)
 
         model = Model(inputs=inputs, outputs=conv10, name='unet')
-        smooth = 1e-6
 
         return model
 
