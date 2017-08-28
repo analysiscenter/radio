@@ -756,6 +756,22 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return rotate_3D
 
     @action
+    @inbatch_parallel(init='_init_images', post='_post_default', target='nogil')
+    def random_rotate(self, max_degree, axes=(1, 2)):
+        """ Perform rotation of 3D image in batch on random angle.
+
+        Args:
+        - max_degree: float, maximum rotation angle;
+        - axes: tuple(int, int), plane of rotation specified by two axes;
+
+        Returns:
+        - ndarray(l, k, m), 3D rotated image;
+
+        *NOTE: zero padding automatically added after rotation;
+        """
+        return random_rotate_3D
+
+    @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
     def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):
         """
