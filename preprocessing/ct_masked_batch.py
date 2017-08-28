@@ -7,7 +7,7 @@ from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .rotate import rotate_3D
-from ..dataset import action, any_action_failed, DatasetIndex
+from ..dataset import action, any_action_failed, DatasetIndex, inbatch_parallel
 from ..dataset import model
 
 
