@@ -52,10 +52,6 @@ class KerasModel(BaseModel):
         """ Train model on batch. """
         self.model.train_on_batch(x, y_true)
 
-    def test_on_batch(self, x, y_true, **kwargs):
-        """ Test model on batch. """
-        y_pred = self.model.predict_on_batch(x)
-
     def predict_on_batch(self, x, **kwargs):
         """ Get predictions on batch x. """
         return self.model.predict_on_batch(x)
