@@ -16,7 +16,6 @@ from keras.layers.advanced_activations import PReLU, ELU
 from keras.layers.advanced_activations import LeakyReLU as LReLU
 from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam, SGD
 from keras import backend as K
 
 from .keras_model import KerasModel
