@@ -842,7 +842,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
             cropped_images.append(cropped_img)
 
-        self._bounds = np.cumsum([] + [crop_size[0]] * len(self))
+        self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
         return self
 
