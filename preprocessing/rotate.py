@@ -19,7 +19,7 @@ def rotate_3D(image, degree, axes=(1, 2)):
 
     *NOTE: zero padding automatically added after rotation;
     """
-    return scipy.ndimage.interpolation.rotate(image, degree, axes)
+    return scipy.ndimage.interpolation.rotate(image, degree, axes, reshape=False)
 
 
 @jit(nogil=True)
@@ -37,4 +37,4 @@ def random_rotate_3D(image, max_degree, axes=(1, 2)):
     *NOTE: zero padding automatically added after rotation;
     """
     angle = np.random.rand(1) * max_degree
-    return scipy.ndimage.interpolation.rotate(image, angle[0], axes)
+    return scipy.ndimage.interpolation.rotate(image, angle[0], axes, reshape=False)
