@@ -20,7 +20,6 @@ from keras.optimizers import Adam, SGD
 from keras.callbacks import (ModelCheckpoint,
                              LearningRateScheduler)
 from keras import backend as K
-from keras import regularizers
 
 from .keras_model import KerasModel
 
