@@ -829,7 +829,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         crop_size = np.asarray(crop_size)
         crop_halfsize = np.ceil(crop_size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
-        if any(np.any(shape < crop_size) for shape in img_shape):
+        if any(np.any(shape < crop_size) for shape in img_shapes):
             raise ValueError("Crop size must be smaller than size of inner 3D images")
 
         cropped_images = []
