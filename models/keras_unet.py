@@ -12,8 +12,6 @@ from keras.layers import (Input,
                           Cropping3D,
                           Lambda,
                           Activation)
-from keras.layers.advanced_activations import PReLU, ELU
-from keras.layers.advanced_activations import LeakyReLU as LReLU
 from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
 from keras import backend as K
