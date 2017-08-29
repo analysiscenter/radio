@@ -6,10 +6,8 @@ from keras.layers import (Input,
                           concatenate,
                           Conv3D,
                           MaxPooling3D,
-                          Deconvolution2D,
                           UpSampling3D,
                           Dropout,
-                          Cropping3D,
                           Lambda,
                           Activation)
 from keras.layers.core import Activation
