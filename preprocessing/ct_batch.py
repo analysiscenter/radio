@@ -827,7 +827,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
     @action
     def central_crop(self, crop_size):
         crop_size = np.asarray(crop_size)
-        crop_halfsize = np.ceil(crop_size / 2)
+        crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
         img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
         if any(np.any(shape < crop_size) for shape in img_shapes):
             raise ValueError("Crop size must be smaller than size of inner 3D images")
@@ -835,7 +835,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         cropped_images = []
         for i in range(len(self)):
             img = self.get(i, 'images')
-            halfsize = np.rint(np.asarray(img.shape) / 2)
+            halfsize = np.rint(np.asarray(img.shape) / 2).astype(np.int)
             cropped_img = img[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
                               halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
                               halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
