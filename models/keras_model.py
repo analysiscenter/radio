@@ -11,7 +11,13 @@ logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
 
 
 class KerasModel(BaseModel):
+    """ Base class for all keras models.
 
+    Contains load, dump and compile methods which are shared between all
+    keras models;
+    Also implements train_on_batch and predict_on_batch methods;
+
+    """
     def __init__(self, name, *args, **kwargs):
         """ Initialize keras model. """
         super().__init__(name, *args, **kwargs)
