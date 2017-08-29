@@ -1,9 +1,6 @@
 import os
-import sys
-import shutil
-from functools import wraps, partial
+from functools import wraps
 import logging
-from logging.handlers import SMTPHandler
 import keras
 from keras.models import model_from_json
 from .base_model import BaseModel
