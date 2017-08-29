@@ -7,8 +7,6 @@ from keras.layers import (Input,
                           Conv3D,
                           MaxPooling3D,
                           UpSampling3D,
-                          Dropout,
-                          Lambda,
                           Activation)
 from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
