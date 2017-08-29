@@ -1,22 +1,14 @@
 import keras
-from keras.models import Model as Model
-from keras.layers import Input
 from keras import layers
 from keras.models import load_model
-from keras.layers import Conv3D, Conv2D, Conv1D
-from keras.layers import Convolution3D
-from keras.layers import MaxPooling3D, MaxPooling2D
-from keras.layers import Flatten, Input, Activation, Dense, BatchNormalization
+from keras.models import Model as Model
 
+from keras.layers import Input
+from keras.models import load_model
 from keras.layers import Dense, Dropout
 from keras.layers import Activation
 from keras.layers import Flatten
-from keras.layers import Conv2D
-from keras.layers import MaxPooling2D
-from keras.layers import ZeroPadding2D
-from keras.layers import AveragePooling2D
-from keras.layers import GlobalAveragePooling2D
-from keras.layers import GlobalMaxPooling2D
+from keras.layers import Conv3D
 from keras.layers import BatchNormalization
 from keras import backend as K
 
