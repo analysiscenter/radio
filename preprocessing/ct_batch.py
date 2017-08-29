@@ -486,6 +486,65 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return self
 
     @staticmethod
+    def get_linear(from_interval, to_interval):
+        """ Get linear transformation that maps one interval to another
+
+        Args:
+            from_interval: sequence of len=2 (llim, ulim) that defines the domain-interval
+            to_interval: sequence of len=2 that defines the image-interval
+
+        Return:
+            linear transformation given by a function
+        """
+        # compute coeffs of the mapping
+        llim, ulim = from_interval
+        new_llim, new_ulim = to_interval
+        slope = (new_ulim - new_llim) / (ulim - llim)
+        intercept = new_llim - slope * llim
+
+        # define the map
+        def linear(x):
+            """ Transformation
+            """
+            return slope * x + intercept
+
+        return linear
+
+    @staticmethod
+    async def encode_dump_array(data, folder, filename):
+        """ Encode an ndarray to int8, blosc-pack it and dump data along with
+                the decoder into supplied folder
+
+        Args:
+            data: ndarray with numeric (e.g., float32) data to be dumped
+            folder: folder for dump
+            filename: name of file where the data is dumped; has format name.ext
+
+        Return:
+            ____
+
+        *NOTE: to encode ndarray to int8, we linearly transform the data to
+            int8-range and drop the fractional part. Decoder is then given by
+            inverse linear transformation
+        """
+        # encode the data
+        data_range = (data.min(), data.max())
+        i8_range = (-128, 127)
+        encoded = np.rint(self.get_linear(data_range, i8_range)(data)).astype(np.int8)
+
+        # get the decoder
+        decoder = self.get_linear(i8_range, data_range)
+
+        # dump encoded data and decoder
+        byted = (blosc.pack_array(encoded), cloudpickle.dumps(decoder))
+        fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
+
+        for btd, fname in zip(byted, fnames):
+            async with aiofiles.open(os.path.join(folder, fname), mode='wb') as file:
+                _ = await file.write(btd)
+
+
+    @staticmethod
     async def dump_data(data_items, folder):
         """ Dump data that is contained in data_items on disk in
                 specified folder
@@ -499,7 +558,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             ____
 
         *NOTE: depending on supplied format, each data-item will be either
-            cloudpickle-serialized (if .cpkl) or blosc-packed (if .blk)
+            cloudpickle-serialized (if .cpkl) or blosc-packed (if .blk).
+            Additionally, .blk-items will be int8-decoded because of speed considerations
         """
 
         # create directory if does not exist
@@ -510,12 +570,12 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         for filename, data in data_items.items():
             ext = filename.split('.')[-1]
             if ext == 'blk':
-                byted = blosc.pack_array(data, cname='zstd', clevel=1)
+                await self.encode_dump_array(data, folder, filename)
             elif ext == 'cpkl':
                 byted = cloudpickle.dumps(data)
-            async with aiofiles.open(os.path.join(folder, filename),
-                                     mode='wb') as file:
-                _ = await file.write(byted)
+                async with aiofiles.open(os.path.join(folder, filename),
+                                         mode='wb') as file:
+                    _ = await file.write(byted)
 
         return None
 
