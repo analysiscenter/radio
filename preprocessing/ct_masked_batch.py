@@ -643,6 +643,46 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.rotate_masks(max_degree=max_degree, axes=axes)
         return self
 
+    @action
+    def central_crop(self, crop_size):
+        """ Make crop with given size from center of images.
+
+        Args:
+        - crop_size: tuple(int, int, int), size of crop;
+
+        NOTE: this method should be rewritten with the use of
+        inheritance;
+        """
+        crop_size = np.asarray(crop_size)
+        crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
+        img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
+        if any(np.any(shape < crop_size) for shape in img_shapes):
+            raise ValueError("Crop size must be smaller than size of inner 3D images")
+
+        cropped_images = []
+        cropped_masks = []
+        for i in range(len(self)):
+            img = self.get(i, 'images')
+            halfsize = np.rint(np.asarray(img.shape) / 2).astype(np.int)
+            cropped_img = img[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
+                              halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
+                              halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
+
+            cropped_images.append(cropped_img)
+
+            if crop_mask and self.masks is not None:
+                msk = self.get(i, 'masks')
+                cropped_msk = msk[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
+                                  halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
+                                  halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
+                cropped_masks.append(cropped_masks)
+
+        self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
+        self.images = np.concatenate(cropped_images, axis=0)
+        if crop_mask and self.masks is not None:
+            self.masks = np.concatenate(cropped_masks, axis=0)
+        return self
+
     def flip(self):
         logger.warning("There is no implementation of flip method for class " +
                        "CTIMagesMaskedBatch. Nothing happened")
