@@ -85,7 +85,7 @@ class KerasUnet(KerasModel):
         conv1 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv1)
         conv1 = Activation("relu")(conv1)
         #conv1 = Dropout(0.3)(conv1)
-        conv1 = Conv3D(32, (3, 3, 3), data_format="channels_first",  padding="same")(conv1)
+        conv1 = Conv3D(32, (3, 3, 3), data_format="channels_first", padding="same")(conv1)
         conv1 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv1)
         conv1 = Activation("relu")(conv1)
         #conv1 = Dropout(0.3)(conv1)
