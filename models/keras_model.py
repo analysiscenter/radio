@@ -1,3 +1,5 @@
+""" Contains base class for all keras models. """
+
 import os
 from functools import wraps
 import logging
