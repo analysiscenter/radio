@@ -37,8 +37,7 @@ class DenseNet(TFModel):
 
     @staticmethod
     def conv3d(input_tensor, filters, kernel_size, name,
-               strides=(1, 1, 1), padding='same', activation=None, use_bias=True):
-        activation_fn = get_activation(activation)
+               strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
         with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                           kernel_size=kernel_size,
@@ -46,12 +45,11 @@ class DenseNet(TFModel):
                                           use_bias=use_bias,
                                           name='conv3d', padding=padding)
 
-            output_tensor = activation_fn(output_tensor)
+            output_tensor = activation(output_tensor)
         return output_tensor
 
     def bn_conv3d(self, input_tensor, filters, kernel_size, name,
-                  strides=(1, 1, 1), padding='same', activation=None, use_bias=False):
-        activation_fn = get_activation(activation)
+                  strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):
         with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
@@ -61,7 +59,7 @@ class DenseNet(TFModel):
 
             output_tensor = tf.layers.batch_normalization(output_tensor, axis=-1,
                                                           training=self.learning_phase)
-            output_tensor = activation_fn(output_tensor)
+            output_tensor = activation(output_tensor)
         return output_tensor
 
     def dropout(self, input_tensor, rate=0.3):
@@ -77,15 +75,13 @@ class DenseNet(TFModel):
                                    kernel_size=(1, 1, 1),
                                    strides=(1, 1, 1),
                                    name=subblock_name + '_conv3d_1_1',
-                                   padding='same',
-                                   activation='relu')
+                                   padding='same')
 
                 x = self.bn_conv3d(x, filters=filters,
                                    kernel_size=(3, 3, 3),
                                    strides=(1, 1, 1),
                                    name=subblock_name + '_conv3d_3_3',
-                                   padding='same',
-                                   activation='relu')
+                                   padding='same')
 
                 previous_input = tf.concat([previous_input, x], axis=-1)
 
