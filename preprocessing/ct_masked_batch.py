@@ -624,9 +624,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - axes: tuple(int, int), axes that specify plane of rotation;
         - rotate_mask: bool, whether rotate mask or not
         """
-        super().rotate(degree, axes)
+        super().rotate(degree=degree, axes=axes)
         if rotate_mask and self.masks is not None:
-            self.rotate_masks(degree, axes)
+            self.rotate_masks(degree=degree, axes=axes)
         return self
 
     @action
@@ -638,9 +638,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - axes: tuple(int, int), axes that specify rotation plane;
         - rotate_mask: bool, whether rotate mask or not;
         """
-        super().random_rotate(max_degree, axes)
+        super().random_rotate(max_degree=max_degree, axes=axes)
         if rotate_mask and self.masks is not None:
-            self.rotate_masks(max_degree, axes)
+            self.rotate_masks(max_degree=max_degree, axes=axes)
         return self
 
     def flip(self):
