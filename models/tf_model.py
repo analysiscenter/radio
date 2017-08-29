@@ -51,7 +51,7 @@ class TFModel(object):
 
     def add_to_collection(self, tensor, alias=None):
         """ Add tensor to inner collection. """
-        tensor_list = tensor if isinstance(tensor, list) else [tensor]
+        tensor_list = tensor if isinstance(tensor, (list, tuple)) else [tensor]
         if alias is None:
             alias_list = [t.name.split('/')[-1].split(':')[0] for t in tensor_list]
         elif isinstance(alias, str):
