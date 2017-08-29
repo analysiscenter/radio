@@ -1,3 +1,5 @@
+""" Contains KerasUnet model class. """
+
 import numpy as np
 import keras
 from keras.models import Model
