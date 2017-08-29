@@ -437,13 +437,28 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         for source in kwargs['src']:
             # set correct extension for each component and choose a tool
-            # for debyting it
+            # for debyting and (possibly) decoding it
             if source in ['spacing', 'origin']:
                 ext = '.cpkl'
                 unpacker = cloudpickle.loads
             else:
                 ext = '.blk'
-                unpacker = blosc.unpack_array
+                def unpacker(byted):
+                    """ Debyte and decode an ndarray
+                    """
+                    debyted = blosc.unpack_array(byted)
+
+                    # read the decoder and apply it
+                    decod_path = os.path.join(self.index.get_fullpath(patient_id), source + '.decoder')
+
+                    # if file with decoder not exists, assume that no decoding is needed
+                    if os.path.exists(decod_path):
+                        async with aiofiles.open(decod_path, mode='rb') as file:
+                            decoder = await file.read()
+                    else:
+                        decoder = lambda x: x
+
+                    return decoder(debyted)
 
             comp_path = os.path.join(self.index.get_fullpath(patient_id), source + ext)
 
