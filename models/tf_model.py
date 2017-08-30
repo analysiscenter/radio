@@ -127,7 +127,7 @@ class TFModel(object):
         with open(os.path.join(dir_path, 'tensor_collection.json'), 'r') as f:
             self.tensor_names = json.load(f)
 
-        for alias, name in self._tensor_names.items():
+        for alias, name in self.tensor_names.items():
             setattr(self, alias, self.graph.get_tensor_by_name(name))
         return self
 
