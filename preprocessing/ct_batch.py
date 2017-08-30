@@ -453,8 +453,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
-                        async with aiofiles.open(decod_path, mode='rb') as file:
-                            decoder = await file.read()
+                        with open(decod_path, mode='rb') as file:
+                            decoder = file.read()
                     else:
                         decoder = lambda x: x
 
