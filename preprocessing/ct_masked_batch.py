@@ -744,10 +744,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns:
         - self, unchanged CTImagesMaskedBatch;
         """
-        model = self.get_model_by_name(model_name)
+        _model = self.get_model_by_name(model_name)
         x, y_true = self.unpack_data(dim_ordering='channels_last',
                                      y_component=y_component, **kwargs)
-        model.train_on_batch(x, y_true)
+        _model.train_on_batch(x, y_true)
         return self
 
     @action
@@ -765,10 +765,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns:
         - self, unchanged CTImagesMaskedBatch;
         """
-        model = self.get_model_by_name(model_name)
+        _model = self.get_model_by_name(model_name)
         x, _ = self.unpack_data(dim_ordering=dim_ordering,
                                 y_component=y_component, **kwargs)
-        predicted_labels = model.predict_on_batch(x)
+        predicted_labels = _model.predict_on_batch(x)
         dst_dict.update(zip(self.indices, predicted_labels))
         return self
 
@@ -791,7 +791,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns:
         - self, uncahnged CTImagesMaskedBatch;
         """
-        model = self.get_model_by_name(model_name)
+        _model = self.get_model_by_name(model_name)
         x, _ = self.unpack_data(y_component='no_y', dim_ordering=dim_ordering)
 
         patches_arr = self.get_patches(patch_shape=CROP_SHAPE, stride=strides, padding='reflect')
@@ -802,7 +802,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         predictions = []
         for i in range(0, patches_arr.shape[0], batch_size):
-            current_prediction = np.asarray(model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
+            current_prediction = np.asarray(_model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
 
             if y_component == 'labels':
                 current_prediction = np.stack([np.ones(shape=(CROP_SHAPE))
