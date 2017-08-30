@@ -13,7 +13,7 @@ def log_loss(y_true, y_pred, epsilon=10e-7):
 
 
 class TFResNet(TFModel):
-    """ This class contains tensorflow implementation of 3D resnet architecture. """
+    """ This class implements 3D ResNet architecture via tensorflow. """
 
     @staticmethod
     def conv3d(input_tensor, filters, kernel_size, name,
