@@ -772,7 +772,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def predict_on_scan(self, model_name, strides=(16, 32, 32), batch_size=4,
+    def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64), batch_size=4,
                         y_component='labels', dim_ordering='channels_last'):
         """ Get predictions of the model on data contained in batch.
 
@@ -794,7 +794,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         _model = self.get_model_by_name(model_name)
         x, _ = self.unpack_data(y_component='no_y', dim_ordering=dim_ordering)
 
-        patches_arr = self.get_patches(patch_shape=CROP_SHAPE, stride=strides, padding='reflect')
+        patches_arr = self.get_patches(patch_shape=crop_shape, stride=strides, padding='reflect')
         if dim_ordering == 'channels_first':
             patches_arr = patches_arr[:, np.newaxis, ...]
         elif dim_ordering == 'channels_last':
@@ -805,9 +805,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
             current_prediction = np.asarray(_model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
 
             if y_component == 'labels':
-                current_prediction = np.stack([np.ones(shape=(CROP_SHAPE))
+                current_prediction = np.stack([np.ones(shape=(crop_shape))
                                                * prob for prob in current_prediction.ravel()])
-            current_prediction = current_prediction.reshape(patches_arr[i: i + batch_size, ...].shape[0], *CROP_SHAPE)
+            current_prediction = current_prediction.reshape(patches_arr[i: i + batch_size, ...].shape[0], *crop_shape)
             predictions.append(current_prediction)
 
         patches_mask = np.concatenate(predictions, axis=0)
