@@ -7,15 +7,19 @@ from .tf_model import model_scope
 
 
 def get_shape(x):
+    """ Get shape of tensor passed as argument. """
     return x.get_shape().as_list()
 
 
 def log_loss(y_true, y_pred, epsilon=10e-7):
+    """ Log loss implemented in tensorflow. """
     return - tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
                             + (1 - y_true) * tf.log(1 - y_pred + epsilon))
 
 
 class DenseNet(TFModel):
+    """ This class implements 3D DenseNet architecture via tensorflow. """
+
     @staticmethod
     def maxpool3d(input_tensor, pool_size, strides, name, padding='same'):
         """ Apply maxpooling3d operation to the input_tensor. """
