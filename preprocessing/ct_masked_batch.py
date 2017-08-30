@@ -699,8 +699,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns:
         - self, unchanged batch;
         """
-        self.labels = np.asarray([np.sum(self.get(i, 'masks')) > threshold
-                                 for i in range(len(self))], dtype=np.float)
+        self.labels = np.asarray([np.sum(self.get(i, 'masks')) > threshold for i in range(len(self))], dtype=np.float)
         return self
 
     def unpack_data(self, y_component, dim_ordering='channels_last', **kwargs):
