@@ -26,17 +26,17 @@ class TFModel(object):
         instance = super(TFModel, cls).__new__(cls)
 
         graph = tf.Graph()
-        instance._graph = graph
+        instance.graph = graph
         with graph.as_default():
             with tf.variable_scope(name):
-                instance._name = name
-                instance._tensor_names = {}
+                instance.name = name
+                instance.tensor_names = {}
                 instance.global_step = 3
 
                 instance.learning_phase = tf.placeholder(tf.bool)
                 instance.add_to_collection(instance.learning_phase, 'learning_phase')
 
-                instance._sess = None
+                instance.sess = None
                 instance.train_op = None
                 instance.loss = None
                 instance.input = None
@@ -44,11 +44,6 @@ class TFModel(object):
                 instance.y_true = None
 
         return instance
-
-    @property
-    def tensor_names(self):
-        """ Get names of tensors that will be used during loading and saving model. """
-        return self._tensor_names
 
     def add_to_collection(self, tensor, alias=None):
         """ Add tensor to inner collection. """
