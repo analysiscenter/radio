@@ -1,6 +1,5 @@
 """ Contains implementation of ResNet via keras. """
 
-import keras
 from keras import layers
 from keras.models import Model
 
