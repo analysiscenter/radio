@@ -27,7 +27,7 @@ class KerasModel(BaseModel):
         self.name = name
 
         self.log.info("Building keras model...")
-        self.model = self.initialize_model(**kwargs)
+        self.model = self.initialize_model(**kwargs)  # pylint: disable=assignment-from-none
         self.log.info("Keras model was build")
 
     @staticmethod
