@@ -1,6 +1,6 @@
 """ Contains implementation of VGG16 architecture in keras. """
 
-
+from functools import wraps
 from keras.models import Model
 from keras.layers import Input, Flatten, Dense
 from keras.layers import Conv3D, MaxPooling3D
@@ -93,6 +93,7 @@ class KerasVGG16(KerasModel):
         """ Initialize vgg16 model. """
         return cls.build_vgg16()
 
+    @wraps(keras.models.Model.compile)
     def compile(self, optimizer='adam', loss='binary_crossentropy', **kwargs):
         """ Compile vgg16 model. """
         super().compile(optimizer=optimizer, loss=loss)
