@@ -52,22 +52,7 @@ class TFModel(object):
             alias_list = [t.name.split('/')[-1].split(':')[0] for t in tensor_list]
         elif isinstance(alias, str):
             alias_list = [alias]
-        self._tensor_names.update({a: t.name for t, a in zip(tensor_list, alias_list)})
-
-    @property
-    def name(self):
-        """ Get name of tensorflow model. """
-        return self._name
-
-    @property
-    def graph(self):
-        """ Get tensorflow graph object. """
-        return self._graph
-
-    @property
-    def sess(self):
-        """ Get tensorflow session. """
-        return self._sess
+        self.tensor_names.update({a: t.name for t, a in zip(tensor_list, alias_list)})
 
     def get_number_of_trainable_vars(self):
         """ Get number of trainable variable in graph associated with current model. """
@@ -129,18 +114,18 @@ class TFModel(object):
         path = os.path.join(dir_path, self.name)
         saver.save(self.sess, path, global_step=self.global_step)
         with open(os.path.join(dir_path, 'tensor_collection.json'), 'w') as f:
-            json.dump(self._tensor_names, f)
+            json.dump(self.tensor_names, f)
         return self
 
     def load(self, graph_path, checkpoint_path, dir_path, *args, **kwargs):
         """ Load tensorflow model. """
-        self._sess = tf.Session()
+        self.sess = tf.Session()
         saver = tf.train.import_meta_graph(graph_path)
         saver.restore(self.sess, checkpoint_path)
-        self._graph = self._sess.graph
+        self.graph = self.sess.graph
 
         with open(os.path.join(dir_path, 'tensor_collection.json'), 'r') as f:
-            self._tensor_names = json.load(f)
+            self.tensor_names = json.load(f)
 
         for alias, name in self._tensor_names.items():
             setattr(self, alias, self.graph.get_tensor_by_name(name))
@@ -155,7 +140,7 @@ class TFModel(object):
         with tf.control_dependencies(update_ops):
             train_op = optimizer.minimize(self.loss)
 
-        self._sess = tf.Session()
+        self.sess = tf.Session()
         self.sess.run(tf.global_variables_initializer())
         self.train_op = train_op
         return self
