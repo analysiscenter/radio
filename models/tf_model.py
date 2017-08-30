@@ -13,7 +13,7 @@ def model_scope(method):
     @wraps(method)
     def wrapped(self, *args, **kwargs):
         """ Wrapped method. """
-        with self.graph.as_default():
+        with self.graph.as_default():  # pylint disable=not-context-manager
             with tf.variable_scope(self.name):
                 result = method(self, *args, **kwargs)
         return result
