@@ -29,7 +29,7 @@ class TFModel(object):
 
         graph = tf.Graph()
         instance.graph = graph
-        with graph.as_default():
+        with graph.as_default():  # pylint disable=not-context-manager
             with tf.variable_scope(name):
                 instance.name = name
                 instance.tensor_names = {}
