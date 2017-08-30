@@ -1,3 +1,5 @@
+""" Contains TFResNet model class. """
+
 import tensorflow as tf
 
 from .tf_model import TFModel
@@ -11,6 +13,7 @@ def log_loss(y_true, y_pred, epsilon=10e-7):
 
 
 class TFResNet(TFModel):
+    """ This class contains tensorflow implementation of 3D resnet architecture. """
 
     @staticmethod
     def conv3d(input_tensor, filters, kernel_size, name,
