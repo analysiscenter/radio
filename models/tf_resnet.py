@@ -31,7 +31,7 @@ class TFResNet(TFModel):
 
     def bn_conv3d(self, input_tensor, filters, kernel_size, name,
                   strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):
-        """ 3D convolution layer with batch normalization. """
+        """ 3D convolution layer with batch normalization along last axis. """
         with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
