@@ -46,7 +46,7 @@ class TFResNet(TFModel):
         return output_tensor
 
     def bn_conv3d(self, input_tensor, filters, kernel_size, name,
-                  strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):
+                  strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):  # pylint disable=too-many-arguments
         """ Apply 3D convolution operation with batch normalization to input tensor.
 
         Args:
