@@ -18,7 +18,23 @@ class TFResNet(TFModel):
     @staticmethod
     def conv3d(input_tensor, filters, kernel_size, name,
                strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
-        """ 3D convolution layer. """
+        """ Apply 3D convolution operation to input tensor.
+
+        Args:
+        - input_tensor: tf.Variable, input tensor;
+        - filters: int, number of filters in the ouput tensor;
+        - kernel_size: tuple(int, int, int), size of kernel
+          of 3D convolution operation along 3 dimensions;
+        - name: str, name of the layer that will be used as an argument of tf.variable_scope;
+        - strides: tuple(int, int, int), size of strides along 3 dimensions;
+        - padding: str, padding mode, can be 'same' or 'valid';
+        - activation: tensorflow activation function that will be applied to
+        output tensor;
+        - use_bias: bool, whether use bias or not;
+
+        Returns:
+        - tf.Variable, output tensor;
+        """
         with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
@@ -31,7 +47,23 @@ class TFResNet(TFModel):
 
     def bn_conv3d(self, input_tensor, filters, kernel_size, name,
                   strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):
-        """ 3D convolution layer with batch normalization along last axis. """
+        """ Apply 3D convolution operation with batch normalization to input tensor.
+
+        Args:
+        - input_tensor: tf.Variable, input tensor;
+        - filters: int, number of filters in the ouput tensor;
+        - kernel_size: tuple(int, int, int), size of kernel
+          of 3D convolution operation along 3 dimensions;
+        - name: str, name of the layer that will be used as an argument of tf.variable_scope;
+        - strides: tuple(int, int, int), size of strides along 3 dimensions;
+        - padding: str, padding mode, can be 'same' or 'valid';
+        - activation: tensorflow activation function that will be applied to
+        output tensor;
+        - use_bias: bool, whether use bias or not;
+
+        Returns:
+        - tf.Variable, output tensor;
+        """
         with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
@@ -65,7 +97,14 @@ class TFResNet(TFModel):
         return output_tensor
 
     def conv_block(self, input_tensor, kernel_size, filters, name, strides=(2, 2, 2)):
-        """ A block that has a conv layer at shortcut. """
+        """ Convolutional block that has a conv layer as shortcut.
+
+        Args:
+        - input_tensor: tf.Variable, input tensor;
+        - kernel_size: tuple(int, int, int), size of kernel
+        of 3D convolution along 3 dimension of the middle layer;
+        - filetrs: tuple(int, int, int)
+        """
         filters1, filters2, filters3 = filters
 
         with tf.variable_scope(name):
