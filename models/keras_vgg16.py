@@ -93,6 +93,6 @@ class KerasVGG16(KerasModel):
         """ Initialize vgg16 model. """
         return cls.build_vgg16()
 
-    def compile(self, optimizer='adam', loss='binary_crossentropy'):
+    def compile(self, optimizer='adam', loss='binary_crossentropy', **kwargs):
         """ Compile vgg16 model. """
         super().compile(optimizer=optimizer, loss=loss)
