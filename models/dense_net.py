@@ -123,7 +123,8 @@ class DenseNet(TFModel):
     @model_scope
     def build_model(self):
         """ Build densenet model implemented via tensorflow. """
-        input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='input')
+        input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
+                                      dtype=tf.float32, name='input')
         y_true = tf.placeholder(shape=(None, 1), dtype=tf.float32, name='y_true')
 
         x = self.conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(5, 5, 5),
@@ -132,31 +133,20 @@ class DenseNet(TFModel):
         x = self.maxpool3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
                            padding='same', name='initial_pooling')
 
-        print(get_shape(x))
-
         x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
         x = self.transition_layer(x, filters=32, name='transition_layer_1')
-
-        print(get_shape(x))
 
         x = self.dense_block(x, filters=32, block_size=12, name='dense_block_2')
         x = self.transition_layer(x, filters=32, name='transition_layer_2')
 
-        print(get_shape(x))
-
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_3')
         x = self.transition_layer(x, filters=32, name='transition_layer_3')
 
-        print(get_shape(x))
 
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_4')
         x = self.transition_layer(x, filters=32, name='transition_layer_4')
 
-        print(get_shape(x))
-
         y_pred = self.global_averagepool3d(x, name='global_average_pool3d')
-
-        print(get_shape(y_pred))
 
         y_pred = tf.layers.dense(y_pred, units=1, name='dense32_1')
         y_pred = tf.nn.sigmoid(y_pred)
