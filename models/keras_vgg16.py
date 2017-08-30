@@ -2,7 +2,7 @@
 
 from functools import wraps
 from keras.models import Model
-from keras.layers import Input, Flatten, Dense
+from keras.layers import Input, Flatten
 from keras.layers import Conv3D, MaxPooling3D
 from keras.layers import Dropout
 from keras.layers import Dense, BatchNormalization
