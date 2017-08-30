@@ -454,7 +454,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
                         with open(decod_path, mode='rb') as file:
-                            decoder = file.read()
+                            decoder = cloudpickle.loads(file.read())
                     else:
                         decoder = lambda x: x
 
@@ -585,7 +585,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         for filename, data in data_items.items():
             ext = filename.split('.')[-1]
             if ext == 'blk':
-                await cls.encode_dump_array(data, folder, filename)
+                _ = await cls.encode_dump_array(data, folder, filename)
             elif ext == 'cpkl':
                 byted = cloudpickle.dumps(data)
                 async with aiofiles.open(os.path.join(folder, filename),
