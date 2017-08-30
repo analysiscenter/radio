@@ -48,6 +48,19 @@ class TFModel(object):
 
         return instance
 
+    def build_model(self, *args, **kwargs):
+        """ Build tensorflow model.
+
+        This method must be implemented in ancestor class:
+        inside it tensorflow model must be build,
+        self.y_true, self.input, self.y_pred, self.loss attributes
+        must be set as tensorflow tensors;
+
+        NOTE: this method will be automatically called when compile method
+        is called by user;
+        """
+        raise NotImplementedError()
+
     def add_to_collection(self, tensor, alias=None):
         """ Add tensor to inner collection. """
         tensor_list = tensor if isinstance(tensor, (list, tuple)) else [tensor]
