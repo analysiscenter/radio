@@ -757,7 +757,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil')
-    def random_rotate(self, max_degree, axes=(1, 2)):
+    def random_rotate(self, max_degree, axes=(1, 2), **kwargs):
         """ Perform rotation of 3D image in batch on random angle.
 
         Args:
