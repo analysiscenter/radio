@@ -117,6 +117,7 @@ class DenseNet(TFModel):
 
     @model_scope
     def build_model(self):
+        """ Build densenet model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='input')
         y_true = tf.placeholder(shape=(None, 1), dtype=tf.float32, name='y_true')
 
