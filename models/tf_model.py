@@ -30,7 +30,7 @@ class TFModel(object):
         graph = tf.Graph()
         instance.graph = graph
         with graph.as_default():  # pylint disable=not-context-manager
-            with tf.variable_scope(name):
+            with tf.variable_scope(name):  # pylint disable=not-context-manager
                 instance.name = name
                 instance.tensor_names = {}
                 instance.global_step = 3
