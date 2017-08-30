@@ -3,6 +3,7 @@ lung-cancer on CT-scans
 """
 # from .models_batch import CTImagesModels
 from .dense_net import DenseNet
+from .tf_resnet import TFResNet
 from .keras_unet import KerasUnet
 from .keras_resnet import KerasResNet
 from .keras_vgg16 import KerasVGG16
