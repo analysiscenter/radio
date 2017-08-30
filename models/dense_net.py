@@ -1,6 +1,5 @@
 """ Contains DenseNet model class. """
 
-import numpy as np
 import tensorflow as tf
 
 from .tf_model import TFModel
