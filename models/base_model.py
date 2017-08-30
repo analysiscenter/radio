@@ -23,10 +23,6 @@ class BaseModel(object):
         """ Train model on batch. """
         raise NotImplementedError
 
-    def test_on_batch(self, x, y_true, **kwargs):
-        """ Test model on batch. """
-        raise NotImplementedError
-
     def predict_on_batch(self, x, **kwargs):
         """ Predict on batch. """
         raise NotImplementedError
