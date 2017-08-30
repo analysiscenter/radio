@@ -46,6 +46,7 @@ class DenseNet(TFModel):
 
     @staticmethod
     def global_averagepool3d(input_tensor, name):
+        """ Global average pooling 3d layer. """
         with tf.variable_scope(name):
             output_layer = tf.reduce_mean(input_tensor, axis=(1, 2, 3))
         return output_layer
@@ -53,6 +54,7 @@ class DenseNet(TFModel):
     @staticmethod
     def conv3d(input_tensor, filters, kernel_size, name,
                strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
+        """ 3D convolution layer. """
         with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                           kernel_size=kernel_size,
@@ -82,6 +84,7 @@ class DenseNet(TFModel):
         return tf.layers.dropout(input_tensor, rate=rate, training=self.learning_phase)
 
     def dense_block(self, input_tensor, filters, block_size, name):
+        """ Dense block which is used as a build block of densenet model. """
         with tf.variable_scope(name):
             previous_input = tf.identity(input_tensor)
             for i in range(block_size):
@@ -103,6 +106,7 @@ class DenseNet(TFModel):
         return previous_input
 
     def transition_layer(self, input_tensor, filters, name):
+        """ Transition layer which is used as a build block of densenet model. """
         with tf.variable_scope(name):
             output_tensor = self.bn_conv3d(input_tensor, filters=filters,
                                            kernel_size=(1, 1, 1),
