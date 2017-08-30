@@ -6,6 +6,15 @@ from .tf_model import TFModel
 from .tf_model import model_scope
 
 
+def get_shape(x):
+    return x.get_shape().as_list()
+
+
+def log_loss(y_true, y_pred, epsilon=10e-7):
+    return - tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
+                            + (1 - y_true) * tf.log(1 - y_pred + epsilon))
+
+
 class DenseNet(TFModel):
     @staticmethod
     def maxpool3d(input_tensor, pool_size, strides, name, padding='same'):
@@ -144,6 +153,7 @@ class DenseNet(TFModel):
         self.input = input_tensor
         self.y_true = y_true
         self.y_pred = y_pred
+        self.loss = log_loss(self.y_true, self.y_pred)
 
         self.add_to_collection((self.input, self.y_true, self.y_pred, self.loss))
         return self
