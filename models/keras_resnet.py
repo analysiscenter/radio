@@ -4,7 +4,6 @@ from keras.models import load_model
 from keras.models import Model as Model
 
 from keras.layers import Input
-from keras.models import load_model
 from keras.layers import Dense, Dropout
 from keras.layers import Activation
 from keras.layers import Flatten
