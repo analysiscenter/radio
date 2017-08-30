@@ -21,7 +21,7 @@ def model_scope(method):
     return wrapped
 
 
-class TFModel(object):
+class TFModel(BaseModel):
     """ Base class for all tensorflow models. """
 
     def __new__(cls, name, *args, **kwargs):
