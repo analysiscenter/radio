@@ -6,7 +6,7 @@ import numpy as np
 from numba import njit
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
-from .rotate import rotate_3D
+from .rotate import rotate_3D, random_rotate_3D
 from ..dataset import action, any_action_failed, DatasetIndex, inbatch_parallel
 from ..dataset import model
 
