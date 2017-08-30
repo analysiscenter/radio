@@ -4,7 +4,7 @@ import numpy as np
 from keras.models import Model
 from keras.layers import Input, merge, Flatten, Dense
 from keras.layers import Conv3D, MaxPooling3D
-from keras.layers import Dropout, Lambda, Activation
+from keras.layers import Dropout
 from keras.layers import Flatten, Input, Activation, Dense, BatchNormalization
 
 from .keras_model import KerasModel
