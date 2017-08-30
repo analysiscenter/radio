@@ -525,8 +525,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         return linear
 
-    @staticmethod
-    async def encode_dump_array(data, folder, filename):
+    @classmethod
+    async def encode_dump_array(cls, data, folder, filename):
         """ Encode an ndarray to int8, blosc-pack it and dump data along with
                 the decoder into supplied folder
 
@@ -545,10 +545,10 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         # encode the data
         data_range = (data.min(), data.max())
         i8_range = (-128, 127)
-        encoded = np.rint(self.get_linear(data_range, i8_range)(data)).astype(np.int8)
+        encoded = np.rint(cls.get_linear(data_range, i8_range)(data)).astype(np.int8)
 
         # get the decoder
-        decoder = self.get_linear(i8_range, data_range)
+        decoder = cls.get_linear(i8_range, data_range)
 
         # dump encoded data and decoder
         byted = (blosc.pack_array(encoded), cloudpickle.dumps(decoder))
@@ -559,8 +559,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
                 _ = await file.write(btd)
 
 
-    @staticmethod
-    async def dump_data(data_items, folder):
+    @classmethod
+    async def dump_data(cls, data_items, folder):
         """ Dump data that is contained in data_items on disk in
                 specified folder
 
@@ -585,7 +585,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         for filename, data in data_items.items():
             ext = filename.split('.')[-1]
             if ext == 'blk':
-                await self.encode_dump_array(data, folder, filename)
+                await cls.encode_dump_array(data, folder, filename)
             elif ext == 'cpkl':
                 byted = cloudpickle.dumps(data)
                 async with aiofiles.open(os.path.join(folder, filename),
