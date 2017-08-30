@@ -644,7 +644,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def central_crop(self, crop_size):
+    def central_crop(self, crop_size, crop_mask=False):
         """ Make crop with given size from center of images.
 
         Args:
