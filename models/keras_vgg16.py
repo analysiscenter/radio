@@ -5,7 +5,7 @@ from keras.models import Model
 from keras.layers import Input, Flatten, Dense
 from keras.layers import Conv3D, MaxPooling3D
 from keras.layers import Dropout
-from keras.layers import Flatten, Input, Activation, Dense, BatchNormalization
+from keras.layers import Activation, Dense, BatchNormalization
 
 from .keras_model import KerasModel
 
