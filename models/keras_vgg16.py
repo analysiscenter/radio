@@ -1,3 +1,6 @@
+""" Contains implementation of VGG16 architecture in keras. """
+
+
 from keras.models import Model
 from keras.layers import Input, Flatten, Dense
 from keras.layers import Conv3D, MaxPooling3D
