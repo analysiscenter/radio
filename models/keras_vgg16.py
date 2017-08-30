@@ -1,7 +1,6 @@
 import os
 import sys
 import numpy as np
-import keras
 from keras.models import Model
 from keras.layers import Input, merge, Flatten, Dense
 from keras.layers import Conv3D, MaxPooling3D
