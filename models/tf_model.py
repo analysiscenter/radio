@@ -12,6 +12,7 @@ def model_scope(method):
     """ Wrap method of TFModel to apply all ops in context of model's graph and scope. """
     @wraps(method)
     def wrapped(self, *args, **kwargs):
+        """ Wrapped method. """
         with self.graph.as_default():
             with tf.variable_scope(self.name):
                 result = method(self, *args, **kwargs)
