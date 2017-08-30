@@ -133,7 +133,7 @@ class TFResNet(TFModel):
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='input')
         y_true = tf.placeholder(shape=(None, 1), dtype=tf.float32, name='y_true')
 
-        x = self.bn_conv3d(input_tensor, filters=32,kernel_size=(7, 3, 3),
+        x = self.bn_conv3d(input_tensor, filters=32, kernel_size=(7, 3, 3),
                         name='initial_conv', padding='same')
 
         x = tf.layers.max_pooling3d(x, pool_size=(3, 3, 3), strides=(2, 2, 2),
