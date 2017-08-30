@@ -11,7 +11,6 @@ from keras.layers import Activation
 from keras.layers import Flatten
 from keras.layers import Conv3D
 from keras.layers import BatchNormalization
-from keras import backend as K
 
 from .keras_model import KerasModel
 
