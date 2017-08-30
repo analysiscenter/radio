@@ -741,7 +741,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil')
-    def rotate(self, degree, axes=(1, 2)):
+    def rotate(self, degree, axes=(1, 2), **kwargs):
         """ Rotate 3D images in batch on specific angle in plane.
 
         Args:
