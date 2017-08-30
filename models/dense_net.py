@@ -96,10 +96,10 @@ class DenseNet(TFModel):
         """
         with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
-                                          kernel_size=kernel_size,
-                                          strides=strides,
-                                          use_bias=use_bias,
-                                          name='conv3d', padding=padding)
+                                             kernel_size=kernel_size,
+                                             strides=strides,
+                                             use_bias=use_bias,
+                                             name='conv3d', padding=padding)
 
             output_tensor = activation(output_tensor)
         return output_tensor
