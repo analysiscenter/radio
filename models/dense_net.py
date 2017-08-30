@@ -2,7 +2,6 @@
 
 import numpy as np
 import tensorflow as tf
-from collections import namedtuple
 
 from .tf_model import TFModel
 from .tf_model import model_scope
