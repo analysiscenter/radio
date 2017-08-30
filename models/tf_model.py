@@ -38,7 +38,7 @@ class TFModel(object):
                 instance._sess = None
                 instance.train_op = None
                 instance.loss = None
-                instance.x = None
+                instance.input = None
                 instance.y_pred = None
                 instance.y_true = None
 
