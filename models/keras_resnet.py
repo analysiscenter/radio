@@ -2,7 +2,6 @@
 
 import keras
 from keras import layers
-from keras.models import load_model
 from keras.models import Model as Model
 
 from keras.layers import Input
