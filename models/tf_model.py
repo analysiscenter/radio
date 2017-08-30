@@ -116,12 +116,12 @@ class TFModel(object):
         return input_tensor.get_shape().as_list()
 
     def train_on_batch(self, x, y_true, **kwargs):
-        feed_dict = {self.x: x, self.y_true: y_true, self.learning_phase: True}
+        feed_dict = {self.input: x, self.y_true: y_true, self.learning_phase: True}
         _, loss, y_pred = self.sess.run([self.train_op, self.loss, self.y_pred], feed_dict=feed_dict)
 
     def predict_on_batch(self, x, **kwargs):
-        feed_dict = {self.x: x, self.learning_phase: False}
-        _, y_pred = self.sess.run([self.train_op, self.y_pred], feed_dict=feed_dict)
+        feed_dict = {self.input: x, self.learning_phase: False}
+        y_pred = self.sess.run([self.y_pred], feed_dict=feed_dict)[0]
         return y_pred
 
     @model_scope
