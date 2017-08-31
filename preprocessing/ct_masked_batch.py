@@ -613,7 +613,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return random_rotate_3D
 
     @action
-    def rotate(self, degree, axes=(1, 2), rotate_mask=True):
+    def rotate(self, degree, axes=(1, 2), rotate_mask=True, **kwargs):
         """ Rotate 3D images and masks in batch.
 
         Args:
@@ -627,7 +627,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def random_rotate(self, max_degree, axes, rotate_mask=True):
+    def random_rotate(self, max_degree, axes, rotate_mask=True, **kwargs):
         """ Rotate 3D images and masks in batch on random angle.
 
         Args:
