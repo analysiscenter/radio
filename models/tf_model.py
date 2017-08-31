@@ -1,3 +1,4 @@
+# pylint disable=too-many-arguments
 """ Contains base class for all tensorflow models. """
 
 import os
