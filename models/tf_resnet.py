@@ -35,7 +35,7 @@ class TFResNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):
+        with tf.variable_scope(name):  # pylint disable=not-context-manager
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
                                              strides=strides,
