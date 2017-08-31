@@ -1,4 +1,5 @@
 # pylint disable=too-many-arguments
+# pylint disable=not-context-manager
 """ Contains base class for all tensorflow models. """
 
 import os
@@ -15,7 +16,7 @@ def model_scope(method):
     @wraps(method)
     def wrapped(self, *args, **kwargs):
         """ Wrapped method. """
-        with self.graph.as_default():  # pylint disable=not-context-manager
+        with self.graph.as_default():
             with tf.variable_scope(self.name):
                 result = method(self, *args, **kwargs)
         return result
