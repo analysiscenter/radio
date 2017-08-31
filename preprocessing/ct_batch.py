@@ -825,7 +825,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return self
 
     @action
-    def central_crop(self, crop_size):
+    def central_crop(self, crop_size, **kwargs):
         """ Make crop with given size from center of images.
 
         Args:
