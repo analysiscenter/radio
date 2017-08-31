@@ -41,7 +41,7 @@ class TFModel(BaseModel):
         self.graph = tf.Graph()
         with self.graph.as_default():
             with tf.variable_scope(self.name):
-                self.tensor_name = {}
+                self.tensor_names = {}
                 self.global_step = 0
 
                 self.learning_phase = tf.placeholder(tf.bool)
