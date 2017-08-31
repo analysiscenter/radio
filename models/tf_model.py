@@ -50,6 +50,7 @@ class TFModel(BaseModel):
                 self.sess = None
                 self.train_op = None
                 self.loss = None
+                self.input = None
                 self.y_pred = None
                 self.y_true = None
 
