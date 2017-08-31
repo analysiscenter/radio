@@ -637,7 +637,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         super().random_rotate(max_degree=max_degree, axes=axes)
         if rotate_mask and self.masks is not None:
-            self.rotate_masks(max_degree=max_degree, axes=axes)
+            self.random_rotate_masks(max_degree=max_degree, axes=axes)
         return self
 
     @action
