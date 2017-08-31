@@ -65,4 +65,3 @@ class KerasModel(BaseModel):
         with open(os.path.join(dir_path, 'model.json'), 'w') as f:
             f.write(self.model.to_json())
         self.model.save_weights(os.path.join(dir_path, 'model.h5'))
-        self.log.info("Saved %s model in %s" % (self.name, dir_path))
