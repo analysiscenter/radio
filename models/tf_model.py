@@ -155,7 +155,7 @@ class TFModel(BaseModel):
         return self
 
     @model_scope
-    def compile(self, optimizer):
+    def compile(self, optimizer, *args, **kwargs):
         """ Compile tensorflow model. """
         self.build_model()
 
