@@ -35,12 +35,6 @@ class KerasModel(BaseModel):
         """ Initialize inner keras model. """
         return None
 
-    def add_log_file(self, filename):
-        """ Add file handler to logger. """
-        file_handler = logging.FileHandler(filename)
-        file_handler.setLevel(logging.DEBUG)
-        self.log.addHandler(file_handler)
-
     @wraps(keras.models.Model.compile)
     def compile(self, *args, **kwargs):
         """ Compile keras model. """
