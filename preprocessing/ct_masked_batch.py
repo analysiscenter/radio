@@ -672,7 +672,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 cropped_msk = msk[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
                                   halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
                                   halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
-                cropped_masks.append(cropped_masks)
+                cropped_masks.append(cropped_msk)
 
         self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
