@@ -35,11 +35,6 @@ class KerasModel(BaseModel):
         """ Initialize inner keras model. """
         return None
 
-    @property
-    def logger(self):
-        """ Get logger for this model. """
-        return self.log
-
     def add_log_file(self, filename):
         """ Add file handler to logger. """
         file_handler = logging.FileHandler(filename)
