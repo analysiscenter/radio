@@ -46,7 +46,7 @@ class TFResNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
                                              strides=strides,
@@ -57,7 +57,7 @@ class TFResNet(TFModel):
         return output_tensor
 
     def bn_conv3d(self, input_tensor, filters, kernel_size, name,
-                  strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):  # pylint disable=too-many-arguments
+                  strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):
         """ Apply 3D convolution operation with batch normalization to input tensor.
 
         Args:
@@ -75,7 +75,7 @@ class TFResNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
                                              strides=strides,
@@ -91,7 +91,7 @@ class TFResNet(TFModel):
         """ The identity block is the block that has no conv layer at shortcut. """
         filters1, filters2, filters3 = filters
 
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             x = self.bn_conv3d(input_tensor, filters1, (1, 1, 1),
                                name='bn_conv_a', padding='same',
                                activation=tf.nn.relu)
