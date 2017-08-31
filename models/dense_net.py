@@ -39,7 +39,7 @@ class DenseNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             out_tensor = tf.layers.max_pooling3d(input_tensor,
                                                  pool_size=pool_size,
                                                  strides=strides,
@@ -60,7 +60,7 @@ class DenseNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             out_tensor = tf.layers.average_pooling3d(input_tensor,
                                                      pool_size=pool_size,
                                                      strides=strides,
@@ -79,7 +79,7 @@ class DenseNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             output_layer = tf.reduce_mean(input_tensor, axis=(1, 2, 3))
         return output_layer
 
@@ -103,7 +103,7 @@ class DenseNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
                                              strides=strides,
@@ -132,7 +132,7 @@ class DenseNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
                                              kernel_size=kernel_size,
                                              strides=strides,
@@ -184,7 +184,7 @@ class DenseNet(TFModel):
         Returns:
         - tf.Variable, output_tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             previous_input = tf.identity(input_tensor)
             for i in range(block_size):
                 subblock_name = 'sub_block_' + str(i)
@@ -215,7 +215,7 @@ class DenseNet(TFModel):
         Returns:
         - tf.Variable, output tensor;
         """
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             output_tensor = self.bn_conv3d(input_tensor, filters=filters,
                                            kernel_size=(1, 1, 1),
                                            strides=(1, 1, 1),
