@@ -163,7 +163,5 @@ class KerasUnet(KerasModel):
 
     def load_model(self, path):
         """ Load weights and description of keras model. """
-        self.log.info("Loading %s model..." % self.name)
         self.model = keras.models.load_model(path, custom_objects={'dice_coef':dice_coef,
                                                                    'dice_coef_loss':dice_coef_loss})
-        self.log.info("Loaded model from %s" % path)
