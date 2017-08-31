@@ -1,6 +1,5 @@
 """Child class of CTImagesBatch that incorporates nn-models """
 
-import numpy as np
 import tensorflow as tf
 
 from ..preprocessing import CTImagesMaskedBatch
