@@ -160,7 +160,7 @@ class KerasResNet(KerasModel):
         return model
 
     @classmethod
-    def initialize_model(cls, dropout_rate, input_tensor):
+    def initialize_model(cls, dropout_rate, input_tensor, *args, **kwargs):
         """ Initialize ResNet model. """
         # resnet_model.compile(optimizer='rmsprop', loss='binary_crossentropy')
         return cls.build_resnet(input_tensor, dropout_rate)
