@@ -53,12 +53,10 @@ class KerasModel(BaseModel):
         if not os.path.exists(dir_path):
             raise ValueError("Directory %s does not exists!" % dir_path)
 
-        self.log.info("Loading keras model...")
         with open(os.path.join(dir_path, 'model.json'), 'r') as f:
             model = model_from_json(f.read())
         self.model = model
         self.model.load_weights(os.path.join(dir_path, 'model.h5'))
-        self.log.info("Loaded %s model from %s" % (self.name, dir_path))
 
     def save(self, dir_path, *args, **kwargs):
         """ Save model. """
