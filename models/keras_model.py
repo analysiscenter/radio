@@ -23,7 +23,6 @@ class KerasModel(BaseModel):
     def __init__(self, name, *args, **kwargs):
         """ Initialize keras model. """
         super().__init__(name, *args, **kwargs)
-        self.log = logging.getLogger(name)
         self.name = name
 
         self.model = self.initialize_model(**kwargs)  # pylint: disable=assignment-from-none
