@@ -25,29 +25,33 @@ def model_scope(method):
 class TFModel(BaseModel):
     """ Base class for all tensorflow models. """
 
-    def __new__(cls, name, *args, **kwargs):
-        """ Add necessary attributes to object of tensorflow model. """
-        instance = super(TFModel, cls).__new__(cls)
+    def __init__(self, name, *args, **kwargs):
+        """ Initialize tensorflow model.
 
-        graph = tf.Graph()
-        instance.graph = graph
-        with graph.as_default():  # pylint disable=not-context-manager
-            with tf.variable_scope(name):  # pylint disable=not-context-manager
-                instance.name = name
-                instance.tensor_names = {}
-                instance.global_step = 3
+        1) Add self.graph = tf.Graph();
+        2) Add self.name = name which will be used as root variable scope of model;
+        3) Add self.global_step = 0;
+        4) Add self.tensor_names = {};
+        5) Add self.learning_phase = tf.placeholder(tf.bool);
+        6) Initalize self.sess, self.train_op, self.y_pred,
+        self.y_true, self.loss, self.input with None;
+        """
+        self.name = name
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            with tf.variable_scope(self.name):
+                self.tensor_name = {}
+                self.global_step = 0
 
-                instance.learning_phase = tf.placeholder(tf.bool)
-                instance.add_to_collection(instance.learning_phase, 'learning_phase')
+                self.learning_phase = tf.placeholder(tf.bool)
+                self.add_to_collection(self.learning_phase, 'learning_phase')
 
-                instance.sess = None
-                instance.train_op = None
-                instance.loss = None
-                instance.input = None
-                instance.y_pred = None
-                instance.y_true = None
+                self.sess = None
+                self.train_op = None
+                self.loss = None
+                self.y_pred = None
+                self.y_true = None
 
-        return instance
 
     def build_model(self, *args, **kwargs):
         """ Build tensorflow model.
