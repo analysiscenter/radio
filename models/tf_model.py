@@ -37,7 +37,7 @@ class TFModel(BaseModel):
         6) Initalize self.sess, self.train_op, self.y_pred,
         self.y_true, self.loss, self.input with None;
         """
-        self.name = name
+        super().__init__(name, *args, **kwargs)
         self.graph = tf.Graph()
         with self.graph.as_default():
             with tf.variable_scope(self.name):
