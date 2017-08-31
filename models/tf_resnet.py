@@ -8,7 +8,16 @@ from .tf_model import model_scope
 
 
 def log_loss(y_true, y_pred, epsilon=10e-7):
-    """ Tensorflow implementation of log_loss. """
+    """ Log loss implemented in tensorflow.
+
+    Args:
+    - y_true: tf.Variable, true labels;
+    - y_pred: tf.Variable, predicted logits;
+    - epsilon: float, epsilon for avoiding computing log(0);
+
+    Returns:
+    - tf.Variable, log_loss;
+    """
     return - tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
                             + (1 - y_true) * tf.log(1 - y_pred + epsilon))
 
