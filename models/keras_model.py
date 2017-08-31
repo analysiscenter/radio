@@ -38,9 +38,7 @@ class KerasModel(BaseModel):
     @wraps(keras.models.Model.compile)
     def compile(self, *args, **kwargs):
         """ Compile keras model. """
-        self.log.info("Compiling keras model...")
         self.model.compile(*args, **kwargs)
-        self.log.info('Model was compiled')
 
     def train_on_batch(self, x, y_true, **kwargs):
         """ Train model on batch. """
