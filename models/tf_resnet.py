@@ -1,4 +1,5 @@
 # pylint disable=too-many-arguments
+# pylint disable=not-context-manager
 """ Contains TFResNet model class. """
 
 import tensorflow as tf
@@ -117,7 +118,7 @@ class TFResNet(TFModel):
         """
         filters1, filters2, filters3 = filters
 
-        with tf.variable_scope(name):  # pylint disable=not-context-manager
+        with tf.variable_scope(name):
             x = self.bn_conv3d(input_tensor, filters1, (1, 1, 1),
                                name='bn_conv_a', padding='same',
                                activation=tf.nn.relu, strides=strides)
