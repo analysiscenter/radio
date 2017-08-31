@@ -1,3 +1,4 @@
+# pylint disable=too-many-arguments
 """ Contains TFResNet model class. """
 
 import tensorflow as tf
