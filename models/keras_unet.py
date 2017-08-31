@@ -157,7 +157,7 @@ class KerasUnet(KerasModel):
         return model
 
     @classmethod
-    def initialize_model(cls):
+    def initialize_model(cls, *args, **kwargs):
         """ Initialize unet mode. """
         return cls.build_unet()
 
