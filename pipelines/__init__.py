@@ -1,2 +1,2 @@
-""" Pipelines cubmodule. """
-from .ppl import dump_cancerous
+""" Pipelines submodule. """
+from .ppl import split_dump_lunaset
