@@ -169,3 +169,64 @@ class TFModel(BaseModel):
         self.sess.run(tf.global_variables_initializer())
         self.train_op = train_op
         return self
+
+    @staticmethod
+    def conv3d(input_tensor, filters, kernel_size, name,
+               strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
+        """ Apply 3D convolution operation to input tensor.
+
+        Args:
+        - input_tensor: tf.Variable, input tensor;
+        - filters: int, number of filters in the ouput tensor;
+        - kernel_size: tuple(int, int, int), size of kernel
+          of 3D convolution operation along 3 dimensions;
+        - name: str, name of the layer that will be used as an argument of tf.variable_scope;
+        - strides: tuple(int, int, int), size of strides along 3 dimensions;
+        - padding: str, padding mode, can be 'same' or 'valid';
+        - activation: tensorflow activation function that will be applied to
+        output tensor;
+        - use_bias: bool, whether use bias or not;
+
+        Returns:
+        - tf.Variable, output tensor;
+        """
+        with tf.variable_scope(name):
+            output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
+                                             kernel_size=kernel_size,
+                                             strides=strides,
+                                             use_bias=use_bias,
+                                             name='conv3d', padding=padding)
+
+            output_tensor = activation(output_tensor)
+        return output_tensor
+
+    def bn_conv3d(self, input_tensor, filters, kernel_size, name,
+                  strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=False):
+        """ Apply 3D convolution operation with batch normalization to input tensor.
+
+        Args:
+        - input_tensor: tf.Variable, input tensor;
+        - filters: int, number of filters in the ouput tensor;
+        - kernel_size: tuple(int, int, int), size of kernel
+          of 3D convolution operation along 3 dimensions;
+        - name: str, name of the layer that will be used as an argument of tf.variable_scope;
+        - strides: tuple(int, int, int), size of strides along 3 dimensions;
+        - padding: str, padding mode, can be 'same' or 'valid';
+        - activation: tensorflow activation function that will be applied to
+        output tensor;
+        - use_bias: bool, whether use bias or not;
+
+        Returns:
+        - tf.Variable, output tensor;
+        """
+        with tf.variable_scope(name):
+            output_tensor = tf.layers.conv3d(input_tensor, filters=filters,
+                                             kernel_size=kernel_size,
+                                             strides=strides,
+                                             use_bias=use_bias,
+                                             name='conv3d', padding=padding)
+
+            output_tensor = tf.layers.batch_normalization(output_tensor, axis=-1,
+                                                          training=self.learning_phase)
+            output_tensor = activation(output_tensor)
+        return output_tensor
