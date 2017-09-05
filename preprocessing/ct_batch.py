@@ -958,7 +958,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         Example:
             batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
         """
-
         # trimming and scaling to [0, 1]
         self.images = (self.images - min_hu) / (max_hu - min_hu)
         self.images[self.images > 1] = 1.
