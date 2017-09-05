@@ -781,7 +781,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - self, uncahnged CTImagesMaskedBatch;
         """
         _model = self.get_model_by_name(model_name)
-        x, _ = self.unpack_data(y_component='no_y', dim_ordering=dim_ordering)
 
         patches_arr = self.get_patches(patch_shape=crop_shape, stride=strides, padding='reflect')
         if dim_ordering == 'channels_first':
