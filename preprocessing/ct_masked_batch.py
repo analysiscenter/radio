@@ -10,7 +10,7 @@ from .mask import make_mask_numba
 from .rotate import rotate_3D, random_rotate_3D
 from .crop import make_central_crop
 from ..dataset import action, any_action_failed, DatasetIndex, inbatch_parallel
-from ..dataset import model
+# from ..dataset import model
 
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
