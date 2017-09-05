@@ -179,18 +179,18 @@ class DenseNet(TFModel):
         x = self.max_pool3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
                             padding='same', name='initial_pooling')
 
-        x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
-        x = self.transition_layer(x, filters=32, name='transition_layer_1')
+        x = self.dense_block(x, filters=16, block_size=6, name='dense_block_1')
+        x = self.transition_layer(x, filters=16, name='transition_layer_1')
 
-        x = self.dense_block(x, filters=32, block_size=12, name='dense_block_2')
-        x = self.transition_layer(x, filters=32, name='transition_layer_2')
+        x = self.dense_block(x, filters=16, block_size=12, name='dense_block_2')
+        x = self.transition_layer(x, filters=16, name='transition_layer_2')
 
-        x = self.dense_block(x, filters=32, block_size=32, name='dense_block_3')
-        x = self.transition_layer(x, filters=32, name='transition_layer_3')
+        x = self.dense_block(x, filters=16, block_size=32, name='dense_block_3')
+        x = self.transition_layer(x, filters=16, name='transition_layer_3')
 
 
-        x = self.dense_block(x, filters=32, block_size=32, name='dense_block_4')
-        x = self.transition_layer(x, filters=32, name='transition_layer_4')
+        x = self.dense_block(x, filters=16, block_size=32, name='dense_block_4')
+        x = self.transition_layer(x, filters=16, name='transition_layer_4')
 
         y_pred = self.global_average_pool3d(x, name='global_average_pool3d')
 
