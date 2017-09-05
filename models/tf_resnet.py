@@ -1,5 +1,6 @@
 # pylint: disable=too-many-arguments
 # pylint: disable=not-context-manager
+# pylint: disable=duplicate-code
 """ Contains TFResNet model class. """
 
 import tensorflow as tf
