@@ -18,6 +18,7 @@ from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
+from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
 from .rotate import rotate_3D, random_rotate_3D
 
@@ -833,20 +834,14 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         - crop_size: tuple(int, int, int), size of crop;
         """
         crop_size = np.asarray(crop_size)
-        crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
         img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
         if any(np.any(shape < crop_size) for shape in img_shapes):
             raise ValueError("Crop size must be smaller than size of inner 3D images")
 
         cropped_images = []
         for i in range(len(self)):
-            img = self.get(i, 'images')
-            halfsize = np.rint(np.asarray(img.shape) / 2).astype(np.int)
-            cropped_img = img[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
-                              halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
-                              halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
-
-            cropped_images.append(cropped_img)
+            image = self.get(i, 'images')
+            cropped_images.append(make_central_crop(image, crop_size))
 
         self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
