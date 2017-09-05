@@ -660,20 +660,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         cropped_images = []
         cropped_masks = []
         for i in range(len(self)):
-            img = self.get(i, 'images')
-            halfsize = np.rint(np.asarray(img.shape) / 2).astype(np.int)
-            cropped_img = img[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
-                              halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
-                              halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
-
-            cropped_images.append(cropped_img)
+            image = self.get(i, 'images')
+            cropped_images.append(make_central_crop(image, crop_size))
 
             if crop_mask and self.masks is not None:
-                msk = self.get(i, 'masks')
-                cropped_msk = msk[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
-                                  halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
-                                  halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
-                cropped_masks.append(cropped_msk)
+                mask = self.get(i, 'masks')
+                cropped_masks.append(make_central_crop(mask, crop_size))
 
         self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
