@@ -16,7 +16,7 @@ def make_central_crop(image, crop_size):
     Returns:
     - ndarray, 3D crop of source image;
     """
-    crop_size = np.asrray(crop_size)
+    crop_size = np.asarray(crop_size)
     crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
     halfsize = np.rint(np.asarray(image.shape) / 2).astype(np.int)
     cropped_img = image[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
