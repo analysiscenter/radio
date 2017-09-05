@@ -3,7 +3,6 @@
 import numpy as np
 import keras
 from keras.models import Model
-from keras.models import load_model
 from keras.layers import (Input,
                           concatenate,
                           Conv3D,
