@@ -94,9 +94,6 @@ class KerasResNet(KerasModel):
         self.input_tensor = Input(shape=(32, 64, 64, 1))
         super().__init__(name, dropout_rate=dropout_rate, input_tensor=self.input_tensor, **kwargs)
 
-    def compile(self, optimizer='adam', loss='binary_crossentropy'):
-        super().compile(optimizer=optimizer, loss=loss)
-
     @staticmethod
     def build_resnet(input_tensor, dropout_rate):
         """ Build resnet model implemented in keras.
