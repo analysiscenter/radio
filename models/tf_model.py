@@ -124,7 +124,7 @@ class TFModel(BaseModel):
     def train_on_batch(self, x, y_true, **kwargs):
         """ Train tensorflow model on batch data. """
         feed_dict = {self.input: x, self.y_true: y_true, self.learning_phase: True}
-        _, loss, y_pred = self.sess.run([self.train_op, self.loss, self.y_pred], feed_dict=feed_dict)
+        _ = self.sess.run([self.train_op], feed_dict=feed_dict)
 
     def predict_on_batch(self, x, **kwargs):
         """ Get prediction of tensorflow model on batch data. """
