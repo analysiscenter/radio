@@ -1,6 +1,7 @@
 """ Contains implementation of VGG16 architecture in keras. """
 
 from functools import wraps
+import keras
 from keras.models import Model
 from keras.layers import Input, Flatten
 from keras.layers import Conv3D, MaxPooling3D
