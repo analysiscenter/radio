@@ -846,7 +846,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
-        self.origin = self.origin + crop_halfsize * self.spacing
+        self.origin = self.origin + self.spacing * crop_halfsize
         return self
 
     def get_patches(self, patch_shape, stride, padding='edge', data_attr='images'):
