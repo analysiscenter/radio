@@ -1,3 +1,4 @@
+# pylint: disable=too-many-statements
 """ Contains KerasUnet model class. """
 
 import numpy as np
