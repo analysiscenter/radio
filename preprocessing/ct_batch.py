@@ -834,6 +834,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         - crop_size: tuple(int, int, int), size of crop;
         """
         crop_size = np.asarray(crop_size)
+        crop_halfsize = np.rint(crop_size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
         if any(np.any(shape < crop_size) for shape in img_shapes):
             raise ValueError("Crop size must be smaller than size of inner 3D images")
@@ -845,6 +846,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
+        self.origin = self.origin + crop_halfsize * self.spacing
         return self
 
     def get_patches(self, patch_shape, stride, padding='edge', data_attr='images'):
