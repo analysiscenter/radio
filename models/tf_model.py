@@ -1,4 +1,5 @@
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-instance-attributes
 # pylint: disable=not-context-manager
 """ Contains base class for all tensorflow models. """
 
