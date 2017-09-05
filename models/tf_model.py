@@ -39,6 +39,7 @@ class TFModel(BaseModel):
         self.y_true, self.loss, self.input with None;
         """
         super().__init__(name, *args, **kwargs)
+        self.name = name
         self.graph = tf.Graph()
         with self.graph.as_default():
             with tf.variable_scope(self.name):
