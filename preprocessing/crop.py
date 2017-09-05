@@ -3,7 +3,6 @@ import numpy as np
 from numba import njit
 
 
-@njit(nogil=True)
 def make_central_crop(image, crop_size):
     """ Make crop from from center of 3D image;
     This function returns crop from center of the source image(image argument)
