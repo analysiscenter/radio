@@ -5,6 +5,17 @@ from numba import njit
 
 @njit(nogil=True)
 def make_central_crop(image, crop_size):
+    """ Make crop from from center of 3D image;
+    This function returns crop from center of the source image(image argument)
+    with given size(crop_size argument).
+
+    Args:
+    - image: ndarray(l, k, j), source 3D image;
+    - crop_size: ndarray(3) or tuple(int, int, int) size of crop along three dimensions;
+
+    Returns:
+    - ndarray, 3D crop of source image;
+    """
     crop_size = np.asrray(crop_size)
     crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
     halfsize = np.rint(np.asarray(image.shape) / 2).astype(np.int)
