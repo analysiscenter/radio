@@ -8,9 +8,9 @@ def make_central_crop(image, crop_size):
     crop_size = np.asrray(crop_size)
     crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
     halfsize = np.rint(np.asarray(image.shape) / 2).astype(np.int)
-    cropped_img = img[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
-                      halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
-                      halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
+    cropped_img = image[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
+                        halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
+                        halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
     return cropped_img
 
 
