@@ -118,6 +118,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         super().__init__(index, *args, **kwargs)
         self.masks = None
         self.nodules = None
+        self.labels = None
 
     @property
     def components(self):
