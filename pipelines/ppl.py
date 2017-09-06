@@ -11,12 +11,12 @@ RESIZE_FILTER = PIL.Image.LANCZOS
 # define the number of times each cancerous nodule is dumped.
 # with this number of iterations, the whole luna-dataset will
 # produce approximately 115000 cancerous crops
-N_ITERS = 100
+N_ITERS = 100  # N_ITERS * (num_luna_nodules=1149) ~ 115000
 
 # these params ensure that the number of non-cancerous crops will also
 # be around 115000 (when run on the whole luna-dataset)
 RUN_BATCH_SIZE = 8
-NCANCER_BATCH_SIZE = 1030
+NCANCER_BATCH_SIZE = 1030 # NCANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
 
 
 def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=(32, 64, 64),
@@ -25,7 +25,7 @@ def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodu
             and random noncancerous crops in another.
 
     Args:
-        lunaset: dataset of luna scans.
+        lunaset: dataset of luna scans in default luna-format (.raw/mhd).
         dir_cancer: directory to dump cancerous crops in.
         dir_ncancer: directory to dump non-cancerous crops in.
         nodules_df: df with info about nodules' locations.
@@ -36,7 +36,7 @@ def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodu
             cancerous crops.
 
     Return:
-        resulting pipeline run in lazy-mode
+        resulting pipeline run in lazy-mode.
     """
     # set up all args
     args_load = dict(fmt='raw')
@@ -49,7 +49,7 @@ def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodu
 
     # define pipeline. Two separate tasks are performed at once, in one run:
     # 1) sampling and dumping of cancerous crops in wrapper-action sample_sump_cancerous
-    # 2) sampling and dumping of non-cancerous crops in separete actions
+    # 2) sampling and dumping of non-cancerous crops in separate actions
     pipeline = (lunaset.p
                 .load(**args_load)
                 .fetch_nodules_info(**args_fetch)
@@ -58,6 +58,36 @@ def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodu
                 .sample_dump_cancerous(**args_dump_cancer)   # sample and dump non-cancerous crops
                 .sample_nodules(**args_sample_ncancer)
                 .dump(**args_dump_ncancer)
+                .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
+               )
+
+    return pipeline
+
+def update_histo_by_lunaset(lunaset, nodules_df, histo):
+    """ Pipeline for updating histogram using info in luna-dataset.
+
+    Args:
+        lunaset: dataset of luna scans in default luna-format (.raw/mhd).
+        nodules_df: df with info about nodules' locations.
+        histo: 3d-histogram in almost np.histogram format, list [bins, edges];
+            (compare the latter with tuple (bins, edges) returned by np.histogram).
+    
+    Return:
+        resulting pipeline run in lazy-mode.
+    """
+    # set up all args
+    args_load = dict(fmt='raw')
+    args_fetch = dict(nodules_df=nodules_df)
+    args_unify_spacing = dict(spacing=SPACING, shape=USPACING_SHAPE, padding='reflect', resample=RESIZE_FILTER)
+    args_mask = dict()
+
+    # perform unify_spacing and call histo-updating action
+    pipeline = (lunaset.p
+                .load(**args_load)
+                .fetch_nodules_info(**args_fetch)
+                .unify_spacing(**args_unify_spacing)
+                .create_mask(**args_mask)
+                .update_histo(histo)
                 .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
                )
 
