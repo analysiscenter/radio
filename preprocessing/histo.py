@@ -55,8 +55,8 @@ def sample_ellipsoid_region(center, axes, mult_range, size):
         3d-array of shape = (size, 3) containing generated sample.
     """
     # generate uniform sample of polar and azimuthal angles
-    shifted_polar = np.random.uniform(low=-np.pi / 2, high=np.pi / 2, size=size)
-    azimuthal = np.random.uniform(low=-np.pi, high=np.pi, size=size)
+    shifted_polar = np.random.uniform(low=-np.pi / 2, high=np.pi / 2, size=(size, 1))
+    azimuthal = np.random.uniform(low=-np.pi, high=np.pi, size=(size, 1))
 
     # generate random multiplier and apply it to axes
     sample = np.asarray(axes).reshape(1, 3) * np.random.uniform(low=mult_range[0], high=mult_range[1], size=(size, 1))
