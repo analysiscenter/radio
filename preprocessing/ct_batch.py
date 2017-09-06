@@ -11,9 +11,9 @@ import blosc
 import dicom
 import SimpleITK as sitk
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex
 
-from .resize import resize_patient_numba
+from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
@@ -153,6 +153,147 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self._bounds = bounds if bounds is not None else np.array([], dtype='int')
         self.origin = origin if origin is not None else np.zeros((len(self), 3))
         self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
+
+    @classmethod
+    def split(cls, batch, batch_size):
+        """ Split batch in two batches of lens=(batch_size, len(batch) - batch_size)
+
+        Args:
+            batch: batch to be splitted
+            batch_size: len of first half. If batch_size >= len(batch), return None instead
+                of a second batch
+
+        Return:
+            (first_half, second_half)
+
+        NOTE: the method does not change the structure of batch.index. Indices of created
+            batches are simply subsets of batch.index.
+        """
+        if batch_size == 0:
+            return (None, batch)
+
+        if batch_size >= len(batch):
+            return (batch, None)
+
+        # form indices for both batches
+        size_first, _ = batch_size, len(batch) - batch_size
+        ix_first = batch.index.create_subset(batch.indices[:size_first])
+        ix_second = batch.index.create_subset(batch.indices[size_first:])
+
+        # init batches
+        batches = cls(ix_first), cls(ix_second)
+
+        # put non-None components in batch-parts
+        for batch_part in batches:
+            for component in batch.components:
+                if getattr(batch, component) is not None:
+                    comps = []
+                    for ix in batch_part.indices:
+                        # get component for a specific item defined by ix and put into the list
+                        comp_pos = batch.get_pos(None, component, ix)
+                        comp = getattr(batch, component)[comp_pos]
+                        comps.append(comp)
+
+                    # set the component for the whole batch-part
+                    source = np.concatenate(comps)
+                    setattr(batch_part, component, source)
+                else:
+                    setattr(batch_part, component, None)
+
+        # set _bounds attrs if filled in batch
+        if len(batch._bounds) >= 2:                                                                           # pylint: disable=protected-access
+            for batch_part in batches:
+                n_slices = []
+                for ix in batch_part.indices:
+                    ix_pos_initial = batch.index.get_pos(ix)
+                    n_slices.append(batch.upper_bounds[ix_pos_initial] - batch.lower_bounds[ix_pos_initial])
+
+                # update _bounds in new batches
+                batch_part._bounds = np.cumsum([0] + n_slices, dtype=np.int)                                  # pylint: disable=protected-access
+
+        return batches
+
+    @classmethod
+    def concat(cls, batches):
+        """ Concatenate several batches in one large batch. Assume that
+                the same components are filled in all supplied batches.
+
+        Args:
+            batches: sequence of batches to be concatenated
+
+        Return:
+            large batch with len = sum of lens of batches
+
+        NOTE: batches' index is dropped. New large batch has new np-arange
+            index
+        NOTE: None-entries or batches of len=0 can be included in the list of batches.
+            They are simply dropped
+        """
+        # leave only non-empty batches
+        batches = [batch for batch in batches if batch is not None]
+        batches = [batch for batch in batches if len(batch) > 0]
+
+        if len(batches) == 0:
+            return None
+
+        # create index for the large batch and init batch
+        ixbatch = DatasetIndex(np.arange(np.sum([len(batch) for batch in batches])))
+        large_batch = cls(ixbatch)
+
+        # set non-none components in the large batch
+        for component in batches[0].components:
+            comps = None
+            if getattr(batches[0], component) is not None:
+                comps = np.concatenate([getattr(batch, component) for batch in batches])
+            setattr(large_batch, component, comps)
+
+        # set _bounds-attr in large batch
+        n_slices = np.zeros(shape=len(large_batch))
+        ctr = 0
+        for batch in batches:
+            n_slices[ctr: ctr + len(batch)] = batch.upper_bounds - batch.lower_bounds
+            ctr += len(batch)
+
+        large_batch._bounds = np.cumsum(np.insert(n_slices, 0, 0), dtype=np.int)                   # pylint: disable=protected-access
+        return large_batch
+
+    @classmethod
+    def merge(cls, batches, batch_size=None):
+        """ Concatenate list of batches and then split the result in two batches of sizes
+                (batch_size, sum(lens of batches) - batch_size)
+
+        Args:
+            batches: list of batches
+            batch_size: size of first resulting batch
+
+        Return:
+            (new_batch, rest_batch)
+
+        NOTE: we perform split(of middle-batch) and then two concats because of speed considerations;
+            even though the code is slightly lengthier than it'd be if the order was concat->split.
+        """
+        if np.sum([len(batch) for batch in batches]) <= batch_size:
+            return (cls.concat(batches), None)
+
+        # find a batch that needs to be splitted (middle batch)
+        cum_len = 0
+        middle = None
+        middle_pos = None
+        for pos, batch in enumerate(batches):
+            cum_len += len(batch)
+            if cum_len >= batch_size:
+                middle = batch
+                middle_pos = pos
+                break
+
+        # split middle batch
+        left_middle, right_middle = cls.split(middle, len(middle) - cum_len + batch_size)
+
+        # form merged and rest-batches
+        merged = cls.concat(batches[:middle_pos] + [left_middle])
+        rest = cls.concat([right_middle] + batches[middle_pos + 1:])
+
+        return merged, rest
 
     @action
     def load(self, fmt='dicom', source=None, bounds=None,           # pylint: disable=arguments-differ
@@ -454,7 +595,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             if component == 'images':
                 return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
             else:
-                return ind_pos
+                return slice(ind_pos, ind_pos + 1)
         else:
             return index
 
@@ -603,13 +744,15 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         self._crop_sizes = crop_array[:, :, : 2]
 
     def _init_rebuild(self, **kwargs):
-        """
-        args-fetcher for parallelization using decorator
-            can be used when batch-data is rebuild from scratch
-        if shape is supplied as one of the args, assumes that data
-            should be resized, resize is performed
-        if spacing is supplied as one of the args, assumes that unify_spacing
-            is performed
+        """ Args-fetcher for parallelization using inbatch-parallel, used when 'images'-attr
+                is rebuild from scratch.
+        Args:
+            shape: if supplied, assume that images-component will be of this shape
+                in the result of action execution
+            spacing: if supplied, assume that unify_spacing is performed
+
+        Return:
+            list of arg-dicts for different workers
         """
         if 'shape' in kwargs:
             num_slices, y, x = kwargs['shape']
@@ -625,21 +768,27 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             item_args = {'patient': self.get(i, 'images'),
                          'out_patient': out_patient,
                          'res': new_data}
+
             # for unify_spacing
             if 'spacing' in kwargs:
+                shape_after_resize = self.images_shape * self.spacing / np.asarray(kwargs['spacing'])
+                shape_after_resize = np.rint(shape_after_resize).astype(np.int)
                 item_args['res_factor'] = self.spacing[i, :] / np.array(kwargs['spacing'])
+                item_args['shape_resize'] = shape_after_resize[i, :]
 
             all_args += [item_args]
 
         return all_args
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
-        """
-        gatherer of outputs from different workers for
-            ops, requiring complete rebuild of batch.images
-        args:
-            new_batch: if True, returns new batch with data
-                agregated from workers_ouputs
+        """ Gather outputs of different workers for actions, which
+                require complete rebuild of images-comp.
+
+        Args:
+            all_outputs: list of workers' outputs. Each item is given by tuple
+                (ref on new images-comp for whole batch, specific scan's shape)
+            new_batch: if True, returns new batch with data agregated
+                from all_ouputs. O/w changes self.
         """
         if any_action_failed(all_outputs):
             raise ValueError("Failed while parallelizing")
@@ -707,39 +856,72 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return rbba
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def resize(self, shape=(128, 256, 256), order=3, *args, **kwargs):
-        """ Resize (change shape) each CT-scan in the batch.
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',     # pylint: disable=too-many-arguments
+               axes_pairs=None, resample=None, order=3, *args, **kwargs):
+        """ Resize (change shape of) each CT-scan in the batch.
                 When called from a batch, changes this batch.
         Args:
-            shape: needed shape after resize in order z, y, x
-                *note that the order of axes in data is z, y, x
-                 that is, new patient shape = (shape[0], shape[1], shape[2])
-            order: the order of interpolation (<= 5)
-                large value improves precision, but slows down the computaion
-        Returns:
+            shape: needed shape after resize in order z, y, x.
+                NOTE: the order of axes in images is z, y, x. That is,
+                shape of each scan after resize is (shape[0], shape[1], shape[2])
+            method: interpolation package to be used. Can be either 'pil-simd'
+                or 'scipy'. Pil-simd ensures better quality and speed on configurations
+                with average number of cores. On the contrary, scipy is better scaled and
+                can show better performance on systems with large number of cores
+            axes_pairs: pairs of axes that will be used for performing pil-simd resize.
+                If None, set to ((0, 1), (1, 2)). In general, this arg has to be
+                a list/tuple of tuples of len=2 (pairs). The more pairs one uses,
+                the more precise will be the result (while computation will take more time).
+                Min number of pairs to use is 1, while at max there can be 3 * 2 = 6 pairs.
+            resample: filter of pil-simd resize. By default set to bilinear. Can be any of filters
+                supported by PIL.Image.
+            order: the order of scipy-interpolation (<= 5)
+                large value improves precision, but slows down the computaion.
+        Return:
             self
         example:
             shape = (128, 256, 256)
-            Batch = Batch.resize(shape=shape, order=2)
+            Batch = Batch.resize(shape=shape, order=2, method='scipy')
+            Bacch = Batch.resize(shape=shape, resample=PIL.Image.BILINEAR)
         """
-        return resize_patient_numba
+        if method == 'scipy':
+            args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
+            return resize_scipy(**args_resize)
+        elif method == 'pil-simd':
+            args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs,
+                               resample=resample)
+            return resize_pil(**args_resize)
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def unify_spacing(self, spacing=(1, 1, 1), shape=(128, 256, 256), order=3,
-                      padding='edge'):
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    def unify_spacing(self, patient, out_patient, res, res_factor, shape_resize, spacing=(1, 1, 1),    # pylint: disable=too-many-arguments
+                      shape=(128, 256, 256), method='pil-simd', order=3, padding='edge',
+                      axes_pairs=None, resample=None, *args, **kwargs):
         """ Unify spacing of all patients using resize, then crop/pad resized array
                 to supplied shape.
         Args:
             spacing: needed spacing in mm
             shape: needed shape after crop/pad
-            order: order of interpolation (<=5)
+            method: interpolation package to be used for resize ('pil-simd' | resize). See doc of
+                CTImagesBatch.resize for more information
+            order: order of scipy-interpolation (<=5)
             padding: mode of padding, any of those supported by np.pad
+            axes_pairs: pairs of axes that will be used for performing pil-simd resize
+            resample: filter of pil-simd resize
+
+            NOTE: see doc of CTImagesBatch.resize for more info about methods' params.
         Return:
             self
         """
-        return resize_patient_numba
+        if method == 'scipy':
+            args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order,
+                               res_factor=res_factor, padding=padding)
+            return resize_scipy(**args_resize)
+        elif method == 'pil-simd':
+            args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs,
+                               resample=resample, shape_resize=shape_resize, padding=padding)
+            return resize_pil(**args_resize)
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil')
