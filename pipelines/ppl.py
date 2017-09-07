@@ -87,7 +87,7 @@ def update_histo_by_lunaset(lunaset, nodules_df, histo):
                 .fetch_nodules_info(**args_fetch)
                 .unify_spacing(**args_unify_spacing)
                 .create_mask(**args_mask)
-                .update_histo(histo)
+                .update_nodules_histo(histo)
                 .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
                )
 
