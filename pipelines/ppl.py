@@ -92,3 +92,38 @@ def update_histo_by_lunaset(lunaset, nodules_df, histo):
                )
 
     return pipeline
+
+def get_luna_crops(cancerset, ncancerset, batch_sizes=(10, 10), hu_lims=(-1000, 400)):
+    """ Pipeline for generating batches of cancerous and non-cancerous crops from
+            ct-scans in chosen proportion.
+
+    Args:
+        cancerset: dataset of cancerous crops in blosc format.
+        ncancerset: dataset of non-cancerous crops in blosc format.
+        batch_sizes: seq of len=2, (num_cancer_batches, num_noncancer_batches).
+        hu_lims: seq of len=2, representing limits of hu-trimming in normalize_hu-action.
+
+    Return:
+        lazy-run pipeline, that will generate batches of size = batch_sizes[0] + batch_sizes[1],
+            when run without arguments.
+    """
+    # set up args of all actions
+    args_load = dict(fmt='blosc')
+    args_normalize_hu = dict(min_hu=hu_lims[0], max_hu=hu_lims[1])
+
+    # pipeline generating cancerous crops
+    ppl_cancer = (cancerset.p
+                  .load(**args_load)
+                  .normalize_hu(**args_normalize_hu)
+                  .run(lazy=True, batch_size=batch_sizes[0], shuffle=True)
+                 )
+
+    # pipeline generating non-cancerous crops merged with first pipeline
+    pipeline = (ncancerset.p
+                .load(**args_load)
+                .normalize_hu(**args_normalize_hu)
+                .merge(ppl_cancer)
+                .run(lazy=True, batch_size=batch_sizes[1], shuffle=True)
+               )
+
+    return pipeline
