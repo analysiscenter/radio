@@ -70,6 +70,28 @@ class KerasUnet(KerasModel):
         super().__init__(name, **kwargs)
 
     def reduction_block(self, input_tensor, filters, scope, pool_size=(2, 2, 2), padding='same'):
+        """ Apply reduction block transform to input tensor.
+
+        This layer consists of two 3D-convolutional layers with batch normalization
+        before 'relu' activation and max_pooling3d layer in the end.
+
+        Schematically this block can be represented like this:
+        =======================================================================
+        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
+        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
+        => MaxPooling3D{pool_size}[2:2:2]
+        =======================================================================
+
+        Args:
+        - input_tensor: keras tensor, input tensor;
+        - filters: int, number of filters in first and second covnolutions;
+        - scope: str, name of scope for this reduction block;
+        - pool_size: tuple(int, int, int), size of pooling kernel along three axis;
+        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+
+        Returns:
+        - ouput tensor, keras tensor;
+        """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters, (3, 3, 3),
                            data_format='channels_first',
@@ -90,6 +112,24 @@ class KerasUnet(KerasModel):
         return max_pool
 
     def upsampling_block(self, input_tensor, scip_connect_tensor, filters, scope, padding='same'):
+        """ Apply upsampling transform to two input tensors.
+
+        First of all, UpSampling3D transform is applied to input_tensor. Then output
+        tensor of this operation is concatenated with scip_connect_tensor. After this
+        two 3D-convolutions with batch normalization before 'relu' activation
+        are applied.
+
+        Args:
+        - input_tensor: keras tensor, input tensor from previous layer;
+        - scip_connect_tensor: keras tensor, input tensor from simmiliar
+        layer from reduction branch of UNet;
+        - filters: int, number of filters in convolutional layers;
+        - scope: str, name of scope for this block;
+        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+
+        Returns:
+        - output tensor, keras tensor;
+        """
         with tf.variable_scope(scope):
             upsample_tensor = UpSampling3D(data_format="channels_first",
                                            size=(2, 2, 2))(input_tensor)
