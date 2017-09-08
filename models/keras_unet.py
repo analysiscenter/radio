@@ -69,91 +69,85 @@ class KerasUnet(KerasModel):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-    @staticmethod
-    def build_unet():
-        """ Build 3D unet implemented in keras. """
-        inputs = Input((1, 32, 64, 64))
-        conv1 = Conv3D(32, (3, 3, 3), data_format="channels_first", padding="same")(inputs)
-        conv1 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv1)
-        conv1 = Activation("relu")(conv1)
-        #conv1 = Dropout(0.3)(conv1)
-        conv1 = Conv3D(32, (3, 3, 3), data_format="channels_first", padding="same")(conv1)
-        conv1 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv1)
-        conv1 = Activation("relu")(conv1)
-        #conv1 = Dropout(0.3)(conv1)
-        pool1 = MaxPooling3D(data_format="channels_first", pool_size=(2, 2, 2))(conv1)
+    def reduction_block(self, input_tensor, filters, scope, pool_size=(2, 2, 2), padding='same'):
+        with tf.variable_scope(scope):
+            conv1 = Conv3D(filters, (3, 3, 3),
+                           data_format='channels_first',
+                           padding=padding)(input_tensor)
+            conv1 = BatchNormalization(axis=1, momentum=0.1,
+                                       scale=True)(conv1)
+            conv1 = Activation('relu')(conv1)
 
-        #conv2 = Dropout(0.3)(pool1)
-        conv2 = Conv3D(64, (3, 3, 3), data_format="channels_first", padding="same")(pool1)
-        conv2 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv2)
-        conv2 = Activation("relu")(conv2)
-        #conv2 = Dropout(0.3)(conv2)
-        conv2 = Conv3D(64, (3, 3, 3), data_format="channels_first", padding="same")(conv2)
-        conv2 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv2)
-        conv2 = Activation('relu')(conv2)
-        pool2 = MaxPooling3D(data_format="channels_first", pool_size=(2, 2, 2))(conv2)
+            conv2 = Conv3D(filters, (3, 3, 3),
+                           data_format='channels_first',
+                           padding=padding)(conv1)
+            conv2 = BatchNormalization(axis=1, momentum=0.1,
+                                       scale=True)(conv2)
+            conv2 = Activation('relu')(conv2)
 
-        #conv3 = Dropout(0.3)(pool2)
-        conv3 = Conv3D(128, (3, 3, 3), data_format="channels_first", padding="same")(pool2)
-        conv3 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv3)
-        conv3 = Activation('relu')(conv3)
-        conv3 = Conv3D(128, (3, 3, 3), data_format="channels_first", padding="same")(conv3)
-        conv3 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv3)
-        conv3 = Activation('relu')(conv3)
-        pool3 = MaxPooling3D(data_format="channels_first", pool_size=(2, 2, 2))(conv3)
+            max_pool = MaxPooling3D(data_format='channels_first',
+                                    pool_size=pool_size)(conv2)
+        return max_pool
 
-        #conv4 = Dropout(0.3)(pool3)
-        conv4 = Conv3D(256, (3, 3, 3), data_format="channels_first", padding="same")(pool3)
-        conv4 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv4)
-        conv4 = Activation('relu')(conv4)
-        conv4 = Conv3D(256, (3, 3, 3), data_format="channels_first", padding="same")(conv4)
-        conv4 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv4)
-        conv4 = Activation('relu')(conv4)
-        pool4 = MaxPooling3D(data_format="channels_first", pool_size=(2, 2, 2))(conv4)
+    def upsampling_block(self, input_tensor, scip_connect_tensor, filters, scope, padding='same'):
+        with tf.variable_scope(scope):
+            upsample_tensor = UpSampling3D(data_format="channels_first",
+                                           size=(2, 2, 2))(input_tensor)
+            upsample_tensor = concatenate([upsample_tensor, scip_connet_tensor], axis=1)
 
-        #conv5 = Dropout(0.3)(pool4)
-        conv5 = Conv3D(512, (3, 3, 3), data_format="channels_first", padding="same")(pool4)
-        conv5 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv5)
-        conv5 = Activation('relu')(conv5)
-        conv5 = Conv3D(512, (3, 3, 3), data_format="channels_first", padding="same")(conv5)
-        conv5 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv5)
-        conv5 = Activation('relu')(conv5)
+            conv1 = Conv3D(filters, (3, 3, 3),
+                           data_format="channels_first",
+                           padding="same")(upsample_tensor)
+            conv1 = BatchNormalization(axis=1, momentum=0.1,
+                                       scale=True)(conv1)
+            conv1 = Activation('relu')(conv1)
 
-        up6 = concatenate([UpSampling3D(data_format="channels_first", size=(2, 2, 2))(conv5), conv4], axis=1)
-        conv6 = Conv3D(256, (3, 3, 3), data_format="channels_first", padding="same")(up6)
-        conv6 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv6)
-        conv6 = Activation('relu')(conv6)
-        conv6 = Conv3D(256, (3, 3, 3), data_format="channels_first", padding="same")(conv6)
-        conv6 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv6)
-        conv6 = Activation('relu')(conv6)
+            conv2 = Conv3D(filters, (3, 3, 3),
+                           data_format="channels_first",
+                           padding="same")(conv1)
+            conv2 = BatchNormalization(axis=1, momentum=0.1,
+                                       scale=True)(conv2)
+            conv2 = Activation('relu')(conv2)
+        return conv2
 
-        up7 = concatenate([UpSampling3D(data_format="channels_first", size=(2, 2, 2))(conv6), conv3], axis=1)
-        conv7 = Conv3D(128, (3, 3, 3), data_format="channels_first", padding="same")(up7)
-        conv7 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv7)
-        conv7 = Activation('relu')(conv7)
-        conv7 = Conv3D(128, (3, 3, 3), data_format="channels_first", padding="same")(conv7)
-        conv7 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv7)
-        conv7 = Activation('relu')(conv7)
+    def build_unet(self):
+        """ Build 3D unet model implemented in keras. """
+        input_tensor = Input((1, 32, 64, 64))
 
-        up8 = concatenate([UpSampling3D(data_format="channels_first", size=(2, 2, 2))(conv7), conv2], axis=1)
-        conv8 = Conv3D(64, (3, 3, 3), data_format="channels_first", padding="same")(up8)
-        conv8 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv8)
-        conv8 = Activation('relu')(conv8)
-        conv8 = Conv3D(64, (3, 3, 3), data_format="channels_first", padding="same")(conv8)
-        conv8 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv8)
-        conv8 = Activation('relu')(conv8)
+        # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
+        reduct_block_A = self.reduction_block(input_tensor, 32,
+                                              scope='ReductionBlock_A')
+        reduct_block_B = self.reduction_block(reduct_block_A, 64,
+                                              scope='ReductionBlock_B')
+        reduct_block_C = self.reduction_block(reduct_block_B, 128,
+                                              scope='ReductionBlock_C')
+        reduct_block_D = self.reduction_block(reduct_block_C, 256,
+                                              scope='ReductionBlock_D')
 
-        up9 = concatenate([UpSampling3D(data_format="channels_first", size=(2, 2, 2))(conv8), conv1], axis=1)
-        conv9 = Conv3D(32, (3, 3, 3), data_format="channels_first", padding="same")(up9)
-        conv9 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv9)
-        conv9 = Activation('relu')(conv9)
-        conv9 = Conv3D(32, (3, 3, 3), data_format="channels_first", padding="same")(conv9)
-        conv9 = BatchNormalization(axis=1, momentum=0.1, scale=True)(conv9)
-        conv9 = Activation('relu')(conv9)
-        conv10 = Conv3D(1, (1, 1, 1), activation='sigmoid', data_format="channels_first", padding='same')(conv9)
+        # Bottleneck layer
+        bottleneck_block = self.reduction_block(reduct_block_D, 512, scope='BottleneckBlock')
 
-        model = Model(inputs=inputs, outputs=conv10, name='unet')
+        # Upsampling Layers: UpsamplingBlock_D, UpsamplingBlock_C, UpsamplingBlock_B, UpsamplingBlock_A
+        upsample_block_D = self.upsampling_block(bottleneck_block, reduction_block_D,
+                                                 256, scope='UpsamplingBlock_D')
 
+        upsample_block_C = self.upsampling_block(upsample_block_D, reduction_block_C,
+                                                 128, scope='UpsamplingBlock_C')
+
+        upsample_block_B = self.upsampling_block(upsample_block_C, reduction_block_B,
+                                                 64, scope='UpsamplingBlock_B')
+
+        upsample_block_A = self.upsampling_block(upsample_block_B, reduction_block_A,
+                                                 32, scope='UpsamplingBlock_A')
+
+        # Final convolution
+        final_conv = Conv3D(1, (1, 1, 1),
+                            activation='sigmoid',
+                            data_format="channels_first",
+                            padding='same')(upsample_block_A)
+
+        # Building keras model
+        model = Model(inputs=input_tensor, outputs=final_conv, name='unet')
         return model
 
     @classmethod
