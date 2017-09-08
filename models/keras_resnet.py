@@ -137,18 +137,6 @@ class KerasResNet(KerasModel):
         y = Dropout(rate=dropout_rate)(y)
 
         y = BatchNormalization(axis=-1)(y)
-        y = Dense(256, activation='relu')(y)
-        y = Dropout(rate=dropout_rate)(y)
-
-        y = BatchNormalization(axis=-1)(y)
-        y = Dense(128, activation='relu')(y)
-        y = Dropout(rate=dropout_rate)(y)
-
-        y = BatchNormalization(axis=-1)(y)
-        y = Dense(64, activation='relu')(y)
-        y = Dropout(rate=dropout_rate)(y)
-
-        y = BatchNormalization(axis=-1)(y)
         y = Dense(32, activation='relu')(y)
 
         output_layer = Dense(1, activation='sigmoid', name='output')(y)
