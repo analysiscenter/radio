@@ -526,7 +526,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             nodule_size: shape of sampled nodules.
             variance: seq of len=3 representing variance of nodules' locations along 3 axes.
         """
-        for i in range(n_iters):
+        for _ in range(n_iters):
             nodules = self.sample_nodules(all_cancerous=True, nodule_size=nodule_size, variance=variance)
             nodules = nodules.dump(dst=dst)
 

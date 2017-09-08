@@ -71,7 +71,7 @@ def update_histo_by_lunaset(lunaset, nodules_df, histo):
         nodules_df: df with info about nodules' locations.
         histo: 3d-histogram in almost np.histogram format, list [bins, edges];
             (compare the latter with tuple (bins, edges) returned by np.histogram).
-    
+
     Return:
         resulting pipeline run in lazy-mode.
     """
