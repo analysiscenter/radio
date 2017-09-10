@@ -72,21 +72,21 @@ def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 
     bn_name_base = 'bn' + str(stage) + block + '_branch'
 
     x = BatchNormalization(axis=4, name=bn_name_base + '2a')(input_tensor)
-    x = Activation('relu')(x)
     x = Conv3D(filters1, (1, 1, 1),
                strides=strides,
                name=conv_name_base + '2a',
                use_bias=False,
                kernel_initializer='glorot_normal')(x)
+    x = Activation('relu')(x)
 
     x = BatchNormalization(axis=4, name=bn_name_base + '2b')(x)
-    x = Activation('relu')(x)
     x = Conv3D(filters2,
                kernel_size,
                padding='same',
                name=conv_name_base + '2b',
                use_bias=False,
                kernel_initializer='glorot_normal')(x)
+    x = Activation('relu')(x)
 
     x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
     x = Conv3D(filters3, (1, 1, 1),
