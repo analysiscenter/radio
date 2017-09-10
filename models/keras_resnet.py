@@ -133,7 +133,7 @@ class KerasResNet(KerasModel):
         x = Activation('relu')(x)
         return x
 
-    def build_model(self, input_tensor, dropout_rate):
+    def build_model(self, dropout_rate):
         """ Build resnet model implemented in keras.
 
         Args:
@@ -143,6 +143,7 @@ class KerasResNet(KerasModel):
         Returns:
         - keras tensor of the last dense layer;
         """
+        input_tensor = Input(shape=(32, 64, 64, 1))
         x = Conv3D(filters=32, kernel_size=(7, 3, 3),
                    strides=(2, 2, 2), name='initial_conv', padding='same',
                    use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
