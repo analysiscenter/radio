@@ -150,7 +150,7 @@ class KerasUnet(KerasModel):
             conv2 = Activation('relu')(conv2)
         return conv2
 
-    def build_unet(self):
+    def build_model(self):
         """ Build 3D unet model implemented in keras. """
         input_tensor = Input((1, 32, 64, 64))
 
