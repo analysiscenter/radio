@@ -16,7 +16,7 @@ class KerasVGG16(KerasModel):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
-    def reduction_block_I(input_tensor, filters, scope, padding='same'):
+    def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
         """ Reduction block of type I for VGG16 architecture.
 
         Applyes 3D-convolution with kernel size (3, 3, 3), (1, 1, 1) strides
@@ -51,7 +51,7 @@ class KerasVGG16(KerasModel):
         return max_pool
 
 
-    def reduction_block_II(input_tensor, filters, scope, padding='same'):
+    def reduction_block_II(self, input_tensor, filters, scope, padding='same'):
         """ Reduction block of type II for VGG16 architecture.
 
         Applyes 3D-convolution with kernel size (3, 3, 3), strides (1, 1, 1)
@@ -90,7 +90,7 @@ class KerasVGG16(KerasModel):
         return max_pool
 
 
-    def classification_block(input_tensor, units=(512, 256),
+    def classification_block(self, input_tensor, units=(512, 256),
                              dropout_rate=0.35, scope='ClassificationBlock'):
         """ Classification block of VGG16 architecture.
 
