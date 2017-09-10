@@ -130,7 +130,7 @@ class KerasVGG16(KerasModel):
         Returns:
         - keras model;
         """
-        input_tensor = Input(shape=(32, 64, 64, 64, 1))
+        input_tensor = Input(shape=(32, 64, 64, 1))
         block_A = reduction_block_I(img_input, 32, scope='Block_A')
         block_B = reduction_block_I(block_A, 64, scope='Block_B')
         block_C = reduction_block_II(block_B, 128, scope='Block_C')
