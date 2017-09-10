@@ -192,7 +192,7 @@ class KerasUnet(KerasModel):
         return model
 
     @wraps(keras.models.Model.compile)
-    def compile(self, optimizer='adam', loss=dice_coef_loss):
+    def compile(self, optimizer='adam', loss=dice_coef_loss, **kwargs):
         """ Compile unet model. """
         super().compile(optimizer=optimizer, loss=loss)
 
