@@ -120,8 +120,16 @@ class KerasVGG16(KerasModel):
             layer = Dropout(dropout_rate)(layer)
         return layer
 
-    @staticmethod
-    def build_vgg16():
+    def build_model(self, units=(512, 256), dropout_rate=0.35, scope=None):
+        """ Build VGG16 model implemented in keras.
+
+        Args:
+        - units: tuple(int, int), number of units in first and second dense layers;
+        - dropout_rate: float, probability of dropout;
+
+        Returns:
+        - keras model;
+        """
         input_tensor = Input(shape=(32, 64, 64, 64, 1))
         block_A = reduction_block_I(img_input, 32, scope='Block_A')
         block_B = reduction_block_I(block_A, 64, scope='Block_B')
@@ -130,6 +138,7 @@ class KerasVGG16(KerasModel):
         block_E = reduction_block_II(block_D, 256, scope='Block_E')
 
         block_F = classification_block(block_E, (512, 256),
+                                       dropout_rate=dropout_rate,
                                        scope='ClassificationBlock')
 
         output_tensor = Dense(1, activation='sigmoid',
@@ -137,11 +146,6 @@ class KerasVGG16(KerasModel):
 
         model = Model(input_tensor, output_tensor, name='vgg16')
         return model
-
-    @classmethod
-    def initialize_model(cls):
-        """ Initialize vgg16 model. """
-        return cls.build_vgg16()
 
     @wraps(keras.models.Model.compile)
     def compile(self, optimizer='adam', loss='binary_crossentropy', **kwargs):
