@@ -13,99 +13,6 @@ from keras.layers import BatchNormalization
 from .keras_model import KerasModel
 
 
-def identity_block(input_tensor, kernel_size, filters, stage, block):
-    """ The identity block is the block that has no conv layer at shortcut.
-
-    This block consists of two convolutions with batch normalization before
-    'relu' activation. After three convolutions are applyed the ouput tensor
-    is concatenated with input tensor along filters dimension and go
-    through 'relu' activation.
-
-    Args:
-    - input_tensor: keras tensor, input tensor;
-    - kernel_size: tuple(int, int, int), size of the kernel along three dimensions
-    for all convolution operations in block.
-    - filters: tuple(int, int, int), number of filters in first, second and
-    third 3D-convolution operations;
-    - stage: int, number of stage, on par with block argument
-    used to derive names of inner layers;
-    - block: str, block prefix, on par with stage argument used
-    to derive names of inner layers;
-
-    Returns:
-    - output tensor, keras tensor;
-    """
-    filters1, filters2, filters3 = filters
-
-    conv_name_base = 'res' + str(stage) + block + '_branch'
-    bn_name_base = 'bn' + str(stage) + block + '_branch'
-
-    x = Conv3D(filters1, (1, 1, 1), name=conv_name_base + '2a',
-               use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
-    x = BatchNormalization(axis=4, name=bn_name_base + '2a')(x)
-    x = Activation('relu')(x)
-
-    x = Conv3D(filters2, kernel_size,
-               padding='same',
-               name=conv_name_base + '2b',
-               use_bias=False,
-               kernel_initializer='glorot_normal')(x)
-    x = BatchNormalization(axis=4, name=bn_name_base + '2b')(x)
-    x = Activation('relu')(x)
-
-    x = Conv3D(filters3, (1, 1, 1),
-               name=conv_name_base + '2c',
-               use_bias=False,
-               kernel_initializer='glorot_normal')(x)
-    x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
-
-    x = layers.add([x, input_tensor])
-    x = Activation('relu')(x)
-    return x
-
-
-def conv_block(input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 2)):
-    """ A block that has a conv layer at shortcut. """
-    filters1, filters2, filters3 = filters
-
-    conv_name_base = 'res' + str(stage) + block + '_branch'
-    bn_name_base = 'bn' + str(stage) + block + '_branch'
-
-    x = BatchNormalization(axis=4, name=bn_name_base + '2a')(input_tensor)
-    x = Conv3D(filters1, (1, 1, 1),
-               strides=strides,
-               name=conv_name_base + '2a',
-               use_bias=False,
-               kernel_initializer='glorot_normal')(x)
-    x = Activation('relu')(x)
-
-    x = BatchNormalization(axis=4, name=bn_name_base + '2b')(x)
-    x = Conv3D(filters2,
-               kernel_size,
-               padding='same',
-               name=conv_name_base + '2b',
-               use_bias=False,
-               kernel_initializer='glorot_normal')(x)
-    x = Activation('relu')(x)
-
-    x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
-    x = Conv3D(filters3, (1, 1, 1),
-               name=conv_name_base + '2c',
-               use_bias=False,
-               kernel_initializer='glorot_normal')(x)
-
-    shortcut = BatchNormalization(axis=4, name=bn_name_base + '1')(input_tensor)
-    shortcut = Conv3D(filters3, (1, 1, 1),
-                      strides=strides,
-                      name=conv_name_base + '1',
-                      use_bias=False,
-                      kernel_initializer='glorot_normal')(shortcut)
-
-    x = layers.add([x, shortcut])
-    x = Activation('relu')(x)
-    return x
-
-
 class KerasResNet(KerasModel):
     """ ResNet model for 3D scans implemented in keras. """
 
@@ -114,6 +21,117 @@ class KerasResNet(KerasModel):
         self.input_tensor = Input(shape=(32, 64, 64, 1))
         super().__init__(name, dropout_rate=dropout_rate, input_tensor=self.input_tensor, **kwargs)
 
+    def identity_block(self, input_tensor, kernel_size, filters, stage, block):
+        """ The identity block is the block that has no conv layer at shortcut.
+
+        This block consists of two convolutions with batch normalization before
+        'relu' activation. After three convolutions are applyed the ouput tensor
+        is concatenated with input tensor along filters dimension and go
+        through 'relu' activation.
+
+        Args:
+        - input_tensor: keras tensor, input tensor;
+        - kernel_size: tuple(int, int, int), size of the kernel along three dimensions
+        for all convolution operations in block.
+        - filters: tuple(int, int, int), number of filters in first, second and
+        third 3D-convolution operations;
+        - stage: int, number of stage, on par with block argument
+        used to derive names of inner layers;
+        - block: str, block prefix, on par with stage argument used
+        to derive names of inner layers;
+
+        Returns:
+        - output tensor, keras tensor;
+        """
+        filters1, filters2, filters3 = filters
+
+        conv_name_base = 'res' + str(stage) + block + '_branch'
+        bn_name_base = 'bn' + str(stage) + block + '_branch'
+
+        x = Conv3D(filters1, (1, 1, 1), name=conv_name_base + '2a',
+                   use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
+        x = BatchNormalization(axis=4, name=bn_name_base + '2a')(x)
+        x = Activation('relu')(x)
+
+        x = Conv3D(filters2, kernel_size,
+                   padding='same',
+                   name=conv_name_base + '2b',
+                   use_bias=False,
+                   kernel_initializer='glorot_normal')(x)
+        x = BatchNormalization(axis=4, name=bn_name_base + '2b')(x)
+        x = Activation('relu')(x)
+
+        x = Conv3D(filters3, (1, 1, 1),
+                   name=conv_name_base + '2c',
+                   use_bias=False,
+                   kernel_initializer='glorot_normal')(x)
+        x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
+
+        x = layers.add([x, input_tensor])
+        x = Activation('relu')(x)
+        return x
+
+
+    def conv_block(self, input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 2)):
+        """ A block that has a conv layer at shortcut.
+
+        This layer consists of three 3D-convolutional layers with batch
+        normalization before 'relu' activation. The output tesnor then
+        concatenated with result tensor of 3D-convolution applied to input tensor
+        of the block with (2, 2, 2)-strides.
+
+        Args:
+        - input_tensor: keras tensor, input tensor;
+        - kernel_size: tuple(int, int, int), size of the kernel along three dimensions
+        for all convolution operations in block.
+        - filters: tuple(int, int, int), number of filters in first, second and
+        third 3D-convolution operations;
+        - stage: int, number of stage, on par with block argument
+        used to derive names of inner layers;
+        - block: str, block prefix, on par with stage argument used
+        to derive names of inner layers;
+
+        Returns:
+        - output tensor, keras tensor;
+        """
+        filters1, filters2, filters3 = filters
+
+        conv_name_base = 'res' + str(stage) + block + '_branch'
+        bn_name_base = 'bn' + str(stage) + block + '_branch'
+
+        x = BatchNormalization(axis=4, name=bn_name_base + '2a')(input_tensor)
+        x = Conv3D(filters1, (1, 1, 1),
+                   strides=strides,
+                   name=conv_name_base + '2a',
+                   use_bias=False,
+                   kernel_initializer='glorot_normal')(x)
+        x = Activation('relu')(x)
+
+        x = BatchNormalization(axis=4, name=bn_name_base + '2b')(x)
+        x = Conv3D(filters2,
+                   kernel_size,
+                   padding='same',
+                   name=conv_name_base + '2b',
+                   use_bias=False,
+                   kernel_initializer='glorot_normal')(x)
+        x = Activation('relu')(x)
+
+        x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
+        x = Conv3D(filters3, (1, 1, 1),
+                   name=conv_name_base + '2c',
+                   use_bias=False,
+                   kernel_initializer='glorot_normal')(x)
+
+        shortcut = BatchNormalization(axis=4, name=bn_name_base + '1')(input_tensor)
+        shortcut = Conv3D(filters3, (1, 1, 1),
+                          strides=strides,
+                          name=conv_name_base + '1',
+                          use_bias=False,
+                          kernel_initializer='glorot_normal')(shortcut)
+
+        x = layers.add([x, shortcut])
+        x = Activation('relu')(x)
+        return x
 
     def build_model(self, input_tensor, dropout_rate):
         """ Build resnet model implemented in keras.
