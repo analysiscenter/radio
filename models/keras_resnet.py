@@ -95,7 +95,7 @@ class KerasResNet(KerasModel):
         super().__init__(name, dropout_rate=dropout_rate, input_tensor=self.input_tensor, **kwargs)
 
 
-    def build_resnet(input_tensor, dropout_rate):
+    def build_model(input_tensor, dropout_rate):
         """ Build resnet model implemented in keras.
 
         Args:
