@@ -17,8 +17,6 @@ class KerasResNet(KerasModel):
     """ ResNet model for 3D scans implemented in keras. """
 
     def __init__(self, name, dropout_rate=0.3, **kwargs):
-        self.dropout_rate = dropout_rate
-        self.input_tensor = Input(shape=(32, 64, 64, 1))
         super().__init__(name, dropout_rate=dropout_rate, input_tensor=self.input_tensor, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
@@ -133,7 +131,7 @@ class KerasResNet(KerasModel):
         x = Activation('relu')(x)
         return x
 
-    def build_model(self, dropout_rate):
+    def build_model(self, dropout_rate, units):
         """ Build resnet model implemented in keras.
 
         Args:
@@ -143,10 +141,13 @@ class KerasResNet(KerasModel):
         Returns:
         - keras tensor of the last dense layer;
         """
+        units_1, units_2 = units
+
         input_tensor = Input(shape=(32, 64, 64, 1))
         x = Conv3D(filters=32, kernel_size=(7, 3, 3),
                    strides=(2, 2, 2), name='initial_conv', padding='same',
                    use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
+
         x = BatchNormalization(axis=4, name='initial_batch_norm')(x)
         x = Activation('relu')(x)
 
@@ -172,11 +173,11 @@ class KerasResNet(KerasModel):
 
         y = Flatten()(x)
 
-        y = Dense(512, activation='relu')(y)
+        y = Dense(units_1, activation='relu')(y)
         y = Dropout(rate=dropout_rate)(y)
 
         y = BatchNormalization(axis=-1)(y)
-        y = Dense(32, activation='relu')(y)
+        y = Dense(units_2, activation='relu')(y)
 
         output_layer = Dense(1, activation='sigmoid', name='output')(y)
 
