@@ -137,7 +137,7 @@ class KerasVGG16(KerasModel):
         block_D = reduction_block_II(block_C, 256, scope='Block_D')
         block_E = reduction_block_II(block_D, 256, scope='Block_E')
 
-        block_F = classification_block(block_E, (512, 256),
+        block_F = classification_block(block_E, units,
                                        dropout_rate=dropout_rate,
                                        scope='ClassificationBlock')
 
