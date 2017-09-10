@@ -190,6 +190,11 @@ class KerasUnet(KerasModel):
         model = Model(inputs=input_tensor, outputs=final_conv, name='unet')
         return model
 
+    @wraps(keras.models.Model.compile)
+    def compile(self, optimizer='adam', loss=dice_coef_loss):
+        """ Compile unet model. """
+        super().compile(optimizer=optimizer, loss=loss)
+
     def load_model(self, path):
         """ Load weights and description of keras model. """
         self.model = keras.models.load_model(path, custom_objects={'dice_coef':dice_coef,
