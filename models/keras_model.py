@@ -25,7 +25,7 @@ class KerasModel(BaseModel):
         super().__init__(name, *args, **kwargs)
         self.name = name
 
-        self.model = self.initialize_model(**kwargs)  # pylint: disable=assignment-from-none
+        self.model = self.initialize_model(*args, **kwargs)  # pylint: disable=assignment-from-none
 
     @staticmethod
     def initialize_model(*args, **kwargs):
