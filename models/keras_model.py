@@ -2,6 +2,7 @@
 
 import os
 from functools import wraps
+import shutil
 import logging
 import keras
 from keras.models import model_from_json
@@ -56,6 +57,9 @@ class KerasModel(BaseModel):
 
     def save(self, dir_path, *args, **kwargs):
         """ Save model. """
+        if os.path.exists(dir_path):
+            shutil.rmtree(dir_path)
+        os.mkdir(dir_path)
         with open(os.path.join(dir_path, 'model.json'), 'w') as f:
             f.write(self.model.to_json())
         self.model.save_weights(os.path.join(dir_path, 'model.h5'))
