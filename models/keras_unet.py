@@ -103,11 +103,11 @@ def jaccard_coef(y_true, y_pred):
     - jaccard score across all classes;
     """
     smooth = 1e-10
-    y_actual = K.flatten(y_actual)
+    y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)
-    truepos = K.sum(y_actual * y_pred)
+    truepos = K.sum(y_true * y_pred)
     falsepos = K.sum(y_pred) - truepos
-    falseneg = K.sum(y_actual) - truepos
+    falseneg = K.sum(y_true) - truepos
     jaccard = (truepos + smooth) / (smooth + truepos + falseneg + falsepos)
 
     return jaccard
