@@ -805,7 +805,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         - self, unchanged CTImagesMaskedBatch;
         """
         _model = self.get_model_by_name(model_name)
-        x, y_true = self.unpack_data(dim_ordering='channels_last',
+        x, y_true = self.unpack_data(dim_ordering=dim_ordering,
                                      y_component=y_component, **kwargs)
         _model.train_on_batch(x, y_true)
         return self
