@@ -17,7 +17,7 @@ class KerasResNet(KerasModel):
     """ ResNet model for 3D scans implemented in keras. """
 
     def __init__(self, name, dropout_rate=0.3, **kwargs):
-        super().__init__(name, dropout_rate=dropout_rate, input_tensor=self.input_tensor, **kwargs)
+        super().__init__(name, dropout_rate=dropout_rate, input_tensor=input_tensor, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
