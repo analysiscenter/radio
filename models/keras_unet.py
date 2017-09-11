@@ -76,7 +76,7 @@ def tiversky_coef(y_true, y_pred):
     y_pred = K.flatten(y_pred)
     truepos = K.sum(y_true * y_pred)
     FP_and_FN = alpha * K.sum(y_pred * (1 - y_true)) + beta * K.sum((1 - y_pred) * y_true)
-    answer = (truepos + smooth) /( (truepos + smooth) + FP_and_FN )
+    answer = (truepos + smooth) / ((truepos + smooth) + FP_and_FN)
     return answer
 
 def tiversky_loss(y_true, y_pred):
