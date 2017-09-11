@@ -13,8 +13,8 @@ from keras.layers import BatchNormalization
 from .keras_model import KerasModel
 
 
-class KerasResNet(KerasModel):
-    """ ResNet model for 3D scans implemented in keras. """
+class KerasResNet50(KerasModel):
+    """ ResNet50 model for 3D scans implemented in keras. """
 
     def __init__(self, name, dropout_rate=0.3, **kwargs):
         super().__init__(name, dropout_rate=dropout_rate, **kwargs)
@@ -132,7 +132,7 @@ class KerasResNet(KerasModel):
         return x
 
     def build_model(self, dropout_rate, units, *args, **kwargs):
-        """ Build resnet model implemented in keras.
+        """ Build resnet50 model implemented in keras.
 
         Args:
         - input_tensor: keras Input layer;
