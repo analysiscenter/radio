@@ -78,7 +78,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             unet.load_model(path, custom_object=custom_objects)
         else:
             unet = KerasUnet('unet')
-            loss_dict = {'dice': dice_loss, 'tiversky_loss': tiversky_loss}
+            loss_dict = {'dice': dice_coef_loss, 'tiversky_loss': tiversky_loss}
             unet.compile(optimizer='adam', loss=loss_dict[loss])
         return unet
 
