@@ -156,18 +156,18 @@ class TFModel(BaseModel):
             setattr(self, alias, self.graph.get_tensor_by_name(name))
         return self
 
-    @model_scope
     def compile(self, optimizer, *args, **kwargs):
         """ Compile tensorflow model. """
         self.build_model()
 
-        update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-        with tf.control_dependencies(update_ops):
-            train_op = optimizer.minimize(self.loss)
+        with self.graph.as_default():
+            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+            with tf.control_dependencies(update_ops):
+                train_op = optimizer.minimize(self.loss)
 
-        self.sess = tf.Session()
-        self.sess.run(tf.global_variables_initializer())
-        self.train_op = train_op
+            self.sess = tf.Session()
+            self.sess.run(tf.global_variables_initializer())
+            self.train_op = train_op
         return self
 
     @staticmethod
