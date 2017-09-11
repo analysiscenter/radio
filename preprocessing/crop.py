@@ -21,7 +21,7 @@ def make_central_crop(image, crop_size):
     cropped_img = image[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
                         halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
                         halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
-    return cropped_img
+    return cropped_img.copy()
 
 
 @njit(nogil=True)
