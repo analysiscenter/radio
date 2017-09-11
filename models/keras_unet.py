@@ -258,7 +258,6 @@ class KerasUnet(KerasModel):
         """ Compile unet model. """
         super().compile(optimizer=optimizer, loss=loss)
 
-    def load_model(self, path):
+    def load_model(self, path, custom_objects):
         """ Load weights and description of keras model. """
-        self.model = keras.models.load_model(path, custom_objects={'dice_coef':dice_coef,
-                                                                   'dice_coef_loss':dice_coef_loss})
+        self.model = keras.models.load_model(path, custom_objects=custrom_objects)
