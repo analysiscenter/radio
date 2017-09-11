@@ -133,15 +133,15 @@ class KerasVGG16(KerasModel):
         - keras model;
         """
         input_tensor = Input(shape=(32, 64, 64, 1))
-        block_A = reduction_block_I(input_tensor, 32, scope='Block_A')
-        block_B = reduction_block_I(block_A, 64, scope='Block_B')
-        block_C = reduction_block_II(block_B, 128, scope='Block_C')
-        block_D = reduction_block_II(block_C, 256, scope='Block_D')
-        block_E = reduction_block_II(block_D, 256, scope='Block_E')
+        block_A = self.reduction_block_I(input_tensor, 32, scope='Block_A')
+        block_B = self.reduction_block_I(block_A, 64, scope='Block_B')
+        block_C = self.reduction_block_II(block_B, 128, scope='Block_C')
+        block_D = self.reduction_block_II(block_C, 256, scope='Block_D')
+        block_E = self.reduction_block_II(block_D, 256, scope='Block_E')
 
-        block_F = classification_block(block_E, units,
-                                       dropout_rate=dropout_rate,
-                                       scope='ClassificationBlock')
+        block_F = self.classification_block(block_E, units,
+                                            dropout_rate=dropout_rate,
+                                            scope='ClassificationBlock')
 
         output_tensor = Dense(1, activation='sigmoid',
                               name='predictions')(block_F)
