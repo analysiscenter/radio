@@ -261,4 +261,4 @@ class KerasUnet(KerasModel):
 
     def load_model(self, path, custom_objects):
         """ Load weights and description of keras model. """
-        self.model = keras.models.load_model(path, custom_objects=custrom_objects)
+        self.model = keras.models.load_model(path, custom_objects=custom_objects)
