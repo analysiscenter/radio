@@ -122,7 +122,7 @@ class KerasVGG16(KerasModel):
             layer = Dropout(dropout_rate)(layer)
         return layer
 
-    def build_model(self, units=(512, 256), dropout_rate=0.35, scope=None):
+    def build_model(self, units=(512, 256), dropout_rate=0.35, *args, **kwargs):
         """ Build VGG16 model implemented in keras.
 
         Args:
