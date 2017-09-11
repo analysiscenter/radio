@@ -170,8 +170,7 @@ class TFModel(BaseModel):
             self.train_op = train_op
         return self
 
-    @staticmethod
-    def conv3d(input_tensor, filters, kernel_size, name,
+    def conv3d(self, input_tensor, filters, kernel_size, name,
                strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
         """ Apply 3D convolution operation to input tensor.
 
