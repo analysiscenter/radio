@@ -5,7 +5,7 @@ lung-cancer on CT-scans
 from .dense_net import DenseNet
 from .tf_resnet import TFResNet
 from .keras_unet import KerasUnet
-from .keras_resnet import KerasResNet
+from .keras_resnet import KerasResNet50
 from .keras_vgg16 import KerasVGG16
 from .keras_model import KerasModel
 from .tf_model import TFModel
