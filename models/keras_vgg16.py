@@ -1,3 +1,4 @@
+# pylint: disable=not-context-manager
 """ Contains implementation of VGG16 architecture in keras. """
 
 from functools import wraps
