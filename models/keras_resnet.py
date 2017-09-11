@@ -131,7 +131,7 @@ class KerasResNet(KerasModel):
         x = Activation('relu')(x)
         return x
 
-    def build_model(self, dropout_rate, units):
+    def build_model(self, dropout_rate, units, *args, **kwargs):
         """ Build resnet model implemented in keras.
 
         Args:
