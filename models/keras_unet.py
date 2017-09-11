@@ -112,15 +112,6 @@ def jaccard_coef(y_true, y_pred):
     return jaccard
 
 
-def jaccard_coef_loss(y_true, y_pred):
-    """ Jaccard
-    """
-    smooth = 1e-10
-    jaccard = -jaccard_coef(y_true, y_pred)
-
-    return jaccard
-
-
 def jaccard_coef_logloss(y_true, y_pred):
     """ Keras loss function based on jaccard coefficient.
 
