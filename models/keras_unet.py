@@ -3,6 +3,7 @@
 
 from functools import wraps
 import numpy as np
+import tensorflow as tf
 import keras
 from keras.models import Model
 from keras.layers import (Input,
@@ -134,7 +135,7 @@ class KerasUnet(KerasModel):
         with tf.variable_scope(scope):
             upsample_tensor = UpSampling3D(data_format="channels_first",
                                            size=(2, 2, 2))(input_tensor)
-            upsample_tensor = concatenate([upsample_tensor, scip_connet_tensor], axis=1)
+            upsample_tensor = concatenate([upsample_tensor, scip_connect_tensor], axis=1)
 
             conv1 = Conv3D(filters, (3, 3, 3),
                            data_format="channels_first",
