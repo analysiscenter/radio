@@ -168,7 +168,7 @@ class KerasUnet(KerasModel):
                                                  scope='ReductionBlock_D')
 
         # Bottleneck layer
-        bottleneck_block = self.reduction_block(reduct_block_D, 512, scope='BottleneckBlock')
+        bottleneck_block = self.reduction_block(reduction_block_D, 512, scope='BottleneckBlock')
 
         # Upsampling Layers: UpsamplingBlock_D, UpsamplingBlock_C, UpsamplingBlock_B, UpsamplingBlock_A
         upsample_block_D = self.upsampling_block(bottleneck_block, reduction_block_D,
