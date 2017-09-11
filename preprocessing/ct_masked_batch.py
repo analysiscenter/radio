@@ -865,8 +865,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             current_prediction = np.asarray(_model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
 
             if y_component == 'labels':
-                current_prediction = np.stack([np.ones(shape=(crop_shape))
-                                               * prob for prob in current_prediction.ravel()])
+                current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
+                                               for prob in current_prediction.ravel()])
 
             current_prediction = np.squeeze(current_prediction)
             predictions.append(current_prediction)
