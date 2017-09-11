@@ -9,6 +9,7 @@ from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
 from .layers import tf_dice_loss
 
 from .keras_unet import KerasUnet
+from .keras_unet import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
 from .keras_resnet import KerasResNet50
 from .keras_vgg16 import KerasVGG16
 from .keras_model import KerasModel
@@ -37,18 +38,49 @@ class CTImagesModels(CTImagesMaskedBatch):
             method for performing inference on images of batch using trained model
     """
 
-    @model()
-    def unet():
-        """ Get unet model implemented in keras. """
-        return KerasUnet('unet')
+    @model(mode='static')
+    def keras_unet(pipeline):
+        """ Create Unet model implemented in keras and immediatelly compile it.
 
-    @model()
-    def unet_pretrained():
-        """ Get pretrained keras unet model. """
-        pretrained_unet = KerasUnet('pretrained_unet')
-        pretrained_unet.load_model(PRETRAINED_UNET_PATH)
-        pretrained_unet.compile()
-        return pretrained_unet
+        This method is wrapped with model(mode='static') decorator meaning
+        that model is created in the momment when pipeline.run(...) is called.
+        Config attribute is a dictionary that can contain 'loss' and 'path'
+        values. If config contains 'path', then model is loaded from directory
+        specified by this parameter. Otherwise new keras model is to be built;
+
+        Another key of config dict is 'loss'. Value 'loss' can be one of
+        two str: 'dice' or 'tiversky'. This value specifies the loss function
+        that will be used during model compilation;
+
+        Args:
+        - pipeline: Pipeline object from dataset package; it is the only argument
+        and it is used to pass parameters required by model being created
+        through pipeline.config attribute;
+
+        Returns:
+        - compiled model;
+        """
+        path = pipeline.config.get("path", None)
+        loss = pipeline.config.get("loss", 'dice')
+        if  path is not None:
+            unet = KerasModel('unet')
+
+            if loss == 'tiversky':
+                custom_objects = {'tiversky_loss': tiversky_loss,
+                                  'dice_coef': dice_coef,
+                                  'jaccard_coef': jaccard_coef,
+                                  'dice_coef_loss': dice_coef_loss}
+
+            elif loss == 'dice':
+                custom_objects = {'dice_coef_loss': dice_coef_loss,
+                                  'dice_coef': dice_coef}
+
+            unet.load_model(path, custom_object=custom_objects)
+        else:
+            unet = KerasUnet('unet')
+            loss_dict = {'dice': dice_loss, 'tiversky_loss': tiversky_loss}
+            unet.compile(optimizer='adam', loss=loss_dict[loss])
+        return unet
 
     @model()
     def resnet():
