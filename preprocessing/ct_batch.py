@@ -1150,6 +1150,16 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         return self
 
     @action
+    def double_normalize_hu(self, min_hu=-1000, max_hu=400):
+        """ Call normalize_hu action twice.
+
+        This method is required by KerasUnet model.
+        """
+        self.normalize_hu(min_hu, max_hu)
+        self.normalize_hu(min_hu, max_hu)
+        return self
+
+    @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def flip(self):    # pylint: disable=no-self-use
         """
