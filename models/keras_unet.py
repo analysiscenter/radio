@@ -157,14 +157,14 @@ class KerasUnet(KerasModel):
         input_tensor = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
-        reduct_block_A = self.reduction_block(input_tensor, 32,
-                                              scope='ReductionBlock_A')
-        reduct_block_B = self.reduction_block(reduct_block_A, 64,
-                                              scope='ReductionBlock_B')
-        reduct_block_C = self.reduction_block(reduct_block_B, 128,
-                                              scope='ReductionBlock_C')
-        reduct_block_D = self.reduction_block(reduct_block_C, 256,
-                                              scope='ReductionBlock_D')
+        reduction_block_A = self.reduction_block(input_tensor, 32,
+                                                 scope='ReductionBlock_A')
+        reduction_block_B = self.reduction_block(reduct_block_A, 64,
+                                                 scope='ReductionBlock_B')
+        reduction_block_C = self.reduction_block(reduct_block_B, 128,
+                                                 scope='ReductionBlock_C')
+        reduction_block_D = self.reduction_block(reduct_block_C, 256,
+                                                 scope='ReductionBlock_D')
 
         # Bottleneck layer
         bottleneck_block = self.reduction_block(reduct_block_D, 512, scope='BottleneckBlock')
