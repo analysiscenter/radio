@@ -63,3 +63,7 @@ class KerasModel(BaseModel):
         with open(os.path.join(dir_path, 'model.json'), 'w') as f:
             f.write(self.model.to_json())
         self.model.save_weights(os.path.join(dir_path, 'model.h5'))
+
+    def load_model(self, path, custom_objects):
+        """ Load weights and description of keras model. """
+        self.model = keras.models.load_model(path, custom_objects=custom_objects)
