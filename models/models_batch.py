@@ -4,22 +4,13 @@
 import tensorflow as tf
 
 from ..preprocessing import CTImagesMaskedBatch
-from ..dataset import action, model
-from .layers import vnet_down, vnet_up, deconv3d_bnorm_activation, selu
-from .layers import tf_dice_loss
+from ..dataset import model
 
 from .keras_unet import KerasUnet
 from .keras_unet import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
-from .keras_resnet import KerasResNet50
-from .keras_vgg16 import KerasVGG16
 from .keras_model import KerasModel
 # global constants
 # input shape of a nodule
-NOD_SHAPE = (32, 64, 64)
-
-PRETRAINED_UNET_PATH = ''
-PRETRAINED_RESNET_PATH = ''
-PRETRAINED_VGG16_PATH = ''
 
 class CTImagesModels(CTImagesMaskedBatch):
     """ Сlass for describing, training nn-models of segmentation/classification;
