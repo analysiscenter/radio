@@ -10,8 +10,6 @@ from .layers import tf_dice_loss
 
 from .keras_unet import KerasUnet
 from .keras_unet import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
-from .keras_resnet import KerasResNet50
-from .keras_vgg16 import KerasVGG16
 from .keras_model import KerasModel
 # global constants
 # input shape of a nodule
