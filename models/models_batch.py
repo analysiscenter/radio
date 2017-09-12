@@ -51,36 +51,6 @@ class CTImagesModels(CTImagesMaskedBatch):
         return pretrained_unet
 
     @model()
-    def resnet():
-        """ Get resnet model implemented in keras. """
-        resnet_model = KerasResNet('resnet')
-        resnet_model.compile(optimizer='adam', loss='binary_crossentropy')
-        return resnet_model
-
-    @model()
-    def resnet_pretrained():
-        """ Get pretrained resnet model. """
-        resnet_model = KerasModel('pretrained_resnet')
-        resnet_model.load(PRETRAINED_RESNET_PATH)
-        resnet_model.compile(optimizer='adam', loss='binary_crossentropy')
-        return resnet_model
-
-    @model()
-    def vgg16():
-        """ Get vgg16 model implemented in keras. """
-        vgg16_model = KerasVGG16('vgg16')
-        vgg16_model.compile(optimizer='adam', loss='binary_crossentropy')
-        return vgg16_model
-
-    @model
-    def vgg16_pretrained():
-        """ Get pretrained vgg16 model. """
-        vgg16_model = KerasModel('pretrained_vgg16')
-        vgg16_model.load(PRETRAINED_VGG16_PATH)
-        vgg16_model.compile(optimizer='adam', loss='binary_crossentropy')
-        return vgg16_model
-
-    @model()
     def selu_vnet_4(): # pylint: disable=no-method-argument
         """ Describe vnet-model of depth = 4 with magic SELU activations
         Schematically:
