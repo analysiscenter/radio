@@ -67,15 +67,16 @@ def dice_coef_loss(y_true, y_pred):
     return answer
 
 
-    def tiversky_coef(y_actual, y_pred):
+def tiversky_coef(y_true, y_pred):
+    """ Tiversky coef. """
     alpha = 0.3
     beta = 0.7
     smooth = 1e-10
-    y_actual = K.flatten(y_actual)
+    y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)
-    truepos = K.sum(y_actual * y_pred)
-    FP_and_FN = alpha * K.sum(y_pred * (1-y_actual)) + beta * K.sum((1-y_pred)*y_actual)
-    answer = (truepos + smooth) /( (truepos + smooth) + FP_and_FN )
+    truepos = K.sum(y_true * y_pred)
+    FP_and_FN = alpha * K.sum(y_pred * (1 - y_true)) + beta * K.sum((1 - y_pred) * y_true)
+    answer = (truepos + smooth) / ((truepos + smooth) + FP_and_FN)
     return answer
 
 def tiversky_loss(y_true, y_pred):
@@ -102,11 +103,11 @@ def jaccard_coef(y_true, y_pred):
     - jaccard score across all classes;
     """
     smooth = 1e-10
-    y_actual = K.flatten(y_actual)
+    y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)
-    truepos = K.sum(y_actual * y_pred)
+    truepos = K.sum(y_true * y_pred)
     falsepos = K.sum(y_pred) - truepos
-    falseneg = K.sum(y_actual) - truepos
+    falseneg = K.sum(y_true) - truepos
     jaccard = (truepos + smooth) / (smooth + truepos + falseneg + falsepos)
 
     return jaccard
@@ -257,8 +258,3 @@ class KerasUnet(KerasModel):
     def compile(self, optimizer='adam', loss=dice_coef_loss, **kwargs):
         """ Compile unet model. """
         super().compile(optimizer=optimizer, loss=loss)
-
-    def load_model(self, path):
-        """ Load weights and description of keras model. """
-        self.model = keras.models.load_model(path, custom_objects={'dice_coef':dice_coef,
-                                                                   'dice_coef_loss':dice_coef_loss})
