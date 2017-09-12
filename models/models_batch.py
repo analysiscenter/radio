@@ -30,7 +30,7 @@ class CTImagesModels(CTImagesMaskedBatch):
     """
 
     @model(mode='static')
-    def keras_unet(pipeline):
+    def keras_unet(pipeline):  # pylint: disable=no-self-argument
         """ Create Unet model implemented in keras and immediatelly compile it.
 
         This method is wrapped with model(mode='static') decorator meaning
