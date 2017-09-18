@@ -5,7 +5,7 @@ import logging
 
 import numpy as np
 from numba import njit
-import skimages
+import skimage
 from skimage import measure
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
