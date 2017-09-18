@@ -5,6 +5,8 @@ import logging
 
 import numpy as np
 from numba import njit
+import skimages
+from skimage import measure
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .histo import sample_histo3d
@@ -260,6 +262,47 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
             counter += 1
 
+        self._refresh_nodules_info(images_loaded)
+        return self
+
+    @action
+    def fetch_nodules_from_mask(self, images_loaded=True):
+        """ Fetch nodules info(centers and sizes) from masks.
+
+        First of all, runs skimage.measure.labels for fetching nodules regions
+        from mask. After that extracts nodules info from segmented regions
+        and put this information in self.nodules record array.
+
+        Args:
+        - images_loaded: bool, whether 'images' component is loaded or not;
+        this argument is required by self._refresh_nodules_info method;
+
+        Returns:
+        - self, batch;
+        """
+        nodules_list = []
+        for pos in range(len(self)):
+            mask = self.get(pos, 'masks')
+            mask_labels = measure.label(mask, background=0)
+            for props in measure.regionprops(np.int16(mask_labels)):
+                center = np.asarray((props.centroid[0],
+                                     props.centroid[1],
+                                     props.centroid[2]), dtype=np.float)
+                center = center * self.spacing[pos] + self.origin[pos]
+
+
+                diameter = np.asarray([props.equivalent_diameter / 2] * 3, dtype=np.float)
+                diameter = diameter * self.spacing[pos]
+                nodules_list.append({'patient_pos': pos,
+                                     'nodule_center': center,
+                                     'nodule_size': diameter})
+
+        num_nodules = len(nodules_list)
+        self.nodules = np.rec.array(np.zeros(num_nodules, dtype=self.nodules_dtype))
+        for i, nodule in enumerate(nodules_list):
+            self.nodules.patient_pos[i] = nodule['patient_pos']
+            self.nodules.nodule_center[i, :] = nodule['nodule_center']
+            self.nodules.nodule_size[i, :] = nodule['nodule_size']
         self._refresh_nodules_info(images_loaded)
         return self
 
