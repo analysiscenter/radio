@@ -111,15 +111,6 @@ class TFModel(BaseModel):
         """
         raise NotImplementedError()
 
-    def add_to_collection(self, tensor, alias=None):
-        """ Add tensor to inner collection. """
-        tensor_list = tensor if isinstance(tensor, (list, tuple)) else [tensor]
-        if alias is None:
-            alias_list = [t.name.split('/')[-1].split(':')[0] for t in tensor_list]
-        elif isinstance(alias, str):
-            alias_list = [alias]
-        self.tensor_names.update({a: t.name for t, a in zip(tensor_list, alias_list)})
-
     def get_number_of_trainable_vars(self):
         """ Get number of trainable variable in graph associated with current model. """
         with self.graph.as_default():
