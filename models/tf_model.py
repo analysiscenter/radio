@@ -192,17 +192,18 @@ class TFModel(BaseModel):
 
     def compile(self, optimizer, loss, *args, **kwargs):
         """ Compile tensorflow model. """
-        self.build_model()
-
         with self.graph.as_default():
+            self.loss = loss(self.y_true, self.y_pred)
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
+
             with tf.control_dependencies(update_ops):
-                train_op = optimizer.minimize(self.loss)
+                self.train_step = optimizer.minimize(self.loss, global_step=self.global_step)
 
             self.sess = tf.Session()
             self.sess.run(tf.global_variables_initializer())
-            self.train_op = train_op
-        return self
+
+        self.add_restore_var(self.loss, alias='loss')
+        self.add_restore_op(self.train_step, alias='train_step')
 
     def conv3d(self, input_tensor, filters, kernel_size, name,
                strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
