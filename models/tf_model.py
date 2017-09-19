@@ -54,6 +54,14 @@ class TFModel(BaseModel):
             self.add_restore_var(self.learning_phase)
             self.add_restore_var(self.global_step)
 
+    def set_decay(self, **kwargs):
+        with self.graph.as_default():
+            decay_mode = 'exp'
+            if 'decay_mode' in kwargs:
+                decay_mode = kwargs.pop('decay_mode')
+            decay_fn = DECAY_DICT[decay_mode]
+            self.learning_rate = decay_fn(global_step=self.global_step, **kwargs)
+
     def add_restore_var(self, variable, alias=None):
         """ Enable tf.Tensor or tf.Variable to be restored after dump as an attribute.
 
