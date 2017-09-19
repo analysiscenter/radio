@@ -6,7 +6,6 @@
 import tensorflow as tf
 
 from .tf_model import TFModel
-from .tf_model import model_scope
 
 
 def log_loss(y_true, y_pred, epsilon=10e-7):
