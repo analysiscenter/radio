@@ -178,7 +178,6 @@ class TFModel(BaseModel):
             saver.save(self.sess, path, global_step=self.global_step)
             with open(os.path.join(dir_path, 'restore_keys.json'), 'w') as f:
                 json.dump(self.restore_keys, f)
-            self.saver = saver
         return self
 
     def load(self, dir_path, graph_path, checkpoint=None, *args, **kwargs):
