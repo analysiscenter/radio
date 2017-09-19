@@ -54,6 +54,34 @@ class TFModel(BaseModel):
             self.add_restore_var(self.learning_phase)
             self.add_restore_var(self.global_step)
 
+    def add_restore_var(self, variable, alias=None):
+
+        if not isinstance(variable, (tf.Tensor, tf.Variable)):
+            raise ValueError("Argument 'variable' must be an instance of class tf.Tensor")
+
+        if alias is None:
+            _alias = variable.name.split('/')[-1].split(':')[0]
+        else:
+            _alias = alias
+
+        self.restore_keys['vars'].append(_alias)
+        with self.graph.as_default():
+            restore_vars_collection = tf.get_collection_ref('restore_vars')
+            restore_vars_collection.append(variable)
+
+    def add_restore_op(self, operation, alias=None):
+        if not isinstance(operation, tf.Operation):
+            raise ValueError("Argument 'operation' must be an instance of class tf.Operation")
+
+        if alias is None:
+            _alias = operation.name.split('/')[-1].split(':')[0]
+        else:
+            _alias = alias
+
+        self.restore_keys['vars'].append(_alias)
+        with self.graph.as_default():
+            restore_ops_collection = tf.get_collection_ref('restore_ops')
+            restore_ops_collection.append(operation)
 
     def build_model(self, *args, **kwargs):
         """ Build tensorflow model.
