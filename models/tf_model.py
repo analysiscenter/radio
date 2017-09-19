@@ -42,19 +42,17 @@ class TFModel(BaseModel):
         self.name = name
         self.graph = tf.Graph()
         with self.graph.as_default():
-            with tf.variable_scope(self.name):
-                self.tensor_names = {}
-                self.global_step = 0
+            self.sess = None
+            self.loss = None
+            self.train_step = None
 
-                self.learning_phase = tf.placeholder(tf.bool)
-                self.add_to_collection(self.learning_phase, 'learning_phase')
+            self.learning_rate = None
+            self.restore_keys = {'vars': [], 'ops': []}
+            self.learning_phase = tf.placeholder(tf.bool, name='learning_phase')
+            self.global_step = tf.Variable(0, trainable=False, name='global_step')
 
-                self.sess = None
-                self.train_op = None
-                self.loss = None
-                self.input = None
-                self.y_pred = None
-                self.y_true = None
+            self.add_restore_var(self.learning_phase)
+            self.add_restore_var(self.global_step)
 
 
     def build_model(self, *args, **kwargs):
@@ -156,7 +154,7 @@ class TFModel(BaseModel):
             setattr(self, alias, self.graph.get_tensor_by_name(name))
         return self
 
-    def compile(self, optimizer, *args, **kwargs):
+    def compile(self, optimizer, loss, *args, **kwargs):
         """ Compile tensorflow model. """
         self.build_model()
 
