@@ -12,6 +12,9 @@ import tensorflow as tf
 from .base_model import BaseModel
 
 
+DECAY_DICT = {'exp': tf.train.exponential_decay, 'inverse_time': tf.train.inverse_time_decay}
+
+
 def model_scope(method):
     """ Wrap method of TFModel to apply all ops in context of model's graph and scope. """
     @wraps(method)
