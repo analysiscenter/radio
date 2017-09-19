@@ -521,7 +521,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # build nodules' batch
         bounds = np.arange(batch_size + 1) * nodule_size[0]
         crops_spacing = self.spacing[crops_indices]
-        crops_origin = self.origin[crops_indices] + crops_spacing * nodules_st_pos
+        offset = np.zeros((batch_size, 3))
+        offset[:, 0] = self.lower_bounds[crops_indices]
+        crops_origin = self.origin[crops_indices] + crops_spacing * (nodules_st_pos - offset)
         names_gen = zip(self.indices[crops_indices], self.make_indices(batch_size))
         ix_batch = ['_'.join([prefix, random_str]) for prefix, random_str in names_gen]
         nodules_batch = type(self)(DatasetIndex(ix_batch))
@@ -617,6 +619,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
     def _filter_nodules_info(self):
         """ Filter record-array self.nodules s.t. only records about cancerous nodules
                 that have non-zero intersection with scan-boxes be present.
+
+        Args:
+            ____
+        Return:
+            ____
 
         NOTE: can be called only after execution of fetch_nodules_info and _refresh_nodules_info
         """
