@@ -1,8 +1,6 @@
 # pylint: disable=no-method-argument
 """Child class of CTImagesBatch that incorporates nn-models """
 
-import tensorflow as tf
-
 from ..preprocessing import CTImagesMaskedBatch
 from ..dataset import model
 
