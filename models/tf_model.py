@@ -55,7 +55,6 @@ class TFModel(BaseModel):
             self.add_restore_var(self.global_step)
 
     def add_restore_var(self, variable, alias=None):
-
         if not isinstance(variable, (tf.Tensor, tf.Variable)):
             raise ValueError("Argument 'variable' must be an instance of class tf.Tensor")
 
