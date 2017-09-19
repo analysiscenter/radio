@@ -32,6 +32,9 @@ class TFModel(BaseModel):
         self.name = name
         self.graph = tf.Graph()
         with self.graph.as_default():
+            self.input = None
+            self.y_true = None
+            self.y_pred = None
             self.sess = None
             self.loss = None
             self.train_step = None
