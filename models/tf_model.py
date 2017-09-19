@@ -58,6 +58,7 @@ class TFModel(BaseModel):
             self.add_restore_var(self.global_step)
 
     def set_decay(self, **kwargs):
+        """ Set decay of learning rate. """
         with self.graph.as_default():
             decay_mode = 'exp'
             if 'decay_mode' in kwargs:
