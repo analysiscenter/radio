@@ -25,7 +25,7 @@ class TFModel(BaseModel):
         3) Add self.global_step = 0;
         4) Add self.tensor_names = {};
         5) Add self.learning_phase = tf.placeholder(tf.bool);
-        6) Initalize self.sess, self.train_op, self.y_pred,
+        6) Initalize self.sess, self.train_step, self.y_pred,
         self.y_true, self.loss, self.input with None;
         """
         super().__init__(name, *args, **kwargs)
@@ -161,7 +161,7 @@ class TFModel(BaseModel):
         """ Train tensorflow model on batch data. """
         with self.graph.as_default():
             feed_dict = {self.input: x, self.y_true: y_true, self.learning_phase: True}
-            _ = self.sess.run(self.train_op, feed_dict=feed_dict)
+            _ = self.sess.run(self.train_step, feed_dict=feed_dict)
 
     def predict_on_batch(self, x, **kwargs):
         """ Get prediction of tensorflow model on batch data. """
