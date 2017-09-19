@@ -166,28 +166,39 @@ class TFModel(BaseModel):
             y_pred = self.sess.run(self.y_pred, feed_dict=feed_dict)
         return y_pred
 
-    @model_scope
     def save(self, dir_path, *args, **kwargs):
         """ Save tensorflow model. """
-        saver = tf.train.Saver()
-        path = os.path.join(dir_path, self.name)
-        saver.save(self.sess, path, global_step=self.global_step)
-        with open(os.path.join(dir_path, 'tensor_collection.json'), 'w') as f:
-            json.dump(self.tensor_names, f)
+        with self.graph.as_default():
+            saver = tf.train.Saver()
+            path = os.path.join(dir_path, self.name)
+            saver.save(self.sess, path, global_step=self.global_step)
+            with open(os.path.join(dir_path, 'restore_keys.json'), 'w') as f:
+                json.dump(self.restore_keys, f)
+            self.saver = saver
         return self
 
-    def load(self, graph_path, checkpoint_path, dir_path, *args, **kwargs):
+    def load(self, dir_path, checkpoint=None, *args, **kwargs):
         """ Load tensorflow model. """
         self.sess = tf.Session()
-        saver = tf.train.import_meta_graph(graph_path)
+        saver = tf.train.import_meta_graph(glob.glob(os.path.join(dir_path, '*.meta'))[0])
+
+        if checkpoint is None:
+            checkpoint_path = tf.train.latest_checkpoint(dir_path)
+        else:
+            checkpoint_path = os.path.join(dir_path, checkpoint)
         saver.restore(self.sess, checkpoint_path)
         self.graph = self.sess.graph
 
-        with open(os.path.join(dir_path, 'tensor_collection.json'), 'r') as f:
-            self.tensor_names = json.load(f)
+        with open(os.path.join(dir_path, 'restore_keys.json'), 'r') as json_file:
+            self.restore_keys = json.load(json_file)
 
-        for alias, name in self.tensor_names.items():
-            setattr(self, alias, self.graph.get_tensor_by_name(name))
+        with self.graph.as_default():
+            for alias, var in zip(self.restore_keys['vars'], tf.get_collection('restore_vars')):
+                setattr(self, alias, var)
+
+            for alias, op in zip(self.restore_keys['ops'], tf.get_collection('restore_ops')):
+                setattr(self, alias, op)
+
         return self
 
     def compile(self, optimizer, loss, *args, **kwargs):
