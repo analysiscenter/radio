@@ -78,7 +78,6 @@ class TFResNet(TFModel):
             output_tensor = tf.nn.relu(output_tensor)
         return output_tensor
 
-    @model_scope
     def build_model(self):
         """ Build renset model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='input')
@@ -130,7 +129,5 @@ class TFResNet(TFModel):
         self.input = input_tensor
         self.y_true = y_true
         self.y_pred = z
-        self.loss = log_loss(self.y_true, self.y_pred)
 
-        self.add_to_collection((self.input, self.y_true, self.y_pred, self.loss))
-        return self
+        return self.input, self.y_true, self.y_pred
