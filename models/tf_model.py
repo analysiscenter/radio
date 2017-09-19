@@ -216,6 +216,10 @@ class TFModel(BaseModel):
     def compile(self, optimizer, loss, *args, **kwargs):
         """ Compile tensorflow model. """
         with self.graph.as_default():
+
+            for var in self.build_model(**kwargs):
+                self.add_restore_var(var)
+
             self.loss = loss(self.y_true, self.y_pred)
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
