@@ -161,8 +161,9 @@ class TFModel(BaseModel):
 
     def predict_on_batch(self, x, **kwargs):
         """ Get prediction of tensorflow model on batch data. """
-        feed_dict = {self.input: x, self.learning_phase: False}
-        y_pred = self.sess.run(self.y_pred, feed_dict=feed_dict)
+        with self.graph.as_default():
+            feed_dict = {self.input: x, self.learning_phase: False}
+            y_pred = self.sess.run(self.y_pred, feed_dict=feed_dict)
         return y_pred
 
     @model_scope
