@@ -55,6 +55,14 @@ class TFModel(BaseModel):
             self.add_restore_var(self.global_step)
 
     def add_restore_var(self, variable, alias=None):
+        """ Enable tf.Tensor or tf.Variable to be restored after dump as an attribute.
+
+        Args:
+        - variable: tf.Tensor or tf.Variable to add to collection of variables
+        that can be restored after dump;
+        - alias: str, alias for tf.Variable or tf.Tensor which will be used as
+        a name of attribute for accessing it from outside of TFModel instance;
+        """
         if not isinstance(variable, (tf.Tensor, tf.Variable)):
             raise ValueError("Argument 'variable' must be an instance of class tf.Tensor")
 
@@ -69,6 +77,14 @@ class TFModel(BaseModel):
             restore_vars_collection.append(variable)
 
     def add_restore_op(self, operation, alias=None):
+        """ Enable tf.Operation to be restored after dump as an attribute.
+
+        Args:
+        - operation: tf.Operation, operation to add to collection of operations
+        that can be restored after dump;
+        - alias: str, alias for tf.Operation which will be used as a name of
+        attribute for accessing this operation;
+        """
         if not isinstance(operation, tf.Operation):
             raise ValueError("Argument 'operation' must be an instance of class tf.Operation")
 
