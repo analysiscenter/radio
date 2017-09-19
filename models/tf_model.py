@@ -181,10 +181,10 @@ class TFModel(BaseModel):
             self.saver = saver
         return self
 
-    def load(self, dir_path, checkpoint=None, *args, **kwargs):
+    def load(self, dir_path, graph_path, checkpoint=None, *args, **kwargs):
         """ Load tensorflow model. """
         self.sess = tf.Session()
-        saver = tf.train.import_meta_graph(glob.glob(os.path.join(dir_path, '*.meta'))[0])
+        saver = tf.train.import_meta_graph(graph_path)
 
         if checkpoint is None:
             checkpoint_path = tf.train.latest_checkpoint(dir_path)
