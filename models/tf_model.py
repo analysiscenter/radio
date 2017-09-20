@@ -96,7 +96,7 @@ class TFModel(BaseModel):
         else:
             _alias = alias
 
-        self.restore_keys['vars'].append(_alias)
+        self.restore_keys['ops'].append(_alias)
         with self.graph.as_default():
             restore_ops_collection = tf.get_collection_ref('restore_ops')
             restore_ops_collection.append(operation)
