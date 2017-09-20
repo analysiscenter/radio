@@ -924,8 +924,8 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
             return resize_pil(**args_resize)
 
     @action
-    @inbatch_parallel(init='_init_images', post='_post_default', target='nogil')
-    def rotate(self, degree, axes=(1, 2), **kwargs):
+    @inbatch_parallel(init='_init_images', post='_post_default', target='threads')
+    def rotate(self, image, degree, axes=(1, 2), **kwargs):
         """ Rotate 3D images in batch on specific angle in plane.
 
         Args:
@@ -937,11 +937,11 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         *NOTE: zero padding automatically added after rotation;
         """
-        return rotate_3D
+        return rotate_3D(image, degree, axes)
 
     @action
-    @inbatch_parallel(init='_init_images', post='_post_default', target='nogil')
-    def random_rotate(self, max_degree, axes=(1, 2), **kwargs):
+    @inbatch_parallel(init='_init_images', post='_post_default', target='threads')
+    def random_rotate(self, image, max_degree, axes=(1, 2), **kwargs):
         """ Perform rotation of 3D image in batch on random angle.
 
         Args:
@@ -953,7 +953,7 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
 
         *NOTE: zero padding automatically added after rotation;
         """
-        return random_rotate_3D
+        return random_rotate_3D(image, max_degree, axes)
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
