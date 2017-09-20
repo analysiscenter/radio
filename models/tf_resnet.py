@@ -126,6 +126,6 @@ class TFResNet(TFModel):
 
         self.input = input_tensor
         self.y_true = y_true
-        self.y_pred = z
+        self.y_pred = tf.identity(z, namne='y_pred')
 
         return self.input, self.y_true, self.y_pred
