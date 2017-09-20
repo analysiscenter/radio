@@ -105,7 +105,7 @@ class TFResNet(TFModel):
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3D')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3E')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3F')
-        x = tf.layers.dropout(x, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
 
         x = self.conv_block(x, (3, 3, 3), [64, 64, 196], name='conv_4A')
         x = self.identity_block(x, (3, 3, 3), [64, 64, 196], name='identity_4B')
