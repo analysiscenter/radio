@@ -717,15 +717,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return [self.get(i, 'masks') for i in range(len(self))]
 
-    @inbatch_parallel(init='_init_mask', post='_post_mask', target='nogil')
-    def rotate_masks(self, degree, axes):
+    @inbatch_parallel(init='_init_mask', post='_post_mask', target='threads')
+    def rotate_masks(self, mask, degree, axes):
         """ Rotate 3D masks contatined in batch. """
-        return rotate_3D
+        return rotate_3D(mask, max_degree, axes)
 
-    @inbatch_parallel(init='_init_mask', post='_post_mask', target='nogil')
-    def random_rotate_masks(self, max_degree, axes):
+    @inbatch_parallel(init='_init_mask', post='_post_mask', target='threads')
+    def random_rotate_masks(self, mask, max_degree, axes):
         """ Rotate 3D masks contained in batch on random angle. """
-        return random_rotate_3D
+        return random_rotate_3D(mask, max_degree, axes)
 
     @action
     def rotate(self, degree, axes=(1, 2), rotate_mask=True, **kwargs):
