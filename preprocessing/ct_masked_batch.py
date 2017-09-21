@@ -583,7 +583,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-
     def get_axial_slice(self, patient_pos, height):
         """Get tuple of slices (data slice, mask slice).
 
