@@ -426,7 +426,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return self.indices
 
-
     @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async', update=False)
     async def _load_blosc(self, patient_id, *args, **kwargs):
         """
