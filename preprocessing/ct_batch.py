@@ -27,7 +27,7 @@ AIR_HU = -2000
 DARK_HU = -2000
 
 
-class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
+class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     """
     class for storing batch of CT(computed tomography) 3d-scans.
