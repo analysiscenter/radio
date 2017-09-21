@@ -38,6 +38,7 @@ def min_max_sum_fn(a, b, flag):
         return a + b
     return 0
 
+
 @njit(nogil=True)
 def numba_xip(arr, l, m, n, flag, fill_value):
     """Compute njit xip for given slice.
