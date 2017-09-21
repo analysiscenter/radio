@@ -873,8 +873,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64), batch_size=4,
-                        y_component='labels', dim_ordering='channels_last'):
+    def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
+                        batch_size=4, y_component='labels', dim_ordering='channels_last'):
         """ Get predictions of the model on data contained in batch.
 
         Transforms scan data into patches of shape CROP_SHAPE and then feed
