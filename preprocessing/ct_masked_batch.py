@@ -341,7 +341,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return (start_pix + self.nodules.offset).astype(np.int)
 
-
     @action
     def create_mask(self):
         """Load mask data for using nodule's info.
