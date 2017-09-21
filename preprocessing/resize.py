@@ -89,6 +89,7 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
     # for post-function
     return res, output_array.shape
 
+
 @jit(nogil=True)
 def _seq_resize(input_array, shape, axes, resample):
     """ Calculate 3d-resize based on sequence of 2d-resizes performed on slices
