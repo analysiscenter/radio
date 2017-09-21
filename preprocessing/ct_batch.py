@@ -31,74 +31,86 @@ DARK_HU = -2000
 class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     """
-    class for storing batch of CT(computed tomography) 3d-scans.
+    Class for storing batch of CT(computed tomography) 3d-scans.
     This class is derived from base class Batch defined in dataset submodule.
 
 
     Attrs:
-        1. index: array of itemsIDs. Usually, itemsIDs are strings
+
+        1. index: instance of dataset.Index class. Index is required as
+           a first argument by __init__ method of base Batch class.
+           Later it is used almost by every method that requires indexing.
+
         2. images: 3d-array of stacked scans along number_of_slices axis ("skyscraper")
+
         3. _bounds: 1d-array of bound-floors for each scan,
             has length = number of items in batch + 1
+
         4. spacing: 2d-array [number of items X 3] that contains spacing
-            of each item (scan) along each axis
+           of each item (scan) along each axis.
+           NOTE [z, y, x] order is used.
+
         5. origin: 2d-array [number of items X 3] that contains spacing
-            of each item along each axis
+           of each item along each axis.
+           NOTE [z, y, x] order is used.
+
+    Properties:
+        1. components: return tuple of string; each of strings reffers to
+           an attribute of instance which would be considered as data component.
+           NOTE: Implementation of this property is required by base class.
 
 
     Important methods:
+
         1. __init__(self, index):
-            basic initialization of images batch
-            in accordance with Batch.__init__
-            given base class Batch
+            Basic initialization of images batch in accordance
+            with Batch.__init__ given base class Batch.
 
         2. load(self, source, fmt, upper_bounds, src_blosc):
+           Builds skyscraper of scans from either
+           'dicom'|'raw'|'blosc'|'ndarray' and returns self.
 
-            builds skyscraper of scans
-            from either 'dicom'|'raw'|'blosc'|'ndarray'
-            returns self
+           NOTE: this method uses async-await notation.
 
         2. resize(self, shape, order):
-            transform the shape of all scans to shape=shape
-            method is spline iterpolation(order = order)
-            the function is multithreaded
-            returns self
+           Transforms the shape of all scans to a given shape('shape' argument).
+           The kernel of this method is scipy.ndimage.interpolation.zoom function.
+
+           NOTE: this function is can be executed in parallel via multithreading.
 
         3. unify_spacing(self, spacing, shape):
-            resize each scan so that its spacing changed to supplied spacing,
-            then crop/pad each scan to supplied shape
+           Resizes each scan so that its spacing changed to supplied spacing,
+           then crop/pad each scan to supplied shape.
 
         4. dump(self, format, dst)
-            create a dump of the batch
-            in the path-folder
-            returns self
+           Creates a dump of the batch in the path-folder and returns self.
 
-            NOTE: as of 06.07.2017, only format='blosc' is supported
+           NOTE: as of 06.07.2017, only format='blosc' is supported.
+           NOTE: this method uses async-await notation.
 
         5. calc_lungs_mask(self, erosion_radius=7)
-            returns binary-mask for lungs segmentation
-            the larger erosion_radius
-            the lesser the resulting lungs will be
-            * returns mask, not self
+           Returns binary-mask for lungs segmentation;
+           the larger erosion_radius the lesser the resulting lungs will be.
+           NOTE: returns mask, not self.
 
         6. segment(self, erosion_radius=2)
-            segments using mask from calc_lungs_mask()
-            that is, sets to hu = -2000 of pixels outside mask
-            changes self, returns self
+           This method uses mask from calc_lungs_mask()
+           that is, sets to hu = -2000 of pixels outside mask
+           and returns self.
 
-            *NOTE: segment can be applied only before normalize_hu
-                and to batch that contains scans for whole patients
+           NOTE: segment can be applied only before normalize_hu
+           and to batch that contains scans for whole patients.
 
         7. flip(self)
-            invert slices corresponding to each scan
-            do not change the order of scans
-            changes self, returns self
+           Inverts slices corresponding to each scan,
+           but does not change the order of scans.
+           NOTE: changes self inplace, returns self
 
         7. normalize_hu(self, min_hu=-1000, max_hu=400):
-            normalizes hu-densities to interval [0, 255]
-            trims hus outside range [min_hu, max_hu]
-            then scales to [0, 255]
-            changes self, returns self
+           Normalizes hu-densities to interval [0, 255]
+           trims hu's outside range [min_hu, max_hu] and
+           then scales to [0, 255]. After that assigns result to self.images.
+           NOTE: changes self inplace, returns self.
 
     """
 
@@ -276,6 +288,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         even though the code is slightly lengthier
         than it'd be if the order was concat->split.
         """
+        if batch_size is None:
+            return (cls.concat(batches), None)
         if np.sum([len(batch) for batch in batches]) <= batch_size:
             return (cls.concat(batches), None)
 
