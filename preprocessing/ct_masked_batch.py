@@ -511,7 +511,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             cancer_nodules = self._fit_into_bounds(nodule_size, variance=variance)
 
             # randomly select needed number of cancer nodules (their starting positions)
-            sample_indices = np.random.choice(np.arange(self.num_nodules), size=cancer_n, replace=False)
+            sample_indices = np.random.choice(np.arange(self.num_nodules),
+                                              size=cancer_n, replace=False)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
         nodules_st_pos = cancer_nodules
