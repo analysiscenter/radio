@@ -452,7 +452,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.asarray(samples + offset, dtype=np.int)
 
     @action
-    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals
+    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,
                        variance=None, mask_shape=None, histo=None):
         """Fetch random cancer and non-cancer nodules from batch.
 
