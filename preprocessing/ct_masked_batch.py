@@ -1,5 +1,6 @@
 # pylint: disable=no-member
 # pylint: disable=too-many-public-methods
+# pylint: disable=too-many-locals
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import logging
 
