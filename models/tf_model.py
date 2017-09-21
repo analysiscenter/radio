@@ -224,6 +224,9 @@ class TFModel(BaseModel):
 
         Returns:
         - None;
+
+        NOTE: **kwargs argument is added for compatibillity
+        with BaseModel method.
         """
         with self.graph.as_default():
             feed_dict = {self.input: x, self.y_true: y_true, self.learning_phase: True}
@@ -239,6 +242,9 @@ class TFModel(BaseModel):
 
         Returns:
         - y_pred: ndarray containing predictions of the model;
+
+        NOTE: **kwargs argument is added for compatibillity
+        with BaseModel method.
         """
         with self.graph.as_default():
             feed_dict = {self.input: x, self.learning_phase: False}
