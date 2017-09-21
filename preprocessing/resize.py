@@ -113,6 +113,7 @@ def _seq_resize(input_array, shape, axes, resample):
 
     return result
 
+
 @jit(nogil=True)
 def _slice_and_resize(input_array, axis, slice_shape, resample):
     """ Slice 3d-array along the axis given by axis-arg and resize each slice to
