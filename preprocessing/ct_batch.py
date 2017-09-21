@@ -410,7 +410,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # return shape of slices
         return shapes[0, 1], shapes[0, 2]
 
-
     def _init_load_blosc(self, **kwargs):
         """ Init-func for load from blosc.
 
