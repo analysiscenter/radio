@@ -1070,7 +1070,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             data_padded = data_4d
 
         # init tensor with patches
-        num_sections = (np.asarray(data_padded.shape[1 : ]) - patch_shape) // stride + 1
+        num_sections = (np.asarray(data_padded.shape[1:]) - patch_shape) // stride + 1
         patches = np.zeros(shape=(len(self), np.prod(num_sections)) + tuple(patch_shape))
 
         # put patches into the tensor
