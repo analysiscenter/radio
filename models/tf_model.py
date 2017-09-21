@@ -4,11 +4,34 @@
 """ Contains base class for all tensorflow models. """
 
 import os
+import functools
 import json
 import numpy as np
 import tensorflow as tf
 
 from .base_model import BaseModel
+
+
+def restore_nodes(*names):
+    if any(not isinstance(arg, str) for arg in names):
+        raise ValueError("Arguments of restore_nodes decorator must be strings "
+                         + "that will be names of attributes to "
+                         + "which output tensors from decorated method "
+                         + "will assosiated with")
+
+    def decorated(method):
+        @functools.wraps(method)
+        def wrapped(self, *args, **kwargs):
+            out_tf_variables = method(self, *args, **kwargs)
+            if not isinstance(out_tf_variables, (tuple, list)):
+                out_tf_variables = (out_tf_variables, )
+            for alias, variable in zip(names, out_tf_variables):
+                self.add_restore_var(variable, alias)
+                setattr(self, alias, variable)
+            return *out_tf_variables
+
+        return wrapped
+    return decorated
 
 
 DECAY_DICT = {'exp': tf.train.exponential_decay, 'inverse_time': tf.train.inverse_time_decay}
@@ -48,6 +71,34 @@ class TFModel(BaseModel):
 
             self.add_restore_var(self.learning_phase)
             self.add_restore_var(self.global_step)
+
+    def __enter__(self):
+        """ Use model context.
+
+        This magic method enables using TFModels instances with with statements.
+        Inside __enter__ just default tensorflow graph is changed to self.graph.
+
+        Returns:
+        - self, TFModel.
+        """
+        self.graph_context = self.graph.as_default()
+        self.graph_context.__enter__()
+        return self
+
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        """ Exit model context.
+
+        This magic method enables using TFModel instances with 'with' statements.
+        Inside __exit__ just default tensorflow graph is restored.
+
+        Args:
+        - exception_type: type of exception that was raised inside context.
+        - exception_value: exception instance.
+        - exception_traceback: traceback of exception that was raised inside context.
+        """
+        return self.graph_context.__exit__(exception_type,
+                                           exception_value,
+                                           exception_traceback)
 
     def set_decay(self, **kwargs):
         """ Set decay of learning rate. """
@@ -208,9 +259,7 @@ class TFModel(BaseModel):
         """ Compile tensorflow model. """
         with self.graph.as_default():
 
-            for var in self.build_model(**kwargs):
-                self.add_restore_var(var)
-
+            _ = self.build_model()
             self.loss = loss(self.y_true, self.y_pred)
             update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
 
