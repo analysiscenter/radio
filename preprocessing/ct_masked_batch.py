@@ -520,7 +520,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # if non-cancerous nodules are needed, add random starting pos
         if batch_size - cancer_n > 0:
             # sample starting positions for (most-likely) non-cancerous crops
-            random_nodules = self.sample_random_nodules(batch_size - cancer_n, nodule_size, histo=histo)
+            random_nodules = self.sample_random_nodules(batch_size - cancer_n,
+                                                        nodule_size, histo=histo)
 
             # concat non-cancerous and cancerous crops' starting positions
             nodules_st_pos = np.vstack([nodules_st_pos, random_nodules]).astype(np.int)  # pylint: disable=no-member
