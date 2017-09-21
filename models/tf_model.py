@@ -237,7 +237,7 @@ class TFModel(BaseModel):
         """ Save tensorflow model.
 
         Args:
-        - dir_path: str, path of directory on hard drive that will be used
+        - dir_path: str, path to directory on hard drive that will be used
         for storing model's data;
 
         Returns:
@@ -254,7 +254,20 @@ class TFModel(BaseModel):
         return self
 
     def load(self, dir_path, graph_path, checkpoint=None, *args, **kwargs):
-        """ Load tensorflow model. """
+        """ Load tensorflow model.
+
+        Args:
+        - dir_path: str, path to directory on hard drive where model
+        was saved via save method;
+        - graph_path: str, path to file with metagraph;
+        - checkpoint: str or None, if str then must represent path
+        to checkpoint file that will be loaded, if None then latest checkpoint
+        from 'dir_path' directory will be loaded;
+
+        Example:
+        >>> tf_model = TFResNetModel('resnet50')
+        >>> tf.model.load('/path/to/resnet50/model/', '/path/to/resnet50/model/resnet50-1982.meta')
+        """
         self.sess = tf.Session()
         saver = tf.train.import_meta_graph(graph_path)
 
