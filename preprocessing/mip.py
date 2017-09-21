@@ -115,6 +115,7 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
     _projection = _PROJECTIONS[projection]
     _reverse_projection = _REVERSE_PROJECTIONS[projection]
     _function = _NUMBA_FUNC[func]
+
     def out_function(data, start=0, end=-1):
         data_tr = data.transpose(_projection)
         if _function == 0:
