@@ -214,16 +214,28 @@ class TFModel(BaseModel):
         return input_tensor.get_shape().as_list()
 
     def train_on_batch(self, x, y_true, **kwargs):
-        """ Train tensorflow model on batch data. """
+        """ Train tensorflow model on batch data.
+
+        Args:
+        - x: ndarray, numpy array that will be fed into input
+        placeholder(self.input attribute by default);
+        - y_true: ndarray, numpy array that will be fed into
+        'true-value' placeholder(self.y_true attribute by default);
+
+        Returns:
+        - None;
+        """
         with self.graph.as_default():
             feed_dict = {self.input: x, self.y_true: y_true, self.learning_phase: True}
             _ = self.sess.run(self.train_step, feed_dict=feed_dict)
+        return None
 
     def predict_on_batch(self, x, **kwargs):
         """ Get prediction of tensorflow model on batch data.
 
         Args:
-        - x: ndarray, numpy array that will fed to input placeholder;
+        - x: ndarray, numpy array that will be fed to input
+        placeholder(self.input attribute by default);
 
         Returns:
         - y_pred: ndarray containing predictions of the model;
