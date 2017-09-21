@@ -32,7 +32,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     """
     class for storing batch of CT(computed tomography) 3d-scans.
-        Derived from base class Batch
+    This class is derived from base class Batch defined in dataset submodule.
 
 
     Attrs:
