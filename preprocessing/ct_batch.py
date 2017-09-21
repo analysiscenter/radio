@@ -814,7 +814,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # is for unify_spacing
         if 'spacing' in kwargs:
             # recalculate origin, spacing
-            shape_after_resize = np.rint(self.images_shape * self.spacing / np.asarray(kwargs['spacing']))
+            shape_after_resize = np.rint(self.images_shape * self.spacing
+                                         / np.asarray(kwargs['spacing']))
             overshoot = shape_after_resize - np.asarray(kwargs['shape'])
             new_spacing = self.rescale(new_shape=shape_after_resize)
             new_origin = self.origin + new_spacing * (overshoot // 2)
