@@ -63,8 +63,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     Important methods:
 
         1. __init__(self, index):
-            Basic initialization of images batch in accordance
-            with Batch.__init__ given base class Batch.
+           Basic initialization of images batch in accordance
+           with Batch.__init__ given base class Batch.
 
         2. load(self, source, fmt, upper_bounds, src_blosc):
            Builds skyscraper of scans from either
