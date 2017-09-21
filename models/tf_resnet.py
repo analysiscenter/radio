@@ -4,7 +4,7 @@
 """ Contains TFResNet model class. """
 
 import tensorflow as tf
-from .tf_model import TFModel
+from .tf_model import TFModel, restore_nodes
 
 
 def log_loss(y_true, y_pred, epsilon=10e-7):
@@ -76,6 +76,7 @@ class TFResNet(TFModel):
             output_tensor = tf.nn.relu(output_tensor)
         return output_tensor
 
+    @restore_nodes('input', 'y_true', 'y_pred')
     def build_model(self):
         """ Build renset model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='input')
@@ -124,8 +125,6 @@ class TFResNet(TFModel):
         z = tf.layers.dense(z, units=1, name='dense_1')
         z = tf.nn.sigmoid(z)
 
-        self.input = input_tensor
-        self.y_true = y_true
-        self.y_pred = tf.identity(z, name='y_pred')
+        y_pred = tf.identity(z, name='y_pred')
 
-        return self.input, self.y_true, self.y_pred
+        return input_tensor, y_true, y_pred
