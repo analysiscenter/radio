@@ -50,6 +50,7 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
     # and shape of out_patient
     return res, out_patient.shape
 
+
 @jit(nogil=True)
 def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=None,
                resample=None, padding='edge'):
