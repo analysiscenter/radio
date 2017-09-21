@@ -145,7 +145,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return 'images', 'spacing', 'origin'
 
     def _init_data(self, source=None, bounds=None, origin=None, spacing=None):
-        """Initialize images, _bounds, _crop_centers, _crop_sizes atteributes.
+        """ Initialize images, _bounds, _crop_centers, _crop_sizes atteributes.
 
         This method is called inside __init__ and some other methods
         and used as initializer of batch inner structures.
@@ -316,7 +316,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @action
     def load(self, fmt='dicom', source=None, bounds=None,  # pylint: disable=arguments-differ
              origin=None, spacing=None, src_blosc=None):
-        """ Loads 3d scans-data in batch
+        """ Load 3d scans-data in batch.
 
         Args:
             fmt: type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
