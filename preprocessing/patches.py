@@ -96,6 +96,7 @@ def assemble_patches(patches, stride, out_arr, fake):
     # weight resulting image
     out_arr /= weights_inv
 
+
 def calc_padding_size(img_shape, patch_shape, stride):
     """ Calculate width of padding, that needs to be added to 3d-scan
             in order to fit integer number of patches; in format needed for
