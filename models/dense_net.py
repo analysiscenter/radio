@@ -3,7 +3,6 @@
 """ Contains DenseNet model class. """
 
 import tensorflow as tf
-
 from .tf_model import TFModel, restore_nodes
 
 
