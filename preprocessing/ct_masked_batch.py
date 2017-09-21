@@ -561,7 +561,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
             histo: list of len=2, where the first item contains histogram bins: array of
                 shape=(number of bins X number of bins) with number of elems in bins, while the
-                second item contains edges of histogram bins: list of 3 1darrays of shape=(number of bins + 1).
+                second item contains edges of histogram bins:
+                list of 3 1darrays of shape=(number of bins + 1).
                 NOTE: this is almost np.histogram format. The only difference is that np.histogram
                 returns tuple of len=2, not list.
 
