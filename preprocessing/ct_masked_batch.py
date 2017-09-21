@@ -833,7 +833,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return x, y
 
     @action
-    def train_on_crop(self, model_name, y_component='labels', dim_ordering='channels_last', **kwargs):
+    def train_on_crop(self, model_name, y_component='labels',
+                      dim_ordering='channels_last', **kwargs):
         """ Train model on crops of CT-scans contained in batch.
 
         Args:
