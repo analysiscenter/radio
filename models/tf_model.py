@@ -27,6 +27,7 @@ def restore_nodes(*names):
         """ Decorator with captured names for ouput tensors. """
         @functools.wraps(method)
         def wrapped(self, *args, **kwargs):
+            """ Function that will be used insted original method. """
             out_tf_variables = method(self, *args, **kwargs)
             if not isinstance(out_tf_variables, (tuple, list)):
                 out_tf_variables = (out_tf_variables, )
