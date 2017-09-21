@@ -32,7 +32,7 @@ def restore_nodes(*names):
             for alias, variable in zip(names, out_tf_variables):
                 self.add_restore_var(variable, alias)
                 setattr(self, alias, variable)
-            return *out_tf_variables
+            return (*out_tf_variables, )
 
         return wrapped
     return decorated
