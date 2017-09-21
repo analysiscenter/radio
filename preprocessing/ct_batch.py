@@ -367,7 +367,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         # put 2d-scans for each patient in a list
         patient_folder = self.index.get_fullpath(patient_id)
-        list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s)) for s in os.listdir(patient_folder)]
+        list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
+                          for s in os.listdir(patient_folder)]
 
         list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
         intercept_pat = list_of_dicoms[0].RescaleIntercept
