@@ -352,7 +352,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise TypeError("Incorrect type of batch source")
         return self
 
-
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
     def _load_dicom(self, patient_id, *args, **kwargs):
         """
