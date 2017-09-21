@@ -206,7 +206,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 n_slices = []
                 for ix in batch_part.indices:
                     ix_pos_initial = batch.index.get_pos(ix)
-                    n_slices.append(batch.upper_bounds[ix_pos_initial] - batch.lower_bounds[ix_pos_initial])
+                    n_slices.append(batch.upper_bounds[ix_pos_initial]
+                                    - batch.lower_bounds[ix_pos_initial])
 
                 # update _bounds in new batches
                 batch_part._bounds = np.cumsum([0] + n_slices, dtype=np.int)                                  # pylint: disable=protected-access
