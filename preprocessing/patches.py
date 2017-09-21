@@ -42,7 +42,6 @@ def get_patches_numba(img, shape, stride, out_arr, fake):
                 ctr += 1
 
 
-
 @guvectorize([(float64[:, :, :, :], int64[:], float64[:, :, :], int64[:])],
              '(p, l, s, t),(q),(m, n, k)->()',
              nopython=True, target='parallel')
