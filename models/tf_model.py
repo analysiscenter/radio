@@ -58,6 +58,7 @@ class TFModel(BaseModel):
         super().__init__(name, *args, **kwargs)
         self.name = name
         self.graph = tf.Graph()
+        self.graph_context = None
         with self.graph.as_default():
 
             self.input = None
