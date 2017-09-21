@@ -234,7 +234,17 @@ class TFModel(BaseModel):
         return y_pred
 
     def save(self, dir_path, *args, **kwargs):
-        """ Save tensorflow model. """
+        """ Save tensorflow model.
+
+        Args:
+        - dir_path: str, path of directory on hard drive that will be used
+        for storing model's data;
+
+        Returns:
+        - self, TFModel instance;
+
+        NOTE: *args and **kwargs are added for compatibillity with BaseModel class.
+        """
         with self.graph.as_default():
             saver = tf.train.Saver()
             path = os.path.join(dir_path, self.name)
