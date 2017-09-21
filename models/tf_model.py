@@ -24,6 +24,7 @@ def restore_nodes(*names):
                          + "will assosiated with")
 
     def decorated(method):
+        """ Decorator with captured names for ouput tensors. """
         @functools.wraps(method)
         def wrapped(self, *args, **kwargs):
             out_tf_variables = method(self, *args, **kwargs)
