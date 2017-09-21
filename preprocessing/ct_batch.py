@@ -1068,7 +1068,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Return:
             4d-ndaray of patches; first dimension enumerates patches
-        *NOTE: the shape of all patients is assumed to be the same
+
+        *NOTE: the shape of all patients is assumed to be the same.
         """
 
         patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
@@ -1148,14 +1149,19 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
-        """ Normalize hu-densities to interval [0, 255]:
-                trim hus outside range [min_hu, max_hu], then scale to [0, 255].
+        """ Normalize hu-densities to interval [0, 255].
+
+            Trim hus outside range [min_hu, max_hu], then scale to [0, 255].
 
         Args:
+        - min_hu: int, minimum value for hu that will be used as trimming threshold.
+        - max_hu: int, maximum value for hu that will be used as trimming threshold.
 
+        Returns:
+        - self
 
         Example:
-            batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
+        >>> batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
         """
         # trimming and scaling to [0, 1]
         self.images = (self.images - min_hu) / (max_hu - min_hu)
@@ -1185,8 +1191,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             does not change the order of patients
             changes self
 
-        example:
-            batch = batch.flip()
+        Example:
+        >>> batch = batch.flip()
         """
         return flip_patient_numba
 
