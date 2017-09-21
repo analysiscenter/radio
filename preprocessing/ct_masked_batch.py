@@ -858,6 +858,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
                         dim_ordering='channels_last', **kwargs):
         """ Get predictions of model on crops of CT-scans contained in batch.
 
+        This action-method get predictions of model specified by 'model_name'
+        argument on crops contained in batch and extends 'dst_dict' with
+        predictions. Keys of 'dst_dict' are indices and values are predictions.
+
         Args:
         - model_name: str, name of classification model;
         - dst_dict: dictionary that will be updated by predictions;
