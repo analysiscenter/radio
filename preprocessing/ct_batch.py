@@ -299,7 +299,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return merged, rest
 
     @action
-    def load(self, fmt='dicom', source=None, bounds=None,           # pylint: disable=arguments-differ
+    def load(self, fmt='dicom', source=None, bounds=None,  # pylint: disable=arguments-differ
              origin=None, spacing=None, src_blosc=None):
         """ Loads 3d scans-data in batch
 
