@@ -663,7 +663,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self.indices
 
-
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """ Post-function for resize parallelization.
 
