@@ -124,8 +124,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @property
     def components(self):
-        """ Components-property. See doc of base batch from dataset for information.
-                In short, these are names for components of tuple returned from __getitem__.
+        """ Components-property.
+
+        See doc of base batch from dataset for information.
+        In short, these are names for components of tuple returned from __getitem__.
         """
         return 'images', 'masks', 'spacing', 'origin'
 
