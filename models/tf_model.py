@@ -206,7 +206,7 @@ class TFModel(BaseModel):
         """ Return full shape of the input tensor represented by tuple of ints.
 
         Args:
-        - input_tensor: tf.Variable, input_tensor.
+        - input_tensor: tf.Variable, input_tensor;
 
         Return:
         - shape of input_tensor, tuple(int);
@@ -223,10 +223,10 @@ class TFModel(BaseModel):
         """ Get prediction of tensorflow model on batch data.
 
         Args:
-        - x: ndarray, numpy array that will fed to input placeholder.
+        - x: ndarray, numpy array that will fed to input placeholder;
 
         Returns:
-        - y_pred: ndarray containing predictions of the model.
+        - y_pred: ndarray containing predictions of the model;
         """
         with self.graph.as_default():
             feed_dict = {self.input: x, self.learning_phase: False}
