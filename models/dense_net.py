@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 
-from .tf_model import TFModel
+from .tf_model import TFModel, restore_nodes
 
 
 def log_loss(y_true, y_pred, epsilon=10e-7):
@@ -165,6 +165,7 @@ class DenseNet(TFModel):
                                                 name='averagepool_2_2')
         return output_tensor
 
+    @restore_nodes('input', 'y_true', 'y_pred')
     def build_model(self):
         """ Build densenet model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
@@ -201,8 +202,4 @@ class DenseNet(TFModel):
 
         y_pred = tf.identity(z, name='y_pred')
 
-        self.input = input_tensor
-        self.y_true = y_true
-        self.y_pred = y_pred
-
-        return self.input, self.y_true, self.y_pred
+        return input_tensor, y_true, y_pred
