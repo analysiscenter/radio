@@ -201,7 +201,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     setattr(batch_part, component, None)
 
         # set _bounds attrs if filled in batch
-        if len(batch._bounds) >= 2:                                                                           # pylint: disable=protected-access
+        if len(batch._bounds) >= 2:  # pylint: disable=protected-access
             for batch_part in batches:
                 n_slices = []
                 for ix in batch_part.indices:
@@ -210,7 +210,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                                     - batch.lower_bounds[ix_pos_initial])
 
                 # update _bounds in new batches
-                batch_part._bounds = np.cumsum([0] + n_slices, dtype=np.int)                                  # pylint: disable=protected-access
+                batch_part._bounds = np.cumsum([0] + n_slices, dtype=np.int)  # pylint: disable=protected-access
 
         return batches
 
