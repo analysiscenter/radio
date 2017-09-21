@@ -311,7 +311,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 starting pixels. Needed only if fmt='ndarray'
             spacing: ndarray [len(bounds) X 3] with spacings of patients.
                 Needed only if fmt='ndarray'
-            src_blosc: list/tuple/string with component(s) of batch that should be loaded from blosc.
+            src_blosc: list/tuple/string with component(s) of batch
+                that should be loaded from blosc.
                 Needed only if fmt='blosc'. If None, all components are loaded.
 
         Return:
