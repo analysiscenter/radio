@@ -7,21 +7,6 @@ import tensorflow as tf
 from .tf_model import TFModel, restore_nodes
 
 
-def log_loss(y_true, y_pred, epsilon=10e-7):
-    """ Log loss implemented in tensorflow.
-
-    Args:
-    - y_true: tf.Variable, true labels;
-    - y_pred: tf.Variable, predicted logits;
-    - epsilon: float, epsilon for avoiding computing log(0);
-
-    Returns:
-    - tf.Variable, log_loss;
-    """
-    return - tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
-                            + (1 - y_true) * tf.log(1 - y_pred + epsilon))
-
-
 class DenseNet(TFModel):
     """ This class implements 3D DenseNet architecture via tensorflow. """
 
