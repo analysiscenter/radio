@@ -101,7 +101,7 @@ class TFModel(BaseModel):
         - exception_value: exception instance.
         - exception_traceback: traceback of exception that was raised inside context.
         """
-        return self.graph_context.__exit__(exception_type,
+        return self.graph_context.__exit__(exception_type,  # pylint: disable=no-member
                                            exception_value,
                                            exception_traceback)
 
