@@ -1,3 +1,4 @@
+# pylint: disable=too-many-arguments
 # pylint: disable=undefined-variable
 # pylint: disable=no-member
 """ contains Batch class for storing Ct-scans """
@@ -898,7 +899,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def unify_spacing(self, patient, out_patient, res, res_factor, shape_resize, spacing=(1, 1, 1),    # pylint: disable=too-many-arguments
+    def unify_spacing(self, patient, out_patient, res, res_factor,
+                      shape_resize, spacing=(1, 1, 1),
                       shape=(128, 256, 256), method='pil-simd', order=3, padding='edge',
                       axes_pairs=None, resample=None, *args, **kwargs):
         """ Unify spacing of all patients using resize, then crop/pad resized array
