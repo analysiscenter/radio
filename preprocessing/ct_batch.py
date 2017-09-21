@@ -625,7 +625,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             pos = self.index.get_pos(index)
         return pos
 
-
     @property
     def images_shape(self):
         """Get CTImages shapes for all patients in CTImagesBatch.
