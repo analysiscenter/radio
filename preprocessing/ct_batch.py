@@ -270,8 +270,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Return:
             (new_batch, rest_batch)
 
-        NOTE: we perform split(of middle-batch) and then two concats because of speed considerations;
-            even though the code is slightly lengthier than it'd be if the order was concat->split.
+        NOTE: we perform split(of middle-batch) and then two concats
+        because of speed considerations;
+        even though the code is slightly lengthier
+        than it'd be if the order was concat->split.
         """
         if np.sum([len(batch) for batch in batches]) <= batch_size:
             return (cls.concat(batches), None)
