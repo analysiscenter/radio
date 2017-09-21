@@ -268,7 +268,38 @@ class TFModel(BaseModel):
         return self
 
     def compile(self, optimizer, loss, *args, **kwargs):
-        """ Compile tensorflow model. """
+        """ Compile tensorflow model.
+
+        First of all compile method enters in the context of graph that
+        corresponds to the model. After that it calls build_model method.
+        Finally, it assigns loss tensor(loss_tensor = loss(self.y_true, self.y_pred))
+        to self.loss attribute and assigns result of optimizer.minimize(self.loss)
+        operation to self.train_step attribute.
+
+        NOTE: after assignment self.loss and self.train_step are added to
+        collections of restorable tensors and operations.
+
+        Args:
+        - optimizer: optimizer from tf.train.*;
+        - loss: tensorflow function that takes self.y_true as its first argument
+        self.y_pred as its second argument and return real-value tensor as result.
+
+        NOTE: it's strongly recommended to create optimizer and pass it in compile method
+        inside model context(see Example)
+
+        Example:
+        >>> tf_model = TFResNetModel('resnet50')
+        >>> with tf_model:
+        ...     tf_model.compile(optimizer=tf.train.AdamOptimizer(0.005), loss=tf.losses.log_loss)
+
+        that is equal to
+
+        >>> tf_model = TFResNetModel('resnet50')
+        >>> with tf.model.graph.as_default():
+        ...     tf_model.compile(optimizer=tf.train.AdamOptimizer(0.005), loss=tf.losses.log_loss)
+
+        but is shorter.
+        """
         with self.graph.as_default():
 
             _ = self.build_model()
