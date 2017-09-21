@@ -255,7 +255,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             n_slices[ctr: ctr + len(batch)] = batch.upper_bounds - batch.lower_bounds
             ctr += len(batch)
 
-        large_batch._bounds = np.cumsum(np.insert(n_slices, 0, 0), dtype=np.int)                   # pylint: disable=protected-access
+        large_batch._bounds = np.cumsum(np.insert(n_slices, 0, 0), dtype=np.int)  # pylint: disable=protected-access
         return large_batch
 
     @classmethod
