@@ -892,8 +892,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
             return resize_scipy(**args_resize)
         elif method == 'pil-simd':
-            args_resize = dict(input_array=patient, output_array=out_patient, res=res, axes_pairs=axes_pairs,
-                               resample=resample)
+            args_resize = dict(input_array=patient, output_array=out_patient,
+                               res=res, axes_pairs=axes_pairs, resample=resample)
             return resize_pil(**args_resize)
 
     @action
