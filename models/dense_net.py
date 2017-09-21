@@ -163,19 +163,19 @@ class DenseNet(TFModel):
         x = self.max_pool3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
                             padding='same', name='initial_pooling')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
         x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
         x = self.transition_layer(x, filters=32, name='transition_layer_1')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
         x = self.dense_block(x, filters=32, block_size=12, name='dense_block_2')
         x = self.transition_layer(x, filters=32, name='transition_layer_2')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_3')
         x = self.transition_layer(x, filters=32, name='transition_layer_3')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_4')
         x = self.transition_layer(x, filters=32, name='transition_layer_4')
 
