@@ -387,10 +387,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         scale_factor = np.asarray(shape) / self.images_shape[0, :]
 
         # get rescaled nodule-centers, nodule-sizes, offsets, locs of nod starts
-        center_scaled = np.abs(self.nodules.nodule_center - self.nodules.origin) / \
-                               self.nodules.spacing * scale_factor
-        start_scaled = (center_scaled - scale_factor * self.nodules.nodule_size / \
-                                        self.nodules.spacing / 2)
+        center_scaled = (np.abs(self.nodules.nodule_center - self.nodules.origin) /
+                         self.nodules.spacing * scale_factor)
+        start_scaled = (center_scaled - scale_factor * self.nodules.nodule_size /
+                        self.nodules.spacing / 2)
         start_scaled = np.rint(start_scaled).astype(np.int)
         offset_scaled = np.rint(self.nodules.offset * scale_factor).astype(np.int)
         img_size_scaled = np.rint(self.nodules.img_size * scale_factor).astype(np.int)
