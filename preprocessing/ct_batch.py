@@ -851,7 +851,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             self._crop_params_patients()
         return self._crop_sizes
 
-
     @inbatch_parallel(init='_init_images', post='_post_crop', target='nogil')
     def _crop_params_patients(self, *args, **kwargs):
         """
