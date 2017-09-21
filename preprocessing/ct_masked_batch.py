@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 @njit(nogil=True)
 def get_nodules_numba(data, positions, size):
-    """Fetch nodules from array by array of starting positions.
+    """ Fetch nodules from array by array of starting positions.
 
     This numberized function takes source array with data of shape (n, k, l)
     represented by 3d numpy array with BatchCt data,
@@ -55,7 +55,7 @@ def get_nodules_numba(data, positions, size):
 
 
 class CTImagesMaskedBatch(CTImagesBatch):
-    """Class for storing masked batch of ct-scans.
+    """ Class for storing masked batch of ct-scans.
 
     Allows to load info about cancer nodules, then create cancer-masks
         for each patient. Created masks are stored in self.masks
@@ -102,7 +102,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @staticmethod
     def make_indices(size):
-        """Generate list of batch indices of given size.
+        """ Generate list of batch indices of given size.
 
         Take number of indices as input parameter size and
         generates list of random indices of length size.
@@ -113,7 +113,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return [CTImagesMaskedBatch.make_filename() for i in range(size)]
 
     def __init__(self, index, *args, **kwargs):
-        """Initialization of CTImagesMaskedBatch.
+        """ Initialization of CTImagesMaskedBatch.
 
         Initialize CTImagesMaskedBatch with index.
         """
@@ -135,7 +135,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=arguments-differ
              origin=None, spacing=None, nodules=None, masks=None,
              src_blosc=None):
-        """Load data in masked batch of patients.
+        """ Load data in masked batch of patients.
 
         Args:
         - source: source array with skyscraper, needed if fmt is 'ndarray';
@@ -210,7 +210,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @property
     def num_nodules(self):
-        """Get number of nodules in CTImagesMaskedBatch.
+        """ Get number of nodules in CTImagesMaskedBatch.
 
         This property returns the number
         of nodules in CTImagesMaskedBatch. If fetch_nodules_info
@@ -223,7 +223,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def fetch_nodules_info(self, nodules_df, update=False, images_loaded=True):
-        """Extract nodules' info from nodules_df into attribute self.nodules.
+        """ Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
         and put them in numpy record array which can be accessed outside
@@ -310,7 +310,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     # TODO think about another name of method
     def _fit_into_bounds(self, size, variance=None):
-        """Fetch start pixel coordinates of all nodules.
+        """ Fetch start pixel coordinates of all nodules.
 
         This method returns start pixel coordinates of all nodules
         in batch. Note that all nodules are considered to have the
@@ -347,7 +347,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def create_mask(self):
-        """Load mask data for using nodule's info.
+        """ Load mask data for using nodule's info.
 
         Load mask into self.masks using info in attribute self.nodules_info.
         *Note: nodules info must be loaded before the call of this method.
@@ -370,7 +370,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     def fetch_mask(self, shape):
-        """Create scaled mask using nodule info from self
+        """ Create scaled mask using nodule info from self
 
         Args:
             shape: requiring shape of mask to be created
@@ -408,7 +408,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
-        """Sample random nodules from CTImagesBatchMasked skyscraper.
+        """ Sample random nodules from CTImagesBatchMasked skyscraper.
 
         Samples random num_nodules' lower_bounds coordinates
         and stack obtained data into ndarray(l, 3) then returns it.
@@ -457,7 +457,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,
                        variance=None, mask_shape=None, histo=None):
-        """Fetch random cancer and non-cancer nodules from batch.
+        """ Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
 
@@ -588,7 +588,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     def get_axial_slice(self, patient_pos, height):
-        """Get tuple of slices (data slice, mask slice).
+        """ Get tuple of slices (data slice, mask slice).
 
         Args:
             patient_pos: patient position in the batch
@@ -605,7 +605,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return patch
 
     def _refresh_nodules_info(self, images_loaded=True):
-        """Refresh self.nodules attributes [spacing, origin, img_size, bias].
+        """ Refresh self.nodules attributes [spacing, origin, img_size, bias].
 
         This method should be called when it is needed to make
         [spacing, origin, img_size, bias] attributes of self.nodules
@@ -623,7 +623,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
 
     def _rescale_spacing(self):
-        """Rescale spacing values and update nodules_info.
+        """ Rescale spacing values and update nodules_info.
 
         This method should be called after any operation that
         changes shape of inner data.
@@ -633,7 +633,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     def _post_mask(self, list_of_arrs, **kwargs):
-        """ concatenate outputs of different workers and put the result in mask-attr
+        """ Concatenate outputs of different workers and put the result in mask-attr
 
         Args:
             list_of_arrs: list of ndarays, with each ndarray representing a
@@ -687,7 +687,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def make_xip(self, step=2, depth=10, func='max',
                  projection='axial', *args, **kwargs):
-        """Compute xip of source CTImage along given x with given step and depth.
+        """ Compute xip of source CTImage along given x with given step and depth.
 
         Call parent variant of make_xip then change nodules sizes'
         via calling _update_nodule_size and create new mask that corresponds
