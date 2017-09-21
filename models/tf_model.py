@@ -17,6 +17,7 @@ DECAY_DICT = {'exp': tf.train.exponential_decay,
 
 
 def restore_nodes(*names):
+    """ Decorator for making output tensors of TFModel method be restorable as attributes. """
     if any(not isinstance(arg, str) for arg in names):
         raise ValueError("Arguments of restore_nodes decorator must be strings "
                          + "that will be names of attributes to "
