@@ -244,6 +244,11 @@ class TFModel(BaseModel):
         - self, TFModel instance;
 
         NOTE: *args and **kwargs are added for compatibillity with BaseModel class.
+
+        Example:
+        >>> tf_model = TFResNetModel('resnet50')
+        >>> .............training model..............
+        >>> tf_model.save('/path/to/resnet50/model/')
         """
         with self.graph.as_default():
             saver = tf.train.Saver()
