@@ -12,6 +12,10 @@ import tensorflow as tf
 from .base_model import BaseModel
 
 
+DECAY_DICT = {'exp': tf.train.exponential_decay,
+              'inverse_time': tf.train.inverse_time_decay}
+
+
 def restore_nodes(*names):
     if any(not isinstance(arg, str) for arg in names):
         raise ValueError("Arguments of restore_nodes decorator must be strings "
@@ -32,9 +36,6 @@ def restore_nodes(*names):
 
         return wrapped
     return decorated
-
-
-DECAY_DICT = {'exp': tf.train.exponential_decay, 'inverse_time': tf.train.inverse_time_decay}
 
 
 class TFModel(BaseModel):
