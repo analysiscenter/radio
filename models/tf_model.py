@@ -220,7 +220,14 @@ class TFModel(BaseModel):
             _ = self.sess.run(self.train_step, feed_dict=feed_dict)
 
     def predict_on_batch(self, x, **kwargs):
-        """ Get prediction of tensorflow model on batch data. """
+        """ Get prediction of tensorflow model on batch data.
+
+        Args:
+        - x: ndarray, numpy array that will fed to input placeholder.
+
+        Returns:
+        - y_pred: ndarray containing predictions of the model.
+        """
         with self.graph.as_default():
             feed_dict = {self.input: x, self.learning_phase: False}
             y_pred = self.sess.run(self.y_pred, feed_dict=feed_dict)
