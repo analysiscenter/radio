@@ -169,32 +169,37 @@ class DenseNet(TFModel):
         """ Build densenet model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
                                       dtype=tf.float32, name='input')
+
         y_true = tf.placeholder(shape=(None, 1), dtype=tf.float32, name='y_true')
 
-        x = self.conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(5, 5, 5),
+        x = self.conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
                         padding='same', name='initial_convolution')
 
         x = self.max_pool3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
                             padding='same', name='initial_pooling')
 
+        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
         x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
         x = self.transition_layer(x, filters=32, name='transition_layer_1')
 
+        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
         x = self.dense_block(x, filters=32, block_size=12, name='dense_block_2')
         x = self.transition_layer(x, filters=32, name='transition_layer_2')
 
+        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_3')
         x = self.transition_layer(x, filters=32, name='transition_layer_3')
 
-
+        x = tf.layers.dropout(x, rate=0.35, training=self.training_phase)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_4')
         x = self.transition_layer(x, filters=32, name='transition_layer_4')
 
-        y_pred = self.global_average_pool3d(x, name='global_average_pool3d')
+        z = self.global_average_pool3d(x, name='global_average_pool3d')
 
-        y_pred = tf.layers.dense(y_pred, units=1, name='dense32_1')
-        y_pred = tf.nn.sigmoid(y_pred)
-        y_pred = tf.identity(y_pred, name='y_pred')
+        z = tf.layers.dense(z, units=1, name='dense32=>1')
+        z = tf.nn.sigmoid(z)
+
+        y_pred = tf.identity(z, name='y_pred')
 
         self.input = input_tensor
         self.y_true = y_true
