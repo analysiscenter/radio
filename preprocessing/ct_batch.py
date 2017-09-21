@@ -1127,8 +1127,6 @@ class CTImagesBatch(Batch): # pylint: disable=too-many-public-methods
         data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + tuple(scan_shape[1 : ]))
         setattr(self, data_attr, data_4d)
 
-
-
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
         """ Normalize hu-densities to interval [0, 255]:
