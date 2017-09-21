@@ -1096,14 +1096,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             ___
         """
         scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
-        patch_shape = np.asarray(patches.shape[1 : ])
+        patch_shape = np.asarray(patches.shape[1:])
 
         # infer what padding was applied to scans when extracting patches
         pad_width = calc_padding_size(scan_shape, patch_shape, stride)
 
         # if padding is non-zero, adjust the shape of scan
         if pad_width is not None:
-            shape_delta = np.asarray([before + after for before, after in pad_width[1 : ]])
+            shape_delta = np.asarray([before + after for before, after in pad_width[1:]])
         else:
             shape_delta = np.zeros(3).astype('int')
 
@@ -1124,7 +1124,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             data_4d = data_4d[:, slc_z, slc_y, slc_x]
 
         # reshape 4d-data to skyscraper form and put it into needed attr
-        data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + tuple(scan_shape[1 : ]))
+        data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + tuple(scan_shape[1:]))
         setattr(self, data_attr, data_4d)
 
     @action
