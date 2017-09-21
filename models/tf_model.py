@@ -13,6 +13,7 @@ from .base_model import BaseModel
 
 DECAY_DICT = {'exp': tf.train.exponential_decay, 'inverse_time': tf.train.inverse_time_decay}
 
+
 class TFModel(BaseModel):
     """ Base class for all tensorflow models. """
 
