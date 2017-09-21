@@ -294,7 +294,7 @@ class TFModel(BaseModel):
         - loss: tensorflow function that takes self.y_true as its first argument
         self.y_pred as its second argument and return real-value tensor as result.
 
-        NOTE: it's strongly recommended to create optimizer and pass it in compile method
+        NOTE: it's strongly recommended to create optimizer and pass it into compile method
         inside model context(see Example)
 
         Example:
