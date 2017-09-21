@@ -861,7 +861,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',     # pylint: disable=too-many-arguments
+    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
                axes_pairs=None, resample=None, order=3, *args, **kwargs):
         """ Resize (change shape of) each CT-scan in the batch.
                 When called from a batch, changes this batch.
