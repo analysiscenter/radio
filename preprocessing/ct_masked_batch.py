@@ -628,7 +628,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self._refresh_nodules_info()
         return self
 
-
     def _post_mask(self, list_of_arrs, **kwargs):
         """ concatenate outputs of different workers and put the result in mask-attr
 
