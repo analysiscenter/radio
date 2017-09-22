@@ -711,46 +711,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.create_mask()
         return batch
 
-    def _init_mask(self, **kwargs):
-        """ Init method for rotation action.
-
-        *NOTE: required by inbatch_parallel decorator as argument;
-        """
-        return [self.get(i, 'masks') for i in range(len(self))]
-
-    @inbatch_parallel(init='_init_mask', post='_post_mask', target='threads')
-    def rotate_masks(self, mask, degree, axes):
-        """ Rotate 3D masks contatined in batch. """
-        return rotate_3D(mask, degree, axes)
-
-    @action
-    def rotate(self, degree, axes=(1, 2), rotate_mask=True, **kwargs):
-        """ Rotate 3D images and masks in batch.
-
-        Args:
-        - degree: float, angle of rotation;
-        - axes: tuple(int, int), axes that specify plane of rotation;
-        - rotate_mask: bool, whether rotate mask or not
-        """
-        super().rotate(degree=degree, axes=axes)  # pylint: disable=no-value-for-parameter
-        if rotate_mask and self.masks is not None:
-            self.rotate_masks(degree=degree, axes=axes)  # pylint: disable=no-value-for-parameter
-        return self
-
-    @action
-    def random_rotate(self, max_degree, axes, rotate_mask=True, **kwargs):
-        """ Rotate 3D images and masks in batch on random angle.
-
-        Args:
-        - max_degree: float, max degree that can be reached by random rotation;
-        - axes: tuple(int, int), axes that specify rotation plane;
-        - rotate_mask: bool, whether rotate mask or not;
-        """
-        super().random_rotate(max_degree=max_degree, axes=axes)  # pylint: disable=no-value-for-parameter
-        if rotate_mask and self.masks is not None:
-            self.random_rotate_masks(max_degree=max_degree, axes=axes)  # pylint: disable=no-value-for-parameter
-        return self
-
     @action
     def central_crop(self, crop_size, crop_mask=False, **kwargs):
         """ Make crop with given size from center of images.
