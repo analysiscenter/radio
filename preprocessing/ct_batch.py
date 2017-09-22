@@ -958,7 +958,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         *NOTE: zero padding automatically added after rotation;
         """
         if random:
-            _degree = random.rand * degree
+            _degree = random.rand() * degree
         return rotate_3D(image, degree, axes)
 
     @action
