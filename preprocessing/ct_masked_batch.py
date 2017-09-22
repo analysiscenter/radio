@@ -514,26 +514,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return nodules_batch
 
     @action
-    def sample_dump_cancerous(self, dst, n_iters, nodule_size, variance):
-        """ Helper action that allows to sample and dump cancerous nodules from a batch.
-                Wraps actions sample_nodules and dump.
-
-        Args:
-            dst: folder to dump nodules in.
-            n_iters: number of iterations to be performed on one batch. Coupled with
-                variance-arg, can be used for introducing variability in locations of
-                nodule-centers.
-            nodule_size: shape of sampled nodules.
-            variance: seq of len=3 representing variance of nodules' locations along 3 axes.
-        """
-        for _ in range(n_iters):
-            nodules = self.sample_nodules(all_cancerous=True, nodule_size=nodule_size, variance=variance)
-            nodules = nodules.dump(dst=dst)
-
-        return self
-
-
-    @action
     def update_nodules_histo(self, histo):
         """ Update histogram of nodules' locations in pixel coords using info
                 about cancer nodules from batch.

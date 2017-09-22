@@ -1,6 +1,7 @@
 """ Helper functions describing pipelines for creating large samples of nodules """
 
 import PIL
+from ..dataset import Pipeline
 
 # global constants defining args of some actions in pipeline
 
@@ -19,13 +20,12 @@ RUN_BATCH_SIZE = 8
 NCANCER_BATCH_SIZE = 1030 # NCANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
 
 
-def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=(32, 64, 64),
+def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=(32, 64, 64),
                        variance=(36, 144, 144)):
     """ Define pipeline for dumping cancerous crops in one folder
             and random noncancerous crops in another.
 
     Args:
-        lunaset: dataset of luna scans in default luna-format (.raw/mhd).
         dir_cancer: directory to dump cancerous crops in.
         dir_ncancer: directory to dump non-cancerous crops in.
         nodules_df: df with info about nodules' locations.
@@ -36,44 +36,47 @@ def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodu
             cancerous crops.
 
     Return:
-        resulting pipeline run in lazy-mode.
+        resulting pipeline run in lazy-mode. Can be applied to dataset containing luna-scans.
     """
     # set up all args
     args_load = dict(fmt='raw')
     args_fetch = dict(nodules_df=nodules_df)
     args_mask = dict()
     args_unify_spacing = dict(spacing=SPACING, shape=USPACING_SHAPE, padding='reflect', resample=RESIZE_FILTER)
-    args_dump_cancer = dict(dst=dir_cancer, n_iters=N_ITERS, nodule_size=nodule_shape, variance=variance)
+    args_sample_cancer = dict(all_cancerous=True, nodule_size=nodule_shape, variance=variance)
+    args_dump_cancer = dict(dst=dir_cancer)
     args_sample_ncancer = dict(nodule_size=nodule_shape, histo=histo, batch_size=NCANCER_BATCH_SIZE, share=0.0)
     args_dump_ncancer = dict(dst=dir_ncancer)
 
-    # define pipeline. Two separate tasks are performed at once, in one run:
-    # 1) sampling and dumping of cancerous crops in wrapper-action sample_sump_cancerous
-    # 2) sampling and dumping of non-cancerous crops in separate actions
-    pipeline = (lunaset.p
+    # define sub-pipeline, performing sampling and dumping of cancerous crops
+    subpipe = (Pipeline().sample_nodules(**args_sample_cancer).dump(**args_dump_cancer)) * N_ITERS
+
+    # define the main pipeline
+    pipeline = (Pipeline()
                 .load(**args_load)
                 .fetch_nodules_info(**args_fetch)
                 .unify_spacing(**args_unify_spacing)
-                .create_mask(**args_mask)
-                .sample_dump_cancerous(**args_dump_cancer)   # sample and dump non-cancerous crops
+                .create_mask(**args_mask)) +
+                + subpipe +
+                + (Pipeline()
                 .sample_nodules(**args_sample_ncancer)
-                .dump(**args_dump_ncancer)
-                .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
-               )
+                .dump(**args_dump_ncancer))
+
+    # run it in lazy mode
+    pipeline.run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
 
     return pipeline
 
-def update_histo_by_lunaset(lunaset, nodules_df, histo):
+def update_histo_by_lunaset(nodules_df, histo):
     """ Pipeline for updating histogram using info in luna-dataset.
 
     Args:
-        lunaset: dataset of luna scans in default luna-format (.raw/mhd).
         nodules_df: df with info about nodules' locations.
         histo: 3d-histogram in almost np.histogram format, list [bins, edges];
             (compare the latter with tuple (bins, edges) returned by np.histogram).
 
     Return:
-        resulting pipeline run in lazy-mode.
+        resulting pipeline run in lazy-mode. Can be applied to dataset containing luna-scans.
     """
     # set up all args
     args_load = dict(fmt='raw')
@@ -82,7 +85,7 @@ def update_histo_by_lunaset(lunaset, nodules_df, histo):
     args_mask = dict()
 
     # perform unify_spacing and call histo-updating action
-    pipeline = (lunaset.p
+    pipeline = (Pipeline()
                 .load(**args_load)
                 .fetch_nodules_info(**args_fetch)
                 .unify_spacing(**args_unify_spacing)
