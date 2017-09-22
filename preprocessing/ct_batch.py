@@ -5,6 +5,7 @@
 
 import os
 import cloudpickle
+import random
 
 import numpy as np
 import aiofiles
@@ -193,7 +194,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ix_first = batch.index.create_subset(batch.indices[:size_first])
         ix_second = batch.index.create_subset(batch.indices[size_first:])
 
-        # init batches
+    # init batches
         batches = cls(ix_first), cls(ix_second)
 
         # put non-None components in batch-parts
@@ -944,7 +945,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads')
-    def rotate(self, image, degree, axes=(1, 2), **kwargs):
+    def rotate(self, image, degree, axes=(1, 2), random=True, **kwargs):
         """ Rotate 3D images in batch on specific angle in plane.
 
         Args:
@@ -956,23 +957,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         *NOTE: zero padding automatically added after rotation;
         """
+        if random:
+            _degree = random.rand * degree
         return rotate_3D(image, degree, axes)
-
-    @action
-    @inbatch_parallel(init='_init_images', post='_post_default', target='threads')
-    def random_rotate(self, image, max_degree, axes=(1, 2), **kwargs):
-        """ Perform rotation of 3D image in batch on random angle.
-
-        Args:
-        - max_degree: float, maximum rotation angle;
-        - axes: tuple(int, int), plane of rotation specified by two axes;
-
-        Returns:
-        - ndarray(l, k, m), 3D rotated image;
-
-        *NOTE: zero padding automatically added after rotation;
-        """
-        return random_rotate_3D(image, max_degree, axes)
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
