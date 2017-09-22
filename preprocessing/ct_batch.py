@@ -960,7 +960,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         if random:
             _degree = random.rand() * degree
-        return rotate_3D(image, degree, axes)
+        return rotate_3D(image, _degree, axes)
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
