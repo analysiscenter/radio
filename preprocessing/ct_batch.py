@@ -22,7 +22,7 @@ from .flip import flip_patient_numba
 from .crop import return_black_border_array as rbba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
-from .rotate import rotate_3D, random_rotate_3D
+from .rotate import rotate_3D
 
 
 AIR_HU = -2000
