@@ -52,7 +52,7 @@ def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=
     subpipe = (Pipeline().sample_nodules(**args_sample_cancer).dump(**args_dump_cancer)) * N_ITERS
 
     # define the main pipeline
-    pipeline = (Pipeline()
+    pipeline = ((Pipeline()
                 .load(**args_load)
                 .fetch_nodules_info(**args_fetch)
                 .unify_spacing(**args_unify_spacing)
@@ -60,7 +60,7 @@ def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=
                 + subpipe +
                 + (Pipeline()
                 .sample_nodules(**args_sample_ncancer)
-                .dump(**args_dump_ncancer))
+                .dump(**args_dump_ncancer)))
 
     # run it in lazy mode
     pipeline.run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
