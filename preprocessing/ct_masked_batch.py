@@ -197,7 +197,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             if component in ['images', 'masks']:
                 return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
             else:
-                return ind_pos
+                return slice(ind_pos, ind_pos + 1)
         else:
             return index
 
