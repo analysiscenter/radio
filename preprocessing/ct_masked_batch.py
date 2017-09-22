@@ -11,7 +11,6 @@ from skimage import measure
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .histo import sample_histo3d
-from .rotate import rotate_3D, random_rotate_3D
 from .crop import make_central_crop
 from ..dataset import action, any_action_failed, DatasetIndex, inbatch_parallel
 
