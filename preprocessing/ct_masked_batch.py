@@ -12,7 +12,7 @@ from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .histo import sample_histo3d
 from .crop import make_central_crop
-from ..dataset import action, any_action_failed, DatasetIndex, inbatch_parallel
+from ..dataset import action, any_action_failed, DatasetIndex
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
