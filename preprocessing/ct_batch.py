@@ -951,6 +951,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Args:
         - degree: float, degree of rotation;
         - axes: tuple(int, int), plane of rotation specified by two axes;
+        - random: bool, if True then degree specifies maximum angle of rotation;
 
         Returns:
         - ndarray(l, k, m), 3D rotated image;
