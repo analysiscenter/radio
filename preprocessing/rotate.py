@@ -6,12 +6,12 @@ import scipy.ndimage
 
 
 @jit(nogil=True)
-def rotate_3D(image, degree, axes=(1, 2)):
+def rotate_3D(image, angle, axes=(1, 2)):
     """ Rotate 3D image in plane specified by two axes.
 
     Args:
     - image: ndarray(l, k, m), 3D image;
-    - degree: float, degree of rotation;
+    - angle: float, angle of rotation;
     - axes: tuple(int, int), axes that specify rotation plane;
 
     Returns:
@@ -19,4 +19,4 @@ def rotate_3D(image, degree, axes=(1, 2)):
 
     *NOTE: zero padding automatically added after rotation;
     """
-    return scipy.ndimage.interpolation.rotate(image, degree, axes, reshape=False)
+    return scipy.ndimage.interpolation.rotate(image, angle, axes, reshape=False)
