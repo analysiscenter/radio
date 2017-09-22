@@ -944,12 +944,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return resize_pil(**args_resize)
 
     @action
-    @inbatch_parallel(init='_init_images', post='_post_default', target='threads')
-    def rotate(self, image, degree, axes=(1, 2), random=True, **kwargs):
+    @inbatch_parallel(init='indices', post='_post_default', update=False, target='threads')
+    def rotate(self, index, angle, components='images', axes=(1, 2), random=True, **kwargs):
         """ Rotate 3D images in batch on specific angle in plane.
 
         Args:
-        - degree: float, degree of rotation;
+        - angle: float, degree of rotation;
         - axes: tuple(int, int), plane of rotation specified by two axes;
         - random: bool, if True then degree specifies maximum angle of rotation;
 
@@ -958,9 +958,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         *NOTE: zero padding automatically added after rotation;
         """
+        if not isinstance(components, (tuple, list)):
+            _components = (components, )
         if random:
-            _degree = random.rand() * degree
-        return rotate_3D(image, _degree, axes)
+            _angle = random.rand() * degree
+        for comp in _components:
+            data = self.get(index, comp)
+            rotate_3D(data, _angle, axes)
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
