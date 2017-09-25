@@ -57,8 +57,7 @@ def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=
                  .fetch_nodules_info(**args_fetch)
                  .unify_spacing(**args_unify_spacing)
                  .create_mask(**args_mask)) +
-                 + subpipe +
-                 + 
+                subpipe +
                 (Pipeline()
                  .sample_nodules(**args_sample_ncancer)
                  .dump(**args_dump_ncancer)))
