@@ -2,6 +2,7 @@
 
 import numpy as np
 
+
 def cart_triples(*arrs):
     """ Get array of cartesian triples in lexicographical order
             given sequence of 3 arrays
