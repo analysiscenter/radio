@@ -81,7 +81,7 @@ def update_histo_by_lunaset(nodules_df, histo):
     args_mask = dict()
 
     # perform unify_spacing and call histo-updating action
-    pipeline = (lunaset.p
+    pipeline = (Pipeline()
                 .load(**args_load)
                 .fetch_nodules_info(**args_fetch)
                 .unify_spacing(**args_unify_spacing)
