@@ -1,6 +1,7 @@
 """ Helper functions describing pipelines for creating large samples of nodules """
 
 import PIL
+from ..dataset import Pipeline
 
 # global constants defining args of some actions in pipeline
 
@@ -19,13 +20,12 @@ RUN_BATCH_SIZE = 8
 NCANCER_BATCH_SIZE = 1030 # NCANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
 
 
-def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=(32, 64, 64),
+def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=(32, 64, 64),
                        variance=(36, 144, 144)):
     """ Define pipeline for dumping cancerous crops in one folder
             and random noncancerous crops in another.
 
     Args:
-        lunaset: dataset of luna scans in default luna-format (.raw/mhd).
         dir_cancer: directory to dump cancerous crops in.
         dir_ncancer: directory to dump non-cancerous crops in.
         nodules_df: df with info about nodules' locations.
@@ -50,7 +50,7 @@ def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodu
     # define pipeline. Two separate tasks are performed at once, in one run:
     # 1) sampling and dumping of cancerous crops in wrapper-action sample_sump_cancerous
     # 2) sampling and dumping of non-cancerous crops in separate actions
-    pipeline = (lunaset.p
+    pipeline = (Pipeline()
                 .load(**args_load)
                 .fetch_nodules_info(**args_fetch)
                 .unify_spacing(**args_unify_spacing)
@@ -63,11 +63,10 @@ def split_dump_lunaset(lunaset, dir_cancer, dir_ncancer, nodules_df, histo, nodu
 
     return pipeline
 
-def update_histo_by_lunaset(lunaset, nodules_df, histo):
+def update_histo_by_lunaset(nodules_df, histo):
     """ Pipeline for updating histogram using info in luna-dataset.
 
     Args:
-        lunaset: dataset of luna scans in default luna-format (.raw/mhd).
         nodules_df: df with info about nodules' locations.
         histo: 3d-histogram in almost np.histogram format, list [bins, edges];
             (compare the latter with tuple (bins, edges) returned by np.histogram).
