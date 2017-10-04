@@ -269,9 +269,10 @@ class TFModel(BaseModel):
         >>> tf_model.save('/path/to/resnet50/model/')
         """
         with self.graph.as_default():
-            saver = tf.train.Saver()
+            if self.saver is None:
+                self.saver = tf.train.Saver()
             path = os.path.join(dir_path, self.name)
-            saver.save(self.sess, path, global_step=self.global_step)
+            self.saver.save(self.sess, path, global_step=self.global_step)
             with open(os.path.join(dir_path, 'restore_keys.json'), 'w') as f:
                 json.dump(self.restore_keys, f)
         return self
