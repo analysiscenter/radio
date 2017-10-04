@@ -68,6 +68,7 @@ class TFModel(BaseModel):
             self.sess = None
             self.loss = None
             self.train_step = None
+            self.saver = None
 
             self.learning_rate = None
             self.restore_keys = {'vars': [], 'ops': []}
