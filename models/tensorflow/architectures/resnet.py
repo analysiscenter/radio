@@ -111,7 +111,7 @@ class TFResNet(TFModel):
         z = tf.layers.batch_normalization(z, axis=-1, training=self.learning_phase)
         z = tf.nn.relu(z)
 
-        z = tf.layers.dense(z, units=self.num_targets, name='dense_1')
+        z = tf.layers.dense(z, units=self.num_targets, name='dense')
         z = tf.nn.sigmoid(z)
 
         y_pred = tf.identity(z, name='y_pred')
