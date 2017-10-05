@@ -18,6 +18,7 @@ from keras.layers.normalization import BatchNormalization
 from keras import backend as K
 
 from ..keras_model import KerasModel
+from ..losses import dice_coef_loss
 
 
 class KerasUnet(KerasModel):
