@@ -17,7 +17,7 @@ from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
 from keras import backend as K
 
-from .keras_model import KerasModel
+from ..keras_model import KerasModel
 
 
 class KerasUnet(KerasModel):
