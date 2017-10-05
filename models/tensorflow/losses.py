@@ -18,7 +18,7 @@ def log_loss(y_true, y_pred, epsilon=10e-7):
                           + (1 - y_true) * tf.log(1 - y_pred + epsilon))
 
 
-def reg_l2_loss(y_true, y_pred, lambda_coords):
+def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
     """ L2 loss for prediction of cancer tumor's centers, sizes joined with binary classification task.
 
     Args:
