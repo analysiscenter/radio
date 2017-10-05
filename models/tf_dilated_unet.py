@@ -39,6 +39,21 @@ def repeat(input_tensor, times):
 class TFDilatedUnet(TFModel):
 
     def upsampling3d(self, input_tensor, times, name):
+        """ Apply 3D upsampling operation to input tensor.
+
+        This operation is a kind of reverse operation for maxpooling3D.
+
+        Args:
+        - input_tensor: tf.Tensor, input tensor;
+        - times: tuple(int, int, int), number of times to repeat values
+        along each spatial axis;
+
+        NOTE: this layer does not perform repeat operation
+        along channels and batch axes.
+
+        Returns:
+        - tf.Tensor, output tensor;
+        """
         if isinstance(times, (list, tuple, np.ndarray)):
             _times = tuple(times)
         else:
@@ -71,7 +86,29 @@ class TFDilatedUnet(TFModel):
 
     def reduction_block(self, input_tensor, filters, scope, dilation=(1, 1, 1),
                         pool_size=(2, 2, 2), padding='same'):
+        """ Apply reduction block transform to input tensor.
 
+        This layer consists of two 3D-convolutional layers with batch normalization
+        before 'relu' activation and max_pooling3d layer in the end.
+
+        Schematically this block can be represented like this:
+        =======================================================================
+        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
+        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
+        => MaxPooling3D{pool_size}[2:2:2]
+        =======================================================================
+
+        Args:
+        - input_tensor: keras tensor, input tensor;
+        - filters: int, number of filters in first and second covnolutions;
+        - scope: str, name of scope for this reduction block;
+        - dilation: tuple(int, int, int), dilation rate along spatial axes;
+        - pool_size: tuple(int, int, int), size of pooling kernel along three axis;
+        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+
+        Returns:
+        - ouput tensor;
+        """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
             conv1 = self.bn_conv3d(input_tensor, filters, (1, 1, 1),
