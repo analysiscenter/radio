@@ -10,7 +10,7 @@ from keras.layers import Flatten
 from keras.layers import Conv3D
 from keras.layers import BatchNormalization
 
-from .keras_model import KerasModel
+from ..keras_model import KerasModel
 
 
 class KerasResNet50(KerasModel):
