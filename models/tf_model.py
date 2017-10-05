@@ -214,7 +214,7 @@ class TFModel(BaseModel):
         """
         return input_tensor.get_shape().as_list()
 
-    def train_on_batch(self, *args, **kwargs):
+    def train_on_batch(self, x, y_true, **kwargs):
         """ Train tensorflow model on batch data.
 
         Args:
@@ -234,7 +234,7 @@ class TFModel(BaseModel):
             _ = self.sess.run(self.train_step, feed_dict=feed_dict)
         return None
 
-    def predict_on_batch(self, *args, **kwargs):
+    def predict_on_batch(self, x, **kwargs):
         """ Get prediction of tensorflow model on batch data.
 
         Args:
