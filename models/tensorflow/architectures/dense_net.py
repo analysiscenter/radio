@@ -9,7 +9,7 @@ from ..tf_model import TFModel, restore_nodes
 class TFDenseNet(TFModel):
     """ This class implements 3D DenseNet architecture via tensorflow. """
 
-    def __init__(self, name, num_targets, *args, **kwargs):
+    def __init__(self, name, num_targets=1, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
         self.num_targets = num_targets
 
