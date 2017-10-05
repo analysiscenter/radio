@@ -103,15 +103,15 @@ class TFResNet(TFModel):
 
         z = tf.contrib.layers.flatten(x)
 
-        z = tf.layers.dense(z, units=64, name='dense_128')
+        z = tf.layers.dense(z, units=64, name='dense_64')
         z = tf.layers.batch_normalization(z, axis=-1, training=self.learning_phase)
         z = tf.nn.relu(z)
 
-        z = tf.layers.dense(z, units=16, name='dense_32')
+        z = tf.layers.dense(z, units=16, name='dense_16')
         z = tf.layers.batch_normalization(z, axis=-1, training=self.learning_phase)
         z = tf.nn.relu(z)
 
-        z = tf.layers.dense(z, units=self.num_targets, name='dense')
+        z = tf.layers.dense(z, units=self.num_targets, name='dense_' + str(self.num_targets))
         z = tf.nn.sigmoid(z)
 
         y_pred = tf.identity(z, name='y_pred')
