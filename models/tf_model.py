@@ -214,7 +214,7 @@ class TFModel(BaseModel):
         """
         return input_tensor.get_shape().as_list()
 
-    def train_on_batch(self, x, y_true, **kwargs):
+    def train_on_batch(self, **kwargs):
         """ Train tensorflow model on batch data.
 
         Args:
