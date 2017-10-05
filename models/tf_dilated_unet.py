@@ -9,6 +9,16 @@ def get_shape(input_tensor):
 
 
 def repeat(input_tensor, times):
+    """ Repeat tensor given times along axes.
+
+    Args:
+    - input_tensor: tf.Tensor, input tensor;
+    - times: tuple(int, int,..., int) number of times to repeat
+    tensor along each axis;
+
+    Return:
+    - tf.Tensor, repeated tensor;
+    """
     source_shape = get_shape(input_tensor)
     x = tf.expand_dims(input_tensor, axis=len(source_shape))
     x = tf.tile(x, [1, *times])
@@ -19,9 +29,6 @@ def repeat(input_tensor, times):
 
 
 class TFDilatedUnet(TFModel):
-
-    def __init__(self, name, *args, **kwargs):
-        super().__init__(name, **kwargs)
 
     def upsampling3d(self, input_tensor, times, name):
         if isinstance(times, (list, tuple, np.ndarray)):
