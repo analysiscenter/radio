@@ -50,6 +50,7 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
     # and shape of out_patient
     return res, out_patient.shape
 
+
 @jit(nogil=True)
 def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=None,
                resample=None, padding='edge'):
@@ -88,6 +89,7 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
     # for post-function
     return res, output_array.shape
 
+
 @jit(nogil=True)
 def _seq_resize(input_array, shape, axes, resample):
     """ Calculate 3d-resize based on sequence of 2d-resizes performed on slices
@@ -110,6 +112,7 @@ def _seq_resize(input_array, shape, axes, resample):
         result = _slice_and_resize(result, axis, slice_shape, resample)
 
     return result
+
 
 @jit(nogil=True)
 def _slice_and_resize(input_array, axis, slice_shape, resample):

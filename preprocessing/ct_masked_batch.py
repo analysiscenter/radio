@@ -1,15 +1,18 @@
 # pylint: disable=no-member
+# pylint: disable=too-many-public-methods
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-arguments
 """Contains class CTImagesMaskedBatch for storing masked Ct-scans."""
 import logging
 
 import numpy as np
 from numba import njit
+from skimage import measure
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .histo import sample_histo3d
-
+from .crop import make_central_crop
 from ..dataset import action, any_action_failed, DatasetIndex
-
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
@@ -20,7 +23,7 @@ logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
 
 @njit(nogil=True)
 def get_nodules_numba(data, positions, size):
-    """Fetch nodules from array by array of starting positions.
+    """ Fetch nodules from array by array of starting positions.
 
     This numberized function takes source array with data of shape (n, k, l)
     represented by 3d numpy array with BatchCt data,
@@ -51,7 +54,7 @@ def get_nodules_numba(data, positions, size):
 
 
 class CTImagesMaskedBatch(CTImagesBatch):
-    """Class for storing masked batch of ct-scans.
+    """ Class for storing masked batch of ct-scans.
 
     Allows to load info about cancer nodules, then create cancer-masks
         for each patient. Created masks are stored in self.masks
@@ -98,7 +101,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @staticmethod
     def make_indices(size):
-        """Generate list of batch indices of given size.
+        """ Generate list of batch indices of given size.
 
         Take number of indices as input parameter size and
         generates list of random indices of length size.
@@ -109,26 +112,29 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.array([CTImagesMaskedBatch.make_filename() for i in range(size)])
 
     def __init__(self, index, *args, **kwargs):
-        """Initialization of CTImagesMaskedBatch.
+        """ Initialization of CTImagesMaskedBatch.
 
         Initialize CTImagesMaskedBatch with index.
         """
         super().__init__(index, *args, **kwargs)
         self.masks = None
         self.nodules = None
+        self.labels = None
 
     @property
     def components(self):
-        """ Components-property. See doc of base batch from dataset for information.
-                In short, these are names for components of tuple returned from __getitem__.
+        """ Components-property.
+
+        See doc of base batch from dataset for information.
+        In short, these are names for components of tuple returned from __getitem__.
         """
         return 'images', 'masks', 'spacing', 'origin'
 
     @action
-    def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=too-many-arguments, arguments-differ
+    def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=arguments-differ
              origin=None, spacing=None, nodules=None, masks=None,
              src_blosc=None):
-        """Load data in masked batch of patients.
+        """ Load data in masked batch of patients.
 
         Args:
         - source: source array with skyscraper, needed if fmt is 'ndarray';
@@ -203,7 +209,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @property
     def num_nodules(self):
-        """Get number of nodules in CTImagesMaskedBatch.
+        """ Get number of nodules in CTImagesMaskedBatch.
 
         This property returns the number
         of nodules in CTImagesMaskedBatch. If fetch_nodules_info
@@ -268,9 +274,49 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self._refresh_nodules_info(images_loaded)
         return self
 
+    @action
+    def fetch_nodules_from_mask(self, images_loaded=True):
+        """ Fetch nodules info(centers and sizes) from masks.
+
+        First of all, runs skimage.measure.labels for fetching nodules regions
+        from mask. After that extracts nodules info from segmented regions
+        and put this information in self.nodules record array.
+
+        Args:
+        - images_loaded: bool, whether 'images' component is loaded or not;
+        this argument is required by self._refresh_nodules_info method;
+
+        Returns:
+        - self, batch;
+        """
+        nodules_list = []
+        for pos in range(len(self)):
+            mask = self.get(pos, 'masks')
+            mask_labels = measure.label(mask, background=0)
+            for props in measure.regionprops(np.int16(mask_labels)):
+                center = np.asarray((props.centroid[0],
+                                     props.centroid[1],
+                                     props.centroid[2]), dtype=np.float)
+                center = center * self.spacing[pos] + self.origin[pos]
+
+                diameter = np.asarray([props.equivalent_diameter / 2] * 3, dtype=np.float)
+                diameter = diameter * self.spacing[pos]
+                nodules_list.append({'patient_pos': pos,
+                                     'nodule_center': center,
+                                     'nodule_size': diameter})
+
+        num_nodules = len(nodules_list)
+        self.nodules = np.rec.array(np.zeros(num_nodules, dtype=self.nodules_dtype))
+        for i, nodule in enumerate(nodules_list):
+            self.nodules.patient_pos[i] = nodule['patient_pos']
+            self.nodules.nodule_center[i, :] = nodule['nodule_center']
+            self.nodules.nodule_size[i, :] = nodule['nodule_size']
+        self._refresh_nodules_info(images_loaded)
+        return self
+
     # TODO think about another name of method
     def _fit_into_bounds(self, size, variance=None):
-        """Fetch start pixel coordinates of all nodules.
+        """ Fetch start pixel coordinates of all nodules.
 
         This method returns start pixel coordinates of all nodules
         in batch. Note that all nodules are considered to have the
@@ -305,10 +351,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return (start_pix + self.nodules.offset).astype(np.int)
 
-
     @action
     def create_mask(self):
-        """Load mask data for using nodule's info.
+        """ Load mask data for using nodule's info.
 
         Load mask into self.masks using info in attribute self.nodules_info.
         *Note: nodules info must be loaded before the call of this method.
@@ -331,7 +376,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     def fetch_mask(self, shape):
-        """Create scaled mask using nodule info from self
+        """ Create scaled mask using nodule info from self
 
         Args:
             shape: requiring shape of mask to be created
@@ -352,10 +397,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         scale_factor = np.asarray(shape) / self.images_shape[0, :]
 
         # get rescaled nodule-centers, nodule-sizes, offsets, locs of nod starts
-        center_scaled = np.abs(self.nodules.nodule_center - self.nodules.origin) / \
-                               self.nodules.spacing * scale_factor
-        start_scaled = (center_scaled - scale_factor * self.nodules.nodule_size / \
-                                        self.nodules.spacing / 2)
+        center_scaled = (np.abs(self.nodules.nodule_center - self.nodules.origin) /
+                         self.nodules.spacing * scale_factor)
+        start_scaled = (center_scaled - scale_factor * self.nodules.nodule_size /
+                        self.nodules.spacing / 2)
         start_scaled = np.rint(start_scaled).astype(np.int)
         offset_scaled = np.rint(self.nodules.offset * scale_factor).astype(np.int)
         img_size_scaled = np.rint(self.nodules.img_size * scale_factor).astype(np.int)
@@ -367,10 +412,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # return ndarray-mask
         return mask
 
-
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
-        """Sample random nodules from CTImagesBatchMasked skyscraper.
+        """ Sample random nodules from CTImagesBatchMasked skyscraper.
 
         Samples random num_nodules' lower_bounds coordinates
         and stack obtained data into ndarray(l, 3) then returns it.
@@ -419,7 +463,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals, too-many-statements
                        variance=None, mask_shape=None, histo=None):
-        """Fetch random cancer and non-cancer nodules from batch.
+        """ Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
 
@@ -480,7 +524,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             cancer_nodules = self._fit_into_bounds(nodule_size, variance=variance)
 
             # randomly select needed number of cancer nodules (their starting positions)
-            sample_indices = np.random.choice(np.arange(self.num_nodules), size=cancer_n, replace=False)
+            sample_indices = np.random.choice(np.arange(self.num_nodules),
+                                              size=cancer_n, replace=False)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
             # store scans-indices for chosen crops
@@ -556,7 +601,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
             histo: list of len=2, where the first item contains histogram bins: array of
                 shape=(number of bins X number of bins) with number of elems in bins, while the
-                second item contains edges of histogram bins: list of 3 1darrays of shape=(number of bins + 1).
+                second item contains edges of histogram bins:
+                list of 3 1darrays of shape=(number of bins + 1).
                 NOTE: this is almost np.histogram format. The only difference is that np.histogram
                 returns tuple of len=2, not list.
 
@@ -577,9 +623,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-
     def get_axial_slice(self, patient_pos, height):
-        """Get tuple of slices (data slice, mask slice).
+        """ Get tuple of slices (data slice, mask slice).
 
         Args:
             patient_pos: patient position in the batch
@@ -596,7 +641,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return patch
 
     def _refresh_nodules_info(self, images_loaded=True):
-        """Refresh self.nodules attributes [spacing, origin, img_size, bias].
+        """ Refresh self.nodules attributes [spacing, origin, img_size, bias].
 
         This method should be called when it is needed to make
         [spacing, origin, img_size, bias] attributes of self.nodules
@@ -643,7 +688,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules = self.nodules[~zero_mask]
 
     def _rescale_spacing(self):
-        """Rescale spacing values and update nodules_info.
+        """ Rescale spacing values and update nodules_info.
 
         This method should be called after any operation that
         changes shape of inner data.
@@ -652,9 +697,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self._refresh_nodules_info()
         return self
 
-
     def _post_mask(self, list_of_arrs, **kwargs):
-        """ concatenate outputs of different workers and put the result in mask-attr
+        """ Concatenate outputs of different workers and put the result in mask-attr
 
         Args:
             list_of_arrs: list of ndarays, with each ndarray representing a
@@ -688,7 +732,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self.indices
 
-
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """ Post-function for resize parallelization.
 
@@ -709,7 +752,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def make_xip(self, step=2, depth=10, func='max',
                  projection='axial', *args, **kwargs):
-        """Compute xip of source CTImage along given x with given step and depth.
+        """ Compute xip of source CTImage along given x with given step and depth.
 
         Call parent variant of make_xip then change nodules sizes'
         via calling _update_nodule_size and create new mask that corresponds
@@ -733,7 +776,172 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.create_mask()
         return batch
 
+    @action
+    def central_crop(self, crop_size, crop_mask=False, **kwargs):
+        """ Make crop with given size from center of images.
+
+        Args:
+        - crop_size: tuple(int, int, int), size of crop;
+
+        NOTE: this method should be rewritten with the use of
+        inheritance;
+        """
+        crop_size = np.asarray(crop_size)
+        img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
+        if any(np.any(shape < crop_size) for shape in img_shapes):
+            raise ValueError("Crop size must be smaller than size of inner 3D images")
+
+        cropped_images = []
+        cropped_masks = []
+        for i in range(len(self)):
+            image = self.get(i, 'images')
+            cropped_images.append(make_central_crop(image, crop_size))
+
+            if crop_mask and self.masks is not None:
+                mask = self.get(i, 'masks')
+                cropped_masks.append(make_central_crop(mask, crop_size))
+
+        self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
+        self.images = np.concatenate(cropped_images, axis=0)
+        if crop_mask and self.masks is not None:
+            self.masks = np.concatenate(cropped_masks, axis=0)
+        return self
+
     def flip(self):
         logger.warning("There is no implementation of flip method for class " +
                        "CTIMagesMaskedBatch. Nothing happened")
+        return self
+
+    @action
+    def create_labels_by_mask(self, threshold):
+        """ Create labels attribute that containes labels corresponding to masks.
+
+        Args:
+        - threshold: int, threshold for number of 1 pixel for considering
+        item having cancer;
+
+        Returns:
+        - self, unchanged batch;
+        """
+        self.labels = np.asarray([np.sum(self.get(i, 'masks')) > threshold
+                                  for i in range(len(self))], dtype=np.float)
+        return self
+
+    def unpack_data(self, y_component, dim_ordering='channels_last', **kwargs):
+        """ Unpack data contained in batch for feeding in model.
+
+        Args:
+        - y_component: str, name of y_component to fetch, can be 'masks' or 'labels';
+        - dim_ordering: str, can be 'channels_last' or 'channels_first';
+
+        Returns:
+        - x, y ndarrays;
+        """
+        x, y = [], [] if y_component is not None else None
+        for i in range(len(self)):
+            x.append(self.get(i, 'images'))
+            if y_component == 'no_y':
+                y.append(np.nan)
+                continue
+            elif y_component == 'masks':
+                y.append(self.get(i, 'masks'))
+            elif y_component == 'labels':
+                y.append(self.labels[i])
+        x, y = np.stack(x), np.stack(y)
+        if dim_ordering == 'channels_last':
+            x, y = x[..., np.newaxis], y[..., np.newaxis]
+        elif dim_ordering == 'channels_first':
+            x = x[:, np.newaxis, ...]
+            if y_component == 'masks':
+                y = y[:, np.newaxis, ...]
+        return x, y
+
+    @action
+    def train_on_crop(self, model_name, y_component='labels',
+                      dim_ordering='channels_last', **kwargs):
+        """ Train model on crops of CT-scans contained in batch.
+
+        Args:
+        - model_name: str, name of classification model;
+        - y_component: str, name of y component, can be 'masks' or 'labels';
+        - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last';
+
+        Returns:
+        - self, unchanged CTImagesMaskedBatch;
+        """
+        _model = self.get_model_by_name(model_name)
+        x, y_true = self.unpack_data(dim_ordering=dim_ordering,
+                                     y_component=y_component, **kwargs)
+        _model.train_on_batch(x, y_true)
+        return self
+
+    @action
+    def predict_on_crop(self, model_name, dst_dict, y_component='labels',
+                        dim_ordering='channels_last', **kwargs):
+        """ Get predictions of model on crops of CT-scans contained in batch.
+
+        This action-method get predictions of model specified by 'model_name'
+        argument on crops contained in batch and extends 'dst_dict' with
+        predictions. Keys of 'dst_dict' are indices and values are predictions.
+
+        Args:
+        - model_name: str, name of classification model;
+        - dst_dict: dictionary that will be updated by predictions;
+
+        - y_component: str, name of y component, can be 'masks' or 'labels';
+        - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last';
+
+        Returns:
+        - self, unchanged CTImagesMaskedBatch;
+        """
+        _model = self.get_model_by_name(model_name)
+        x, _ = self.unpack_data(dim_ordering=dim_ordering,
+                                y_component=y_component, **kwargs)
+        predicted_labels = _model.predict_on_batch(x)
+        dst_dict.update(zip(self.indices, predicted_labels))
+        return self
+
+    @action
+    def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
+                        batch_size=4, y_component='labels', dim_ordering='channels_last'):
+        """ Get predictions of the model on data contained in batch.
+
+        Transforms scan data into patches of shape CROP_SHAPE and then feed
+        this patches sequentially into model with name specified by
+        argument 'model_name'; after that loads predicted masks or probabilities
+        into 'masks' component of the current batch and returns it.
+
+        Args:
+        - model_name: str, name of model;
+        - strides: tuple(int, int, int) strides for patching operation;
+        - batch_size: int, number of patches to feed in model in one iteration;
+        - y_component: str, name of y component, can be 'masks' or labels;
+        - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last'
+
+        Returns:
+        - self, uncahnged CTImagesMaskedBatch;
+        """
+        _model = self.get_model_by_name(model_name)
+
+        patches_arr = self.get_patches(patch_shape=crop_shape, stride=strides, padding='reflect')
+        if dim_ordering == 'channels_first':
+            patches_arr = patches_arr[:, np.newaxis, ...]
+        elif dim_ordering == 'channels_last':
+            patches_arr = patches_arr[..., np.newaxis]
+
+        predictions = []
+        for i in range(0, patches_arr.shape[0], batch_size):
+            current_prediction = np.asarray(_model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
+
+            if y_component == 'labels':
+                current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
+                                               for prob in current_prediction.ravel()])
+
+            current_prediction = np.squeeze(current_prediction)
+            predictions.append(current_prediction)
+
+        patches_mask = np.concatenate(predictions, axis=0)
+        self.load_from_patches(patches_mask, stride=strides,
+                               scan_shape=tuple(self.images_shape[0, :]),
+                               data_attr='masks')
         return self

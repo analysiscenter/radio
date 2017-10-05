@@ -48,22 +48,19 @@ def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=
     args_sample_ncancer = dict(nodule_size=nodule_shape, histo=histo, batch_size=NCANCER_BATCH_SIZE, share=0.0)
     args_dump_ncancer = dict(dst=dir_ncancer)
 
-    # define sub-pipeline, performing sampling and dumping of cancerous crops
-    subpipe = (Pipeline().sample_nodules(**args_sample_cancer).dump(**args_dump_cancer)) * N_ITERS
-
-    # define the main pipeline
-    pipeline = ((Pipeline()
-                 .load(**args_load)
-                 .fetch_nodules_info(**args_fetch)
-                 .unify_spacing(**args_unify_spacing)
-                 .create_mask(**args_mask)) +
-                subpipe +
-                (Pipeline()
-                 .sample_nodules(**args_sample_ncancer)
-                 .dump(**args_dump_ncancer)))
-
-    # run it in lazy mode
-    pipeline.run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
+    # define pipeline. Two separate tasks are performed at once, in one run:
+    # 1) sampling and dumping of cancerous crops in wrapper-action sample_sump_cancerous
+    # 2) sampling and dumping of non-cancerous crops in separate actions
+    pipeline = (Pipeline()
+                .load(**args_load)
+                .fetch_nodules_info(**args_fetch)
+                .unify_spacing(**args_unify_spacing)
+                .create_mask(**args_mask)
+                .sample_dump_cancerous(**args_dump_cancer)   # sample and dump non-cancerous crops
+                .sample_nodules(**args_sample_ncancer)
+                .dump(**args_dump_ncancer)
+                .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
+               )
 
     return pipeline
 

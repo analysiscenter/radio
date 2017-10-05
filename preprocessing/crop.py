@@ -3,6 +3,27 @@ import numpy as np
 from numba import njit
 
 
+def make_central_crop(image, crop_size):
+    """ Make crop from from center of 3D image;
+    This function returns crop from center of the source image(image argument)
+    with given size(crop_size argument).
+
+    Args:
+    - image: ndarray(l, k, j), source 3D image;
+    - crop_size: ndarray(3) or tuple(int, int, int) size of crop along three dimensions;
+
+    Returns:
+    - ndarray, 3D crop of source image;
+    """
+    crop_size = np.asarray(crop_size)
+    crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
+    halfsize = np.rint(np.asarray(image.shape) / 2).astype(np.int)
+    cropped_img = image[halfsize[0] - crop_halfsize[0]: halfsize[0] + crop_size[0] - crop_halfsize[0],
+                        halfsize[1] - crop_halfsize[1]: halfsize[1] + crop_size[1] - crop_halfsize[1],
+                        halfsize[2] - crop_halfsize[2]: halfsize[2] + crop_size[2] - crop_halfsize[2]]
+    return cropped_img.copy()
+
+
 @njit(nogil=True)
 def detect_black_border(masked_image):
     """
