@@ -107,7 +107,8 @@ class TFDilatedUnet(TFModel):
         - padding: str, padding mode for convolutions, can be 'same' or 'valid';
 
         Returns:
-        - ouput tensor;
+        - Two tensorflow tensors: first corresponds to the output of concatenation
+        operation before max_pooling, second -- after max_pooling;
         """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
@@ -129,7 +130,25 @@ class TFDilatedUnet(TFModel):
 
     def upsampling_block(self, input_tensor, scip_connect_tensor, filters,
                          scope, dilation=(2, 2, 2), padding='same'):
+        """ Apply upsampling transform to two input tensors.
 
+        First of all, UpSampling3D transform is applied to input_tensor. Then output
+        tensor of this operation is concatenated with scip_connect_tensor. After this
+        two 3D-convolutions with batch normalization before 'relu' activation
+        are applied.
+
+        Args:
+        - input_tensor: keras tensor, input tensor from previous layer;
+        - scip_connect_tensor: keras tensor, input tensor from simmiliar
+        layer from reduction branch of UNet;
+        - filters: int, number of filters in convolutional layers;
+        - scope: str, name of scope for this block;
+        - dilation: tuple(int, int, int), dilation rate along spatial axes;
+        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+
+        Returns:
+        - output tensor, tensorflow tensor;
+        """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
             upsample_tensor = self.upsampling3d(input_tensor,
