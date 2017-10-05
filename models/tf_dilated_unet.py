@@ -67,7 +67,19 @@ class TFDilatedUnet(TFModel):
 
     def bottleneck_block(self, input_tensor, filters, scope, dilation=(1, 1, 1),
                         pool_size=(2, 2, 2), padding='same'):
+        """ Apply bottleneck block transform to input tensor.
 
+        Args:
+        - input_tensor: tf.Tensor, input tensor;
+        - filters: int, number of filters;
+        - scope: str, name scope of the layer;
+        - dilation: tuple(int, int, int), dilation rate along spatial axes;
+        - pool_size: tuple(int, int, int), size of max pooling kernel along spatial axes;
+        - padding: str, padding mode, can be 'valid' or 'same';
+
+        Returns:
+        - tensorflow tensor;
+        """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
             conv1 = self.bn_conv3d(input_tensor, filters, (1, 1, 1),
@@ -178,7 +190,7 @@ class TFDilatedUnet(TFModel):
 
     @restore_nodes('input', 'y_true', 'y_pred')
     def build_model(self):
-
+        """ Build unet with dilated convolutions model implemented in tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32)
         y_true = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32)
 
