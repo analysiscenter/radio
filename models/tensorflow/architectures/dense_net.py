@@ -173,7 +173,7 @@ class TFDenseNet(TFModel):
 
         z = self.global_average_pool3d(x, name='global_average_pool3d')
 
-        z = tf.layers.dense(z, units=self.num_targets, name='dense32=>1')
+        z = tf.layers.dense(z, units=self.num_targets, name='dense32_1')
         z = tf.nn.sigmoid(z)
 
         y_pred = tf.identity(z, name='y_pred')
