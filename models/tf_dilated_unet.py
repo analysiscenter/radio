@@ -5,6 +5,14 @@ from .tf_model import TFModel, restore_nodes
 
 
 def get_shape(input_tensor):
+    """ Get shape of input tensor.
+
+    Args:
+    - input_tensor: tf.Tensor, input tensor;
+
+    Returns:
+    - tf.Tensor, output tensor;
+    """
     return input_tensor.get_shape().as_list()
 
 
