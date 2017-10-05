@@ -26,8 +26,6 @@ class KerasModel(BaseModel):
         super().__init__(name, *args, **kwargs)
         self.name = name
 
-        self.model = self.build_model(*args, **kwargs)  # pylint: disable=assignment-from-none
-
     def build_model(self, *args, **kwargs):
         """ Initialize inner keras model. """
         return None
@@ -35,6 +33,7 @@ class KerasModel(BaseModel):
     @wraps(keras.models.Model.compile)
     def compile(self, *args, **kwargs):
         """ Compile keras model. """
+        self.model = self.build_model(*args, **kwargs)  # pylint: disable=assignment-from-none
         self.model.compile(*args, **kwargs)
 
     def train_on_batch(self, x, y_true, **kwargs):
