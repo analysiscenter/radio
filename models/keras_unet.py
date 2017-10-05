@@ -133,6 +133,24 @@ class KerasUnet(KerasModel):
     def __init__(self, name, **kwargs):
         super().__init__(name, **kwargs)
 
+    def bottleneck_block(self, input_tensor, filters, scope, padding='same'):
+        """ Apply bottleneck block transform to input tensor. """
+        with tf.variable_scope(scope):
+            conv1 = Conv3D(filters, (3, 3, 3),
+                           data_format='channels_first',
+                           padding=padding)(input_tensor)
+            conv1 = BatchNormalization(axis=1, momentum=0.1,
+                                       scale=True)(conv1)
+            conv1 = Activation('relu')(conv1)
+
+            conv2 = Conv3D(filters, (3, 3, 3),
+                           data_format='channels_first',
+                           padding=padding)(conv1)
+            conv2 = BatchNormalization(axis=1, momentum=0.1,
+                                       scale=True)(conv2)
+            conv2 = Activation('relu')(conv2)
+        return conv2
+
     def reduction_block(self, input_tensor, filters, scope, pool_size=(2, 2, 2), padding='same'):
         """ Apply reduction block transform to input tensor.
 
@@ -173,7 +191,7 @@ class KerasUnet(KerasModel):
 
             max_pool = MaxPooling3D(data_format='channels_first',
                                     pool_size=pool_size)(conv2)
-        return max_pool
+        return conv2, max_pool
 
     def upsampling_block(self, input_tensor, scip_connect_tensor, filters, scope, padding='same'):
         """ Apply upsampling transform to two input tensors.
@@ -219,29 +237,41 @@ class KerasUnet(KerasModel):
         input_tensor = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
-        reduction_block_A = self.reduction_block(input_tensor, 32,
-                                                 scope='ReductionBlock_A')
-        reduction_block_B = self.reduction_block(reduction_block_A, 64,
-                                                 scope='ReductionBlock_B')
-        reduction_block_C = self.reduction_block(reduction_block_B, 128,
-                                                 scope='ReductionBlock_C')
-        reduction_block_D = self.reduction_block(reduction_block_C, 256,
-                                                 scope='ReductionBlock_D')
+        # block_A has shape (None, 32, 64, 64, 32), reduct_block_A has shape (None, 16, 32, 32, 32)
+        block_A, reduct_block_A = self.reduction_block(input_tensor, 32,
+                                                       scope='ReductionBlock_A')
+
+        # block_B has shape (None, 16, 32, 32, 64), reduct_block_B has shape (None, 8, 16, 16, 64)
+        block_B, reduct_block_B = self.reduction_block(reduct_block_A, 64,
+                                                       scope='ReductionBlock_B')
+
+        # block_C has shape (None, 8, 16, 16, 128), reduct_block_C has shape (None, 4, 8, 8, 128)
+        block_C, reduct_block_C = self.reduction_block(reduct_block_B, 128,
+                                                       scope='ReductionBlock_C')
+
+        # block_D has shape (None, 4, 8, 8, 256), reduct_block_D has shape (None, 2, 4, 4, 256)
+        block_D, reduct_block_D = self.reduction_block(reduct_block_C, 256,
+                                                       scope='ReductionBlock_D')
 
         # Bottleneck layer
-        bottleneck_block = self.reduction_block(reduction_block_D, 512, scope='BottleneckBlock')
+        # bottleneck_block has shape (None, 2, 4, 4, 512)
+        bottleneck_block = self.bottleneck_block(reduct_block_D, 512, 'BottleNeckBlock')
 
         # Upsampling Layers: UpsamplingBlock_D, UpsamplingBlock_C, UpsamplingBlock_B, UpsamplingBlock_A
-        upsample_block_D = self.upsampling_block(bottleneck_block, reduction_block_D,
+        # upsample_block_C has shape (None, 4, 8, 8, 256)
+        upsample_block_D = self.upsampling_block(bottleneck_block, block_D,
                                                  256, scope='UpsamplingBlock_D')
 
-        upsample_block_C = self.upsampling_block(upsample_block_D, reduction_block_C,
+        # upsample_block_C has shape (None, 8, 16, 16, 128)
+        upsample_block_C = self.upsampling_block(upsample_block_D, block_C,
                                                  128, scope='UpsamplingBlock_C')
 
-        upsample_block_B = self.upsampling_block(upsample_block_C, reduction_block_B,
+        # upsample_block_B has shape (None, 16, 32, 32, 64)
+        upsample_block_B = self.upsampling_block(upsample_block_C, block_B,
                                                  64, scope='UpsamplingBlock_B')
 
-        upsample_block_A = self.upsampling_block(upsample_block_B, reduction_block_A,
+        # upsample_block_A has shape (None, 32, 64, 64, 32)
+        upsample_block_A = self.upsampling_block(upsample_block_B, block_A,
                                                  32, scope='UpsamplingBlock_A')
 
         # Final convolution
