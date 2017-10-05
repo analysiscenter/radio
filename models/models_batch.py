@@ -4,9 +4,9 @@
 from ..preprocessing import CTImagesMaskedBatch
 from ..dataset import model
 
-from .keras_unet import KerasUnet
-from .keras_unet import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
-from .keras_model import KerasModel
+from .keras.keras_unet import KerasUnet
+from .keras.losses import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
+from .keras.architectures.keras_model import KerasModel
 # global constants
 # input shape of a nodule
 
