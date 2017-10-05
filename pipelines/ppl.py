@@ -36,15 +36,14 @@ def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=
             cancerous crops.
 
     Return:
-        resulting pipeline run in lazy-mode. Can be applied to dataset containing luna-scans.
+        resulting pipeline run in lazy-mode.
     """
     # set up all args
     args_load = dict(fmt='raw')
     args_fetch = dict(nodules_df=nodules_df)
     args_mask = dict()
     args_unify_spacing = dict(spacing=SPACING, shape=USPACING_SHAPE, padding='reflect', resample=RESIZE_FILTER)
-    args_sample_cancer = dict(all_cancerous=True, nodule_size=nodule_shape, variance=variance)
-    args_dump_cancer = dict(dst=dir_cancer)
+    args_dump_cancer = dict(dst=dir_cancer, n_iters=N_ITERS, nodule_size=nodule_shape, variance=variance)
     args_sample_ncancer = dict(nodule_size=nodule_shape, histo=histo, batch_size=NCANCER_BATCH_SIZE, share=0.0)
     args_dump_ncancer = dict(dst=dir_ncancer)
 
@@ -73,7 +72,7 @@ def update_histo_by_lunaset(nodules_df, histo):
             (compare the latter with tuple (bins, edges) returned by np.histogram).
 
     Return:
-        resulting pipeline run in lazy-mode. Can be applied to dataset containing luna-scans.
+        resulting pipeline run in lazy-mode.
     """
     # set up all args
     args_load = dict(fmt='raw')
