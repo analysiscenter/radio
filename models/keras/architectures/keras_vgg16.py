@@ -10,7 +10,7 @@ from keras.layers import Conv3D, MaxPooling3D
 from keras.layers import Dropout
 from keras.layers import Dense, BatchNormalization
 
-from .keras_model import KerasModel
+from ..keras_model import KerasModel
 
 
 class KerasVGG16(KerasModel):
