@@ -6,7 +6,7 @@ import shutil
 import logging
 import keras
 from keras.models import model_from_json
-from .base_model import BaseModel
+from ..base_model import BaseModel
 
 
 logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
