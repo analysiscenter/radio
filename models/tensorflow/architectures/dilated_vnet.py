@@ -1,42 +1,11 @@
 import math
 import numpy as np
 import tensorflow as tf
-from .tf_model import TFModel, restore_nodes
+from ..tf_model import TFModel, restore_nodes
+from ..utils import repeat_tensor
 
 
-def get_shape(input_tensor):
-    """ Get shape of input tensor.
-
-    Args:
-    - input_tensor: tf.Tensor, input tensor;
-
-    Returns:
-    - tf.Tensor, output tensor;
-    """
-    return input_tensor.get_shape().as_list()
-
-
-def repeat(input_tensor, times):
-    """ Repeat tensor given times along axes.
-
-    Args:
-    - input_tensor: tf.Tensor, input tensor;
-    - times: tuple(int, int,..., int) number of times to repeat
-    tensor along each axis;
-
-    Return:
-    - tf.Tensor, repeated tensor;
-    """
-    source_shape = get_shape(input_tensor)
-    x = tf.expand_dims(input_tensor, axis=len(source_shape))
-    x = tf.tile(x, [1, *times])
-
-    new_shape = tuple(np.array(source_shape[1:]) * np.array(times[1:]))
-    x = tf.reshape(x, shape=(-1, *new_shape))
-    return x
-
-
-class TFDilatedUnet(TFModel):
+class TFDilatedVnet(TFModel):
 
     def upsampling3d(self, input_tensor, times, name):
         """ Apply 3D upsampling operation to input tensor.
@@ -63,7 +32,7 @@ class TFDilatedUnet(TFModel):
             raise ValueError("Times must be tuple, list or ndarray of size 3")
 
         with tf.variable_scope(name):
-            return repeat(input_tensor, (1, *_times, 1))
+            return repeat_tensor(input_tensor, (1, *_times, 1))
 
     def bottleneck_block(self, input_tensor, filters, scope, dilation=(1, 1, 1),
                         pool_size=(2, 2, 2), padding='same'):
@@ -190,7 +159,7 @@ class TFDilatedUnet(TFModel):
 
     @restore_nodes('input', 'y_true', 'y_pred')
     def build_model(self):
-        """ Build unet with dilated convolutions model implemented in tensorflow. """
+        """ Build vnet with dilated convolutions model implemented in tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32)
         y_true = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32)
 

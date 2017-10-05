@@ -3,11 +3,15 @@
 """ Contains DenseNet model class. """
 
 import tensorflow as tf
-from .tf_model import TFModel, restore_nodes
+from ..tf_model import TFModel, restore_nodes
 
 
-class DenseNet(TFModel):
+class TFDenseNet(TFModel):
     """ This class implements 3D DenseNet architecture via tensorflow. """
+
+    def __init__(self, name, num_targets, *args, **kwargs):
+        super().__init__(name, *args, **kwargs)
+        self.num_targets = num_targets
 
     @staticmethod
     def max_pool3d(input_tensor, pool_size, strides, name, padding='same'):
@@ -65,18 +69,6 @@ class DenseNet(TFModel):
         with tf.variable_scope(name):
             output_layer = tf.reduce_mean(input_tensor, axis=(1, 2, 3))
         return output_layer
-
-    def dropout(self, input_tensor, rate=0.3):
-        """ Add dropout layer with given dropout rate to the input tensor.
-
-        Args:
-        - input_tensor: tf.Variable, input tensor;
-        - rate: float, dropout rate;
-
-        Returns:
-        - tf.Variable, output tensor;
-        """
-        return tf.layers.dropout(input_tensor, rate=rate, training=self.learning_phase)
 
     def dense_block(self, input_tensor, filters, block_size, name):
         """ Dense block which is used as a build block of densenet model.
@@ -155,7 +147,7 @@ class DenseNet(TFModel):
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
                                       dtype=tf.float32, name='input')
 
-        y_true = tf.placeholder(shape=(None, 1), dtype=tf.float32, name='y_true')
+        y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='y_true')
 
         x = self.conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
                         padding='same', name='initial_convolution')
@@ -181,7 +173,7 @@ class DenseNet(TFModel):
 
         z = self.global_average_pool3d(x, name='global_average_pool3d')
 
-        z = tf.layers.dense(z, units=1, name='dense32=>1')
+        z = tf.layers.dense(z, units=self.num_targets, name='dense32=>1')
         z = tf.nn.sigmoid(z)
 
         y_pred = tf.identity(z, name='y_pred')

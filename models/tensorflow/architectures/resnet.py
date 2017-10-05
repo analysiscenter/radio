@@ -4,11 +4,15 @@
 """ Contains TFResNet model class. """
 
 import tensorflow as tf
-from .tf_model import TFModel, restore_nodes
+from ..tf_model import TFModel, restore_nodes
 
 
 class TFResNet(TFModel):
     """ This class implements 3D ResNet architecture via tensorflow. """
+
+    def __init__(self, name, num_targets, *args, **kwargs):
+        super().__init__(name, *args, **kwargs)
+        self.num_targets = num_targets
 
     def identity_block(self, input_tensor, kernel_size, filters, name):
         """ The identity block is the block that has no conv layer at shortcut. """
@@ -65,7 +69,7 @@ class TFResNet(TFModel):
     def build_model(self):
         """ Build renset model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='input')
-        y_true = tf.placeholder(shape=(None, 1), dtype=tf.float32, name='y_true')
+        y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='y_true')
 
         x = self.bn_conv3d(input_tensor, filters=32, kernel_size=(7, 3, 3),
                            name='initial_conv', padding='same')
@@ -107,7 +111,7 @@ class TFResNet(TFModel):
         z = tf.layers.batch_normalization(z, axis=-1, training=self.learning_phase)
         z = tf.nn.relu(z)
 
-        z = tf.layers.dense(z, units=1, name='dense_1')
+        z = tf.layers.dense(z, units=self.num_targets, name='dense_1')
         z = tf.nn.sigmoid(z)
 
         y_pred = tf.identity(z, name='y_pred')
