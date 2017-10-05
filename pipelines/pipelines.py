@@ -20,12 +20,13 @@ RUN_BATCH_SIZE = 8
 NCANCER_BATCH_SIZE = 1030 # NCANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
 
 
-def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=(32, 64, 64),
-                       variance=(36, 144, 144)):
+def split_dump(dir_cancer, dir_ncancer, nodules_df, histo, fmt='raw', nodule_shape=(32, 64, 64),
+               variance=(36, 144, 144)):
     """ Define pipeline for dumping cancerous crops in one folder
             and random noncancerous crops in another.
 
     Args:
+        fmt: format of scans ('raw'|'blosc'|'dicom').
         dir_cancer: directory to dump cancerous crops in.
         dir_ncancer: directory to dump non-cancerous crops in.
         nodules_df: df with info about nodules' locations.
@@ -39,7 +40,7 @@ def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=
         resulting pipeline run in lazy-mode.
     """
     # set up all args
-    args_load = dict(fmt='raw')
+    args_load = dict(fmt=fmt)
     args_fetch = dict(nodules_df=nodules_df)
     args_mask = dict()
     args_unify_spacing = dict(spacing=SPACING, shape=USPACING_SHAPE, padding='reflect', resample=RESIZE_FILTER)
@@ -63,19 +64,20 @@ def split_dump_lunaset(dir_cancer, dir_ncancer, nodules_df, histo, nodule_shape=
 
     return pipeline
 
-def update_histo_by_lunaset(nodules_df, histo):
-    """ Pipeline for updating histogram using info in luna-dataset.
+def update_histo(nodules_df, histo, fmt='raw'):
+    """ Pipeline for updating histogram using info in dataset of scans.
 
     Args:
         nodules_df: df with info about nodules' locations.
         histo: 3d-histogram in almost np.histogram format, list [bins, edges];
             (compare the latter with tuple (bins, edges) returned by np.histogram).
+        fmt: format of scans ('raw'|'blosc'|'dicom').
 
     Return:
         resulting pipeline run in lazy-mode.
     """
     # set up all args
-    args_load = dict(fmt='raw')
+    args_load = dict(fmt=fmt)
     args_fetch = dict(nodules_df=nodules_df)
     args_unify_spacing = dict(spacing=SPACING, shape=USPACING_SHAPE, padding='reflect', resample=RESIZE_FILTER)
     args_mask = dict()
@@ -92,7 +94,7 @@ def update_histo_by_lunaset(nodules_df, histo):
 
     return pipeline
 
-def get_luna_crops(cancerset, ncancerset, batch_sizes=(10, 10), hu_lims=(-1000, 400)):
+def get_crops(cancerset, ncancerset, batch_sizes=(10, 10), hu_lims=(-1000, 400)):
     """ Pipeline for generating batches of cancerous and non-cancerous crops from
             ct-scans in chosen proportion.
 

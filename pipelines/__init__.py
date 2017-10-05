@@ -1,2 +1,2 @@
 """ Pipelines submodule. """
-from .ppl import split_dump_lunaset, update_histo_by_lunaset, get_luna_crops
+from .pipelines import split_dump, update_histo, get_crops
