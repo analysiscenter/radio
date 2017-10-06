@@ -224,15 +224,15 @@ class CTImagesModels(CTImagesMaskedBatch):
         """
         metrics = ()
         show_metrics = False
-        if pipeline.config is not None:
+        if self.pipeline.config is not None:
             metrics = self.pipeline.config.get('metrics', ())
             show_metrics = self.pipeline.config.get('show_metrics', False)
 
-            df_init = pd.DataFrame(columns=[m.__name__ for m in metrics])
+            df_init = lambda: pd.DataFrame(columns=[m.__name__ for m in metrics])
             train_metrics = self.pipeline.get_variable('train_metrics', init=df_init)
 
         _model = self.get_model_by_name(model_name)
-        x, y_true = self._get_by_unpacker(**kwargs)
+        x, y_true = self._get_by_unpacker(unpacker, **kwargs)
         _model.train_on_batch(x, y_true)
 
         if len(metrics):
@@ -261,7 +261,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         - self, unchanged CTImagesMaskedBatch;
         """
         _model = self.get_model_by_name(model_name)
-        x, _ = self._get_by_unpacker(**kwargs)
+        x, _ = self._get_by_unpacker(unpacker, **kwargs)
         _model.predict_on_batch(x)
         return self
 
@@ -288,12 +288,12 @@ class CTImagesModels(CTImagesMaskedBatch):
             test_pipeline = self.pipeline.config.get('test_pipeline', None)
             test_dataset = self.pipeline.config.get('test_dataset', None)
 
-            df_init = pd.DataFrame(columns=[m.__name__ for m in metrics])
+            df_init = lambda: pd.DataFrame(columns=[m.__name__ for m in metrics])
             test_metrics = self.pipeline.get_variable('test_metrics', init=df_init)
 
         if len(metrics):
             _model = self.get_model_by_name(model_name)
-            x, _ = self._get_by_unpacker(**kwargs)
+            x, _ = self._get_by_unpacker(unpacker, **kwargs)
 
             y_pred = _model.predict_on_batch(x)
 
