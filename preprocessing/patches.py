@@ -42,7 +42,6 @@ def get_patches_numba(img, shape, stride, out_arr, fake):
                 ctr += 1
 
 
-
 @guvectorize([(float64[:, :, :, :], int64[:], float64[:, :, :], int64[:])],
              '(p, l, s, t),(q),(m, n, k)->()',
              nopython=True, target='parallel')
@@ -96,6 +95,7 @@ def assemble_patches(patches, stride, out_arr, fake):
 
     # weight resulting image
     out_arr /= weights_inv
+
 
 def calc_padding_size(img_shape, patch_shape, stride):
     """ Calculate width of padding, that needs to be added to 3d-scan
