@@ -194,7 +194,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ix_first = batch.index.create_subset(batch.indices[:size_first])
         ix_second = batch.index.create_subset(batch.indices[size_first:])
 
-    # init batches
+        # init batches
         batches = cls(ix_first), cls(ix_second)
 
         # put non-None components in batch-parts
@@ -585,21 +585,22 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
 
     @classmethod
-    async def dump_data(cls, data_items, folder):
+    async def dump_data(cls, data_items, folder, i8_encode):
         """ Dump data that is contained in data_items on disk in
-                specified folder
+                specified folder.
 
         Args:
             data_items: dict of data items for dump in form item_name.ext: item
-                (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing})
-            folder: folder to dump data-items in
+                (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing}).
+            folder: folder to dump data-items in.
+            i8_encode: whether to perform cast to int8 on data-items with .blk-extensions.
 
         Return:
             ____
 
         *NOTE: depending on supplied format, each data-item will be either
             cloudpickle-serialized (if .cpkl) or blosc-packed (if .blk).
-            Additionally, .blk-items will be int8-decoded because of speed considerations
+            Additionally, .blk-items can be int8-decoded.
         """
 
         # create directory if does not exist
@@ -610,18 +611,23 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         for filename, data in data_items.items():
             ext = filename.split('.')[-1]
             if ext == 'blk':
-                _ = await cls.encode_dump_array(data, folder, filename)
+                if i8_encode:
+                    _ = await cls.encode_dump_array(data, folder, filename)
+                else:
+                    byted = blosc.pack_array(data, cname='zstd', clevel=1)
+                    async with aiofiles.open(os.path.join(folder, filename), mode='wb') as file:
+                        _ = await file.write(byted)
+
             elif ext == 'cpkl':
                 byted = cloudpickle.dumps(data)
-                async with aiofiles.open(os.path.join(folder, filename),
-                                         mode='wb') as file:
+                async with aiofiles.open(os.path.join(folder, filename), mode='wb') as file:
                     _ = await file.write(byted)
 
         return None
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, src=None, fmt='blosc'):
+    async def dump(self, patient, dst, src=None, fmt='blosc', i8_encode=False):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Args:
@@ -632,6 +638,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 in this case folder for each patient is created, patient's data
                 is put into images.blk, attributes are put into files attr_name.cpkl
                 (e.g., spacing.cpkl)
+            i8_encode: whether components with .blk-format should be cast to int8-type.
+                The cast allows to save space on disk and to speed up batch-loading. However,
+                the cast comes with loss of precision, as originally .blk-components are stored
+                in float32-format.
 
         example:
             # initialize batch and load data
@@ -679,7 +689,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # set patient-specific folder
         folder = os.path.join(dst, patient)
 
-        return await self.dump_data(data_items, folder)
+        return await self.dump_data(data_items, folder, i8_encode)
 
     def get_pos(self, data, component, index):
         """ Return a posiiton of a component in data for a given index
