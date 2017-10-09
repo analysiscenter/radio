@@ -109,7 +109,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
         - size: size of list with indices;
         """
-        return [CTImagesMaskedBatch.make_filename() for i in range(size)]
+        return np.array([CTImagesMaskedBatch.make_filename() for i in range(size)])
 
     def __init__(self, index, *args, **kwargs):
         """ Initialization of CTImagesMaskedBatch.
@@ -221,8 +221,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df, update=False, images_loaded=True):
-        """ Extract nodules' info from nodules_df into attribute self.nodules.
+    def fetch_nodules_info(self, nodules_df=None, nodules_records=None, update=False, images_loaded=True):
+        """Extract nodules' info from nodules_df into attribute self.nodules.
 
         This method fetch info about all nodules in batch
         and put them in numpy record array which can be accessed outside
@@ -243,26 +243,33 @@ class CTImagesMaskedBatch(CTImagesBatch):
             logger.warning("Nodules have already been extracted. " +
                            "Put update argument as True for refreshing")
             return self
-        nodules_df = nodules_df.set_index('seriesuid')
 
-        unique_indices = nodules_df.index.unique()
-        inter_index = np.intersect1d(unique_indices, self.indices)
-        nodules_df = nodules_df.loc[inter_index,
-                                    ["coordZ", "coordY",
-                                     "coordX", "diameter_mm"]]
+        if nodules_records is not None:
+            # load from record-array
+            self.nodules = nodules_records
 
-        num_nodules = nodules_df.shape[0]
-        self.nodules = np.rec.array(np.zeros(num_nodules,
-                                             dtype=self.nodules_dtype))
-        counter = 0
-        for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
-            pat_pos = self.index.get_pos(pat_id)
-            self.nodules.patient_pos[counter] = pat_pos
-            self.nodules.nodule_center[counter, :] = np.array([coordz,
-                                                               coordy,
-                                                               coordx])
-            self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
-            counter += 1
+        else:
+            # assume that nodules_df is supplied and load from it
+            nodules_df = nodules_df.set_index('seriesuid')
+
+            unique_indices = nodules_df.index.unique()
+            inter_index = np.intersect1d(unique_indices, self.indices)
+            nodules_df = nodules_df.loc[inter_index,
+                                        ["coordZ", "coordY",
+                                         "coordX", "diameter_mm"]]
+
+            num_nodules = nodules_df.shape[0]
+            self.nodules = np.rec.array(np.zeros(num_nodules,
+                                                 dtype=self.nodules_dtype))
+            counter = 0
+            for pat_id, coordz, coordy, coordx, diam in nodules_df.itertuples():
+                pat_pos = self.index.get_pos(pat_id)
+                self.nodules.patient_pos[counter] = pat_pos
+                self.nodules.nodule_center[counter, :] = np.array([coordz,
+                                                                   coordy,
+                                                                   coordx])
+                self.nodules.nodule_size[counter, :] = np.array([diam, diam, diam])
+                counter += 1
 
         self._refresh_nodules_info(images_loaded)
         return self
@@ -451,10 +458,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if histo is not None:
             samples /= data_shape
 
-        return np.asarray(samples + offset, dtype=np.int)
+        return np.asarray(samples + offset, dtype=np.int), sampled_indices
 
     @action
-    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,
+    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals, too-many-statements
                        variance=None, mask_shape=None, histo=None):
         """ Fetch random cancer and non-cancer nodules from batch.
 
@@ -502,6 +509,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if not all_cancerous and batch_size is None:
             raise ValueError('Either supply batch_size or set all_cancerous to True')
 
+        # pos of batch-items that correspond to crops
+        crops_indices = np.zeros(0, dtype=np.int16)
+
         # choose cancerous nodules' starting positions
         nodule_size = np.asarray(nodule_size, dtype=np.int)
         batch_size = self.num_nodules if all_cancerous else batch_size
@@ -518,16 +528,23 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                               size=cancer_n, replace=False)
             cancer_nodules = cancer_nodules[sample_indices, :]
 
+            # store scans-indices for chosen crops
+            cancerous_indices = self.nodules.patient_pos[sample_indices].reshape(-1)
+            crops_indices = np.concatenate([crops_indices, cancerous_indices])
+
         nodules_st_pos = cancer_nodules
 
         # if non-cancerous nodules are needed, add random starting pos
         if batch_size - cancer_n > 0:
             # sample starting positions for (most-likely) non-cancerous crops
-            random_nodules = self.sample_random_nodules(batch_size - cancer_n,
-                                                        nodule_size, histo=histo)
+            random_nodules, random_indices = self.sample_random_nodules(batch_size - cancer_n,
+                                                                        nodule_size, histo=histo)
 
             # concat non-cancerous and cancerous crops' starting positions
             nodules_st_pos = np.vstack([nodules_st_pos, random_nodules]).astype(np.int)  # pylint: disable=no-member
+
+            # store scan-indices for randomly chose crops
+            crops_indices = np.concatenate([crops_indices, random_indices])
 
         # obtain nodules' scans by cropping from self.images
         images = get_nodules_numba(self.images, nodules_st_pos, nodule_size)
@@ -546,15 +563,56 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # crop nodules' masks
         masks = get_nodules_numba(batch_mask, nodules_st_pos, mask_shape)
 
-        # build noudles' batch
+        # build nodules' batch
         bounds = np.arange(batch_size + 1) * nodule_size[0]
-        ds_index = DatasetIndex(self.make_indices(batch_size))
-        nodules_batch = type(self)(ds_index)
-        nodules_batch.load(source=images, fmt='ndarray', bounds=bounds)
+        crops_spacing = self.spacing[crops_indices]
+        offset = np.zeros((batch_size, 3))
+        offset[:, 0] = self.lower_bounds[crops_indices]
+        crops_origin = self.origin[crops_indices] + crops_spacing * (nodules_st_pos - offset)
+        names_gen = zip(self.indices[crops_indices], self.make_indices(batch_size))
+        ix_batch = ['_'.join([prefix, random_str]) for prefix, random_str in names_gen]
+        nodules_batch = type(self)(DatasetIndex(ix_batch))
+        nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
 
-        # TODO add info about nodules by changing self.nodules
+        # set masks
         nodules_batch.masks = masks
+
+        # set nodules info in nodules' batch
+        nodules_records = [self.nodules[self.nodules.patient_pos == crop_pos] for crop_pos in crops_indices]
+        new_patient_pos = []
+        for i, records in enumerate(nodules_records):
+            new_patient_pos += [i] * len(records)
+        new_patient_pos = np.array(new_patient_pos)
+        nodules_records = np.concatenate(nodules_records)
+        nodules_records = nodules_records.view(np.recarray)
+        nodules_records.patient_pos = new_patient_pos
+        nodules_batch.fetch_nodules_info(nodules_records=nodules_records)
+
+        # leave out nodules with zero-intersection with crops' boxes
+        nodules_batch._filter_nodules_info()                                                     # pylint: disable=protected-access
+
         return nodules_batch
+
+    @action
+    def sample_dump_cancerous(self, dst, n_iters, nodule_size, variance):
+        """ Helper action that allows to sample and dump cancerous nodules from a batch.
+                Wraps actions sample_nodules and dump.
+        Args:
+            dst: folder to dump nodules in.
+            n_iters: number of iterations to be performed on one batch. Coupled with
+                variance-arg, can be used for introducing variability in locations of
+                nodule-centers.
+            nodule_size: shape of sampled nodules.
+            variance: seq of len=3 representing variance of nodules' locations along 3 axes.
+
+        Return:
+            self.
+        """
+        for _ in range(n_iters):
+            nodules = self.sample_nodules(all_cancerous=True, nodule_size=nodule_size, variance=variance)
+            nodules = nodules.dump(dst=dst)
+
+        return self
 
     @action
     def update_nodules_histo(self, histo):
@@ -613,6 +671,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
             images_loaded: if set to True, assume that _bounds-attr is loaded
                 and images are already loaded.
+
+        Return:
+            ____
         """
         if images_loaded:
             self.nodules.offset[:, 0] = self.lower_bounds[self.nodules.patient_pos]
@@ -620,6 +681,32 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         self.nodules.spacing = self.spacing[self.nodules.patient_pos, :]
         self.nodules.origin = self.origin[self.nodules.patient_pos, :]
+
+    def _filter_nodules_info(self):
+        """ Filter record-array self.nodules s.t. only records about cancerous nodules
+                that have non-zero intersection with scan-boxes be present.
+
+        Args:
+            ____
+        Return:
+            ____
+
+        NOTE: can be called only after execution of fetch_nodules_info and _refresh_nodules_info
+        """
+        # nodules start and trailing pixel-coords
+        center_pix = (self.nodules.nodule_center - self.nodules.origin) / self.nodules.spacing
+        start_pix = center_pix - np.rint(self.nodules.nodule_size / self.nodules.spacing / 2)
+        start_pix = np.rint(start_pix).astype(np.int)
+        end_pix = start_pix + np.rint(self.nodules.nodule_size / self.nodules.spacing)
+
+        # find nodules with no intersection with scan-boxes
+        nods_images_shape = self.images_shape[self.nodules.patient_pos]
+        start_mask = np.any(start_pix >= nods_images_shape, axis=1)
+        end_mask = np.any(end_pix <= 0, axis=1)
+        zero_mask = start_mask | end_mask
+
+        # filter out such nodules
+        self.nodules = self.nodules[~zero_mask]
 
     def _rescale_spacing(self):
         """ Rescale spacing values and update nodules_info.
