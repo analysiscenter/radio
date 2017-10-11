@@ -163,7 +163,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def dump(self, dst, src=None, fmt='blosc'):                # pylint: disable=arguments-differ
+    def dump(self, dst, src=None, fmt='blosc', i8_encode=False):                # pylint: disable=arguments-differ
         """ Dump scans data (3d-array) on specified path in specified format
 
         Args:
@@ -174,6 +174,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 in this case folder for each patient is created, patient's data
                 is put into images.blk, attributes are put into files attr_name.cpkl
                 (e.g., spacing.cpkl)
+            i8_encode: whether components with .blk-format should be cast to int8-type.
 
         See docstring of parent-batch for examples.
         """
@@ -188,7 +189,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             src = tuple(src) + ('images_shape', )
 
         # execute parent-method
-        super().dump(dst=dst, src=src, fmt=fmt)
+        super().dump(dst=dst, src=src, fmt=fmt, i8_encode=i8_encode)
 
         return self
 
