@@ -9,7 +9,8 @@ import pandas as pd
 from numba import njit
 from IPython.display import clear_output
 from ..preprocessing import CTImagesMaskedBatch
-from ..dataset import model, action, Batch
+from ..dataset import action, Batch
+from ..dataset import model as batch_model
 
 from .keras.keras_unet import KerasUnet
 from .keras.losses import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
@@ -60,7 +61,7 @@ def with_model(cls, model, mode='dynamic', **kwargs):
             _model = src_model
             _name = src_model.name
 
-        @model(mode=mode)
+        @batch_model(mode=mode)
         def model_fn(*args, **nkwargs):
             if callable(src_model):
                 return _model(*args, **nkwargs)
