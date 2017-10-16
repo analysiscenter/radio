@@ -9,7 +9,7 @@ import pandas as pd
 from numba import njit
 from IPython.display import clear_output
 from ..preprocessing import CTImagesMaskedBatch
-from ..dataset import model, action
+from ..dataset import model, action, Batch
 
 from .keras.keras_unet import KerasUnet
 from .keras.losses import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
