@@ -79,18 +79,6 @@ def with_model(cls, model, mode='dynamic', **kwargs):
 class CTImagesModels(CTImagesMaskedBatch):
     """ Сlass for describing, training nn-models of segmentation/classification;
             inference using models is also supported.
-
-    Methods:
-        1. selu_vnet_4:
-            build vnet of depth = 4 using tensorflow,
-            return tensors necessary for training, evaluating and inferencing
-        2. train_vnet_4:
-            train selu_vnet_4 on images and masks, that are contained in batch
-        3. update_test_stats:
-            method for evaluation of the model on test-batch (test-dataset) during
-            training
-        4. get_cancer_segmentation:
-            method for performing inference on images of batch using trained model
     """
 
 
