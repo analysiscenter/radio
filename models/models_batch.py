@@ -44,7 +44,7 @@ def create_mask_reg(centers, sizes, probs, crop_shape, threshold):
 
 def with_model(cls, model, mode='dynamic', **kwargs):
     """ Create Batch-class containing model-decorated methods. """
-    if not issubclass(cls, ds.Batch):
+    if not issubclass(cls, Batch):
         raise TypeError("Argument cls must be batch class that extends dataset.Batch!")
 
     if not isinstance(model, (list, tuple)):
