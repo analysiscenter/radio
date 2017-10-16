@@ -745,3 +745,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         logger.warning("There is no implementation of flip method for class " +
                        "CTIMagesMaskedBatch. Nothing happened")
         return self
+
+    @action
+    def binarize_mask(self, threshold=0.35):
+        """ Binarize masks by threshold.
+
+        Args:
+        - threshold: float, threshold for masks binarization;
+
+        Returns:
+        - self, source CTImagesMaskedBatch with binarized masks.
+        """
+        self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
+        return self
