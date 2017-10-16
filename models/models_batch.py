@@ -219,8 +219,10 @@ class CTImagesModels(CTImagesMaskedBatch):
         _model.train_on_batch(x, y_true)
 
         if len(metrics):
-            y_pred = _model.predict_on_batch(x)
-            train_metrics.append({m.__name__: m(y_true, y_pred) for m in metrics})
+            extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
+
+            n = train_metrics.shape[0]
+            train_metrics.loc[n, list(extend_data.keys())] = list(extend_data.values())
 
         if show_metrics:
             sys.stdout.write(str(train_metrics.iloc[-1, :]))
@@ -274,7 +276,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
             metrics = self.pipeline.config.get('metrics', ())
             test_pipeline = self.pipeline.config.get('test_pipeline', None)
-            test_dataset = self.pipeline.config.get('test_dataset', None)
+            test_pipeline.reset_iter()
 
             df_init = lambda: pd.DataFrame(columns=[m.__name__ for m in metrics])
             test_metrics = self.pipeline.get_variable('test_metrics', init=df_init)
@@ -285,8 +287,11 @@ class CTImagesModels(CTImagesMaskedBatch):
 
             y_pred = _model.predict_on_batch(x)
 
-            for batch in (test_pipeline << test_dataset).gen_batch(batch_size):
-                test_metrics.append({m.__name__: m(y_true, y_pred) for m in metrics})
+            for batch in test_pipeline.gen_batch(batch_size):
+                extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
+
+                n = test_metrics.shape[0]
+                test_metrics.loc[n, list(extend_data.keys())] = list(extend_data.values())
         return self
 
     @action
