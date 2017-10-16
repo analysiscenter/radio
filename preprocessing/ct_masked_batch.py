@@ -761,35 +761,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                   for i in range(len(self))], dtype=np.float)
         return self
 
-    def unpack_data(self, y_component, dim_ordering='channels_last', **kwargs):
-        """ Unpack data contained in batch for feeding in model.
-
-        Args:
-        - y_component: str, name of y_component to fetch, can be 'masks' or 'labels';
-        - dim_ordering: str, can be 'channels_last' or 'channels_first';
-
-        Returns:
-        - x, y ndarrays;
-        """
-        x, y = [], [] if y_component is not None else None
-        for i in range(len(self)):
-            x.append(self.get(i, 'images'))
-            if y_component == 'no_y':
-                y.append(np.nan)
-                continue
-            elif y_component == 'masks':
-                y.append(self.get(i, 'masks'))
-            elif y_component == 'labels':
-                y.append(self.labels[i])
-        x, y = np.stack(x), np.stack(y)
-        if dim_ordering == 'channels_last':
-            x, y = x[..., np.newaxis], y[..., np.newaxis]
-        elif dim_ordering == 'channels_first':
-            x = x[:, np.newaxis, ...]
-            if y_component == 'masks':
-                y = y[:, np.newaxis, ...]
-        return x, y
-
     @action
     def train_on_crop(self, model_name, y_component='labels',
                       dim_ordering='channels_last', **kwargs):
