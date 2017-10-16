@@ -60,7 +60,7 @@ def with_model(cls, model, mode='dynamic', **kwargs):
             _model = src_model
             _name = src_model.name
 
-        @ds.model(mode=mode)
+        @model(mode=mode)
         def model_fn(*args, **nkwargs):
             if callable(src_model):
                 return _model(*args, **nkwargs)
