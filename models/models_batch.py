@@ -225,6 +225,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         metrics = ()
         show_metrics = False
         if self.pipeline.config is not None:
+            train_iter = self.pipeline.get_variable('iter', 0)
+
             metrics = self.pipeline.config.get('metrics', ())
             show_metrics = self.pipeline.config.get('show_metrics', False)
 
@@ -242,6 +244,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         if show_metrics:
             sys.stdout.write(str(train_metrics.iloc[-1, :]))
             clear_output(wait=True)
+
+        self.pipeline.set_variable('iter', train_iter + 1)
         return self
 
     @action
@@ -266,7 +270,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         return self
 
     @action
-    def test_on_dataset(self, model_name, unpacker, batch_size, **kwargs):
+    def test_on_dataset(self, model_name, unpacker, batch_size, period, **kwargs):
         """ Compute metrics of model on dataset.
 
         Args:
@@ -277,13 +281,16 @@ class CTImagesModels(CTImagesMaskedBatch):
         - component: str, name of y_component, can be 'masks' or 'labels'(optional);
         - dim_ordering: str, dimension ordering, can be 'channels_first'
         or 'channels last'(optional);
+        - period: int, frequency of test_on_dataset runs;
 
         Returns:
         - self, unchanged CTImagesMaskedBatch;
         """
         metrics = ()
         show_metrics = False
-        if pipeline.config is not None:
+        if self.pipeline.config is not None:
+            train_iter = self.pipeline.get_variable('iter', 0)
+
             metrics = self.pipeline.config.get('metrics', ())
             test_pipeline = self.pipeline.config.get('test_pipeline', None)
             test_dataset = self.pipeline.config.get('test_dataset', None)
@@ -291,9 +298,9 @@ class CTImagesModels(CTImagesMaskedBatch):
             df_init = lambda: pd.DataFrame(columns=[m.__name__ for m in metrics])
             test_metrics = self.pipeline.get_variable('test_metrics', init=df_init)
 
-        if len(metrics):
+        if len(metrics) and (train_iter % period == 0):
             _model = self.get_model_by_name(model_name)
-            x, _ = self._get_by_unpacker(unpacker, **kwargs)
+            x, y_true = self._get_by_unpacker(unpacker, **kwargs)
 
             y_pred = _model.predict_on_batch(x)
 
