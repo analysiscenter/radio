@@ -2,6 +2,7 @@
 """Child class of CTImagesBatch that incorporates nn-models """
 import os
 import sys
+import functools
 import tqdm
 import numpy as np
 import pandas as pd
