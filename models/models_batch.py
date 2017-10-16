@@ -41,6 +41,40 @@ def create_mask_reg(centers, sizes, probs, crop_shape, threshold):
     return masks_array
 
 
+def with_model(cls, model, mode='dynamic', **kwargs):
+    """ Create Batch-class containing model-decorated methods. """
+    if not issubclass(cls, ds.Batch):
+        raise TypeError("Argument cls must be batch class that extends dataset.Batch!")
+
+    if not isinstance(model, (list, tuple)):
+        models = (model, )
+    else:
+        models = model
+
+    def model_constructor(src_model):
+        if callable(src_model):
+            _model = functools.partial(src_model, **kwargs)
+            _name = src_model.__name__
+        else:
+            _model = src_model
+            _name = src_model.name
+
+        @ds.model(mode=mode)
+        def model_fn(*args, **nkwargs):
+            if callable(src_model):
+                return _model(*args, **nkwargs)
+            else:
+                return _model
+
+        return _name, model_fn
+
+    models_dict = dict(model_constructor(m) for m in models)
+
+    out_cls = type(cls.__name__ + 'With_' + '_'.join(models_dict.keys())
+                   + '_Model', (cls, ), models_dict)
+    return out_cls
+
+
 class CTImagesModels(CTImagesMaskedBatch):
     """ Сlass for describing, training nn-models of segmentation/classification;
             inference using models is also supported.
@@ -58,49 +92,6 @@ class CTImagesModels(CTImagesMaskedBatch):
             method for performing inference on images of batch using trained model
     """
 
-    @model(mode='static')
-    def keras_unet(pipeline):  # pylint: disable=no-self-argument
-        """ Create Unet model implemented in keras and immediatelly compile it.
-
-        This method is wrapped with model(mode='static') decorator meaning
-        that model is created in the momment when pipeline.run(...) is called.
-        Config attribute is a dictionary that can contain 'loss' and 'path'
-        values. If config contains 'path', then model is loaded from directory
-        specified by this parameter. Otherwise new keras model is to be built;
-
-        Another key of config dict is 'loss'. Value 'loss' can be one of
-        two str: 'dice' or 'tiversky'. This value specifies the loss function
-        that will be used during model compilation;
-
-        Args:
-        - pipeline: Pipeline object from dataset package; it is the only argument
-        and it is used to pass parameters required by model being created
-        through pipeline.config attribute;
-
-        Returns:
-        - compiled model;
-        """
-        path = pipeline.config.get("path", None)
-        loss = pipeline.config.get("loss", 'dice')
-        if  path is not None:
-            unet = KerasModel('unet')
-
-            if loss == 'tiversky':
-                custom_objects = {'tiversky_loss': tiversky_loss,
-                                  'dice_coef': dice_coef,
-                                  'jaccard_coef': jaccard_coef,
-                                  'dice_coef_loss': dice_coef_loss}
-
-            elif loss == 'dice':
-                custom_objects = {'dice_coef_loss': dice_coef_loss,
-                                  'dice_coef': dice_coef}
-
-            unet.load_model(path, custom_objects=custom_objects)
-        else:
-            unet = KerasUnet('unet')  # pylint: disable=redefined-variable-type
-            loss_dict = {'dice': dice_coef_loss, 'tiversky_loss': tiversky_loss}
-            unet.compile(optimizer='adam', loss=loss_dict[loss])
-        return unet
 
     def unpack_component(self, component, dim_ordering):
         """ Basic way for unpacking 'images' or 'masks' from batch.
