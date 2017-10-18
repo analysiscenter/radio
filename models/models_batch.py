@@ -13,6 +13,7 @@ from ..preprocessing import CTImagesMaskedBatch
 from ..dataset import action, Batch
 from ..dataset import model as batch_model
 
+from .utils import nodules_info_to_rzyx, sphere_overlap, nodules_sets_overlap_jit
 from .keras.architectures import KerasUnet
 from .keras import KerasModel
 from .keras.losses import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
