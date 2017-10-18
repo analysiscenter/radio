@@ -35,12 +35,12 @@ def sphere_overlap(nodule_true, nodule_pred):
 
     if d >= r1 + r2:
         return 0
-    elif r1 > d + r2:
+    elif r1 >= d + r2:
         if r1 > 5 * r2:
             return 0
         else:
             return 1
-    elif r2 > d + r:
+    elif r2 >= d + r:
         return 1
 
     volume = (np.pi * (r1 + r2 - d) ** 2 * (d ** 2
