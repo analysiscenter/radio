@@ -159,7 +159,7 @@ def dice_loss(y_true, y_pred):
     Returns:
     - tf.Tensor containing tiversky loss;
     """
-    return -tiversky_coef(y_true, y_pred)
+    return -dice_coef(y_true, y_pred)
 
 
 def jaccard_coef_logloss(y_true, y_pred):
