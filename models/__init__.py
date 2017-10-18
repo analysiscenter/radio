@@ -9,3 +9,4 @@ from .keras.architectures import KerasUnet
 from .keras.architectures import KerasResNet50
 from .keras.architectures import KerasVGG16
 from .tensorflow import TFModel
+from .keras import KerasModel
