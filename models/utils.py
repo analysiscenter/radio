@@ -40,7 +40,7 @@ def sphere_overlap(nodule_true, nodule_pred):
             return 0
         else:
             return 1
-    elif r2 >= d + r:
+    elif r2 >= d + r1:
         return 1
 
     volume = (np.pi * (r1 + r2 - d) ** 2 * (d ** 2
@@ -50,7 +50,7 @@ def sphere_overlap(nodule_true, nodule_pred):
     return volume / pos2_area
 
 
-@njit(cache=True, parallel=True)
+@njit
 def nodules_sets_overlap_jit(nodules_true, nodules_pred):
     """ Compute overlap matrix for two sets of nodules. """
     num_pred = nodules_pred.shape[0]
@@ -58,7 +58,7 @@ def nodules_sets_overlap_jit(nodules_true, nodules_pred):
 
     r_true, r_pred = nodules_true[:, 0], nodules_pred[:, 0]
 
-    overlap_matrix = np.zeros(shape=(num_true, num_pred), dtype=np.float)
+    overlap_matrix = np.zeros(shape=(num_true, num_pred))
     for i in range(num_pred):
         for j in range(num_true):
             overlap_volume = sphere_overlap(nodules_true[j, 1:],
