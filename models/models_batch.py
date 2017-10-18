@@ -13,9 +13,9 @@ from ..preprocessing import CTImagesMaskedBatch
 from ..dataset import action, Batch
 from ..dataset import model as batch_model
 
-from .keras.keras_unet import KerasUnet
+from .keras.architectures import KerasUnet
+from .keras import KerasModel
 from .keras.losses import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
-from .keras.architectures.keras_model import KerasModel
 
 
 @njit(nogil=True)
