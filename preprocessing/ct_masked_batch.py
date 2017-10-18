@@ -192,6 +192,22 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
+    def nodules_to_df(self, nodules):
+        """ Transform array of nodules_info to padnas DataFrame. """
+
+        columns = ['nodule_id', 'source_id', 'locZ', 'locY',
+                   'locX', 'diamZ', 'diamY', 'diamX']
+
+        nodule_id = self.make_indices(nodules.shape[0])
+        return pd.DataFrame({'source_id': self.indices[nodules.patient_pos],
+                             'nodule_id': nodule_id,
+                             'locZ': nodules.nodule_center[:, 0],
+                             'locY': nodules.nodule_center[:, 1],
+                             'locX': nodules.nodule_center[:, 2],
+                             'diamZ': nodules.nodule_size[:, 0],
+                             'diamY': nodules.nodule_size[:, 1],
+                             'diamX': nodules.nodule_size[:, 2]}, columns=columns)
+
     def get_pos(self, data, component, index):
         """ Return a posiiton of a component in data for a given index
 
