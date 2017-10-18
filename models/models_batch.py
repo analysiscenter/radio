@@ -398,13 +398,15 @@ class CTImagesModels(CTImagesMaskedBatch):
             try:
                 nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
             except KeyError as e:
-                true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_true.shape[0]))
+                nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
+                pred_out.append(nods_pred.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))
                 continue
 
             try:
                 nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
-            except:
-                pred_out.append(nods_pred.assign(overlap_index=lambda df: [np.nan] * nods_true.shape[0]))
+            except KeyError as e:
+                nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
+                true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_true.shape[0]))
                 continue
 
             overlap_matrix = nodules_sets_overlap_jit(nods_true.values, nods_pred.values)
