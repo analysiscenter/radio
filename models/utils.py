@@ -46,8 +46,8 @@ def sphere_overlap(nodule_true, nodule_pred):
     volume = (np.pi * (r1 + r2 - d) ** 2 * (d ** 2
                  + r1 * (2 * d - 3 * r1)
                  + r2 * (2 * d - 3 * r2)
-                 + 6 * r1 * r2)) / (12 * d)
-    return volume / pos2_area
+                 + 6 * r1 * r2)) / (12 * d + 10e-7)
+    return volume / (pos2_area + 10e-7)
 
 
 @njit
