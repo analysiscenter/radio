@@ -364,7 +364,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         return self
 
     def _create_overlap_index(self, overlap_matrix):
-
+        """ Get indices of nodules that overlaps using overlap_matrix. """
         argmax_ov = overlap_matrix.argmax(axis=1)
         max_ov = overlap_matrix.max(axis=1).astype(np.bool)
 
