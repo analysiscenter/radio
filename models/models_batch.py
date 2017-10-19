@@ -357,6 +357,21 @@ class CTImagesModels(CTImagesMaskedBatch):
         return max_ov, argmax_ov
 
     def nodules_to_df(self, nodules):
+        """ Convert nodules_info ndarray into pandas dataframe.
+
+        Pandas DataFrame will contain following columns:
+        'source_id' - id of source element of batch;
+        'nodule_id' - generated id for nodules;
+        'locZ', 'locY', 'locX' - coordinates of nodules' centers;
+        'diamZ', 'diamY', 'diamX' - sizes of nodules along zyx axes;
+
+        Args:
+        - nodules: ndarray of type nodules_info(this type is defined
+        inside of CTImagesMaskedBatch class);
+
+        Returns:
+        - pd.DataFrame with centers, ids and sizes of nodules;
+        """
         columns = ['nodule_id', 'source_id', 'locZ', 'locY',
                    'locX', 'diamZ', 'diamY', 'diamX']
 
