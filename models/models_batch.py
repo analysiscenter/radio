@@ -216,6 +216,8 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         Returns:
         - self, unchanged CTImagesMaskedBatch;
+        TODO this method does not save result anywhere: in this version
+        it's just useless;
         """
         _model = self.get_model_by_name(model_name)
         x, _ = self._get_by_unpacker(unpacker, **kwargs)
