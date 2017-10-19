@@ -350,7 +350,7 @@ class CTImagesModels(CTImagesMaskedBatch):
                                data_attr='masks')
         return self
 
-    def create_conjugate_index(self, nodules, overlap_matrix):
+    def _create_overlap_index(self, nodules, overlap_matrix):
         argmax_ov = overlap_matrix.argmax(axis=1)
         max_ov = overlap_matrix.max(axis=1).astype(np.bool)
 
@@ -427,8 +427,8 @@ class CTImagesModels(CTImagesMaskedBatch):
 
             overlap_matrix = nodules_sets_overlap_jit(nods_true.values, nods_pred.values)
 
-            ov_mask_true, ov_ind_true = self.create_conjugate_index(nods_true, overlap_matrix)
-            ov_mask_pred, ov_ind_pred = self.create_conjugate_index(nods_pred, overlap_matrix.T)
+            ov_mask_true, ov_ind_true = self._create_overlap_index(nods_true, overlap_matrix)
+            ov_mask_pred, ov_ind_pred = self._create_overlap_index(nods_pred, overlap_matrix.T)
 
             nods_true = nods_true.assign(overlap_index=lambda df: df.index)
             nods_true.loc[ov_mask_true, 'overlap_index'] = nods_pred.index[ov_ind_true[ov_mask_true]]
