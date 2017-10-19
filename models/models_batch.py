@@ -171,9 +171,6 @@ class CTImagesModels(CTImagesMaskedBatch):
         Returns:
         - self, unchanged CTImagesMaskedBatch;
         """
-        metrics = ()
-        show_metrics = False
-
         if self.pipeline is None:
             return self
 
