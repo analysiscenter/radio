@@ -88,7 +88,7 @@ def split_channels(input_tensor, size):
     if in_filters <= size:
         return input_tensor
     a, b = int(in_filters / size), int(in_filters % size)
-    main = tf.split(x[...,: a * size], a, axis=len(x.get_shape()) - 1)
+    main = tf.split(x[..., : a * size], a, axis=len(x.get_shape()) - 1)
     if b != 0:
         main.append(x[..., a * size: ])
     return main
