@@ -359,14 +359,14 @@ class CTImagesModels(CTImagesMaskedBatch):
         for group_name in {**true_gr.groups, **pred_gr.groups}:
             try:
                 nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
-            except KeyError as e:
+            except KeyError:
                 nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
                 pred_out.append(nods_pred.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))
                 continue
 
             try:
                 nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
-            except KeyError as e:
+            except KeyError:
                 nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
                 true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_true.shape[0]))
                 continue
