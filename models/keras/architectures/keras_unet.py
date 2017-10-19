@@ -3,7 +3,6 @@
 """ Contains KerasUnet model class. """
 
 from functools import wraps
-import numpy as np
 import tensorflow as tf
 import keras
 from keras.models import Model
