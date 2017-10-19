@@ -1,7 +1,7 @@
 """ Module of nn-models for classification/segmentation of
 lung-cancer on CT-scans
 """
-from .models_batch import CTImagesModels, with_model
+from .models_batch import CTImagesModels
 from .tensorflow.architectures import TFDenseNet
 from .tensorflow.architectures import TFResNet
 from .tensorflow.architectures import TFDilatedVnet
