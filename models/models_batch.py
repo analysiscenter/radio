@@ -297,7 +297,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         predictions = []
         iterations = range(0, patches_arr.shape[0], batch_size)
         if show_progress:
-            iterations = tqdm.tqdm_notebook(iterations)
+            iterations = tqdm.tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
         for i in iterations:
             current_prediction = np.asarray(_model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
 
