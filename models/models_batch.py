@@ -248,11 +248,11 @@ class CTImagesModels(CTImagesMaskedBatch):
             test_pipeline = self.pipeline.config.get('test_pipeline', None)
             test_pipeline.reset_iter()
 
-            df_init = lambda: pd.DataFrame(columns=[m.__name__ for m in metrics])
-            test_metrics = self.pipeline.get_variable('test_metrics', init=df_init)
+            test_metrics = self.pipeline.get_variable('test_metrics', init=list)
 
         if len(metrics) and (train_iter % period == 0):
             _model = self.get_model_by_name(model_name)
+            ds_metrics_list = []
             for batch in test_pipeline.gen_batch(batch_size):
                 x, y_true = batch._get_by_unpacker(unpacker, **kwargs)
 
@@ -260,8 +260,10 @@ class CTImagesModels(CTImagesMaskedBatch):
 
                 extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
 
-                n = test_metrics.shape[0]
-                test_metrics.loc[n, list(extend_data.keys())] = list(extend_data.values())
+                ds_metrics_list.append(extend_data)
+
+        ds_metrics = pd.DataFrame(ds_metrics_list).mean()
+        test_metrics.append(ds_metrics.to_dict())
         return self
 
     @action
