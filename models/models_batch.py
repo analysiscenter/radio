@@ -207,6 +207,10 @@ class CTImagesModels(CTImagesMaskedBatch):
         """
         metrics = ()
         show_metrics = False
+
+        if self.pipeline is None:
+            return self
+
         if self.pipeline.config is not None:
             train_iter = self.pipeline.get_variable('iter', 0)
 
