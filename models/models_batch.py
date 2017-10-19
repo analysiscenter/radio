@@ -142,8 +142,8 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
-        y_pred =  np.asarray([self.get(i, 'masks').sum() > threshold
-                              for i in range(len(self))], dtype=np.int)
+        y_pred = np.asarray([self.get(i, 'masks').sum() > threshold
+                             for i in range(len(self))], dtype=np.int)
 
         return self.unpack_component('images', dim_ordering), y_pred
 
@@ -369,35 +369,6 @@ class CTImagesModels(CTImagesMaskedBatch):
         max_ov = overlap_matrix.max(axis=1).astype(np.bool)
 
         return max_ov, argmax_ov
-
-    def nodules_to_df(self, nodules):
-        """ Convert nodules_info ndarray into pandas dataframe.
-
-        Pandas DataFrame will contain following columns:
-        'source_id' - id of source element of batch;
-        'nodule_id' - generated id for nodules;
-        'locZ', 'locY', 'locX' - coordinates of nodules' centers;
-        'diamZ', 'diamY', 'diamX' - sizes of nodules along zyx axes;
-
-        Args:
-        - nodules: ndarray of type nodules_info(this type is defined
-        inside of CTImagesMaskedBatch class);
-
-        Returns:
-        - pd.DataFrame with centers, ids and sizes of nodules;
-        """
-        columns = ['nodule_id', 'source_id', 'locZ', 'locY',
-                   'locX', 'diamZ', 'diamY', 'diamX']
-
-        nodule_id = self.make_indices(nodules.shape[0])
-        return pd.DataFrame({'source_id': self.indices[nodules.patient_pos],
-                             'nodule_id': nodule_id,
-                             'locZ': nodules.nodule_center[:, 0],
-                             'locY': nodules.nodule_center[:, 1],
-                             'locX': nodules.nodule_center[:, 2],
-                             'diamZ': nodules.nodule_size[:, 0],
-                             'diamY': nodules.nodule_size[:, 1],
-                             'diamX': nodules.nodule_size[:, 2]}, columns=columns)
 
     @action
     def overlap_nodules(self):
