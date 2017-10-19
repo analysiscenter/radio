@@ -31,6 +31,7 @@ def create_mask_jit(masks, start, end):
 
 
 def create_mask_reg(centers, sizes, probs, crop_shape, threshold):
+    """ Create mask by data contained in predictions of regression model. """
     n_items = centers.shape[0]
     masks_array = np.zeros(shape=(n_items, *crop_shape), dtype=np.float)
     _crop_shape = np.asarray(crop_shape)
