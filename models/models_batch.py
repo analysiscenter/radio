@@ -192,7 +192,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         if show_metrics:
             # sys.stdout.write(str(train_metrics.iloc[-1, :]))
-            sys.stdout(str(pd.Series(train_metrics[-1])))
+            sys.stdout.write(str(pd.Series(train_metrics[-1])))
             clear_output(wait=True)
 
         self.pipeline.set_variable('iter', train_iter + 1)
