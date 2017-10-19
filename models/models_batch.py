@@ -262,8 +262,8 @@ class CTImagesModels(CTImagesMaskedBatch):
 
                 ds_metrics_list.append(extend_data)
 
-        ds_metrics = pd.DataFrame(ds_metrics_list).mean()
-        test_metrics.append(ds_metrics.to_dict())
+            ds_metrics = pd.DataFrame(ds_metrics_list).mean()
+            test_metrics.append(ds_metrics.to_dict())
         return self
 
     @action
