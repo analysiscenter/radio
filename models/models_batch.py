@@ -371,7 +371,7 @@ class CTImagesModels(CTImagesMaskedBatch):
                              'diamX': nodules.nodule_size[:, 2]}, columns=columns)
 
     @action
-    def overlap_table(self):
+    def overlap_nodules(self):
         ppl_nodules_true = self.pipeline.get_variable('nodules_true', init=list)
         ppl_nodules_pred = self.pipeline.get_variable('nodules_pred', init=list)
 
