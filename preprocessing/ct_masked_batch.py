@@ -6,6 +6,7 @@
 import logging
 
 import numpy as np
+import pandas as pd
 from numba import njit
 from skimage import measure
 from .ct_batch import CTImagesBatch
