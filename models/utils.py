@@ -56,8 +56,6 @@ def nodules_sets_overlap_jit(nodules_true, nodules_pred):
     num_pred = nodules_pred.shape[0]
     num_true = nodules_true.shape[0]
 
-    r_true, r_pred = nodules_true[:, 0], nodules_pred[:, 0]
-
     overlap_matrix = np.zeros(shape=(num_true, num_pred))
     for i in range(num_pred):
         for j in range(num_true):
