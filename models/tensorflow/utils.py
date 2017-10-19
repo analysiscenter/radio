@@ -4,18 +4,6 @@ import numpy as np
 import tensorflow as tf
 
 
-def get_shape(input_tensor):
-    """ Get shape of input tensor.
-
-    Args:
-    - input_tensor: tf.Tensor, input tensor;
-
-    Returns:
-    - tf.Tensor, output tensor;
-    """
-    return input_tensor.get_shape().as_list()
-
-
 def repeat_tensor(input_tensor, times):
     """ Repeat tensor given times along axes.
 
