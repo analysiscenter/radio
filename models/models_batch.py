@@ -179,9 +179,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
             metrics = self.pipeline.config.get('metrics', ())
             show_metrics = self.pipeline.config.get('show_metrics', False)
-
-            df_init = lambda: pd.DataFrame(columns=[m.__name__ for m in metrics])
-            train_metrics = self.pipeline.get_variable('train_metrics', init=df_init)
+            train_metrics = self.pipeline.get_variable('train_metrics', init=list)
 
         _model = self.get_model_by_name(model_name)
         x, y_true = self._get_by_unpacker(unpacker, **kwargs)
@@ -190,12 +188,11 @@ class CTImagesModels(CTImagesMaskedBatch):
         if len(metrics):
             y_pred = _model.predict_on_batch(x)
             extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
-
-            n = train_metrics.shape[0]
-            train_metrics.loc[n, list(extend_data.keys())] = list(extend_data.values())
+            train_metrics.append(extend_data)
 
         if show_metrics:
-            sys.stdout.write(str(train_metrics.iloc[-1, :]))
+            # sys.stdout.write(str(train_metrics.iloc[-1, :]))
+            sys.stdout(str(pd.Series(train_metrics[-1])))
             clear_output(wait=True)
 
         self.pipeline.set_variable('iter', train_iter + 1)
