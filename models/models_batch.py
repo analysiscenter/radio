@@ -257,7 +257,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         if len(metrics) and (train_iter % period == 0):
             for batch in test_pipeline.gen_batch(batch_size):
                 _model = self.get_model_by_name(model_name)
-                x, y_true = self._get_by_unpacker(unpacker, **kwargs)
+                x, y_true = batch._get_by_unpacker(unpacker, **kwargs)
 
                 y_pred = _model.predict_on_batch(x)
 
