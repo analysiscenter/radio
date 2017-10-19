@@ -188,7 +188,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         _model.train_on_batch(x, y_true)
 
         if len(metrics):
-            y_pred = _model_train.predict_on_batch(x)
+            y_pred = _model.predict_on_batch(x)
             extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
 
             n = train_metrics.shape[0]
