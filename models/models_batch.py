@@ -21,6 +21,10 @@ from .keras.losses import dice_coef_loss, dice_coef, jaccard_coef, tiversky_loss
 
 @njit(nogil=True)
 def create_mask_jit(masks, start, end):
+    """ Jit-decorated function for fast computation of masks by regression data.
+
+    This function is usually called inside create_mask_reg function.
+    """
     num_items = start.shape[0]
     for i in range(num_items):
         masks[i,
