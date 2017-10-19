@@ -11,7 +11,7 @@ from ..preprocessing import CTImagesMaskedBatch
 from ..dataset import action, Batch
 from ..dataset import model as batch_model
 
-from .utils import sphere_overlap, nodules_sets_overlap_jit
+from .utils import nodules_sets_overlap_jit
 
 
 @njit(nogil=True)
