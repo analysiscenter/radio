@@ -329,6 +329,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
     @action
     def overlap_nodules(self):
+        """ Accumulate info about true and predicted nodules in pipeline variables. """
         ppl_nodules_true = self.pipeline.get_variable('nodules_true', init=list)
         ppl_nodules_pred = self.pipeline.get_variable('nodules_pred', init=list)
 
