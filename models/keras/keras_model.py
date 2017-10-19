@@ -25,6 +25,7 @@ class KerasModel(BaseModel):
         """ Initialize keras model. """
         super().__init__(name, *args, **kwargs)
         self.name = name
+        self.model = None
 
     def build_model(self, *args, **kwargs):
         """ Initialize inner keras model. """
