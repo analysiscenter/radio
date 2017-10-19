@@ -50,40 +50,6 @@ def create_mask_reg(centers, sizes, probs, crop_shape, threshold):
     return masks_array
 
 
-def with_model(cls, model, mode='dynamic', **kwargs):
-    """ Create Batch-class containing model-decorated methods. """
-    if not issubclass(cls, Batch):
-        raise TypeError("Argument cls must be batch class that extends dataset.Batch!")
-
-    if not isinstance(model, (list, tuple)):
-        models = (model, )
-    else:
-        models = model
-
-    def model_constructor(src_model):
-        if callable(src_model):
-            _model = functools.partial(src_model, **kwargs)
-            _name = src_model.__name__
-        else:
-            _model = src_model
-            _name = src_model.name
-
-        @batch_model(mode=mode)
-        def model_fn(*args, **nkwargs):
-            if callable(src_model):
-                return _model(*args, **nkwargs)
-            else:
-                return _model
-
-        return _name, model_fn
-
-    models_dict = dict(model_constructor(m) for m in models)
-
-    out_cls = type(cls.__name__ + 'With_' + '_'.join(models_dict.keys())
-                   + '_Model', (cls, ), models_dict)
-    return out_cls
-
-
 class CTImagesModels(CTImagesMaskedBatch):
     """ Сlass for describing, training nn-models of segmentation/classification;
             inference using models is also supported.
