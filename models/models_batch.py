@@ -135,10 +135,11 @@ class CTImagesModels(CTImagesMaskedBatch):
         sizes[self.nodules.patient_pos, :] = nodule_sizes
         centers[self.nodules.patient_pos, :] = nodule_centers
 
-        labels = np.expand_dims(self.unpack_clf(threshold, dim_ordering), axis=1)
+        x, labels = self.unpack_clf(threshold, dim_ordering)
+        labels = np.expand_dims(labels, axis=1)
         y_true = np.concatenate([centers, sizes, labels], axis=1)
 
-        return self.unpack_images(dim_ordering), y_true
+        return x, y_true
 
     def _get_by_unpacker(self, unpacker, **kwargs):
         """ Check unpacker type and get result from it. """
