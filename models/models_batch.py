@@ -156,71 +156,70 @@ class CTImagesModels(CTImagesMaskedBatch):
                              + " attribute or external function. Got %s" % unpacker)
         return x, y_true
 
-    @action
-    def train_model(self, model_name, unpacker, **kwargs):
-        """ Train model on crops of CT-scans contained in batch.
-
-        Args:
-        - model_name: str, name of classification model;
-        - unpacker: callable or str, if str must be attribute of batch instance;
-        if callable then it is called with '**kwargs' and its output is considered
-        as data flowed in model.train_on_batch method;
-        - component: str, name of y component, can be 'masks' or 'labels'(optional);
-        - dim_ordering: str, dimension ordering, can be 'channels_first'
-        or 'channels_last'(optional);
-
-        Returns:
-        - self, unchanged CTImagesMaskedBatch;
-        """
-        if self.pipeline is None:
-            return self
-
-        if self.pipeline.config is not None:
-            train_iter = self.pipeline.get_variable('iter', 0)
-
-            metrics = self.pipeline.config.get('metrics', ())
-            show_metrics = self.pipeline.config.get('show_metrics', False)
-            train_metrics = self.pipeline.get_variable('train_metrics', init=list)
-
-        _model = self.get_model_by_name(model_name)
-        x, y_true = self._get_by_unpacker(unpacker, **kwargs)
-        _model.train_on_batch(x, y_true)
-
-        if len(metrics):
-            y_pred = _model.predict_on_batch(x)
-            extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
-            train_metrics.append(extend_data)
-
-        if show_metrics:
-            # sys.stdout.write(str(train_metrics.iloc[-1, :]))
-            sys.stdout.write(str(pd.Series(train_metrics[-1])))
-            clear_output(wait=True)
-
-        self.pipeline.set_variable('iter', train_iter + 1)
-        return self
-
-    @action
-    def predict_model(self, model_name, unpacker, **kwargs):
-        """ Predict by model on crops of CT-scans contained in batch.
-
-        Args:
-        - model_name: str, name of classification model;
-        - unpacker: callable or str, if str must be attribute of batch instance;
-        if callable then it is called with '**kwargs' and its output is considered
-        as data flowed in model.train_on_batch method;
-        - component: str, name of y component, can be 'masks' or 'labels'(optional);
-        - dim_ordering: str, dimension ordering, can be 'channels_first'
-        or 'channels_last'(optional);
-
-        Returns:
-        - self, unchanged CTImagesMaskedBatch;
-        TODO this method does not save result anywhere: in this version
-        it's just useless;
-        """
-        _model = self.get_model_by_name(model_name)
-        x, _ = self._get_by_unpacker(unpacker, **kwargs)
-        _model.predict_on_batch(x)
-        return self
+    # @action
+    # def train_model(self, model_name, unpacker, **kwargs):
+    #     """ Train model on crops of CT-scans contained in batch.
+    #
+    #     Args:
+    #     - model_name: str, name of classification model;
+    #     - unpacker: callable or str, if str must be attribute of batch instance;
+    #     if callable then it is called with '**kwargs' and its output is considered
+    #     as data flowed in model.train_on_batch method;
+    #     - component: str, name of y component, can be 'masks' or 'labels'(optional);
+    #     - dim_ordering: str, dimension ordering, can be 'channels_first'
+    #     or 'channels_last'(optional);
+    #
+    #     Returns:
+    #     - self, unchanged CTImagesMaskedBatch;
+    #     """
+    #     if self.pipeline is None:
+    #         return self
+    #
+    #     if self.pipeline.config is not None:
+    #         train_iter = self.pipeline.get_variable('iter', 0)
+    #
+    #         metrics = self.pipeline.config.get('metrics', ())
+    #         show_metrics = self.pipeline.config.get('show_metrics', False)
+    #         train_metrics = self.pipeline.get_variable('train_metrics', init=list)
+    #
+    #     _model = self.get_model_by_name(model_name)
+    #     x, y_true = self._get_by_unpacker(unpacker, **kwargs)
+    #     _model.train_on_batch(x, y_true)
+    #
+    #     if len(metrics):
+    #         y_pred = _model.predict_on_batch(x)
+    #         extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
+    #         train_metrics.append(extend_data)
+    #
+    #     if show_metrics:
+    #         sys.stdout.write(str(pd.Series(train_metrics[-1])))
+    #         clear_output(wait=True)
+    #
+    #     self.pipeline.set_variable('iter', train_iter + 1)
+    #     return self
+    #
+    # @action
+    # def predict_model(self, model_name, unpacker, **kwargs):
+    #     """ Predict by model on crops of CT-scans contained in batch.
+    #
+    #     Args:
+    #     - model_name: str, name of classification model;
+    #     - unpacker: callable or str, if str must be attribute of batch instance;
+    #     if callable then it is called with '**kwargs' and its output is considered
+    #     as data flowed in model.train_on_batch method;
+    #     - component: str, name of y component, can be 'masks' or 'labels'(optional);
+    #     - dim_ordering: str, dimension ordering, can be 'channels_first'
+    #     or 'channels_last'(optional);
+    #
+    #     Returns:
+    #     - self, unchanged CTImagesMaskedBatch;
+    #     TODO this method does not save result anywhere: in this version
+    #     it's just useless;
+    #     """
+    #     _model = self.get_model_by_name(model_name)
+    #     x, _ = self._get_by_unpacker(unpacker, **kwargs)
+    #     _model.predict_on_batch(x)
+    #     return self
 
     @action
     def test_on_dataset(self, model_name, unpacker, batch_size, period, **kwargs):
