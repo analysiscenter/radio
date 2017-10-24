@@ -47,7 +47,7 @@ def create_mask_reg(centers, sizes, probs, crop_shape, threshold):
 
 class CTImagesModels(CTImagesMaskedBatch):
     """ Сlass for describing, training nn-models of segmentation/classification;
-            inference using models is also supported.
+        inference using models is also supported.
     """
 
 
