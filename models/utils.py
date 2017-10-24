@@ -52,7 +52,17 @@ def sphere_overlap(nodule_true, nodule_pred):
 
 @njit
 def nodules_sets_overlap_jit(nodules_true, nodules_pred):
-    """ Compute overlap matrix for two sets of nodules. """
+    """ Compute overlap matrix for two sets of nodules.
+
+    Args:
+    - nodules_true: ndarray(l, 4), contains info about centers of predicted nodules
+    and theirs diameters;
+    - nodules_pred: ndarray(k, 4), contains info about centers of predicted nodules
+    and theirs diameters;
+
+    Returns:
+    - overlap_matrix, ndarray(l, k);
+    """
     num_pred = nodules_pred.shape[0]
     num_true = nodules_true.shape[0]
 
