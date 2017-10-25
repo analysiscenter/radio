@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import tensorflow as tf
-from ..tf_model import TFModel, restore_nodes
+from ..tf_model import TFModel
 from ..utils import repeat_tensor
 
 
