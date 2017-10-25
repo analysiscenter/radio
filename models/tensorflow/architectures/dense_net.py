@@ -89,7 +89,7 @@ class TFDenseNet(TFModel):
                                                         name='averagepool3d_2_2')
         return output_tensor
 
-    def build_model(self):
+    def _build(self):
         """ Build densenet model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
                                       dtype=tf.float32, name='input')
