@@ -20,17 +20,20 @@ class TFResNet(TFModel):
         filters1, filters2, filters3 = filters
 
         with tf.variable_scope(name):
-            x = self.bn_conv3d(input_tensor, filters1, (1, 1, 1),
-                               name='bn_conv_a', padding='same',
-                               activation=tf.nn.relu)
+            x = bn_conv3d(input_tensor, filters1, (1, 1, 1),
+                          name='bn_conv_a', padding='same',
+                          activation=tf.nn.relu,
+                          is_training=self.is_training)
 
-            x = self.bn_conv3d(x, filters2, kernel_size,
-                               name='bn_conv_b', padding='same',
-                               activation=tf.nn.relu)
+            x = bn_conv3d(x, filters2, kernel_size,
+                          name='bn_conv_b', padding='same',
+                          activation=tf.nn.relu,
+                          is_training=self.is_training)
 
-            x = self.bn_conv3d(x, filters3, (1, 1, 1),
-                               name='bn_conv_c', padding='same',
-                               activation=tf.nn.relu)
+            x = bn_conv3d(x, filters3, (1, 1, 1),
+                          name='bn_conv_c', padding='same',
+                          activation=tf.nn.relu,
+                          is_training=self.is_training)
 
             output_tensor = tf.add(x, input_tensor)
         return output_tensor
@@ -47,21 +50,24 @@ class TFResNet(TFModel):
         filters1, filters2, filters3 = filters
 
         with tf.variable_scope(name):
-            x = self.bn_conv3d(input_tensor, filters1, (1, 1, 1),
-                               name='bn_conv_a', padding='same',
-                               activation=tf.nn.relu, strides=strides)
+            x = bn_conv3d(input_tensor, filters1, (1, 1, 1),
+                          name='bn_conv_a', padding='same',
+                          activation=tf.nn.relu, strides=strides,
+                          is_training=self.is_training)
 
-            x = self.bn_conv3d(x, filters2, kernel_size,
-                               name='bn_conv_b', padding='same',
-                               activation=tf.nn.relu)
+            x = bn_conv3d(x, filters2, kernel_size,
+                          name='bn_conv_b', padding='same',
+                          activation=tf.nn.relu, is_training=self.is_training)
 
-            x = self.bn_conv3d(x, filters3, (1, 1, 1),
-                               name='bn_conv_c', padding='same',
-                               activation=tf.nn.relu)
+            x = bn_conv3d(x, filters3, (1, 1, 1),
+                          name='bn_conv_c', padding='same',
+                          activation=tf.nn.relu)
 
-            shortcut = self.bn_conv3d(input_tensor, filters3, (1, 1, 1),
-                                      strides=strides, name='bn_conv3d_shortcut',
-                                      padding='same', activation=tf.identity)
+            shortcut = bn_conv3d(input_tensor, filters3, (1, 1, 1),
+                                 strides=strides, name='bn_conv3d_shortcut',
+                                 padding='same', activation=tf.identity,
+                                 is_training=self.is_training)
+
             output_tensor = tf.add(x, shortcut)
             output_tensor = tf.nn.relu(output_tensor)
         return output_tensor
