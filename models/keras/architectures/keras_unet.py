@@ -22,6 +22,7 @@ from ..losses import dice_coef_loss
 class KerasUnet(KerasModel):
     """ KerasUnet model for 3D scans implemented in keras. """
     def __init__(self, name, **kwargs):
+        """ Call __init__ of KerasModel. """
         super().__init__(name, **kwargs)
 
     def bottleneck_block(self, input_tensor, filters, scope, padding='same'):
