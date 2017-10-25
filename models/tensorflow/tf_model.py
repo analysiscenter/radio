@@ -41,70 +41,8 @@ def restore_nodes(*names):
     return decorated
 
 
-class TFModel(BaseModel):
+class TFModel3D(TFModel):
     """ Base class for all tensorflow models. """
-
-    def __init__(self, name, *args, **kwargs):
-        """ Initialize tensorflow model.
-
-        1) Add self.graph = tf.Graph();
-        2) Add self.name = name which will be used as root variable scope of model;
-        3) Add self.global_step = 0;
-        4) Add self.tensor_names = {};
-        5) Add self.learning_phase = tf.placeholder(tf.bool);
-        6) Initalize self.sess, self.train_step, self.y_pred,
-        self.y_true, self.loss, self.input with None;
-        """
-        super().__init__(name, *args, **kwargs)
-        self.name = name
-        self.graph = tf.Graph()
-        self.graph_context = None
-        with self.graph.as_default():
-
-            self.input = None
-            self.y_true = None
-            self.y_pred = None
-
-            self.sess = None
-            self.loss = None
-            self.train_step = None
-            self.saver = None
-
-            self.learning_rate = None
-            self.restore_keys = {'vars': [], 'ops': []}
-            self.learning_phase = tf.placeholder(tf.bool, name='learning_phase')
-            self.global_step = tf.Variable(0, trainable=False, name='global_step')
-
-            self.add_restore_var(self.learning_phase)
-            self.add_restore_var(self.global_step)
-
-    def __enter__(self):
-        """ Use model context.
-
-        This magic method enables using TFModels instances with with statements.
-        Inside __enter__ just default tensorflow graph is changed to self.graph.
-
-        Returns:
-        - self, TFModel.
-        """
-        self.graph_context = self.graph.as_default()
-        self.graph_context.__enter__()
-        return self
-
-    def __exit__(self, exception_type, exception_value, exception_traceback):
-        """ Exit model context.
-
-        This magic method enables using TFModel instances with 'with' statements.
-        Inside __exit__ just default tensorflow graph is restored.
-
-        Args:
-        - exception_type: type of exception that was raised inside context.
-        - exception_value: exception instance.
-        - exception_traceback: traceback of exception that was raised inside context.
-        """
-        return self.graph_context.__exit__(exception_type,  # pylint: disable=no-member
-                                           exception_value,
-                                           exception_traceback)
 
     def set_decay(self, **kwargs):
         """ Set decay of learning rate. """
