@@ -32,7 +32,8 @@ class CTImagesModels(CTImagesMaskedBatch):
       {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
        'y': ndarray(batch_size, 7)}
 
-       'x' contains batch of source crops, 'y' contains batch
+       'x' contains batch of source crops, 'y' contains batch of 7-dim vectors
+       with probabilities of cancer, sizes and centers;
 
     """
 
