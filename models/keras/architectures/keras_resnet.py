@@ -140,7 +140,7 @@ class KerasResNet50(KerasModel):
         - dropout_rate: float, dropout_rate for dense layers;
 
         Returns:
-        - keras tensor of the last dense layer;
+        - tuple([*input_nodes], [*output_nodes]);
         """
         units_1, units_2 = units
 
@@ -182,5 +182,4 @@ class KerasResNet50(KerasModel):
 
         output_layer = Dense(1, activation='sigmoid', name='output')(y)
 
-        model = Model(input_tensor, output_layer, name='resnet')
-        return model
+        return [input_tensor], [output_layer]
