@@ -9,7 +9,7 @@ import json
 import numpy as np
 import tensorflow as tf
 
-from ..base_model import BaseModel
+from ..dataset.models.tf import TFModel
 
 
 DECAY_DICT = {'exp': tf.train.exponential_decay,
