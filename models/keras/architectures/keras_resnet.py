@@ -17,6 +17,7 @@ class KerasResNet50(KerasModel):
     """ ResNet50 model for 3D scans implemented in keras. """
 
     def __init__(self, name, dropout_rate=0.3, **kwargs):
+        """ Call __init__ of KerasModel. """
         super().__init__(name, dropout_rate=dropout_rate, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
