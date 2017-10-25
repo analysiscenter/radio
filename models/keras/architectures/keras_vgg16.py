@@ -15,7 +15,8 @@ from ..keras_model import KerasModel
 
 class KerasVGG16(KerasModel):
     """ KerasVGG16 model for 3D scans implemented in keras. """
-    def __init__(self, name, **kwargs):
+    def __init__(self, *args, **kwargs):
+        """ Call __init__ of KerasModel. """
         super().__init__(name, **kwargs)
 
     def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
