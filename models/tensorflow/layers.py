@@ -59,6 +59,7 @@ def conv3d(self, input_tensor, filters, kernel_size, name,
     Returns:
     - tf.Variable, output tensor;
     """
+    init_fn = get_initializer(kernel_init)
     with tf.variable_scope(name):
         output_tensor = tf.layers.conv3d(input_tensor,
                                          filters=filters,
@@ -67,7 +68,7 @@ def conv3d(self, input_tensor, filters, kernel_size, name,
                                          use_bias=use_bias,
                                          name='conv3d',
                                          padding=padding,
-                                         kernel_initializer=kernel_init_fn)
+                                         kernel_initializer=init_fn)
 
         output_tensor = activation(output_tensor)
     return output_tensor
@@ -89,10 +90,14 @@ def bn_conv3d(self, input_tensor, filters, kernel_size, name,
     - activation: tensorflow activation function that will be applied to
     output tensor;
     - use_bias: bool, whether use bias or not;
+    - kernel_init: str, can be 'xavier' or 'normal' initializer for kernel;
+    - is_training: tf.Variable or bool, whether model is in training
+    state of prediction state;
 
     Returns:
     - tf.Variable, output tensor;
     """
+    init_fn = get_initializer(kernel_init)
     with tf.variable_scope(name):
         output_tensor = tf.layers.conv3d(input_tensor,
                                          filters=filters,
@@ -100,7 +105,8 @@ def bn_conv3d(self, input_tensor, filters, kernel_size, name,
                                          strides=strides,
                                          use_bias=use_bias,
                                          name='conv3d',
-                                         padding=padding)
+                                         padding=padding
+                                         kernel_initializer=init_fn)
 
         output_tensor = tf.layers.batch_normalization(output_tensor, axis=-1,
                                                       training=is_training)
@@ -110,7 +116,8 @@ def bn_conv3d(self, input_tensor, filters, kernel_size, name,
 
 def bn_dilated_conv3d(self, input_tensor, filters,
                       kernel_size, name, activation=tf.nn.relu,
-                      dilation=(1, 1, 1), padding='same'):
+                      dilation=(1, 1, 1), padding='same',
+                      is_training=True, kernel_init='xavier'):
     """ Apply 3D convolution operation with batch normalization to input tensor.
 
     Args:
@@ -123,15 +130,19 @@ def bn_dilated_conv3d(self, input_tensor, filters,
     - padding: str, padding mode, can be 'same' or 'valid';
     - activation: tensorflow activation function that will be applied to
     output tensor;
+    - kernel_init: str, can be 'xavier' or 'normal' initializer for kernel;
+    - is_training: tf.Variable or bool, whether model is in training
+    state of prediction state;
 
     Returns:
     - tf.Variable, output tensor;
     """
 
     in_filters = input_tensor.get_shape().as_list()[-1]
+    init_fn = get_initializer(kernel_init)
     with tf.variable_scope(name):
         w = tf.get_variable(name='W', shape=(*kernel_size, in_filters, filters),
-                            initializer=tf.contrib.layers.xavier_initializer())
+                            initializer=init_fn)
 
         output_tensor = tf.nn.convolution(input_tensor, w,
                                           padding=padding.upper(),
