@@ -9,11 +9,7 @@ from keras.models import model_from_json
 from ..base_model import BaseModel
 
 
-logging.basicConfig(format=u'%(levelname)-8s [%(asctime)s] %(message)s',
-                    level=logging.INFO)
-
-
-class KerasModel(BaseModel):
+class KerasModel(Model, BaseModel):
     """ Base class for all keras models.
 
     Contains load, dump and compile methods which are shared between all
@@ -21,48 +17,67 @@ class KerasModel(BaseModel):
     Also implements train_on_batch and predict_on_batch methods;
 
     """
-    def __init__(self, name, *args, **kwargs):
-        """ Initialize keras model. """
-        super().__init__(name, *args, **kwargs)
-        self.name = name
-        self.model = None
+    def __init__(self, *args, **kwargs):
+        """ Call __init__ of BaseModel not keras.models.Model. """
+        BaseModel.__init__(self, *args, **kwargs)
 
-    def build_model(self, *args, **kwargs):
-        """ Initialize inner keras model. """
+        self._show_metrics = self.get_from_config('show_metrics', False)
+        self._train_metrics = []
+
+    @property
+    def train_metrics(self):
+        """ Return pandas DataFrame containing train metrics. """
+        return pd.DataFrame(self._train_metrics)
+
+    def build(self, *args, **kwargs):
+        """ Must return inputs and outputs. """
+        input_nodes, output_nodes = self._build(**self.config)
+        Model.__init__(self, input_nodes, output_nodes)
+        self.compile(loss=self.get_from_config('loss', None),
+                     optimizer=self.get_from_config('optimizer', 'sgd'),
+                     metrics=self.get_from_config('metrics', []))
+
+    def _build(self, *args, **kwargs):
+        """ Must return inputs and outputs. """
+        raise NotImplementedError("This method must be implemented in ancestor model class")
+
+    def train(self, feed_dict=None, **kwargs):
+        """ Wrapper for keras.models.Model.train_on_batch.
+
+        Checks whether feed_dict is None and unpacks it as kwargs
+        of keras.models.Model.train_on_batch method.
+        """
+        if feed_dict is not None:
+            prediction = self.train_on_batch(**feed_dict)
+            if not isinstance(prediction, (list, tuple)):
+                prediction = (prediction, )
+            self._train_metrics.append(dict(zip(self.metrics_names, prediction)))
+        if self._show_metrics:
+            print(self.train_metrics.iloc[-1, :])
+            clear_output(wait=True)
         return None
 
-    @wraps(keras.models.Model.compile)
-    def compile(self, *args, **kwargs):
-        """ Compile keras model. """
-        self.model = self.build_model(*args, **kwargs)  # pylint: disable=assignment-from-none
-        self.model.compile(*args, **kwargs)
+    def predict(self, feed_dict=None, **kwargs):
+        """ Wrapper for keras.models.Model.predict_on_batch.
 
-    def train_on_batch(self, x, y_true, **kwargs):
-        """ Train model on batch. """
-        self.model.train_on_batch(x, y_true)
+        Checks whether feed_dict is None and unpacks it
+        as kwargs of keras.models.Model.predict_on_batch method.
+        """
+        if feed_dict is not None:
+            return Model.predict_on_batch(self, **feed_dict)
+        else:
+            raise ValueError("Argument feed_dict must not be None")
+        return None
 
-    def predict_on_batch(self, x, **kwargs):
-        """ Get predictions on batch x. """
-        return self.model.predict_on_batch(x)
+    @functools.wraps(Model.load_weights)
+    def load(self, *args, **kwargs):
+        """ Wrapper for keras.models.Model.load_weights. """
+        return Model.load_weights(self, **args, **kwargs)
 
-    def load(self, dir_path, *args, **kwargs):
-        """ Load model. """
-        if not os.path.exists(dir_path):
-            raise ValueError("Directory %s does not exists!" % dir_path)
-
-        with open(os.path.join(dir_path, 'model.json'), 'r') as f:
-            model = model_from_json(f.read())
-        self.model = model
-        self.model.load_weights(os.path.join(dir_path, 'model.h5'))
-
-    def save(self, dir_path, *args, **kwargs):
-        """ Save model. """
-        if os.path.exists(dir_path):
-            shutil.rmtree(dir_path)
-        os.mkdir(dir_path)
-        with open(os.path.join(dir_path, 'model.json'), 'w') as f:
-            f.write(self.model.to_json())
-        self.model.save_weights(os.path.join(dir_path, 'model.h5'))
+    @functools.wraps(Model.save_weights)
+    def save(self, *args, **kwargs):
+        """ Wrapper for keras.models.Model.save_weights. """
+        return Model.save_weights(self, *args, **kwargs)
 
     def load_model(self, path, custom_objects):
         """ Load weights and description of keras model. """
