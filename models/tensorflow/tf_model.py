@@ -12,10 +12,6 @@ import tensorflow as tf
 from ..dataset.models.tf import TFModel
 
 
-DECAY_DICT = {'exp': tf.train.exponential_decay,
-              'inverse_time': tf.train.inverse_time_decay}
-
-
 class TFModel3D(TFModel):
     """ Base class for all tensorflow models. """
 
