@@ -5,7 +5,7 @@ import functools
 import shutil
 import keras
 from keras.models import Model
-from ..base_model import BaseModel
+import ..dataset as ds
 
 
 class KerasModel(Model, BaseModel):
