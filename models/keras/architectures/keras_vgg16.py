@@ -140,5 +140,4 @@ class KerasVGG16(KerasModel):
         output_tensor = Dense(1, activation='sigmoid',
                               name='predictions')(block_F)
 
-        model = Model(input_tensor, output_tensor, name='vgg16')
-        return model
+        return [input_tensor], [output_tensor]
