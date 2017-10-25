@@ -81,13 +81,13 @@ class TFResNet(TFModel):
         x = self.conv_block(x, (3, 3, 3), [16, 16, 32], name='conv_1A', strides=(1, 1, 1))
         x = self.identity_block(x, (3, 3, 3), [16, 16, 32], name='identity_1B')
         x = self.identity_block(x, (3, 3, 3), [16, 16, 32], name='identity_1C')
-        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
 
         x = self.conv_block(x, (3, 3, 3), [24, 24, 64], name='conv_2A')
         x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2B')
         x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2C')
         x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2D')
-        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
 
         x = self.conv_block(x, (3, 3, 3), [48, 48, 128], name='conv_3A')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3B')
@@ -96,7 +96,7 @@ class TFResNet(TFModel):
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3D')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3E')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3F')
-        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
 
         x = self.conv_block(x, (3, 3, 3), [64, 64, 196], name='conv_4A')
         x = self.identity_block(x, (3, 3, 3), [64, 64, 196], name='identity_4B')
@@ -105,11 +105,11 @@ class TFResNet(TFModel):
         z = tf.contrib.layers.flatten(x)
 
         z = tf.layers.dense(z, units=64, name='dense_64')
-        z = tf.layers.batch_normalization(z, axis=-1, training=self.learning_phase)
+        z = tf.layers.batch_normalization(z, axis=-1, training=self.is_training)
         z = tf.nn.relu(z)
 
         z = tf.layers.dense(z, units=16, name='dense_16')
-        z = tf.layers.batch_normalization(z, axis=-1, training=self.learning_phase)
+        z = tf.layers.batch_normalization(z, axis=-1, training=self.is_training)
         z = tf.nn.relu(z)
 
         z = tf.layers.dense(z, units=self.num_targets, name='dense_' + str(self.num_targets))
