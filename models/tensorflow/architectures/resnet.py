@@ -4,7 +4,7 @@
 """ Contains TFResNet model class. """
 
 import tensorflow as tf
-from ..tf_model import TFModel, restore_nodes
+from ..tf_model import TFModel
 
 
 class TFResNet(TFModel):
