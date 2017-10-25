@@ -21,6 +21,27 @@ class TFModel3D(TFModel):
             arr = np.asarray([np.prod(self.get_shape(v)) for v in tf.trainable_variables()])
         return np.sum(arr)
 
+    def get_initializer(self, initializer):
+        """ Get tensorflow initializer.
+
+        Returns normal initializer or xavier initializer.
+
+        Args:
+        - kernel_init: str, can be 'xavier' or 'normal' initializer for kernel;
+
+        Returns:
+        - initializer;
+        """
+        kenel_init_fn = None
+        if kernel_init == 'xavier':
+            kernel_init_fn = tf.contrib.layers.xavier_initializer
+        elif kernel_init == 'normal':
+            kernel_init_fn = tf.random_normal_initializer
+        else:
+            raise ValueError("Argument kernel_init must have 'str' type " +
+                             "and be 'xavier' or 'normal'")
+        return kenel_init_fn
+
     @staticmethod
     def num_channels(input_tensor):
         """ Return channels dimension of the input tensor.
