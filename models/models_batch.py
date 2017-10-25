@@ -72,10 +72,10 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
-        y_pred = np.asarray([self.get(i, 'masks').sum() > threshold
+        y_true = np.asarray([self.get(i, 'masks').sum() > threshold
                              for i in range(len(self))], dtype=np.int)
 
-        return self.unpack_component('images', dim_ordering), y_pred
+        return self.unpack_component('images', dim_ordering), y_true
 
     def unpack_reg(self, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
