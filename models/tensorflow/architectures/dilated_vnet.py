@@ -146,21 +146,26 @@ class TFDilatedVnet(TFModel):
 
             upsample_tensor = tf.concat([upsample_tensor, scip_connect_tensor], axis=4)
 
-            conv1 = self.bn_conv3d(upsample_tensor, n, (3, 3, 3),
-                                   padding=padding, name='Conv3D_1x1x1')
+            conv1 = bn_conv3d(upsample_tensor, n, (3, 3, 3),
+                              padding=padding, name='Conv3D_1x1x1',
+                              is_training=self.is_training)
 
-            conv1_dilated = self.bn_dilated_conv3d(conv1, m, (3, 3, 3),
-                                                   dilation=dilation, padding=padding,
-                                                   name='Conv3D_dilated_I')
+            conv1_dilated = bn_dilated_conv3d(conv1, m, (3, 3, 3),
+                                              dilation=dilation,
+                                              padding=padding,
+                                              name='Conv3D_dilated_I',
+                                              is_training=self.is_training)
 
             conv1_stacked = tf.concat([conv1, conv1_dilated], axis=4)
 
-            conv2 = self.bn_conv3d(conv1_stacked, n, (3, 3, 3),
-                                   padding=padding, name='Conv3D_3x3x3')
+            conv2 = bn_conv3d(conv1_stacked, n, (3, 3, 3),
+                              padding=padding, name='Conv3D_3x3x3',
+                              is_training=self.is_training)
 
-            conv2_dilated = self.bn_dilated_conv3d(conv1_stacked, m, (3, 3, 3),
-                                                   dilation=dilation, padding=padding,
-                                                   name='Conv3D_dilated_II')
+            conv2_dilated = bn_dilated_conv3d(conv1_stacked, m, (3, 3, 3),
+                                              dilation=dilation, padding=padding,
+                                              name='Conv3D_dilated_II',
+                                              is_training=self.is_training)
 
             conv2_stacked = tf.concat([conv2, conv2_dilated], axis=4)
         return conv2_stacked
