@@ -4,10 +4,10 @@ import PIL
 from ..dataset import Pipeline
 
 # global constants defining args of some actions in pipeline
-
 SPACING = (1.7, 1.0, 1.0) # spacing of scans after spacing unification
 SHAPE = (400, 512, 512) # shape of scans after spacing unification
 RESIZE_FILTER = PIL.Image.LANCZOS # high-quality filter of resize
+kwargs_default = dict(shape=SHAPE, spacing=SPACING, resample=RESIZE_FILTER)
 
 # define the number of times each cancerous nodule is dumped.
 # with this number of iterations, the whole luna-dataset will
@@ -21,7 +21,7 @@ NON_CANCER_BATCH_SIZE = 1030 # NON_CANCER_BATCH_SIZE * (len_of_lunaset=888) / RU
 
 
 def split_dump(cancer_path, non_cancer_path, nodules_df, histo, fmt='raw', nodule_shape=(32, 64, 64),
-               variance=(36, 144, 144)):
+               variance=(36, 144, 144), **kwargs):
     """ Define pipeline for dumping cancerous crops in one folder
             and random noncancerous crops in another.
 
@@ -35,12 +35,16 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo, fmt='raw', nodul
         nodule_shape: shape of crops.
         variance: variance of locations of cancerous nodules' centers in generated
             cancerous crops.
+        kwargs: unify_spacing-params that need to be changed from default values (see kwargs_default).
 
     Return:
         resulting pipeline run in lazy-mode.
     """
+    # update args of unify spacing
+    kwargs_default.update(kwargs)
+
     # set up all args
-    args_unify_spacing = dict(spacing=SPACING, shape=SHAPE, padding='reflect', resample=RESIZE_FILTER)
+    args_unify_spacing = dict(padding='reflect', **kwargs_default)
     args_dump_cancer = dict(dst=cancer_path, n_iters=N_ITERS, nodule_size=nodule_shape, variance=variance)
     args_sample_ncancer = dict(nodule_size=nodule_shape, histo=histo, batch_size=NON_CANCER_BATCH_SIZE, share=0.0)
 
@@ -60,7 +64,7 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo, fmt='raw', nodul
 
     return pipeline
 
-def update_histo(nodules_df, histo, fmt='raw'):
+def update_histo(nodules_df, histo, fmt='raw', **kwargs):
     """ Pipeline for updating histogram using info in dataset of scans.
 
     Args:
@@ -68,12 +72,16 @@ def update_histo(nodules_df, histo, fmt='raw'):
         histo: 3d-histogram in almost np.histogram format, list [bins, edges];
             (compare the latter with tuple (bins, edges) returned by np.histogram).
         fmt: format of scans ('raw'|'blosc'|'dicom').
+        kwargs: unify_spacing-params that need to be changed from default values (see kwargs_default).
 
     Return:
         resulting pipeline run in lazy-mode.
     """
+    # update args of unify spacing
+    kwargs_default.update(kwargs)
+
     # set up all args
-    args_unify_spacing = dict(spacing=SPACING, shape=USPACING_SHAPE, padding='reflect', resample=RESIZE_FILTER)
+    args_unify_spacing = dict(padding='reflect', **kwargs_default)
 
     # perform unify_spacing and call histo-updating action
     pipeline = (Pipeline()
