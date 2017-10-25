@@ -170,7 +170,6 @@ class TFDilatedVnet(TFModel):
             conv2_stacked = tf.concat([conv2, conv2_dilated], axis=4)
         return conv2_stacked
 
-    @restore_nodes('input', 'y_true', 'y_pred')
     def build_model(self):
         """ Build vnet with dilated convolutions model implemented in tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32)
