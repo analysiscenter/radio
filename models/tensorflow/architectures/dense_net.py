@@ -3,7 +3,8 @@
 """ Contains DenseNet model class. """
 
 import tensorflow as tf
-from ..tf_model import TFModel, restore_nodes
+from ..tf_model import TFModel
+from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d
 
 
 class TFDenseNet(TFModel):
@@ -12,63 +13,6 @@ class TFDenseNet(TFModel):
     def __init__(self, name, num_targets=1, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
         self.num_targets = num_targets
-
-    @staticmethod
-    def max_pool3d(input_tensor, pool_size, strides, name, padding='same'):
-        """ Apply max pooling 3D operation to input_tensor.
-
-        Args:
-        - input_tensor: tf.Variable, input_tensor;
-        - pool_size: tuple(int, int, int), size of pooling kernel along 3 dimensions;
-        - strides: tuple(int, int, int), size of strides along 3 dimensions;
-        - name: str, name of layer that will be used as an argument of tf.variable_scope;
-
-        Returns:
-        - tf.Variable, output tensor;
-        """
-        with tf.variable_scope(name):
-            out_tensor = tf.layers.max_pooling3d(input_tensor,
-                                                 pool_size=pool_size,
-                                                 strides=strides,
-                                                 padding=padding,
-                                                 name='maxpool3d')
-        return out_tensor
-
-    @staticmethod
-    def average_pool3d(input_tensor, pool_size, strides, name, padding='same'):
-        """ Apply average pooling 3D operation to input_tensor.
-
-        Args:
-        - input_tensor: tf.Variable, input tensor;
-        - pool_size: tuple(int, int, int), size of pooling kernel along 3 dimensions;
-        - strides: tuple(int, int, int), size of strides along 3 dimensions;
-        - name: str, name of layer that will be used as an argument of tf.variable_scope;
-
-        Returns:
-        - tf.Variable, output tensor;
-        """
-        with tf.variable_scope(name):
-            out_tensor = tf.layers.average_pooling3d(input_tensor,
-                                                     pool_size=pool_size,
-                                                     strides=strides,
-                                                     padding='same',
-                                                     name='average_pool3d')
-        return out_tensor
-
-    @staticmethod
-    def global_average_pool3d(input_tensor, name):
-        """ Apply global average pooling 3D operation to input tensor.
-
-        Args:
-        - input_tensor: tf.Variable, input tensor;
-        - name: str, name of layer that will be used as an argument of tf.variable_scope;
-
-        Returns:
-        - tf.Variable, output tensor;
-        """
-        with tf.variable_scope(name):
-            output_layer = tf.reduce_mean(input_tensor, axis=(1, 2, 3))
-        return output_layer
 
     def dense_block(self, input_tensor, filters, block_size, name):
         """ Dense block which is used as a build block of densenet model.
@@ -102,17 +46,19 @@ class TFDenseNet(TFModel):
             previous_input = tf.identity(input_tensor)
             for i in range(block_size):
                 subblock_name = 'sub_block_' + str(i)
-                x = self.bn_conv3d(previous_input, filters=filters,
-                                   kernel_size=(1, 1, 1),
-                                   strides=(1, 1, 1),
-                                   name=subblock_name + '_conv3d_1_1',
-                                   padding='same')
+                x = bn_conv3d(previous_input, filters=filters,
+                              kernel_size=(1, 1, 1),
+                              strides=(1, 1, 1),
+                              name=subblock_name + '_conv3d_1_1',
+                              padding='same',
+                              is_training=self.is_training)
 
-                x = self.bn_conv3d(x, filters=filters,
-                                   kernel_size=(3, 3, 3),
-                                   strides=(1, 1, 1),
-                                   name=subblock_name + '_conv3d_3_3',
-                                   padding='same')
+                x = bn_conv3d(x, filters=filters,
+                              kernel_size=(3, 3, 3),
+                              strides=(1, 1, 1),
+                              name=subblock_name + '_conv3d_3_3',
+                              padding='same',
+                              is_training=self.is_training)
 
                 previous_input = tf.concat([previous_input, x], axis=-1)
 
@@ -130,15 +76,17 @@ class TFDenseNet(TFModel):
         - tf.Variable, output tensor;
         """
         with tf.variable_scope(name):
-            output_tensor = self.bn_conv3d(input_tensor, filters=filters,
-                                           kernel_size=(1, 1, 1),
-                                           strides=(1, 1, 1),
-                                           name='conv3d_1_1')
+            output_tensor = bn_conv3d(input_tensor, filters=filters,
+                                      kernel_size=(1, 1, 1),
+                                      strides=(1, 1, 1),
+                                      name='conv3d_1_1',
+                                      is_training=self.is_training)
 
-            output_tensor = self.average_pool3d(output_tensor,
-                                                strides=(2, 2, 2),
-                                                pool_size=(2, 2, 2),
-                                                name='averagepool_2_2')
+            output_tensor = tf.layers.average_pooling3d(output_tensor,
+                                                        pool_size=(2, 2, 2),
+                                                        strides=(2, 2, 2),
+                                                        padding='same',
+                                                        name='averagepool3d_2_2')
         return output_tensor
 
     @restore_nodes('input', 'y_true', 'y_pred')
@@ -149,29 +97,29 @@ class TFDenseNet(TFModel):
 
         y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='y_true')
 
-        x = self.conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
-                        padding='same', name='initial_convolution')
+        x = conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
+                   padding='same', name='initial_convolution', is_training=self.is_training)
 
-        x = self.max_pool3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
-                            padding='same', name='initial_pooling')
+        x = tf.layers.max_pooling3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
+                                    padding=padding, name='maxpool3d')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
         x = self.transition_layer(x, filters=32, name='transition_layer_1')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=12, name='dense_block_2')
         x = self.transition_layer(x, filters=32, name='transition_layer_2')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_3')
         x = self.transition_layer(x, filters=32, name='transition_layer_3')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.learning_phase)
+        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_4')
         x = self.transition_layer(x, filters=32, name='transition_layer_4')
 
-        z = self.global_average_pool3d(x, name='global_average_pool3d')
+        z = global_average_pool3d(x, name='global_average_pool3d')
 
         z = tf.layers.dense(z, units=self.num_targets, name='dense32')
         z = tf.nn.sigmoid(z)
