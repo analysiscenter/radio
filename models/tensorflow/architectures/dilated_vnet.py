@@ -214,7 +214,8 @@ class TFDilatedVnet(TFModel):
         upsample_block_A = self.upsampling_block(upsample_block_B, block_A,
                                                  32, scope='UpsamplingBlock_A')
 
-        y_pred = self.bn_conv3d(upsample_block_A, 1, (1, 1, 1), name='final_conv',
-                                activation=tf.nn.sigmoid, padding='same')
+        y_pred = bn_conv3d(upsample_block_A, 1, (1, 1, 1), name='final_conv',
+                           activation=tf.nn.sigmoid, padding='same',
+                           is_training=self.is_training)
 
         return input_tensor, y_true, y_pred
