@@ -37,7 +37,6 @@ class CTImagesModels(CTImagesMaskedBatch):
 
     """
 
-
     def unpack_component(self, model, component, dim_ordering):
         """ Basic way for unpacking 'images' or 'masks' from batch.
 
