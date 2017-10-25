@@ -2,6 +2,7 @@ import math
 import numpy as np
 import tensorflow as tf
 from ..tf_model import TFModel
+from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d
 from ..utils import repeat_tensor
 
 
@@ -51,15 +52,19 @@ class TFDilatedVnet(TFModel):
         """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
-            conv1 = self.bn_conv3d(input_tensor, filters, (1, 1, 1),
-                                   padding=padding, name='Conv3D_1x1x1')
+            conv1 = bn_conv3d(input_tensor, filters, (1, 1, 1),
+                              padding=padding, name='Conv3D_1x1x1',
+                              is_training=self.is_training)
 
-            conv2 = self.bn_conv3d(conv1, n, (3, 3, 3),
-                                   padding=padding, name='Conv3D_3x3x3')
+            conv2 = bn_conv3d(conv1, n, (3, 3, 3),
+                              padding=padding, name='Conv3D_3x3x3',
+                              is_training=self.is_training)
 
-            conv2_dilated = self.bn_dilated_conv3d(conv1, m, (3, 3, 3),
-                                                   dilation=dilation, padding=padding,
-                                                   name='Conv3D_dilated')
+            conv2_dilated = bn_dilated_conv3d(conv1, m, (3, 3, 3),
+                                              dilation=dilation,
+                                              padding=padding,
+                                              name='Conv3D_dilated',
+                                              is_training=self.is_training)
 
             conv_concated = tf.concat([conv2, conv2_dilated], axis=4)
 
