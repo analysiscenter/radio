@@ -38,7 +38,7 @@ def selu(x):
     return scale * tf.where(x >= 0.0, x, alpha * tf.nn.elu(x))
 
 
-def conv3d(self, input_tensor, filters, kernel_size, name,
+def conv3d(input_tensor, filters, kernel_size, name,
            strides=(1, 1, 1), padding='same', activation=tf.nn.relu,
            use_bias=True, kernel_init='xavier', is_training=True):
     """ Apply 3D convolution operation to input tensor.
@@ -74,7 +74,7 @@ def conv3d(self, input_tensor, filters, kernel_size, name,
     return output_tensor
 
 
-def bn_conv3d(self, input_tensor, filters, kernel_size, name,
+def bn_conv3d(input_tensor, filters, kernel_size, name,
               strides=(1, 1, 1), padding='same', activation=tf.nn.relu,
               use_bias=False, kernel_init='xavier', is_training=True):
     """ Apply 3D convolution operation with batch normalization to input tensor.
@@ -114,7 +114,7 @@ def bn_conv3d(self, input_tensor, filters, kernel_size, name,
     return output_tensor
 
 
-def bn_dilated_conv3d(self, input_tensor, filters,
+def bn_dilated_conv3d(input_tensor, filters,
                       kernel_size, name, activation=tf.nn.relu,
                       dilation=(1, 1, 1), padding='same',
                       is_training=True, kernel_init='xavier'):
@@ -156,3 +156,18 @@ def bn_dilated_conv3d(self, input_tensor, filters,
         output_tensor = activation(output_tensor)
 
     return output_tensor
+
+
+def global_average_pool3d(input_tensor, name):
+    """ Apply global average pooling 3D operation to input tensor.
+
+    Args:
+    - input_tensor: tf.Variable, input tensor;
+    - name: str, name of layer that will be used as an argument of tf.variable_scope;
+
+    Returns:
+    - tf.Variable, output tensor;
+    """
+    with tf.variable_scope(name):
+        output_layer = tf.reduce_mean(input_tensor, axis=(1, 2, 3))
+    return output_layer
