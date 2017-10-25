@@ -132,7 +132,7 @@ class KerasResNet50(KerasModel):
         x = Activation('relu')(x)
         return x
 
-    def build_model(self, dropout_rate=0.3, units=(256, 64), *args, **kwargs):
+    def _build(self, dropout_rate=0.3, units=(256, 64), *args, **kwargs):
         """ Build resnet50 model implemented in keras.
 
         Args:
