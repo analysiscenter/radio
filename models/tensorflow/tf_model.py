@@ -44,19 +44,6 @@ def restore_nodes(*names):
 class TFModel3D(TFModel):
     """ Base class for all tensorflow models. """
 
-    def build_model(self, *args, **kwargs):
-        """ Build tensorflow model.
-
-        This method must be implemented in ancestor class:
-        inside it tensorflow model must be build,
-        self.y_true, self.input, self.y_pred, self.loss attributes
-        must be set as tensorflow tensors;
-
-        NOTE: this method will be automatically called when compile method
-        is called by user;
-        """
-        raise NotImplementedError()
-
     def get_number_of_trainable_vars(self):
         """ Get number of trainable variable in graph associated with current model. """
         with self.graph.as_default():
