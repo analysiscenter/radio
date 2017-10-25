@@ -51,7 +51,7 @@ class CTImagesModels(CTImagesMaskedBatch):
     """
 
 
-    def unpack_component(self, component, dim_ordering):
+    def unpack_component(self, model, component, dim_ordering):
         """ Basic way for unpacking 'images' or 'masks' from batch.
 
         Args:
@@ -90,7 +90,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         return (self.unpack_component('images', dim_ordering),
                 self.unpack_component('masks', dim_ordering))
 
-    def unpack_clf(self, threshold=10, dim_ordering='channels_last'):
+    def unpack_clf(self, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for classification task.
 
         Args:
@@ -108,7 +108,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         return self.unpack_component('images', dim_ordering), y_pred
 
-    def unpack_reg(self, threshold=10, dim_ordering='channels_last'):
+    def unpack_reg(self, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
 
         Args:
