@@ -1,7 +1,7 @@
 """ Contains base class for all keras models. """
 
 import os
-from functools import wraps
+import functools
 import shutil
 import keras
 from keras.models import Model
