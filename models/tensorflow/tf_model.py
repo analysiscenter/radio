@@ -190,69 +190,6 @@ class TFModel3D(TFModel):
             y_pred = self.sess.run(self.y_pred, feed_dict=feed_dict)
         return y_pred
 
-    def save(self, dir_path, *args, **kwargs):
-        """ Save tensorflow model.
-
-        Args:
-        - dir_path: str, path to directory on hard drive that will be used
-        for storing model's data;
-
-        Returns:
-        - self, TFModel instance;
-
-        NOTE: *args and **kwargs are added for compatibillity with BaseModel class.
-
-        Example:
-        >>> tf_model = TFResNetModel('resnet50')
-        >>> .............training model..............
-        >>> tf_model.save('/path/to/resnet50/model/')
-        """
-        with self.graph.as_default():
-            if self.saver is None:
-                self.saver = tf.train.Saver()
-            path = os.path.join(dir_path, self.name)
-            self.saver.save(self.sess, path, global_step=self.global_step)
-            with open(os.path.join(dir_path, 'restore_keys.json'), 'w') as f:
-                json.dump(self.restore_keys, f)
-        return self
-
-    def load(self, dir_path, graph_path, checkpoint=None, *args, **kwargs):
-        """ Load tensorflow model.
-
-        Args:
-        - dir_path: str, path to directory on hard drive where model
-        was saved via save method;
-        - graph_path: str, path to file with metagraph;
-        - checkpoint: str or None, if str then must represent path
-        to checkpoint file that will be loaded, if None then latest checkpoint
-        from 'dir_path' directory will be loaded;
-
-        Example:
-        >>> tf_model = TFResNetModel('resnet50')
-        >>> tf.model.load('/path/to/resnet50/model/', '/path/to/resnet50/model/resnet50-1982.meta')
-        """
-        self.sess = tf.Session()
-        saver = tf.train.import_meta_graph(graph_path)
-
-        if checkpoint is None:
-            checkpoint_path = tf.train.latest_checkpoint(dir_path)
-        else:
-            checkpoint_path = os.path.join(dir_path, checkpoint)
-        saver.restore(self.sess, checkpoint_path)
-        self.graph = self.sess.graph
-
-        with open(os.path.join(dir_path, 'restore_keys.json'), 'r') as json_file:
-            self.restore_keys = json.load(json_file)
-
-        with self.graph.as_default():
-            for alias, var in zip(self.restore_keys['vars'], tf.get_collection('restore_vars')):
-                setattr(self, alias, var)
-
-            for alias, op in zip(self.restore_keys['ops'], tf.get_collection('restore_ops')):
-                setattr(self, alias, op)
-
-        return self
-
     def compile(self, optimizer, loss, *args, **kwargs):
         """ Compile tensorflow model.
 
