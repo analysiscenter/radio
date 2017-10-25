@@ -3,7 +3,6 @@
 import os
 from functools import wraps
 import shutil
-import logging
 import keras
 from keras.models import Model
 from ..base_model import BaseModel
