@@ -48,45 +48,52 @@ class CTImagesModels(CTImagesMaskedBatch):
         """ Unpack data from batch in format suitable for segmentation task.
 
         Args:
+        - self: CTImagesModels batch instance;
+        - model: instance of dataset.models.BaseModel, is not used here;
         - dim_ordering: str, can be 'channels_last' or 'channels_first';
 
         Returns:
-        - tuple(images_array, masks_array) with '1' in channels dimension;
+        - dict {'x': images_array, 'y': labels_array}
 
         XXX 'dim_ordering' argument reflects where to put '1'
         for channels dimension both for images and masks.
         """
-        return (self.unpack_component('images', dim_ordering),
-                self.unpack_component('masks', dim_ordering))
+        return {'x': self.unpack_component('images', dim_ordering),
+                'y': self.unpack_component('masks', dim_ordering)}
 
     def unpack_clf(self, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for classification task.
 
         Args:
+        - self: CTImagesModels batch instance;
+        - model: instance of dataset.models.BaseModel, is not used here;
         - threshold: int, minimum number of '1' pixels in mask to consider it
         cancerous;
         - dim_ordering: str, can be 'channels_last' or 'channels_first';
 
         Returns:
-        - tuple(images_array, labels_array)
+        - dict {'x': images_array, 'y': labels_array}
 
         XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
-        y_true = np.asarray([self.get(i, 'masks').sum() > threshold
-                             for i in range(len(self))], dtype=np.int)
+        masks_labels = np.asarray([self.get(i, 'masks').sum() > threshold
+                                   for i in range(len(self))], dtype=np.int)
 
-        return self.unpack_component('images', dim_ordering), y_true
+        return {'x': self.unpack_component('images', dim_ordering),
+                'y': masks_labels}
 
     def unpack_reg(self, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
 
         Args:
+        - self: CTImagesModels batch instance;
+        - model: instance of dataset.models.BaseModel, is not used here;
         - theshold: int, minimum number of '1' pixels in mask to consider it
         cancerous;
         - dim_ordering: str, can be 'channels_last' or 'channels_first';
 
         Returns:
-        - tuple(images_array, regression_array);
+        - dict {'x': images_array, 'y': y_regression_array}
 
         XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
@@ -106,9 +113,9 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         x, labels = self.unpack_clf(threshold, dim_ordering)
         labels = np.expand_dims(labels, axis=1)
-        y_true = np.concatenate([centers, sizes, labels], axis=1)
+        y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
 
-        return x, y_true
+        return {'x': x, 'y': y_regression_array}
 
     def _get_by_unpacker(self, unpacker, **kwargs):
         """ Check unpacker type and get result from it. """
