@@ -125,7 +125,7 @@ class KerasVGG16(KerasModel):
         - dropout_rate: float, probability of dropout;
 
         Returns:
-        - keras model;
+        - tuple([*input_nodes], [*output_nodes]);
         """
         input_tensor = Input(shape=(32, 64, 64, 1))
         block_A = self.reduction_block_I(input_tensor, 32, scope='Block_A')
