@@ -5,7 +5,7 @@ from functools import wraps
 import shutil
 import logging
 import keras
-from keras.models import model_from_json
+from keras.models import Model
 from ..base_model import BaseModel
 
 
