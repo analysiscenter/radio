@@ -39,17 +39,15 @@ class KerasVGG16(KerasModel):
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
-                           activation='relu', padding=padding,
-                           name='conv_1')(input_tensor)
+                           activation='relu', padding=padding)(input_tensor)
+
             conv1 = BatchNormalization(axis=4)(conv1)
 
             conv2 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
-                           activation='relu', padding=padding,
-                           name='conv2')(conv1)
+                           activation='relu', padding=padding)(conv1)
             conv2 = BatchNormalization(axis=4)(conv2)
 
-            max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2),
-                                    name='max_pool_3D')(conv2)
+            max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2))(conv2)
         return max_pool
 
 
