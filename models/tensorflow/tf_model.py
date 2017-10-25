@@ -190,54 +190,6 @@ class TFModel3D(TFModel):
             y_pred = self.sess.run(self.y_pred, feed_dict=feed_dict)
         return y_pred
 
-    def compile(self, optimizer, loss, *args, **kwargs):
-        """ Compile tensorflow model.
-
-        First of all compile method enters in the context of graph that
-        corresponds to the model. After that it calls build_model method.
-        Finally, it assigns loss tensor(loss_tensor = loss(self.y_true, self.y_pred))
-        to self.loss attribute and assigns result of optimizer.minimize(self.loss)
-        operation to self.train_step attribute.
-
-        NOTE: after assignment self.loss and self.train_step are added to
-        collections of restorable tensors and operations.
-
-        Args:
-        - optimizer: optimizer from tf.train.*;
-        - loss: tensorflow function that takes self.y_true as its first argument
-        self.y_pred as its second argument and return real-value tensor as result.
-
-        NOTE: it's strongly recommended to create optimizer and pass it into compile method
-        inside model context(see Example)
-
-        Example:
-        >>> tf_model = TFResNetModel('resnet50')
-        >>> with tf_model:
-        ...     tf_model.compile(optimizer=tf.train.AdamOptimizer(0.005), loss=tf.losses.log_loss)
-
-        that is equal to
-
-        >>> tf_model = TFResNetModel('resnet50')
-        >>> with tf.model.graph.as_default():
-        ...     tf_model.compile(optimizer=tf.train.AdamOptimizer(0.005), loss=tf.losses.log_loss)
-
-        but is shorter.
-        """
-        with self.graph.as_default():
-
-            _ = self.build_model()
-            self.loss = loss(self.y_true, self.y_pred)
-            update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
-
-            with tf.control_dependencies(update_ops):
-                self.train_step = optimizer.minimize(self.loss, global_step=self.global_step)
-
-            self.sess = tf.Session()
-            self.sess.run(tf.global_variables_initializer())
-
-        self.add_restore_var(self.loss, alias='loss')
-        self.add_restore_op(self.train_step, alias='train_step')
-
     def conv3d(self, input_tensor, filters, kernel_size, name,
                strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
         """ Apply 3D convolution operation to input tensor.
