@@ -16,31 +16,6 @@ DECAY_DICT = {'exp': tf.train.exponential_decay,
               'inverse_time': tf.train.inverse_time_decay}
 
 
-def restore_nodes(*names):
-    """ Decorator for making output tensors of TFModel method be restorable as attributes. """
-    if any(not isinstance(arg, str) for arg in names):
-        raise ValueError("Arguments of restore_nodes decorator must be strings "
-                         + "that will be names of attributes to "
-                         + "which output tensors from decorated method "
-                         + "will assosiated with")
-
-    def decorated(method):
-        """ Decorator with captured names for ouput tensors. """
-        @functools.wraps(method)
-        def wrapped(self, *args, **kwargs):
-            """ Function that will be used insted original method. """
-            out_tf_variables = method(self, *args, **kwargs)
-            if not isinstance(out_tf_variables, (tuple, list)):
-                out_tf_variables = (out_tf_variables, )
-            for alias, variable in zip(names, out_tf_variables):
-                self.add_restore_var(variable, alias)
-                setattr(self, alias, variable)
-            return (*out_tf_variables, )
-
-        return wrapped
-    return decorated
-
-
 class TFModel3D(TFModel):
     """ Base class for all tensorflow models. """
 
