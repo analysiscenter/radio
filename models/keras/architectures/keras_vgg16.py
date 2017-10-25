@@ -116,7 +116,7 @@ class KerasVGG16(KerasModel):
             layer = Dropout(dropout_rate)(layer)
         return layer
 
-    def build_model(self, units=(512, 256), dropout_rate=0.35, *args, **kwargs):
+    def _build(self, units=(512, 256), dropout_rate=0.35, *args, **kwargs):
         """ Build VGG16 model implemented in keras.
 
         Args:
@@ -142,8 +142,3 @@ class KerasVGG16(KerasModel):
 
         model = Model(input_tensor, output_tensor, name='vgg16')
         return model
-
-    @wraps(keras.models.Model.compile)
-    def compile(self, optimizer='adam', loss='binary_crossentropy', **kwargs):
-        """ Compile vgg16 model. """
-        super().compile(optimizer=optimizer, loss=loss)
