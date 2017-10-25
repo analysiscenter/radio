@@ -15,8 +15,25 @@ from .utils import nodules_sets_overlap_jit, create_mask_reg
 
 
 class CTImagesModels(CTImagesMaskedBatch):
-    """ Сlass for describing, training nn-models of segmentation/classification;
-        inference using models is also supported.
+    """ Contains methods for transforming batch instance to dictionaries
+    that can be fed into models.
+
+    Unpack methods:
+    - unpack_component: unpack batch component(component can be 'masks' or 'images');
+    - unpack_seg: unpack batch into dictionary suitable for segmentation neural networks;
+      Ouput dictionary looks like:
+      {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
+       'y': ndarray(batch_size, size_x, size_y, size_z, 1)}
+
+      'x' contains batch of source crops, 'y' contains batch of corresponding masks;
+
+    - unpack_reg: unpack batch into dictionary suitable for regression neural networks;
+      Output dictionary looks like:
+      {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
+       'y': ndarray(batch_size, 7)}
+
+       'x' contains batch of source crops, 'y' contains batch
+
     """
 
 
@@ -117,20 +134,6 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         return {'x': x, 'y': y_regression_array}
 
-    def _get_by_unpacker(self, unpacker, **kwargs):
-        """ Check unpacker type and get result from it. """
-        if isinstance(unpacker, str):
-            _unpacker = getattr(self, unpacker)
-            if callable(_unpacker):
-                x, y_true = _unpacker(**kwargs)
-            else:
-                x, y_true = _unpacker
-        elif callable(unpacker):
-            x, y_true = _unpacker(**kwargs)
-        else:
-            raise ValueError("Argument 'unpacker' can be name of batch instance"
-                             + " attribute or external function. Got %s" % unpacker)
-        return x, y_true
 
     # @action
     # def train_model(self, model_name, unpacker, **kwargs):
