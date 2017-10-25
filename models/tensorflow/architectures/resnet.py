@@ -5,6 +5,7 @@
 
 import tensorflow as tf
 from ..tf_model import TFModel
+from ..layers import conv3d, bn_conv3d, global_average_pool3d
 
 
 class TFResNet(TFModel):
