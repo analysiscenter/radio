@@ -172,9 +172,7 @@ class KerasUnet(KerasModel):
                             data_format="channels_first",
                             padding='same')(upsample_block_A)
 
-        # Building keras model
-        model = Model(inputs=input_tensor, outputs=final_conv, name='unet')
-        return model
+        return [input_tensor], [final_conv]
 
     @wraps(keras.models.Model.compile)
     def compile(self, optimizer='adam', loss=dice_coef_loss, **kwargs):
