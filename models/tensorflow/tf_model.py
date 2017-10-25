@@ -44,59 +44,6 @@ def restore_nodes(*names):
 class TFModel3D(TFModel):
     """ Base class for all tensorflow models. """
 
-    def set_decay(self, **kwargs):
-        """ Set decay of learning rate. """
-        with self.graph.as_default():
-            decay_mode = 'exp'
-            if 'decay_mode' in kwargs:
-                decay_mode = kwargs.pop('decay_mode')
-            decay_fn = DECAY_DICT[decay_mode]
-            self.learning_rate = decay_fn(global_step=self.global_step, **kwargs)
-
-    def add_restore_var(self, variable, alias=None):
-        """ Enable tf.Tensor or tf.Variable to be restored after dump as an attribute.
-
-        Args:
-        - variable: tf.Tensor or tf.Variable to add to collection of variables
-        that can be restored after dump;
-        - alias: str, alias for tf.Variable or tf.Tensor which will be used as
-        a name of attribute for accessing it from outside of TFModel instance;
-        """
-        if not isinstance(variable, (tf.Tensor, tf.Variable)):
-            raise ValueError("Argument 'variable' must be an instance of class tf.Tensor")
-
-        if alias is None:
-            _alias = variable.name.split('/')[-1].split(':')[0]
-        else:
-            _alias = alias
-
-        self.restore_keys['vars'].append(_alias)
-        with self.graph.as_default():
-            restore_vars_collection = tf.get_collection_ref('restore_vars')
-            restore_vars_collection.append(variable)
-
-    def add_restore_op(self, operation, alias=None):
-        """ Enable tf.Operation to be restored after dump as an attribute.
-
-        Args:
-        - operation: tf.Operation, operation to add to collection of operations
-        that can be restored after dump;
-        - alias: str, alias for tf.Operation which will be used as a name of
-        attribute for accessing this operation;
-        """
-        if not isinstance(operation, tf.Operation):
-            raise ValueError("Argument 'operation' must be an instance of class tf.Operation")
-
-        if alias is None:
-            _alias = operation.name.split('/')[-1].split(':')[0]
-        else:
-            _alias = alias
-
-        self.restore_keys['ops'].append(_alias)
-        with self.graph.as_default():
-            restore_ops_collection = tf.get_collection_ref('restore_ops')
-            restore_ops_collection.append(operation)
-
     def build_model(self, *args, **kwargs):
         """ Build tensorflow model.
 
