@@ -44,7 +44,7 @@ class KerasVGG16(KerasModel):
             conv1 = BatchNormalization(axis=4)(conv1)
 
             conv2 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
-                           activaton='relu', padding=padding,
+                           activation='relu', padding=padding,
                            name='conv2')(conv1)
             conv2 = BatchNormalization(axis=4)(conv2)
 
