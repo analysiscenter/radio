@@ -152,44 +152,6 @@ class TFModel3D(TFModel):
         """
         return input_tensor.get_shape().as_list()
 
-    def train_on_batch(self, x, y_true, **kwargs):
-        """ Train tensorflow model on batch data.
-
-        Args:
-        - x: ndarray, numpy array that will be fed into input
-        placeholder(self.input attribute by default);
-        - y_true: ndarray, numpy array that will be fed into
-        'true-value' placeholder(self.y_true attribute by default);
-
-        Returns:
-        - None;
-
-        NOTE: **kwargs argument is added for compatibillity
-        with BaseModel method.
-        """
-        with self.graph.as_default():
-            feed_dict = {self.input: x, self.y_true: y_true, self.learning_phase: True}
-            _ = self.sess.run(self.train_step, feed_dict=feed_dict)
-        return None
-
-    def predict_on_batch(self, x, **kwargs):
-        """ Get prediction of tensorflow model on batch data.
-
-        Args:
-        - x: ndarray, numpy array that will be fed to input
-        placeholder(self.input attribute by default);
-
-        Returns:
-        - y_pred: ndarray containing predictions of the model;
-
-        NOTE: **kwargs argument is added for compatibillity
-        with BaseModel method.
-        """
-        with self.graph.as_default():
-            feed_dict = {self.input: x, self.learning_phase: False}
-            y_pred = self.sess.run(self.y_pred, feed_dict=feed_dict)
-        return y_pred
-
     def conv3d(self, input_tensor, filters, kernel_size, name,
                strides=(1, 1, 1), padding='same', activation=tf.nn.relu, use_bias=True):
         """ Apply 3D convolution operation to input tensor.
