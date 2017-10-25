@@ -51,7 +51,6 @@ class KerasVGG16(KerasModel):
             max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2))(conv2)
         return max_pool
 
-
     def reduction_block_II(self, input_tensor, filters, scope, padding='same'):
         """ Reduction block of type II for VGG16 architecture.
 
