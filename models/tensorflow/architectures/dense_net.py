@@ -14,9 +14,10 @@ class TFDenseNet(TFModel3D):
     https://arxiv.org/pdf/1608.06993v2.pdf
     """
 
-    def __init__(self, name, num_targets=1, *args, **kwargs):
-        super().__init__(name=name, *args, **kwargs)
-        self.num_targets = num_targets
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = self.get_from_config('name')
+        self.num_targets = self.get_from_config('num_targets')
 
     def dense_block(self, input_tensor, filters, block_size, name):
         """ Dense block which is used as a build block of densenet model.
