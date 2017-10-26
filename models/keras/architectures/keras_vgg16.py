@@ -21,6 +21,7 @@ class KerasVGG16(KerasModel):
         self.config = kwargs.get('config', {})
         self.units = self.get_from_config('units', (512, 256))
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
+        self.num_targets = self.get_from_config('num_targets', 1)
         super().__init__(*args, **kwargs)
 
     def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
@@ -133,7 +134,8 @@ class KerasVGG16(KerasModel):
 
         block_F = self.classification_block(block_E, scope='ClassificationBlock')
 
-        output_tensor = Dense(1, activation='sigmoid',
+        output_tensor = Dense(self.num_targets,
+                              activation='sigmoid',
                               name='predictions')(block_F)
 
         return [input_tensor], [output_tensor]
