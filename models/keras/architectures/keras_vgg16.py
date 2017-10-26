@@ -19,6 +19,8 @@ class KerasVGG16(KerasModel):
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
         super().__init__(*args, **kwargs)
+        self.units = self.get_from_config('units', (512, 256))
+        self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
 
     def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
         """ Reduction block of type I for VGG16 architecture.
@@ -106,7 +108,7 @@ class KerasVGG16(KerasModel):
         - output tensor, keras tensor;
         """
         with tf.variable_scope(scope):
-            units_1, units_2 = units
+            units_1, units_2 = self.units
 
             layer = Flatten(name='flatten')(input_tensor)
             layer = Dense(units_1, activation='relu', name='fc1')(layer)
@@ -114,7 +116,7 @@ class KerasVGG16(KerasModel):
             layer = Dropout(dropout_rate)(layer)
             layer = Dense(units_2, activation='relu', name='fc2')(layer)
             layer = BatchNormalization(axis=-1)(layer)
-            layer = Dropout(dropout_rate)(layer)
+            layer = Dropout(self.dropout_rate)(layer)
         return layer
 
     def _build(self, units=(512, 256), dropout_rate=0.35, *args, **kwargs):
@@ -134,9 +136,7 @@ class KerasVGG16(KerasModel):
         block_D = self.reduction_block_II(block_C, 256, scope='Block_D')
         block_E = self.reduction_block_II(block_D, 256, scope='Block_E')
 
-        block_F = self.classification_block(block_E, units,
-                                            dropout_rate=dropout_rate,
-                                            scope='ClassificationBlock')
+        block_F = self.classification_block(block_E, scope='ClassificationBlock')
 
         output_tensor = Dense(1, activation='sigmoid',
                               name='predictions')(block_F)
