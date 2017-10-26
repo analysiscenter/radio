@@ -121,10 +121,6 @@ class KerasVGG16(KerasModel):
     def _build(self, *args, **kwargs):
         """ Build VGG16 model implemented in keras.
 
-        Args:
-        - units: tuple(int, int), number of units in first and second dense layers;
-        - dropout_rate: float, probability of dropout;
-
         Returns:
         - tuple([*input_nodes], [*output_nodes]);
         """
