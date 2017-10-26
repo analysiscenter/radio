@@ -105,7 +105,7 @@ def bn_conv3d(input_tensor, filters, kernel_size, name,
                                          strides=strides,
                                          use_bias=use_bias,
                                          name='conv3d',
-                                         padding=padding
+                                         padding=padding,
                                          kernel_initializer=init_fn)
 
         output_tensor = tf.layers.batch_normalization(output_tensor, axis=-1,
