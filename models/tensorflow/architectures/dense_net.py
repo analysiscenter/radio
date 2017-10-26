@@ -130,4 +130,6 @@ class TFDenseNet(TFModel3D):
 
         y_pred = tf.identity(z, name='y_pred')
 
-        return input_tensor, y_true, y_pred
+        self.store_to_attr('y', y_true)
+        self.store_to_attr('x', input_tensor)
+        self.store_to_attr('y_pred', y_pred)
