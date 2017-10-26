@@ -15,7 +15,7 @@ class TFResNet(TFModel3D):
     https://arxiv.org/pdf/1512.03385v1.pdf
     """
 
-    def __init__(self, name, num_targets=1, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_targets = self.get_from_config('num_targets', 1)
 
