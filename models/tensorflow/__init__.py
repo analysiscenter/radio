@@ -1,1 +1,2 @@
-from .tf_model import TFModel, restore_nodes
+from .tf_model import TFModel3D
+from .architectures import TFDenseNet, TFResNet, TFDilatedVnet
