@@ -22,7 +22,6 @@ class KerasResNet50(KerasModel):
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
         self.num_targets = self.get_from_config('num_targets', 1)
         self.units = self.get_from_config('units', (256, 128))
-
         super().__init__(*args, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
