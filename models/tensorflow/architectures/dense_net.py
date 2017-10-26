@@ -8,7 +8,11 @@ from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d, global_average_pool3d
 
 
 class TFDenseNet(TFModel):
-    """ This class implements 3D DenseNet architecture via tensorflow. """
+    """ This class implements 3D DenseNet architecture via tensorflow.
+
+    Full description of 2D can be downloaded here:
+    https://arxiv.org/pdf/1608.06993v2.pdf
+    """
 
     def __init__(self, name, num_targets=1, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
