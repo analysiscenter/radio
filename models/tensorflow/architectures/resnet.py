@@ -4,11 +4,11 @@
 """ Contains TFResNet model class. """
 
 import tensorflow as tf
-from ..tf_model import TFModel
+from ..tf_model import TFModel3D
 from ..layers import conv3d, bn_conv3d, global_average_pool3d
 
 
-class TFResNet(TFModel):
+class TFResNet(TFModel3D):
     """ This class implements 3D ResNet architecture via tensorflow. """
 
     def __init__(self, name, num_targets=1, *args, **kwargs):
