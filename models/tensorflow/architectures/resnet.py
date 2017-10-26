@@ -17,7 +17,6 @@ class TFResNet(TFModel3D):
 
     def __init__(self, name, num_targets=1, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.name = self.get_from_config('name')
         self.num_targets = self.get_from_config('num_targets', 1)
 
     def identity_block(self, input_tensor, kernel_size, filters, name):
