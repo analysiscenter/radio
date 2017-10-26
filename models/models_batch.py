@@ -120,6 +120,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         Returns:
         - dict {'x': images_array, 'y': y_regression_array}
 
+        TODO Test this method;
         XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
 
