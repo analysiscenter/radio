@@ -69,7 +69,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             x = x[:, np.newaxis, ...]
         return x
 
-    def unpack_seg(self, dim_ordering='channels_last'):
+    def unpack_seg(self, model, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for segmentation task.
 
         Args:
