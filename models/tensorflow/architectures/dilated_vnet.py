@@ -217,4 +217,6 @@ class TFDilatedVnet(TFModel3D):
                            activation=tf.nn.sigmoid, padding='same',
                            is_training=self.is_training)
 
-        return input_tensor, y_true, y_pred
+        self.store_to_attr('y', y_true)
+        self.store_to_attr('x', input_tensor)
+        self.store_to_attr('y_pred', y_pred)
