@@ -18,10 +18,12 @@ class KerasResNet50(KerasModel):
 
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
-        super().__init__(*args, **kwargs)
+        self.config = kwargs.get('config', {})
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
         self.num_targets = self.get_from_config('num_targets', 1)
         self.units = self.get_from_config('units', (256, 128))
+
+        super().__init__(*args, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
