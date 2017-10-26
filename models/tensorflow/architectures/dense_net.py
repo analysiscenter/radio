@@ -15,7 +15,7 @@ class TFDenseNet(TFModel3D):
     """
 
     def __init__(self, name, num_targets=1, *args, **kwargs):
-        super().__init__(name, *args, **kwargs)
+        super().__init__(name=name, *args, **kwargs)
         self.num_targets = num_targets
 
     def dense_block(self, input_tensor, filters, block_size, name):
