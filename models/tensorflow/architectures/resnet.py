@@ -77,7 +77,7 @@ class TFResNet(TFModel3D):
             output_tensor = tf.nn.relu(output_tensor)
         return output_tensor
 
-    def _model(self):
+    def _build(self, *args, **kwargs):
         """ Build renset model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='input')
         y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='y_true')
