@@ -9,7 +9,7 @@ import json
 import numpy as np
 import tensorflow as tf
 
-from ..dataset.models.tf import TFModel
+from ...dataset.models.tf import TFModel
 
 
 class TFModel3D(TFModel):
