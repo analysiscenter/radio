@@ -3,6 +3,7 @@
 import os
 import functools
 import shutil
+import pandas as pd
 import keras
 from keras.models import Model
 from ...dataset.dataset.models import BaseModel
