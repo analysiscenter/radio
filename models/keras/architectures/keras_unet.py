@@ -23,7 +23,7 @@ class KerasUnet(KerasModel):
     """ KerasUnet model for 3D scans implemented in keras. """
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
-        super().__init__(name, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def bottleneck_block(self, input_tensor, filters, scope, padding='same'):
         """ Apply bottleneck block transform to input tensor. """
