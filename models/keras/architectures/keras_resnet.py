@@ -156,11 +156,13 @@ class KerasResNet50(KerasModel):
         x = self.conv_block(x, 3, [16, 16, 64], stage=2, block='a', strides=(1, 1, 1))
         x = self.identity_block(x, 3, [16, 16, 64], stage=2, block='b')
         x = self.identity_block(x, 3, [16, 16, 64], stage=2, block='c')
+        x = Dropout(rate=self.dropout_rate)(x)
 
         x = self.conv_block(x, 3, [32, 32, 128], stage=3, block='a')
         x = self.identity_block(x, 3, [32, 32, 128], stage=3, block='b')
         x = self.identity_block(x, 3, [32, 32, 128], stage=3, block='c')
         x = self.identity_block(x, 3, [32, 32, 128], stage=3, block='d')
+        x = Dropout(rate=self.dropout_rate)(x)
 
         x = self.conv_block(x, 3, [64, 64, 256], stage=4, block='a')
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='b')
@@ -168,6 +170,7 @@ class KerasResNet50(KerasModel):
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='d')
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='e')
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='f')
+        x = Dropout(rate=self.dropout_rate)(x)
 
         x = self.conv_block(x, 3, [128, 128, 512], stage=5, block='a', strides=(2, 2, 2))
         x = self.identity_block(x, 3, [128, 128, 512], stage=5, block='b')
@@ -176,7 +179,7 @@ class KerasResNet50(KerasModel):
         y = Flatten()(x)
 
         y = Dense(units_1, activation='relu')(y)
-        y = Dropout(rate=dropout_rate)(y)
+        y = Dropout(rate=self.dropout_rate)(y)
 
         y = BatchNormalization(axis=-1)(y)
         y = Dense(units_2, activation='relu')(y)
