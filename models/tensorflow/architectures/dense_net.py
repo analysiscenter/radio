@@ -7,7 +7,7 @@ from ..tf_model import TFModel
 from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d, global_average_pool3d
 
 
-class TFDenseNet(TFModel):
+class TFDenseNet(TFModel3D):
     """ This class implements 3D DenseNet architecture via tensorflow.
 
     Full description of 2D can be downloaded here:
