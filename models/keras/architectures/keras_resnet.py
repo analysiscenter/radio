@@ -181,6 +181,6 @@ class KerasResNet50(KerasModel):
         y = BatchNormalization(axis=-1)(y)
         y = Dense(units_2, activation='relu')(y)
 
-        output_layer = Dense(1, activation='sigmoid', name='output')(y)
+        output_layer = Dense(self.num_targets, activation='sigmoid', name='output')(y)
 
         return [input_tensor], [output_layer]
