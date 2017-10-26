@@ -18,9 +18,10 @@ class KerasVGG16(KerasModel):
 
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
-        super().__init__(*args, **kwargs)
+        self.config = kwargs.get('config', {})
         self.units = self.get_from_config('units', (512, 256))
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
+        super().__init__(*args, **kwargs)
 
     def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
         """ Reduction block of type I for VGG16 architecture.
