@@ -9,7 +9,11 @@ from ..layers import conv3d, bn_conv3d, global_average_pool3d
 
 
 class TFResNet(TFModel3D):
-    """ This class implements 3D ResNet architecture via tensorflow. """
+    """ This class implements 3D ResNet architecture via tensorflow.
+
+    Full description of similar 2D model architecture can be downloaded from here:
+    https://arxiv.org/pdf/1512.03385v1.pdf
+    """
 
     def __init__(self, name, num_targets=1, *args, **kwargs):
         super().__init__(name, *args, **kwargs)
