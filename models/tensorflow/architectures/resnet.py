@@ -18,6 +18,7 @@ class TFResNet(TFModel3D):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_targets = self.get_from_config('num_targets', 1)
+        self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
 
     def identity_block(self, input_tensor, kernel_size, filters, name):
         """ The identity block is the block that has no conv layer at shortcut. """
@@ -91,13 +92,13 @@ class TFResNet(TFModel3D):
         x = self.conv_block(x, (3, 3, 3), [16, 16, 32], name='conv_1A', strides=(1, 1, 1))
         x = self.identity_block(x, (3, 3, 3), [16, 16, 32], name='identity_1B')
         x = self.identity_block(x, (3, 3, 3), [16, 16, 32], name='identity_1C')
-        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
+        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
 
         x = self.conv_block(x, (3, 3, 3), [24, 24, 64], name='conv_2A')
         x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2B')
         x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2C')
         x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2D')
-        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
+        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
 
         x = self.conv_block(x, (3, 3, 3), [48, 48, 128], name='conv_3A')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3B')
@@ -106,7 +107,7 @@ class TFResNet(TFModel3D):
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3D')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3E')
         x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3F')
-        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
+        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
 
         x = self.conv_block(x, (3, 3, 3), [64, 64, 196], name='conv_4A')
         x = self.identity_block(x, (3, 3, 3), [64, 64, 196], name='identity_4B')
