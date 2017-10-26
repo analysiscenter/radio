@@ -19,6 +19,8 @@ class KerasResNet50(KerasModel):
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
         super().__init__(*args, **kwargs)
+        self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
+        self.num_targets = self.get_from_config('num_targets', 1)
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
@@ -144,8 +146,8 @@ class KerasResNet50(KerasModel):
         units_1, units_2 = units
 
         input_tensor = Input(shape=(32, 64, 64, 1))
-        x = Conv3D(filters=32, kernel_size=(7, 3, 3),
-                   strides=(2, 2, 2), name='initial_conv', padding='same',
+        x = Conv3D(filters=32, kernel_size=(5, 3, 3),
+                   strides=(1, 2, 2), name='initial_conv', padding='same',
                    use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
 
         x = BatchNormalization(axis=4, name='initial_batch_norm')(x)
