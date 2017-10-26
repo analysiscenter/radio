@@ -6,7 +6,7 @@ from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d
 from ..utils import repeat_tensor
 
 
-class TFDilatedVnet(TFModel):
+class TFDilatedVnet(TFModel3D):
 
     def upsampling3d(self, input_tensor, times, name):
         """ Apply 3D upsampling operation to input tensor.
