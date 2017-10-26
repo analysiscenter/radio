@@ -21,6 +21,7 @@ class KerasResNet50(KerasModel):
         super().__init__(*args, **kwargs)
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
         self.num_targets = self.get_from_config('num_targets', 1)
+        self.units = self.get_from_config('units', (256, 128))
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
@@ -136,14 +137,10 @@ class KerasResNet50(KerasModel):
     def _build(self, *args, **kwargs):
         """ Build resnet50 model implemented in keras.
 
-        Args:
-        - input_tensor: keras Input layer;
-        - dropout_rate: float, dropout_rate for dense layers;
-
         Returns:
         - tuple([*input_nodes], [*output_nodes]);
         """
-        units_1, units_2 = units
+        units_1, units_2 = self.units
 
         input_tensor = Input(shape=(32, 64, 64, 1))
         x = Conv3D(filters=32, kernel_size=(5, 3, 3),
