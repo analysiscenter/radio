@@ -45,7 +45,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
     """
 
-    def unpack_component(self, model, component, dim_ordering):
+    def unpack_component(batch, model, component, dim_ordering):
         """ Basic way for unpacking 'images' or 'masks' from batch.
 
         Args:
@@ -62,14 +62,14 @@ class CTImagesModels(CTImagesMaskedBatch):
         """
         if component not in ('masks', 'images'):
             raise AttributeError("Component must be 'images' or 'masks'")
-        x = np.stack([self.get(i, component) for i in range(len(self))])
+        x = np.stack([batch.get(i, component) for i in range(len(batch))])
         if dim_ordering == 'channels_last':
             x = x[..., np.newaxis]
         elif dim_ordering == 'channels_first':
             x = x[:, np.newaxis, ...]
         return x
 
-    def unpack_seg(self, model, dim_ordering='channels_last'):
+    def unpack_seg(batch, model, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for segmentation task.
 
         Args:
@@ -83,10 +83,10 @@ class CTImagesModels(CTImagesMaskedBatch):
         XXX 'dim_ordering' argument reflects where to put '1'
         for channels dimension both for images and masks.
         """
-        return {'feed_dict': {'x': self.unpack_component(model, 'images', dim_ordering),
-                              'y': self.unpack_component(model, 'masks', dim_ordering)}}
+        return {'feed_dict': {'x': batch.unpack_component(model, 'images', dim_ordering),
+                              'y': batch.unpack_component(model, 'masks', dim_ordering)}}
 
-    def unpack_clf(self, model, threshold=10, dim_ordering='channels_last'):
+    def unpack_clf(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for classification task.
 
         Args:
@@ -101,13 +101,13 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
-        masks_labels = np.asarray([self.get(i, 'masks').sum() > threshold
-                                   for i in range(len(self))], dtype=np.int)
+        masks_labels = np.asarray([batch.get(i, 'masks').sum() > threshold
+                                   for i in range(len(batch))], dtype=np.int)
 
-        return {'feed_dict': {'x': self.unpack_component(model, 'images', dim_ordering),
+        return {'feed_dict': {'x': batch.unpack_component(model, 'images', dim_ordering),
                               'y': masks_labels}}
 
-    def unpack_reg(self, model, threshold=10, dim_ordering='channels_last'):
+    def unpack_reg(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
 
         Args:
