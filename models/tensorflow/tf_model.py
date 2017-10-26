@@ -14,3 +14,4 @@ from ...dataset.dataset.models.tf import TFModel
 
 class TFModel3D(TFModel):
     """ Base class for all tensorflow models. """
+    pass
