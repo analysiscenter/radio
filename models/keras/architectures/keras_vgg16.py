@@ -18,7 +18,7 @@ class KerasVGG16(KerasModel):
 
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
-        super().__init__(name, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
         """ Reduction block of type I for VGG16 architecture.
