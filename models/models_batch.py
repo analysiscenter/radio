@@ -20,6 +20,7 @@ class CTImagesModels(CTImagesMaskedBatch):
 
     Unpack methods:
     - unpack_component: unpack batch component(component can be 'masks' or 'images');
+
     - unpack_seg: unpack batch into dictionary suitable for segmentation neural networks;
       Ouput dictionary looks like:
       {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
@@ -34,6 +35,14 @@ class CTImagesModels(CTImagesMaskedBatch):
 
        'x' contains batch of source crops, 'y' contains batch of 7-dim vectors
        with probabilities of cancer, sizes and centers;
+
+    - unpack_clf: unpack batch into dictionary suitable for classification neural networks;
+      Output dictionary looks like:
+      {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
+       'y': ndarray(batch_size, 1)}
+
+       'x' contains batch of source crops, 'y' contains batch of 1-dim vectors
+       with 0 or 1;
 
     """
 
