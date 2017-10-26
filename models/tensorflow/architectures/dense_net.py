@@ -3,7 +3,7 @@
 """ Contains DenseNet model class. """
 
 import tensorflow as tf
-from ..tf_model import TFModel
+from ..tf_model import TFModel3D
 from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d, global_average_pool3d
 
 
