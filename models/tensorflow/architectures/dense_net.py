@@ -17,6 +17,7 @@ class TFDenseNet(TFModel3D):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.num_targets = self.get_from_config('num_targets', 1)
+        self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
 
     def dense_block(self, input_tensor, filters, block_size, name):
         """ Dense block which is used as a build block of densenet model.
@@ -93,7 +94,7 @@ class TFDenseNet(TFModel3D):
                                                         name='averagepool3d_2_2')
         return output_tensor
 
-    def _build(self):
+    def _build(self, *args, **kwargs):
         """ Build densenet model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
                                       dtype=tf.float32, name='input')
@@ -106,19 +107,19 @@ class TFDenseNet(TFModel3D):
         x = tf.layers.max_pooling3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
                                     padding=padding, name='maxpool3d')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
+        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
         x = self.transition_layer(x, filters=32, name='transition_layer_1')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
+        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=12, name='dense_block_2')
         x = self.transition_layer(x, filters=32, name='transition_layer_2')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
+        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_3')
         x = self.transition_layer(x, filters=32, name='transition_layer_3')
 
-        x = tf.layers.dropout(x, rate=0.35, training=self.is_training)
+        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=32, name='dense_block_4')
         x = self.transition_layer(x, filters=32, name='transition_layer_4')
 
