@@ -16,7 +16,7 @@ from ..keras_model import KerasModel
 class KerasResNet50(KerasModel):
     """ ResNet50 model for 3D scans implemented in keras. """
 
-    def __init__(self, name, dropout_rate=0.3, **kwargs):
+    def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
         super().__init__(name, dropout_rate=dropout_rate, **kwargs)
 
