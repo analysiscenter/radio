@@ -80,7 +80,7 @@ class TFResNet(TFModel3D):
     def _build(self, *args, **kwargs):
         """ Build renset model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='x')
-        y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='y')
+        y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='y_true')
 
         x = bn_conv3d(input_tensor, filters=32, kernel_size=(7, 3, 3),
                       name='initial_conv', padding='same',
@@ -128,4 +128,6 @@ class TFResNet(TFModel3D):
 
         y_pred = tf.identity(z, name='y_pred')
 
-        return input_tensor, y_true, y_pred
+        self.store_to_attr('y', y_true)
+        self.store_to_attr('x', input_tensor)
+        self.store_to_attr('y_pred', y_pred)
