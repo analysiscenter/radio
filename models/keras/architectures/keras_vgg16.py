@@ -89,7 +89,6 @@ class KerasVGG16(KerasModel):
             max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2))(conv3)
         return max_pool
 
-
     def classification_block(self, input_tensor, scope='ClassificationBlock'):
         """ Classification block of VGG16 architecture.
 
