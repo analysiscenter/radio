@@ -89,8 +89,7 @@ class KerasVGG16(KerasModel):
         return max_pool
 
 
-    def classification_block(self, input_tensor, units=(512, 256),
-                             dropout_rate=0.35, scope='ClassificationBlock'):
+    def classification_block(self, input_tensor, scope='ClassificationBlock'):
         """ Classification block of VGG16 architecture.
 
         This block consists of flatten operation applied to input_tensor.
