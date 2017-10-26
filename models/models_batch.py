@@ -9,7 +9,6 @@ from numba import njit
 from IPython.display import clear_output
 from ..preprocessing import CTImagesMaskedBatch
 from ..dataset import action, Batch
-from ..dataset import model as batch_model
 
 from .utils import nodules_sets_overlap_jit, create_mask_reg
 
