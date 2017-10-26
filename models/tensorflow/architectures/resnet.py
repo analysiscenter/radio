@@ -16,9 +16,10 @@ class TFResNet(TFModel3D):
     """
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        self.config = kwargs.get('config', {})
         self.num_targets = self.get_from_config('num_targets', 1)
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
+        super().__init__(*args, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, name):
         """ The identity block is the block that has no conv layer at shortcut. """
