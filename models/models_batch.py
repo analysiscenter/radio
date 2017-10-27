@@ -125,17 +125,25 @@ class CTImagesModels(CTImagesMaskedBatch):
         """
 
         nods = self.nodules
-        nodule_sizes = (nods.nodule_size / self.spacing[nods.patient_pos, :]
-                        / self.images_shape[nods.patient_pos, :])
-
-        nodule_centers = (nods.nodule_center / self.spacing[nods.patient_pos, :]
-                          / self.images_shape[nods.patient_pos, :])
 
         sizes = np.zeros(shape=(len(self), 3), dtype=np.float)
         centers = np.zeros(shape=(len(self), 3), dtype=np.float)
 
-        sizes[nods.patient_pos, :] = nodule_sizes
-        centers[nods.patient_pos, :] = nodule_centers
+        for patient_pos, _ in enumerate(self.indices):
+            pat_nodules = nods[nods.patient_pos == patient_pos]
+            mask_nod_indices = pat_nodules.nodule_size.max(axis=1).argmax()
+
+            if len(pat_nodules) == 0:
+                continue
+
+            nodule_sizes = (pat_nodules.nodule_size / self.spacing[patient_pos, :]
+                            / self.images_shape[patient_pos, :])
+
+            nodule_centers = (pat_nodules.nodule_center / self.spacing[patient_pos, :]
+                              / self.images_shape[patient_pos, :])
+
+            sizes[patient_pos, :] = nodule_sizes[mask_nod_indices, :]
+            centers[patient_pos, :] = nodule_centers[mask_nod_indices, :]
 
         x, labels = self.unpack_clf(threshold, dim_ordering)
         labels = np.expand_dims(labels, axis=1)
