@@ -124,28 +124,28 @@ class CTImagesModels(CTImagesMaskedBatch):
         XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
 
-        nods = self.nodules
+        nods = batch.nodules
 
-        sizes = np.zeros(shape=(len(self), 3), dtype=np.float)
-        centers = np.zeros(shape=(len(self), 3), dtype=np.float)
+        sizes = np.zeros(shape=(len(batch), 3), dtype=np.float)
+        centers = np.zeros(shape=(len(batch), 3), dtype=np.float)
 
-        for patient_pos, _ in enumerate(self.indices):
+        for patient_pos, _ in enumerate(batch.indices):
             pat_nodules = nods[nods.patient_pos == patient_pos]
             mask_nod_indices = pat_nodules.nodule_size.max(axis=1).argmax()
 
             if len(pat_nodules) == 0:
                 continue
 
-            nodule_sizes = (pat_nodules.nodule_size / self.spacing[patient_pos, :]
-                            / self.images_shape[patient_pos, :])
+            nodule_sizes = (pat_nodules.nodule_size / batch.spacing[patient_pos, :]
+                            / batch.images_shape[patient_pos, :])
 
-            nodule_centers = (pat_nodules.nodule_center / self.spacing[patient_pos, :]
-                              / self.images_shape[patient_pos, :])
+            nodule_centers = (pat_nodules.nodule_center / batch.spacing[patient_pos, :]
+                              / batch.images_shape[patient_pos, :])
 
             sizes[patient_pos, :] = nodule_sizes[mask_nod_indices, :]
             centers[patient_pos, :] = nodule_centers[mask_nod_indices, :]
 
-        x, labels = self.unpack_clf(threshold, dim_ordering)
+        x, labels = batch.unpack_clf(threshold, dim_ordering)
         labels = np.expand_dims(labels, axis=1)
         y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
 
