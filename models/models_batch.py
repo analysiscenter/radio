@@ -105,7 +105,7 @@ class CTImagesModels(CTImagesMaskedBatch):
                                    for i in range(len(batch))], dtype=np.int)
 
         return {'feed_dict': {'x': batch.unpack_component(model, 'images', dim_ordering),
-                              'y': masks_labels}}
+                              'y': masks_labels[:, np.newaxis]}}
 
     def unpack_reg(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
