@@ -15,9 +15,9 @@ def get_initializer(initializer):
     - initializer;
     """
     kenel_init_fn = None
-    if kernel_init == 'xavier':
+    if initializer == 'xavier':
         kernel_init_fn = tf.contrib.layers.xavier_initializer
-    elif kernel_init == 'normal':
+    elif initializer == 'normal':
         kernel_init_fn = tf.random_normal_initializer
     else:
         raise ValueError("Argument kernel_init must have 'str' type " +
