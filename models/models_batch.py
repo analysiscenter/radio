@@ -134,8 +134,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         sizes = np.zeros(shape=(len(self), 3), dtype=np.float)
         centers = np.zeros(shape=(len(self), 3), dtype=np.float)
 
-        sizes[self.nodules.patient_pos, :] = nodule_sizes
-        centers[self.nodules.patient_pos, :] = nodule_centers
+        sizes[nods.patient_pos, :] = nodule_sizes
+        centers[nods.patient_pos, :] = nodule_centers
 
         x, labels = self.unpack_clf(threshold, dim_ordering)
         labels = np.expand_dims(labels, axis=1)
