@@ -100,7 +100,7 @@ class TFDenseNet(TFModel3D):
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
                                       dtype=tf.float32, name='input')
 
-        y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='y_true')
+        y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='targets')
 
         x = conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
                    padding='same', name='initial_convolution', is_training=self.is_training)
@@ -129,7 +129,7 @@ class TFDenseNet(TFModel3D):
         z = tf.layers.dense(z, units=self.num_targets, name='dense32')
         z = tf.nn.sigmoid(z)
 
-        y_pred = tf.identity(z, name='y_pred')
+        y_pred = tf.identity(z, name='predictions')
 
         self.store_to_attr('y', y_true)
         self.store_to_attr('x', input_tensor)
