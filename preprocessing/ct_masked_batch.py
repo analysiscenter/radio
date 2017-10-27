@@ -872,10 +872,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         into 'masks' component of the current batch and returns it.
 
         Parameters
-    ----------
-        - model_name: str, name of model;
-        - strides: tuple(int, int, int) strides for patching operation;
-        - batch_size: int, number of patches to feed in model in one iteration;
+        ----------
+        model_name : str, name of model;
+        strides : tuple(int, int, int) strides for patching operation;
+        batch_size : int, number of patches to feed in model in one iteration;
         - y_component: str, name of y component, can be 'masks' or labels;
         - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last'
 

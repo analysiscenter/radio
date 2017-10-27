@@ -1294,6 +1294,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def load_from_patches(self, patches, stride, scan_shape, data_attr='images'):
         """ Get skyscraper from 4d-array of patches, put it to `data_attr` component in batch.
+        
+        Let reconstruct original skyscraper from patches (if same arguments are passed)
 
         Parameters
         ----------
@@ -1308,9 +1310,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Note
         ----
-        If stride != patch.shape(), averaging over overlapped regions is used.
+        If stride != patch.shape(), averaging of overlapped regions is used.
         `scan_shape`, patches.shape(), `stride` are used to infer the number of items
-        in new skyscraper.
+        in new skyscraper; If patches were padded, padding is removed for skyscraper.
 
         """
         scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
@@ -1347,19 +1349,19 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
-        """ Normalize hu-densities to interval [0, 255].
+        """ Normalize HU-densities to interval [0, 255].
 
-            Trim hus outside range [min_hu, max_hu], then scale to [0, 255].
+        Trim HU that are outside range [min_hu, max_hu], then scale to [0, 255].
 
         Parameters
         ----------
-        - min_hu: int, minimum value for hu that will be used as trimming threshold.
-        - max_hu: int, maximum value for hu that will be used as trimming threshold.
+        min_hu : int
+                 minimum value for hu that will be used as trimming threshold.
+        max_hu : int
+                 maximum value for hu that will be used as trimming threshold.
 
-        Returns:
-        - self
-
-        Example:
+        Example
+        -------
         >>> batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
         """
         # trimming and scaling to [0, 1]
@@ -1374,13 +1376,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def flip(self):    # pylint: disable=no-self-use
-        """
-        flip each patient
-            i.e. invert the order of slices for each patient
-            does not change the order of patients
-            changes self
+        """ Invert the order of slices for each patient
 
-        Example:
+        Example
+        -------
         >>> batch = batch.flip()
         """
         return flip_patient_numba
@@ -1390,12 +1389,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-            person_number - can be either number of person in the batch
-                or index of the person whose axial slice we need
-            slice_height: e.g. 0.7 means that we take slice with number
-                int(0.7 * number of slices for person)
+        person_number : str or int
+                        Can be either index (int) of person in the batch
+                        or patient_id (str)
+        slice_height :  float
+                        scaled from 0 to 1 number of slice.
+                        e.g. 0.7 means that we take slice with number
+                        int(0.7 * number of slices for person)
 
-        example: patch = batch.get_axial_slice(5, 0.6)
+        Example
+        -------
+         patch = batch.get_axial_slice(5, 0.6)
                  patch = batch.get_axial_slice(self.index[5], 0.6)
                  # here self.index[5] usually smth like 'a1de03fz29kf6h2'
 
