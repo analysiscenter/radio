@@ -47,6 +47,6 @@ class TFModel3D(TFModel):
                                                          train_output[0]))
 
         if self._show_metrics:
-            print(self._metrics_values.iloc[-1, :])
+            print(self.train_metrics.iloc[-1, :])
             clear_output(wait=True)
         return train_output
