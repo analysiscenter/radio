@@ -131,10 +131,11 @@ class CTImagesModels(CTImagesMaskedBatch):
 
         for patient_pos, _ in enumerate(batch.indices):
             pat_nodules = nods[nods.patient_pos == patient_pos]
-            mask_nod_indices = pat_nodules.nodule_size.max(axis=1).argmax()
 
             if len(pat_nodules) == 0:
                 continue
+
+            mask_nod_indices = pat_nodules.nodule_size.max(axis=1).argmax()
 
             nodule_sizes = (pat_nodules.nodule_size / batch.spacing[patient_pos, :]
                             / batch.images_shape[patient_pos, :])
