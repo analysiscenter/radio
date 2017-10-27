@@ -18,7 +18,8 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
             If res_factor is not supplied, infer resize factor from out_patient.shape.
             O/w, use res_factor for resize and then crop/pad resized array to out_patient.shape.
 
-    Args
+    Parameters
+    ----------
         patient: ndarray with patient data
         out_patient: ndarray, in which patient data after resize should be put
         res: out array for the whole batch. Not needed here, will be used later by post-func

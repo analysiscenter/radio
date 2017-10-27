@@ -1,19 +1,22 @@
-""" Contains auxiliary functions for calculating crop parameters """
+""" Contains auxiliary functions for calculating crop parameters. """
+
 import numpy as np
 from numba import njit
 
 
 def make_central_crop(image, crop_size):
-    """ Make crop from from center of 3D image;
-    This function returns crop from center of the source image(image argument)
-    with given size(crop_size argument).
+    """ Make a crop from center of 3D image of given crop_size.
 
-    Args:
-    - image: ndarray(l, k, j), source 3D image;
-    - crop_size: ndarray(3) or tuple(int, int, int) size of crop along three dimensions;
-
-    Returns:
-    - ndarray, 3D crop of source image;
+    Parameters
+    ----------
+    image :     ndarray 
+                3D image of shape `(dim1, dim2, dim3)`.
+    crop_size : ndarray or tuple 
+                Size of crop along three dimensions `(int, int, int)`
+    Returns
+    -------
+    ndarray
+            3D crop from image.
     """
     crop_size = np.asarray(crop_size)
     crop_halfsize = np.ceil(crop_size / 2).astype(np.int)
@@ -26,8 +29,16 @@ def make_central_crop(image, crop_size):
 
 @njit(nogil=True)
 def detect_black_border(masked_image):
-    """
-    returns number of black slices from top and bottom of 3d-scan
+    """ Get number of black (empty) slices from top and bottom of 3d-scan
+    
+    Parameters
+    ----------
+    masked_image : ndarray
+                   3D numpy array
+    Returns
+    -------
+    tuple
+         (int,int), numbers of empty slices on top and bottom by z-axis
     """
     n = masked_image.shape[0]
     x_l = 0
@@ -55,8 +66,21 @@ def detect_black_border(masked_image):
 
 @njit(nogil=True)
 def return_black_border_array(input_image, background=-2000):
-    """
-    return an array that contains black border
+    """ Get array with a black (empty) border.
+
+    Parameters
+    ----------
+    input_image : ndarray
+                  3D numpy array
+    background : int
+                 voxel's value for background color (air in case of CT).
+                 default is -2000, it is air in HU scale.
+    Returns
+    -------
+    ndarray
+            info with top and bottom number of black (empty) slices,
+            and mean value for non-empty part of scan.
+    
     """
     out_array = np.zeros((3, 3))
 
