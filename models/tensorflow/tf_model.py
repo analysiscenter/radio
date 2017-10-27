@@ -40,7 +40,7 @@ class TFModel3D(TFModel):
             _fetches = tuple()
         elif not isinstance(fetches, (tuple, list)):
             _fetches = (fetches, )
-        _fetches = ('y_pred', *fetches)
+        _fetches = ('y_pred', *_fetches)
         train_output = super().train(_fetches, feed_dict)
 
         self._metrics_values.append(self.compute_metrics(feed_dict['y'],
