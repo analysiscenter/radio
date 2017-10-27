@@ -173,7 +173,7 @@ class TFDilatedVnet(TFModel3D):
     def _build(self, *args, **kwargs):
         """ Build vnet with dilated convolutions model implemented in tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32)
-        y_true = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, 'targets')
+        y_true = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='targets')
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
         # block_A has shape (None, 32, 64, 64, 32), reduct_block_A has shape (None, 16, 32, 32, 32)
