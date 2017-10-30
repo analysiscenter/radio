@@ -94,22 +94,56 @@ class TFDilatedVnet(TFModel3D):
 
         Schematically this block can be represented like this:
         =======================================================================
-        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
-        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
-        => MaxPooling3D{pool_size}[2:2:2]
+                        Conv3D{1x1x1}[1:1:1](filters)
+                                    ||
+                                    \/
+                             BatchNormalization
+                                    ||
+                                    \/
+                                   ReLu
+                            --------||----------
+                           /                    \\
+                          /                      \\
+                         /                        \\
+                        /                          \\
+Conv3D{3x3x3}[1:1:1](filters * (1 - share)) Conv3D{3x3x3}[1:1:1](filters * share)
+            dilation_rate=(1, 1, 1)            dilation_rate=(2, 2, 2)
+                         \\                      /
+                          \\                    /
+                           \\                  /
+                            \\                /
+                             (----Concat------)
+                                    ||
+                                    \/
+                            BatchNormalization
+                                    ||
+                                    \/
+                                   ReLu
+                                    ||
+                                    \/
+                        MaxPooling3D{pool_size}[2:2:2]
         =======================================================================
 
-        Args:
-        - input_tensor: keras tensor, input tensor;
-        - filters: int, number of filters in first and second covnolutions;
-        - scope: str, name of scope for this reduction block;
-        - dilation: tuple(int, int, int), dilation rate along spatial axes;
-        - pool_size: tuple(int, int, int), size of pooling kernel along three axis;
-        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        filters : int
+            number of filters in first and second covnolutions.
+        scope : str
+            name of scope for this reduction block.
+        dilation : tuple(int, int, int)
+            dilation rate along spatial axes.
+        pool_size : tuple(int, int, int)
+            size of pooling kernel along three axis.
+        padding : str
+            padding mode for convolutions, can be 'same' or 'valid'.
 
-        Returns:
-        - Two tensorflow tensors: first corresponds to the output of concatenation
-        operation before max_pooling, second -- after max_pooling;
+        Returns
+        -------
+        tuple(tf.Tensor, tf.Tensor)
+            first tensor corresponds to the output of concatenation
+            operation before max_pooling, second -- after max_pooling.
         """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
