@@ -39,6 +39,39 @@ class TFResNet(TFModel3D):
     def identity_block(self, input_tensor, kernel_size, filters, name):
         """ The identity block is the block that has no conv layer at shortcut.
 
+        If kernel_size is (3, 3, 3) then
+        schematically this block can be represented like this:
+        =======================================================================
+                                   input_tensor _________
+                                        ||                \
+                                        \/                 \
+                            Conv3D{1x1x1}[1:1:1](filters1)  |
+                                        ||                  |
+                                        \/                  |
+                                 BatchNormalization         |
+                                        ||                  |
+                                       ReLu                 |
+                                        ||                  |
+                                        \/                  |
+                            Conv3D{3x3x3}[1:1:1](filters2)  |
+                                        ||                  |
+                                        \/                  |
+                                 BatchNormalization         |
+                                        ||                  |
+                                       ReLu                 |
+                                        ||                  |
+                                        \/                  |
+                            Conv3D{1x1x1}[1:1:1](filter3)   |
+                                        ||                  |
+                                        \/                  |
+                                 BatchNormalization         |
+                                        ||                  |
+                                        \/                  |
+                                       ( + )<---------------|
+                                        ||
+                                        \/
+                                        ReLu
+        =======================================================================
         Parameters
         ----------
         input_tensor : tf.Tensor
@@ -70,7 +103,7 @@ class TFResNet(TFModel3D):
 
             x = bn_conv3d(x, filters3, (1, 1, 1),
                           name='bn_conv_c', padding='same',
-                          activation=tf.nn.relu,
+                          activation=tf.nn.identity,
                           is_training=self.is_training)
 
             output_tensor = tf.add(x, input_tensor)
