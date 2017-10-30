@@ -25,13 +25,17 @@ class TFModel3D(TFModel):
         self._metrics = _metrics
         self._metrics_values = []
 
+    def refresh_metrics(self):
+        """ Refresh metrics values. """
+        self._metrics_values = []
+
     @property
     def train_metrics(self):
         """ Return pandas DataFrame containing train metrics. """
         return pd.DataFrame(self._metrics_values)
 
     def compute_metrics(self, y_true, y_pred):
-        """ Compute all metrics on train. """
+        """ Compute all attached metrics on train and return result. """
         return {metric.__name__: metric(y_true, y_pred)
                 for metric in self._metrics}
 
