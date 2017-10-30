@@ -8,11 +8,14 @@ def get_initializer(initializer):
 
     Returns normal initializer or xavier initializer.
 
-    Args:
-    - kernel_init: str, can be 'xavier' or 'normal' initializer for kernel;
+    Parameters
+    ----------
+    kernel_init : str
+        initializer tyep; can be 'xavier' or 'normal'.
 
-    Returns:
-    - initializer;
+    Returns
+    -------
+    tensorflow initializer.
     """
     kenel_init_fn = None
     if initializer == 'xavier':
@@ -26,12 +29,18 @@ def get_initializer(initializer):
 
 
 def selu(x):
-    """
-    selu activation function
-    Args:
-        input tensor x
-    Return:
-        selu(x)
+    """ Selu activation function.
+
+    Apply selu activation function to input tensor.
+
+    Parameters
+    ----------
+    x : tf.Tensor
+        input tensor.
+
+    Returns
+    -------
+    tf.Tensor
     """
     alpha = 1.6732632423543772848170429916717
     scale = 1.0507009873554804934193349852946
@@ -43,21 +52,31 @@ def conv3d(input_tensor, filters, kernel_size, name,
            use_bias=True, kernel_init='xavier', is_training=True):
     """ Apply 3D convolution operation to input tensor.
 
-    Args:
-    - input_tensor: tf.Variable, input tensor;
-    - filters: int, number of filters in the ouput tensor;
-    - kernel_size: tuple(int, int, int), size of kernel
-      of 3D convolution operation along 3 dimensions;
-    - name: str, name of the layer that will be used as an argument of tf.variable_scope;
-    - strides: tuple(int, int, int), size of strides along 3 dimensions;
-    - padding: str, padding mode, can be 'same' or 'valid';
-    - activation: tensorflow activation function that will be applied to
-    output tensor;
-    - use_bias: bool, whether use bias or not;
-    - kernel_init: str, can be 'xavier' or 'normal' initializer for kernel;
+    Parameters
+    ----------
+    input_tensor : tf.Tensor
+        input tensor for 3D-convolution.
+    filters : int
+        number of filters in the ouput tensor.
+    kernel_size : tuple(int, int, int)
+        size of kernel for 3D-convolution operation along 3 dimensions.
+    name : str
+        name of the layer that will be used as an argument of tf.variable_scope.
+    strides : tuple(int, int, int)
+        size of strides along 3 dimensions required by tf.layers.conv3d.
+    padding : str
+        padding mode, can be 'same' or 'valid'.
+    activation : tensorflow activation function
+        this function will be applied to output tensor.
+    use_bias : bool
+        whether use bias or not.
+    kernel_init : str
+        initializer for kernel, can be 'xavier' or 'normal'.
 
-    Returns:
-    - tf.Variable, output tensor;
+    Returns
+    -------
+    tf.Tensor
+        output tensor.
     """
     init_fn = get_initializer(kernel_init)
     with tf.variable_scope(name):
@@ -79,23 +98,33 @@ def bn_conv3d(input_tensor, filters, kernel_size, name,
               use_bias=False, kernel_init='xavier', is_training=True):
     """ Apply 3D convolution operation with batch normalization to input tensor.
 
-    Args:
-    - input_tensor: tf.Variable, input tensor;
-    - filters: int, number of filters in the ouput tensor;
-    - kernel_size: tuple(int, int, int), size of kernel
-      of 3D convolution operation along 3 dimensions;
-    - name: str, name of the layer that will be used as an argument of tf.variable_scope;
-    - strides: tuple(int, int, int), size of strides along 3 dimensions;
-    - padding: str, padding mode, can be 'same' or 'valid';
-    - activation: tensorflow activation function that will be applied to
-    output tensor;
-    - use_bias: bool, whether use bias or not;
-    - kernel_init: str, can be 'xavier' or 'normal' initializer for kernel;
-    - is_training: tf.Variable or bool, whether model is in training
-    state of prediction state;
+    Parameters
+    ----------
+    input_tensor : tf.Tensor
+        input tensor for 3D-convolution.
+    filters : int
+        number of filters in the ouput tensor.
+    kernel_size : tuple(int, int, int)
+        size of kernel for 3D-convolution operation along 3 dimensions.
+    name : str
+        name of the layer that will be used as an argument of tf.variable_scope.
+    strides : tuple(int, int, int)
+        size of strides along 3 dimensions required by tf.layers.conv3d.
+    padding : str
+        padding mode, can be 'same' or 'valid'.
+    activation : tensorflow activation function
+        this function will be applied to output tensor.
+    use_bias : bool
+        whether use bias or not.
+    kernel_init : str
+        initializer for kernel, can be 'xavier' or 'normal'.
+    is_training : tf.Tensor or bool
+        whether model is in training state of prediction state.
 
-    Returns:
-    - tf.Variable, output tensor;
+    Returns
+    -------
+    tf.Tensor
+        output tensor.
     """
     init_fn = get_initializer(kernel_init)
     with tf.variable_scope(name):
@@ -118,24 +147,37 @@ def bn_dilated_conv3d(input_tensor, filters,
                       kernel_size, name, activation=tf.nn.relu,
                       dilation=(1, 1, 1), padding='same',
                       is_training=True, kernel_init='xavier'):
-    """ Apply 3D convolution operation with batch normalization to input tensor.
+    """ Apply 3D-dilated-convolution operation with batch normalization to input tensor.
 
-    Args:
-    - input_tensor: tf.Variable, input tensor;
-    - filters: int, number of filters in the ouput tensor;
-    - kernel_size: tuple(int, int, int), size of kernel
-      of 3D convolution operation along 3 dimensions;
-    - name: str, name of the layer that will be used as an argument of tf.variable_scope;
-    - dilation: tuple(int, int, int), size of dilation along 3 dimensions;
-    - padding: str, padding mode, can be 'same' or 'valid';
-    - activation: tensorflow activation function that will be applied to
-    output tensor;
-    - kernel_init: str, can be 'xavier' or 'normal' initializer for kernel;
-    - is_training: tf.Variable or bool, whether model is in training
-    state of prediction state;
+    Parameters
+    ----------
+    input_tensor : tf.Tensor
+        input tensor for 3D-convolution.
+    filters : int
+        number of filters in the ouput tensor.
+    kernel_size : tuple(int, int, int)
+        size of kernel for 3D-convolution operation along 3 dimensions.
+    name : str
+        name of the layer that will be used as an argument of tf.variable_scope.
+    dilation : tuple(int, int, int)
+        dilation rate along 3 dimensions.
+    strides : tuple(int, int, int)
+        size of strides along 3 dimensions required by tf.layers.conv3d.
+    padding : str
+        padding mode, can be 'same' or 'valid'.
+    activation : tensorflow activation function
+        this function will be applied to output tensor.
+    use_bias : bool
+        whether use bias or not.
+    kernel_init : str
+        initializer for kernel, can be 'xavier' or 'normal'.
+    is_training : tf.Tensor or bool
+        whether model is in training state of prediction state.
 
-    Returns:
-    - tf.Variable, output tensor;
+    Returns
+    -------
+    tf.Tensor
+        output tensor.
     """
 
     in_filters = input_tensor.get_shape().as_list()[-1]
@@ -161,12 +203,17 @@ def bn_dilated_conv3d(input_tensor, filters,
 def global_average_pool3d(input_tensor, name):
     """ Apply global average pooling 3D operation to input tensor.
 
-    Args:
-    - input_tensor: tf.Variable, input tensor;
-    - name: str, name of layer that will be used as an argument of tf.variable_scope;
+    Parameters
+    ----------
+    input_tensor : tf.Tensor
+        input tensor.
+    name : str
+        name of layer that will be used as an argument of tf.variable_scope.
 
-    Returns:
-    - tf.Variable, output tensor;
+    Returns
+    -------
+    tf.Tensor
+        output tensor.
     """
     with tf.variable_scope(name):
         output_layer = tf.reduce_mean(input_tensor, axis=(1, 2, 3))
