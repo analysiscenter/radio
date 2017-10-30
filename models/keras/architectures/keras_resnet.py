@@ -96,7 +96,7 @@ class KerasResNet50(KerasModel):
             number of filters in first, second and third 3D-convolution operations.
         stage : int
             number of stage, on par with block argument used to derive names of inner layers.
-        - block: str
+        block : str
             block prefix, on par with stage argument used to derive names of inner layers.
 
         Returns
