@@ -38,15 +38,21 @@ class TFDenseNet(TFModel3D):
         => conv3D{3x3x3}[1:1:1](filters) => output_n
         =================================================================================
 
-        Args:
-        - input_tensor: tf.Variable, input_tensor;
-        - filters: int, number of filters in output tensor of each convolution layer;
-        - block_size: int, how many time repeat conv3d{1x1x1} => conv3d{3x3x3}
-        sequentially;
-        - name: str, name of the layer that will be used as an argument of tf.variable_scope;
+        Parameters
+        ----------
+        input_tensor : tf.Tensor
+            input_tensor.
+        filters : int
+            number of filters in output tensor of each convolution layer.
+        block_size : int
+            how many time repeat block conv3d{1x1x1} => conv3d{3x3x3} sequentially.
+        name : str
+            name of the layer that will be used as an argument of tf.variable_scope.
 
-        Returns:
-        - tf.Variable, output_tensor;
+        Returns
+        -------
+        tf.Tensor
+            output_tensor.
         """
         with tf.variable_scope(name):
             previous_input = tf.identity(input_tensor)
@@ -73,13 +79,19 @@ class TFDenseNet(TFModel3D):
     def transition_layer(self, input_tensor, filters, name):
         """ Transition layer which is used as a dimension reduction block in densenset model.
 
-        Args:
-        - input_tensor: tf.Variable, input tensor;
-        - filters: int, number of filters in output tensor;
-        - name: str, name of the layer that will be used as an argument of tf.variable_scope;
+        Parameters
+        ----------
+        input_tensor : tf.Tensor
+            input tensor.
+        filters : int
+            number of filters in output tensor, required by 3D-convolution operation.
+        name : str
+            name of the layer that will be used as an argument of tf.variable_scope.
 
-        Returns:
-        - tf.Variable, output tensor;
+        Returns
+        -------
+        tf.Tensor
+            output tensor.
         """
         with tf.variable_scope(name):
             output_tensor = bn_conv3d(input_tensor, filters=filters,
