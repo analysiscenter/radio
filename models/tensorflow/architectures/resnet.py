@@ -103,7 +103,7 @@ class TFResNet(TFModel3D):
 
             x = bn_conv3d(x, filters3, (1, 1, 1),
                           name='bn_conv_c', padding='same',
-                          activation=tf.nn.identity,
+                          activation=tf.identity,
                           is_training=self.is_training)
 
             output_tensor = tf.add(x, input_tensor)
