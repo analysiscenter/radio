@@ -13,6 +13,21 @@ class TFResNet(TFModel3D):
 
     Full description of similar 2D model architecture can be downloaded from here:
     https://arxiv.org/pdf/1512.03385v1.pdf
+
+    Attributes
+    ----------
+    config : dict
+        config dictionary from dataset pipeline
+        see configuring model section of dataset module
+        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+    name : str
+        name of the model.
+    units : tuple(int, int)
+        number of units in two final dense layers before tensor with predicitons.
+    num_targets : int
+        size of tensor with predicitons.
+    dropout_rate : float
+        probability of dropout.
     """
 
     def __init__(self, *args, **kwargs):
@@ -22,7 +37,24 @@ class TFResNet(TFModel3D):
         super().__init__(*args, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, name):
-        """ The identity block is the block that has no conv layer at shortcut. """
+        """ The identity block is the block that has no conv layer at shortcut.
+
+        Parameters
+        ----------
+        input_tensor : tf.Tensor
+            input tensor.
+        kernel_size : tuple(int, int, int)
+            size of kernel along three dimensions for middle convolution operation in block.
+        filters : tuple(int, int, int)
+            number for filters in first, second and third 3D-convolution operations.
+        name : str
+            name of block that will be used as argument of of tf.variable_scope.
+
+        Returns
+        -------
+        tf.Tensor
+            output tensor.
+        """
         filters1, filters2, filters3 = filters
 
         with tf.variable_scope(name):
@@ -47,11 +79,19 @@ class TFResNet(TFModel3D):
     def conv_block(self, input_tensor, kernel_size, filters, name, strides=(2, 2, 2)):
         """ Convolutional block that has a conv layer as shortcut.
 
-        Args:
-        - input_tensor: tf.Variable, input tensor;
-        - kernel_size: tuple(int, int, int), size of kernel
-        of 3D convolution along 3 dimension of the middle layer;
-        - filetrs: tuple(int, int, int)
+        Parameters
+        ----------
+        input_tensor : tf.Tensor
+            input tensor.
+        kernel_size : tuple(int, int, int)
+            size of kernel along three dimensions for middle convolution operation in block.
+        filters : tuple(int, int, int)
+            number of filters in first, second, and third 3D-convolution operations.
+
+        Returns
+        -------
+        tf.Tensor
+            output tensor.
         """
         filters1, filters2, filters3 = filters
 
