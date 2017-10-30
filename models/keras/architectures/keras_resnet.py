@@ -14,10 +14,32 @@ from ..keras_model import KerasModel
 
 
 class KerasResNet50(KerasModel):
-    """ ResNet50 model for 3D scans implemented in keras. """
+    """ ResNet50 model for 3D scans implemented in keras.
+
+    This class extends KerasModel class.
+
+    Contains description of three types of blocks:
+    'identity_block' and 'conv_block'. ResNet architercture is implemented inside
+    _build method using these blocks.
+
+    Attributes
+    ----------
+    config : dict
+        config dictionary from dataset pipeline
+        see configuring model section of dataset module
+        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+    name : str
+        name of the model.
+    units : tuple(int, int)
+        number of units in two final dense layers before tensor with predicitons.
+    num_targets : int
+        size of tensor with predicitons.
+    dropout_rate : float
+        probability of dropout.
+    """
 
     def __init__(self, *args, **kwargs):
-        """ Call __init__ of KerasModel. """
+        """ Call __init__ of KerasModel and add specific for KerasResNet50 attributes. """
         self.config = kwargs.get('config', {})
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
         self.num_targets = self.get_from_config('num_targets', 1)
