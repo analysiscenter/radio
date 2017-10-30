@@ -34,11 +34,6 @@ class TFModel3D(TFModel):
         """ Return pandas DataFrame containing train metrics. """
         return pd.DataFrame(self._train_metrics_values)
 
-    @property
-    def test_metrics(self):
-        """ Return pandas DataFrame containing test metrics. """
-        return pd.DataFrame(self._test_metrics_values)
-
     def compute_metrics(self, y_true, y_pred):
         """ Compute all attached metrics on train and return result. """
         return {metric.__name__: metric(y_true, y_pred)
