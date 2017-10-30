@@ -461,8 +461,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.asarray(samples + offset, dtype=np.int), sampled_indices
 
     @action
-    def sample_nodules(self, nodule_size, all_cancerous=False, batch_size=None, share=0.8,         # pylint: disable=too-many-locals, too-many-statements
-                       variance=None, mask_shape=None, histo=None):
+    def sample_nodules(self, nodule_size=(32, 64, 64), batch_size=20, share=0.8, variance=None,        # pylint: disable=too-many-locals, too-many-statements
+                       mask_shape=None, histo=None):
         """ Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
@@ -470,10 +470,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Args:
         - nodules_df: dataframe of csv file with information
             about nodules location;
-        - all_cancerous: if True, resulting batch will contain only cancerous
-            nodules. Arg batch_size in this case is not needed.
         - batch_size: number of nodules in the output batch. Must be supplied
-            whenever all_cancerous=False.
+            whenever share=0.0. If batch_size is None and share > 0, the size of
+            resulting batch will be set to (1 / share) * (number of cancerous nodules in a self)
         - nodule_size: size of nodule along axes.
             Must be list, tuple or ndarray(3, ) of integer type;
             (Note: using zyx ordering)
@@ -489,9 +488,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Return:
             A batch with cancerous and non-cancerous nodules in a proportion defined by
-                share with total batch_size nodules. If all_cancerous set to True, args
-                share and batch_size are ignored and resulting batch consists of all
-                cancerous nodules stored in batch.
+                share.
         """
         # make sure that nodules' info is fetched and args are OK
         if self.nodules is None:
@@ -506,17 +503,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                'Would be used no-scale-shift.')
                 variance = None
 
-        if not all_cancerous and batch_size is None:
-            raise ValueError('Either supply batch_size or set all_cancerous to True')
+        if share == 0.0 and batch_size is None:
+            raise ValueError('Either supply batch_size or set share to positive number')
 
         # pos of batch-items that correspond to crops
         crops_indices = np.zeros(0, dtype=np.int16)
 
+        # infer the number of cancerous nodules and the size of batch
+        batch_size = batch_size if batch_size is not None else 1.0 / share * self.num_nodules
+        cancer_n = int(share * batch_size)
+        batch_size = int(batch_size)
+        cancer_n = self.num_nodules if cancer_n > self.num_nodules else cancer_n
+
         # choose cancerous nodules' starting positions
         nodule_size = np.asarray(nodule_size, dtype=np.int)
-        batch_size = self.num_nodules if all_cancerous else batch_size
-        cancer_n = int(share * batch_size) if not all_cancerous else self.num_nodules
-        cancer_n = self.num_nodules if cancer_n > self.num_nodules else cancer_n
         if self.num_nodules == 0:
             cancer_nodules = np.zeros((0, 3))
         else:
@@ -594,22 +594,26 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return nodules_batch
 
     @action
-    def sample_dump_cancerous(self, dst, n_iters, nodule_size, variance):
-        """ Helper action that allows to sample and dump cancerous nodules from a batch.
-                Wraps actions sample_nodules and dump.
+    def sample_dump(self, dst, n_iters, nodule_size=(32, 64, 64), batch_size=20, share=0.8, **kwargs):
+        """ Helper action that performs actions sample_nodules and dump on the same
+                batch n_iters times. Can be used for fast creation of large datasets
+                of cancerous/non-cancerous crops.
+
         Args:
             dst: folder to dump nodules in.
-            n_iters: number of iterations to be performed on one batch. Coupled with
-                variance-arg, can be used for introducing variability in locations of
-                nodule-centers.
+            n_iters: number of iterations to be performed.
             nodule_size: shape of sampled nodules.
-            variance: seq of len=3 representing variance of nodules' locations along 3 axes.
+            batch_size: size of generated batches.
+            share: share of cancer nodules. See docstring of sample_nodules for more info
+                about possible combinations of parameters share and batch_size.
+            kwargs: additional arguments supplied into sample_nodules. See docstring
+                of sample_nodules for more info.
 
         Return:
             self.
         """
         for _ in range(n_iters):
-            nodules = self.sample_nodules(all_cancerous=True, nodule_size=nodule_size, variance=variance)
+            nodules = self.sample_nodules(batch_size=batch_size, nodule_size=nodule_size, share=share, **kwargs)
             nodules = nodules.dump(dst=dst)
 
         return self
