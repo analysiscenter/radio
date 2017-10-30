@@ -39,8 +39,7 @@ class TFResNet(TFModel3D):
     def identity_block(self, input_tensor, kernel_size, filters, name):
         """ The identity block is the block that has no conv layer at shortcut.
 
-        If kernel_size is (3, 3, 3) then
-        schematically this block can be represented like this:
+        Schematically this block can be represented like this:
         =======================================================================
                                    input_tensor ------------|
                                         ||                  |
@@ -53,7 +52,7 @@ class TFResNet(TFModel3D):
                                        ReLu                 |
                                         ||                  |
                                         \/                  |
-                            Conv3D{3x3x3}[1:1:1](filters2)  |
+                      Conv3D{kernel_size}[1:1:1](filters2)  |
                                         ||                  |
                                         \/                  |
                                  BatchNormalization         |
