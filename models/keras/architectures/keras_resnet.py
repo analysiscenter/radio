@@ -20,7 +20,8 @@ class KerasResNet50(KerasModel):
 
     Contains description of three types of blocks:
     'identity_block' and 'conv_block'. ResNet architercture is implemented inside
-    _build method using these blocks.
+    _build method using these blocks. Full description of similar 2D model
+    architecture can be downloaded from here: https://arxiv.org/pdf/1512.03385v1.pdf
 
     Attributes
     ----------
