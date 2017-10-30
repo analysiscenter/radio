@@ -26,7 +26,24 @@ class KerasUnet(KerasModel):
         super().__init__(*args, **kwargs)
 
     def bottleneck_block(self, input_tensor, filters, scope, padding='same'):
-        """ Apply bottleneck block transform to input tensor. """
+        """ Apply bottleneck block transform to input tensor.
+
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        filters : int
+            number of output filters required by Conv3D operation.
+        scope : str
+            scope name for this block, will be used as an argument of tf.variable_scope.
+        padding : str
+            padding mode, can be 'same' or 'valid'.
+
+        Returns
+        -------
+        keras tensor
+            output tensor
+        """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters, (3, 3, 3),
                            data_format='channels_first',
@@ -56,15 +73,23 @@ class KerasUnet(KerasModel):
         => MaxPooling3D{pool_size}[2:2:2]
         =======================================================================
 
-        Args:
-        - input_tensor: keras tensor, input tensor;
-        - filters: int, number of filters in first and second covnolutions;
-        - scope: str, name of scope for this reduction block;
-        - pool_size: tuple(int, int, int), size of pooling kernel along three axis;
-        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        filters : int
+            number of filters in first and second covnolutions.
+        scope : str
+            scope name for this block, will be used as an argument of tf.variable_scope.
+        pool_size : tuple(int, int, int)
+            size of pooling kernel along three axis, required by Conv3D operation.
+        padding : str
+            padding mode for convolutions, can be 'same' or 'valid'.
 
-        Returns:
-        - ouput tensor, keras tensor;
+        Returns
+        -------
+        keras tensor
+            output tensor.
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters, (3, 3, 3),
@@ -85,29 +110,36 @@ class KerasUnet(KerasModel):
                                     pool_size=pool_size)(conv2)
         return conv2, max_pool
 
-    def upsampling_block(self, input_tensor, scip_connect_tensor, filters, scope, padding='same'):
+    def upsampling_block(self, input_tensor, skip_connect_tensor, filters, scope, padding='same'):
         """ Apply upsampling transform to two input tensors.
 
         First of all, UpSampling3D transform is applied to input_tensor. Then output
-        tensor of this operation is concatenated with scip_connect_tensor. After this
+        tensor of this operation is concatenated with skip_connect_tensor. After this
         two 3D-convolutions with batch normalization before 'relu' activation
         are applied.
 
-        Args:
-        - input_tensor: keras tensor, input tensor from previous layer;
-        - scip_connect_tensor: keras tensor, input tensor from simmiliar
-        layer from reduction branch of UNet;
-        - filters: int, number of filters in convolutional layers;
-        - scope: str, name of scope for this block;
-        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor from previous layer.
+        skip_connect_tensor : keras tensor
+            input tensor from simmiliar layer from reduction branch of VNet.
+        filters : int
+            number of filters in convolutional layers.
+        scope : str
+            name of scope for this block.
+        padding : str
+            padding mode for convolutions, can be 'same' or 'valid'.
 
-        Returns:
-        - output tensor, keras tensor;
+        Returns
+        -------
+        keras tensor
+            ouput tensor.
         """
         with tf.variable_scope(scope):
             upsample_tensor = UpSampling3D(data_format="channels_first",
                                            size=(2, 2, 2))(input_tensor)
-            upsample_tensor = concatenate([upsample_tensor, scip_connect_tensor], axis=1)
+            upsample_tensor = concatenate([upsample_tensor, skip_connect_tensor], axis=1)
 
             conv1 = Conv3D(filters, (3, 3, 3),
                            data_format="channels_first",
