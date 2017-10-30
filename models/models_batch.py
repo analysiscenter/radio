@@ -146,7 +146,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             sizes[patient_pos, :] = nodule_sizes[mask_nod_indices, :]
             centers[patient_pos, :] = nodule_centers[mask_nod_indices, :]
 
-        clf_dict = batch.unpack_clf(model, threshold, dim_ordering)['feed_dict']
+        clf_dict = batch.unpack_clf(model, threshold, dim_ordering)
         x, labels = clf_dict['x'], clf_dict['y']
         y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
 
