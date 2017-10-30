@@ -128,10 +128,10 @@ class TFResNet(TFModel3D):
                                         \/                       |
                             Conv3D{3x3x3}[1:1:1](filters2)       |
                                         ||                       |
-                                        \/              Conv3D{1x1x1}[2:2:2](filters3)
+                                        \/                       |
                                  BatchNormalization              |
                                         ||                       |
-                                       ReLu                      |
+                                       ReLu       Conv3D{1x1x1}[2:2:2](filters3)
                                         ||                       |
                                         \/                       |
                             Conv3D{1x1x1}[1:1:1](filter3)        |
