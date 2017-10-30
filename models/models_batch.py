@@ -84,7 +84,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         for channels dimension both for images and masks.
         """
         return {'x': batch.unpack_component(model, 'images', dim_ordering),
-                'y': batch.unpack_component(model, 'masks', dim_ordering)}}
+                'y': batch.unpack_component(model, 'masks', dim_ordering)}
 
     def unpack_clf(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for classification task.
