@@ -14,7 +14,7 @@ class KerasModel(Model, BaseModel):
 
     Contains load, dump and compile methods which are shared between all
     keras models;
-    Also implements train_on_batch and predict_on_batch methods;
+    Also implements train and predict methods;
 
     """
     def __init__(self, *args, **kwargs):
