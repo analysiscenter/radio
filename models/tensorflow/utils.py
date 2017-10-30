@@ -4,6 +4,39 @@ import numpy as np
 import tensorflow as tf
 
 
+def get_shape(input_tensor):
+    """ Return full shape of the input tensor represented by tuple of ints.
+    Parameters
+    ----------
+    input_tensor : tf.Variable or tf.Tensor
+        input_tensor.
+
+    Returns
+    -------
+    tuple(int)
+        input tensor's shape.
+    """
+    return input_tensor.get_shape().as_list()
+
+
+def num_channels(input_tensor):
+    """ Get number of channels in input tensor.
+
+    Parameters
+    ----------
+    input_tensor : tf.Variable or tf.Tensor
+        input_tensor.
+
+    Returns
+    -------
+    int
+        number of channels.
+
+    NOTE: channels last ordering is used.
+    """
+    return get_shape(input_tensor)[-1]
+
+
 def repeat_tensor(input_tensor, times):
     """ Repeat tensor given times along axes.
 
