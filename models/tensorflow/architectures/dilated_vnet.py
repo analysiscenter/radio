@@ -148,7 +148,7 @@ class TFDilatedVnet(TFModel3D):
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        input_tensor : tf.Tensor
             input tensor.
         filters : int
             number of filters in first and second covnolutions.
