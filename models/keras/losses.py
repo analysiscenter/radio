@@ -3,14 +3,19 @@ from keras import backend as K
 
 
 def dice_coef(y_true, y_pred, smooth=1e-6):
-    """ Dice coefficient required by keras model as a part of loss function.
+    """ Dice coefficient function implemente via tensorflow.
 
-    Args:
-    - y_true: keras tensor with targets;
-    - y_pred: keras tensor with predictions;
+    Parameters
+    ----------
+    y_true : keras tensor
+        tensor containing target masks.
+    y_pred : keras tensor
+        tensor containing predicted masks.
 
-    Returns:
-    - keras tensor with dice coefficient value;
+    Returns
+    -------
+    keras tensor
+        tensor containing dice coefficient value.
     """
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
@@ -20,14 +25,19 @@ def dice_coef(y_true, y_pred, smooth=1e-6):
 
 
 def dice_coef_loss(y_true, y_pred):
-    """ Dice loss function.
+    """ Loss function base on dice coefficient.
 
-    Args:
-    - y_true: keras tensor containing target values;
-    - y_pred: keras tensor containing predicted values;
+    Parameters
+    ----------
+    y_true : keras tensor
+        tensor containing target mask.
+    y_pred : keras tensor
+        tensor containing predicted mask.
 
-    Returns:
-    - keras tensor containing dice loss;
+    Returns
+    -------
+    keras tensor
+        tensor containing tiversky loss.
     """
     answer = -dice_coef(y_true, y_pred)
     return answer
@@ -36,12 +46,17 @@ def dice_coef_loss(y_true, y_pred):
 def tiversky_coef(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tiversky coefficient.
 
-    Args:
-    - y_true: keras tensor containing target values;
-    - y_pred: keras tensor containing predicted values;
+    Parameters
+    ----------
+    y_true : keras tensor
+        containing target masks.
+    y_pred : keras tensor
+        containing predicted masks.
 
-    Returns:
-    - keras tensor containing tiversky coefficient;
+    Returns
+    -------
+    keras tensor
+        tensor containing tiverky coefficient.
     """
     y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)
@@ -53,12 +68,17 @@ def tiversky_coef(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
 def tiversky_loss(y_true, y_pred):
     """ Tiversky loss function.
 
-    Args:
-    - y_true: keras tensor containing target mask;
-    - y_pred: keras tensor containing predicted mask;
+    Parameters
+    ----------
+    y_true : keras tensor
+        tensor containing target mask.
+    y_pred : keras tensor
+        tensor containing predicted mask.
 
-    Returns:
-    - keras tensor containing tiversky loss;
+    Returns
+    -------
+    keras tensor
+        tensor containing tiversky loss.
     """
     return -tiversky_coef(y_true, y_pred)
 
@@ -66,14 +86,18 @@ def tiversky_loss(y_true, y_pred):
 def jaccard_coef(y_true, y_pred, smooth=1e-10):
     """ Jaccard coefficient.
 
-    Args:
-    - y_true: actual pixel-by-pixel values for all classes;
-    - y_pred: predicted pixel-by-pixel values for all classes;
+    Parameters
+    ----------
+    y_true : keras tensor
+        tensor containing actual pixel-by-pixel values for all classes.
+    y_pred : keras tensor
+        tensor containing predicted pixel-by-pixel values for all classes.
 
-    Returns:
-    - jaccard score across all classes;
+    Returns
+    -------
+    keras tensor
+        tensor containing jaccard score across all classes.
     """
-
     y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)
     truepos = K.sum(y_true * y_pred)
@@ -83,13 +107,18 @@ def jaccard_coef(y_true, y_pred, smooth=1e-10):
 
 
 def jaccard_coef_logloss(y_true, y_pred):
-    """ Keras loss function based on jaccard coefficient.
+    """ Loss function based on jaccard coefficient.
 
-    Args:
-    - y_true: keras tensor containing target mask;
-    - y_pred: keras tensor containing predicted mask;
+    Parameters
+    ----------
+    y_true : keras tensor
+        tensor containing target mask.
+    y_pred : keras tensor
+        tensor containing predicted mask.
 
-    Returns:
-    - keras tensor with jaccard loss;
+    Returns
+    -------
+    keras tensor
+        tensor containing negative logarithm of jaccard coefficient;
     """
     return -K.log(jaccard_coef(y_true, y_pred))
