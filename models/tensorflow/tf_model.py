@@ -23,16 +23,11 @@ class TFModel3D(TFModel):
             _metrics = [_metrics]
         self._metrics = _metrics
         self._train_metrics_values = []
-        self._test_metrics_values = []
         self._show_metrics = self.get_from_config('show_metrics', False)
-        self._test_pipeline = self.get_from_config('test_pipeline', None)
-        self._iter_num = 0
 
     def refresh(self):
         """ Refresh metrics values. """
         self._train_metrics_values = []
-        self._test_metrics_values = []
-        self._iter_num = 0
 
     @property
     def train_metrics(self):
@@ -58,14 +53,9 @@ class TFModel3D(TFModel):
         if self._show_metrics:
             print(self.train_metrics.iloc[-1, :])
             clear_output(wait=True)
-        self._iter_num += 1
         return train_output
 
     def predict(self, x=None, **kargs):
         """ Predict model on data provided. """
         predictions = super().predict(fetches=None, feed_dict={'x': x})
         return predictions
-
-    def test_on_dataset(self):
-        """ Test model on given dataset with preprocessing pipeline. """
-        pass
