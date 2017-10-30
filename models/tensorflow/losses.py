@@ -218,6 +218,6 @@ def jaccard_coef_logloss(y_true, y_pred):
     Returns
     -------
     tf.Tensor
-        tensor containing negative logarithm of jaccard coefficient;
+        tensor containing negative logarithm of jaccard coefficient.
     """
     return -tf.log(jaccard_coef(y_true, y_pred))

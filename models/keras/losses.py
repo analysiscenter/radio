@@ -3,7 +3,7 @@ from keras import backend as K
 
 
 def dice_coef(y_true, y_pred, smooth=1e-6):
-    """ Dice coefficient function implemente via tensorflow.
+    """ Dice coefficient function implemente via keras backend.
 
     Parameters
     ----------
