@@ -23,6 +23,7 @@ class TFModel3D(TFModel):
             _metrics = [_metrics]
         self._metrics = _metrics
         self._metrics_values = []
+        self._test_metrics_values = []
         self._show_metrics = self.get_from_config('show_metrics', False)
 
     def refresh_metrics(self):
@@ -33,6 +34,11 @@ class TFModel3D(TFModel):
     def train_metrics(self):
         """ Return pandas DataFrame containing train metrics. """
         return pd.DataFrame(self._metrics_values)
+
+    @property
+    def test_metrics(self):
+        """ Return pandas DataFrame containing test metrics. """
+        return pd.DataFrame(self._test_metrics_values)
 
     def compute_metrics(self, y_true, y_pred):
         """ Compute all attached metrics on train and return result. """
