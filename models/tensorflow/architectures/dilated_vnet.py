@@ -193,7 +193,7 @@ class TFDilatedVnet(TFModel3D):
         """ Apply upsampling transform to two input tensors.
 
         First of all, UpSampling3D transform is applied to input_tensor. Then output
-        tensor of this operation is concatenated with scip_connect_tensor. After this
+        tensor of this operation is concatenated with skip_connect_tensor. After this
         two 3D-convolutions with batch normalization before 'relu' activation
         are applied.
 
