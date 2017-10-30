@@ -13,16 +13,22 @@ class TFDilatedVnet(TFModel3D):
 
         This operation is a kind of reverse operation for maxpooling3D.
 
-        Args:
-        - input_tensor: tf.Tensor, input tensor;
-        - times: tuple(int, int, int), number of times to repeat values
-        along each spatial axis;
+        Parameters
+        ----------
+        input_tensor : tf.Tensor
+            input tensor.
+        times : tuple(int, int, int)
+            number of times to repeat values along each spatial axis.
 
-        NOTE: this layer does not perform repeat operation
+        Returns
+        -------
+        tf.Tensor
+            output tensor.
+
+        NOTE
+        ----
+        This layer does not perform repeat operation
         along channels and batch axes.
-
-        Returns:
-        - tf.Tensor, output tensor;
         """
         if isinstance(times, (list, tuple, np.ndarray)):
             _times = tuple(times)
@@ -39,16 +45,25 @@ class TFDilatedVnet(TFModel3D):
                         pool_size=(2, 2, 2), padding='same'):
         """ Apply bottleneck block transform to input tensor.
 
-        Args:
-        - input_tensor: tf.Tensor, input tensor;
-        - filters: int, number of filters;
-        - scope: str, name scope of the layer;
-        - dilation: tuple(int, int, int), dilation rate along spatial axes;
-        - pool_size: tuple(int, int, int), size of max pooling kernel along spatial axes;
-        - padding: str, padding mode, can be 'valid' or 'same';
+        Parameters
+        ----------
+        input_tensor: tf.Tensor
+            input tensor.
+        filters: int
+            number of filters.
+        scope: str
+            name scope of the layer.
+        dilation: tuple(int, int, int)
+            dilation rate along spatial axes.
+        pool_size : tuple(int, int, int)
+            size of max pooling kernel along spatial axes.
+        padding : str
+            padding mode, can be 'valid' or 'same'.
 
-        Returns:
-        - tensorflow tensor;
+        Returns
+        -------
+        tf.Tensor
+            output tensor.
         """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
