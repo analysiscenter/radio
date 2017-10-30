@@ -9,6 +9,7 @@ import keras
 from keras.models import Model
 from ...dataset.dataset.models import BaseModel
 
+
 class KerasModel(Model, BaseModel):
     """ Base class for all keras models.
 
