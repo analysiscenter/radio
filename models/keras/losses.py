@@ -119,6 +119,6 @@ def jaccard_coef_logloss(y_true, y_pred):
     Returns
     -------
     keras tensor
-        tensor containing negative logarithm of jaccard coefficient;
+        tensor containing negative logarithm of jaccard coefficient.
     """
     return -K.log(jaccard_coef(y_true, y_pred))
