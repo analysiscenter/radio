@@ -149,8 +149,7 @@ class KerasResNet50(KerasModel):
         Returns
         -------
         tuple([*input_nodes], [*output_nodes]);
-            list of input nodes and list of output nodes that will be used
-            for Model construction.
+            list of input nodes and list of output nodes.
         """
         units_1, units_2 = self.units
 
