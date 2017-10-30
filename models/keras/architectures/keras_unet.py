@@ -1,6 +1,6 @@
 # pylint: disable=not-context-manager
 # pylint: disable=too-many-statements
-""" Contains KerasUnet model class. """
+""" Contains KerasVnet model class. """
 
 from functools import wraps
 import tensorflow as tf
@@ -19,8 +19,17 @@ from ..keras_model import KerasModel
 from ..losses import dice_coef_loss
 
 
-class KerasUnet(KerasModel):
-    """ KerasUnet model for 3D scans implemented in keras. """
+class KerasVnet(KerasModel):
+    """ Model incapsulating VNet architecture for 3D scans implemented in keras.
+
+    This class extends KerasModel class.
+
+    Contains description of 'bottleneck_block', 'reduction_block' and
+    'upsampling_block'. Current Vnet architecture is implemented
+    inside _build method using these blocks.
+
+    This architecture is inspired by https://arxiv.org/pdf/1606.04797.pdf.
+    """
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
         super().__init__(*args, **kwargs)
@@ -157,7 +166,7 @@ class KerasUnet(KerasModel):
         return conv2
 
     def _build(self, *args, **kwargs):
-        """ Build 3D unet model implemented in keras. """
+        """ Build 3D vnet model implemented in keras. """
         input_tensor = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
@@ -208,5 +217,5 @@ class KerasUnet(KerasModel):
 
     @wraps(keras.models.Model.compile)
     def compile(self, optimizer='adam', loss=dice_coef_loss, **kwargs):
-        """ Compile unet model. """
+        """ Compile vnet model. """
         super().compile(optimizer=optimizer, loss=loss)
