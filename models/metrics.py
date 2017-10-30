@@ -239,6 +239,7 @@ def recall(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """
     return tpr(y_pred, y_true, threshold=threshold, epsilon=epsilon)
 
+
 def accuracy(y_true, y_pred, threshold=0.5):
     """ Compute accuracy on input batched y_pred and y_true.
 
