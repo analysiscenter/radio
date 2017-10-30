@@ -83,8 +83,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         XXX 'dim_ordering' argument reflects where to put '1'
         for channels dimension both for images and masks.
         """
-        return {'feed_dict': {'x': batch.unpack_component(model, 'images', dim_ordering),
-                              'y': batch.unpack_component(model, 'masks', dim_ordering)}}
+        return {'x': batch.unpack_component(model, 'images', dim_ordering),
+                'y': batch.unpack_component(model, 'masks', dim_ordering)}}
 
     def unpack_clf(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for classification task.
@@ -104,8 +104,8 @@ class CTImagesModels(CTImagesMaskedBatch):
         masks_labels = np.asarray([batch.get(i, 'masks').sum() > threshold
                                    for i in range(len(batch))], dtype=np.int)
 
-        return {'feed_dict': {'x': batch.unpack_component(model, 'images', dim_ordering),
-                              'y': masks_labels[:, np.newaxis]}}
+        return {'x': batch.unpack_component(model, 'images', dim_ordering),
+                'y': masks_labels[:, np.newaxis]}
 
     def unpack_reg(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
@@ -150,7 +150,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         x, labels = clf_dict['x'], clf_dict['y']
         y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
 
-        return {'feed_dict': {'x': x, 'y': y_regression_array}}
+        return {'x': x, 'y': y_regression_array}
 
 
     # @action
