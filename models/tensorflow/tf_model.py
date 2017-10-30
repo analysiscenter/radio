@@ -39,19 +39,18 @@ class TFModel3D(TFModel):
         return {metric.__name__: metric(y_true, y_pred)
                 for metric in self._metrics}
 
-    def train(self, fetches=None, feed_dict=None):
+    def train(self, x=None, y=None, **kargs):
         """ Train model with data provided. """
-        if fetches is None:
-            _fetches = tuple()
-        elif not isinstance(fetches, (tuple, list)):
-            _fetches = (fetches, )
-        _fetches = ('y_pred', *_fetches)
-        train_output = super().train(_fetches, feed_dict)
-
-        self._metrics_values.append(self.compute_metrics(feed_dict['y'],
-                                                         train_output[0]))
+        _fetches = ('y_pred', )
+        train_output = super().train(_fetches, {'x': x, 'y': y})
+        self._metrics_values.append(self.comput_metrics(y, train_output[0]))
 
         if self._show_metrics:
             print(self.train_metrics.iloc[-1, :])
             clear_output(wait=True)
         return train_output
+
+    def predict(self, x=None, **kargs):
+        """ Predict model on data provided. """
+        predictions = super().predict(fetches=None, feed_dict={'x': x})
+        return predictions
