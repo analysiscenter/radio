@@ -26,11 +26,13 @@ class TFModel3D(TFModel):
         self._test_metrics_values = []
         self._show_metrics = self.get_from_config('show_metrics', False)
         self._test_pipeline = self.get_from_config('test_pipeline', None)
+        self._iter_num = 0
 
     def refresh(self):
         """ Refresh metrics values. """
         self._train_metrics_values = []
         self._test_metrics_values = []
+        self._iter_num = 0
 
     @property
     def train_metrics(self):
