@@ -18,7 +18,7 @@ def log_loss(y_true, y_pred, epsilon=10e-7):
     Returns
     -------
     tf.Tensor
-        log loss on input tensors;
+        log loss on input tensors.
     """
     return tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
                           + (1 - y_true) * tf.log(1 - y_pred + epsilon))
