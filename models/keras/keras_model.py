@@ -52,6 +52,9 @@ class KerasModel(Model, BaseModel):
         Checks whether feed_dict is None and unpacks it as kwargs
         of keras.models.Model.train_on_batch method.
         """
+        if x is None or y is None:
+            raise ValueError("Arguments 'x' and 'y' must not be None")
+
         prediction = self.train_on_batch(x=x, y=y)
         if not isinstance(prediction, (list, tuple)):
             prediction = (prediction, )
@@ -71,7 +74,7 @@ class KerasModel(Model, BaseModel):
         if x is not None:
             return Model.predict_on_batch(self, x=x)
         else:
-            raise ValueError("Argument feed_dict must not be None")
+            raise ValueError("Argument 'x' must not be None")
         return None
 
     @functools.wraps(Model.load_weights)
