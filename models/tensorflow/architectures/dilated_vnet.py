@@ -107,7 +107,7 @@ class TFDilatedVnet(TFModel3D):
                          /                        \\
                         /                          \\
 Conv3D{3x3x3}[1:1:1](filters * (1 - share)) Conv3D{3x3x3}[1:1:1](filters * share)
-            dilation_rate=(1, 1, 1)            dilation_rate=(2, 2, 2)
+            dilation_rate=(1, 1, 1)            dilation_rate=(dilation_rate)
                          \\                      /
                           \\                    /
                            \\                  /
@@ -166,7 +166,7 @@ Conv3D{3x3x3}[1:1:1](filters * (1 - share)) Conv3D{3x3x3}[1:1:1](filters * share
                                                name='max_pool3d')
         return conv_concated, max_pool
 
-    def upsampling_block(self, input_tensor, scip_connect_tensor, filters,
+    def upsampling_block(self, input_tensor, skip_connect_tensor, filters,
                          scope, dilation=(2, 2, 2), padding='same'):
         """ Apply upsampling transform to two input tensors.
 
@@ -175,17 +175,25 @@ Conv3D{3x3x3}[1:1:1](filters * (1 - share)) Conv3D{3x3x3}[1:1:1](filters * share
         two 3D-convolutions with batch normalization before 'relu' activation
         are applied.
 
-        Args:
-        - input_tensor: keras tensor, input tensor from previous layer;
-        - scip_connect_tensor: keras tensor, input tensor from simmiliar
-        layer from reduction branch of UNet;
-        - filters: int, number of filters in convolutional layers;
-        - scope: str, name of scope for this block;
-        - dilation: tuple(int, int, int), dilation rate along spatial axes;
-        - padding: str, padding mode for convolutions, can be 'same' or 'valid';
+        Parameters
+        ----------
+        input_tensor : tf.Tensor
+            input tensor from previous layer.
+        skip_connect_tensor : tf.Tensor
+            input tensor from simmiliar layer from reduction branch of VNet.
+        filters : int
+            number of filters in convolutional layers.
+        scope : str
+            name of scope for this block.
+        dilation : tuple(int, int, int)
+            dilation rate along spatial axes.
+        padding: str
+            padding mode for convolutions, can be 'same' or 'valid'.
 
-        Returns:
-        - output tensor, tensorflow tensor;
+        Returns
+        -------
+        tf.Tensor
+            output tensor.
         """
         with tf.variable_scope(scope):
             n, m = math.ceil(filters / 2), math.floor(filters / 2)
@@ -193,7 +201,7 @@ Conv3D{3x3x3}[1:1:1](filters * (1 - share)) Conv3D{3x3x3}[1:1:1](filters * share
                                                 times=(2, 2, 2),
                                                 name='upsample3d')
 
-            upsample_tensor = tf.concat([upsample_tensor, scip_connect_tensor], axis=4)
+            upsample_tensor = tf.concat([upsample_tensor, skip_connect_tensor], axis=4)
 
             conv1 = bn_conv3d(upsample_tensor, n, (3, 3, 3),
                               padding=padding, name='Conv3D_1x1x1',
