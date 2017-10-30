@@ -135,9 +135,9 @@ class KerasResNet50(KerasModel):
         If kernel_size=(3, 3, 3) and strides=(2, 2, 2) then
         schematically this block can be represented like this:
         =======================================================================
-                                   input_tensor _______________
-                                        ||                     \
-                                        \/                      \
+                                   input_tensor -----------------|
+                                        ||                       |
+                                        \/                       |
                             Conv3D{1x1x1}[2:2:2](filters1)       |
                                         ||                       |
                                         \/                       |
@@ -151,7 +151,7 @@ class KerasResNet50(KerasModel):
                                         \/                       |
                                  BatchNormalization              |
                                         ||                       |
-                                       ReLu       Conv3D{1x1x1}[2:2:2](filters3)
+                                       ReLu      Conv3D{1x1x1}[2:2:2](filters3)
                                         ||                       |
                                         \/                       |
                             Conv3D{1x1x1}[1:1:1](filter3)        |
