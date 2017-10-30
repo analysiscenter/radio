@@ -34,14 +34,21 @@ class KerasVGG16(KerasModel):
         After all applyes 3D maxpooling operation with strides (2, 2, 2)
         and pooling size (2, 2, 2).
 
-        Args:
-        - input_tensor: keras tensor, input tensor;
-        - filters: int, number of filters in 3D-convolutional layers;
-        - scope: str, name of the scope;
-        - padding: str, padding mode can be 'same' or 'valid';
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        filters : int
+            number of filters in 3D-convolutional layers.
+        scope : str
+            scope name for this block, will be used as an argument of tf.variable_scope.
+        padding : str
+            padding mode can be 'same' or 'valid'.
 
-        Returns:
-        - output tensor, keras tensor;
+        Returns
+        -------
+        keras tensor
+            output tensor.
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
@@ -65,14 +72,21 @@ class KerasVGG16(KerasModel):
         Finally, adds 3D maxpooling layer with
         strides (2, 2, 2) and pooling size (2, 2, 2).
 
-        Args:
-        - input_tensor: keras tensor, input tensor;
-        - filters: int, number of filters in 3D-convolutional layers;
-        - scope: str, name of the scope;
-        - padding: str, padding mode can be 'same' or 'valid';
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        filters : int
+            number of filters in 3D-convolutional layers.
+        scope : str
+            scope name for this block, will be used as an argument of tf.variable_scope.
+        padding : str
+            padding mode can be 'same' or 'valid'.
 
-        Returns:
-        - output tensor, keras tensor;
+        Returns
+        -------
+        keras tensor
+            output tensor.
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
@@ -98,14 +112,20 @@ class KerasVGG16(KerasModel):
         batch normalization and dropout layers. This block should be put
         in the end of the model.
 
-        Args:
-        - input_tensor: keras tensor, input tensor;
-        - units: tuple(int, int), number of units in first and second dense layers;
-        - dropoout_rate: float, probability of dropout;
-        - scope: str, name of scope;
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        units : tuple(int, int)
+            number of units in first and second dense layers.
+        dropoout_rate : float
+            probability of dropout.
+        scope : str
+            scope name for this block, will be used as an argument of tf.variable_scope.
 
         Returns:
-        - output tensor, keras tensor;
+        keras tensor
+            output tensor.
         """
         with tf.variable_scope(scope):
             units_1, units_2 = self.units
@@ -122,8 +142,10 @@ class KerasVGG16(KerasModel):
     def _build(self, *args, **kwargs):
         """ Build VGG16 model implemented in keras.
 
-        Returns:
-        - tuple([*input_nodes], [*output_nodes]);
+        Returns
+        -------
+        tuple([*input_nodes], [*output_nodes])
+            list of input nodes and list of output nodes.
         """
         input_tensor = Input(shape=(32, 64, 64, 1))
         block_A = self.reduction_block_I(input_tensor, 32, scope='Block_A')
