@@ -112,6 +112,39 @@ class TFResNet(TFModel3D):
     def conv_block(self, input_tensor, kernel_size, filters, name, strides=(2, 2, 2)):
         """ Convolutional block that has a conv layer as shortcut.
 
+        If kernel_size=(3, 3, 3) and strides=(2, 2, 2) then
+        schematically this block can be represented like this:
+        =======================================================================
+                                   input_tensor _______________
+                                        ||                     \
+                                        \/                      \
+                            Conv3D{1x1x1}[2:2:2](filters1)       |
+                                        ||                       |
+                                        \/                       |
+                                 BatchNormalization              |
+                                        ||                       |
+                                       ReLu                      |
+                                        ||                       |
+                                        \/                       |
+                            Conv3D{3x3x3}[1:1:1](filters2)       |
+                                        ||                       |
+                                        \/              Conv3D{1x1x1}[2:2:2](filters3)
+                                 BatchNormalization              |
+                                        ||                       |
+                                       ReLu                      |
+                                        ||                       |
+                                        \/                       |
+                            Conv3D{1x1x1}[1:1:1](filter3)        |
+                                        ||                       |
+                                        \/                       |
+                                 BatchNormalization              |
+                                        ||                       |
+                                        \/                       |
+                                       ( + )<--------------------|
+                                        ||
+                                        \/
+                                        ReLu
+        =======================================================================
         Parameters
         ----------
         input_tensor : tf.Tensor
