@@ -17,10 +17,10 @@ class KerasVGG16(KerasModel):
     """ KerasVGG16 model for 3D scans implemented in keras.
 
     This class extends KerasModel class.
+
     Contains description of three types of blocks:
-    'reduction_block_I', 'reduction_block_II' and 'classification_block'
-    which are implemented as methods.
-    VGG16 architecture is implemented inside _build method using these methods.
+    'reduction_block_I', 'reduction_block_II' and 'classification_block'.
+    VGG16 architecture is implemented inside _build method using these blocks.
 
     Attributes
     ----------
@@ -39,7 +39,7 @@ class KerasVGG16(KerasModel):
     """
 
     def __init__(self, *args, **kwargs):
-        """ Call __init__ of KerasModel. """
+        """ Call __init__ of KerasModel and add specific for KerasVGG16 attributes. """
         self.config = kwargs.get('config', {})
         self.units = self.get_from_config('units', (512, 256))
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
