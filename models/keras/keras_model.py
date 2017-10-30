@@ -45,30 +45,30 @@ class KerasModel(Model, BaseModel):
         """ Must return inputs and outputs. """
         raise NotImplementedError("This method must be implemented in ancestor model class")
 
-    def train(self, feed_dict=None, **kwargs):
+    def train(self, x=None, y=None, **kwargs):
         """ Wrapper for keras.models.Model.train_on_batch.
 
         Checks whether feed_dict is None and unpacks it as kwargs
         of keras.models.Model.train_on_batch method.
         """
-        if feed_dict is not None:
-            prediction = self.train_on_batch(**feed_dict)
-            if not isinstance(prediction, (list, tuple)):
-                prediction = (prediction, )
-            self._metrics_values.append(dict(zip(self.metrics_names, prediction)))
+        prediction = self.train_on_batch(x=x, y=y)
+        if not isinstance(prediction, (list, tuple)):
+            prediction = (prediction, )
+
+        self._metrics_values.append(dict(zip(self.metrics_names, prediction)))
         if self._show_metrics:
             print(self.train_metrics.iloc[-1, :])
             clear_output(wait=True)
         return None
 
-    def predict(self, feed_dict=None, **kwargs):
+    def predict(self, x=None, **kwargs):
         """ Wrapper for keras.models.Model.predict_on_batch.
 
         Checks whether feed_dict is None and unpacks it
         as kwargs of keras.models.Model.predict_on_batch method.
         """
-        if feed_dict is not None:
-            return Model.predict_on_batch(self, **feed_dict)
+        if x is not None:
+            return Model.predict_on_batch(self, x=x)
         else:
             raise ValueError("Argument feed_dict must not be None")
         return None
