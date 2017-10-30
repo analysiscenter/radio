@@ -222,6 +222,7 @@ def precision(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     fp_value = fp(y_pred, y_true, threshold)
     return tp_value / (tp_value + fp_value + epsilon)
 
+
 def recall(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     """ Compute recall metric.
 
