@@ -23,7 +23,7 @@ class KerasModel(Model, BaseModel):
         BaseModel.__init__(self, *args, **kwargs)
 
         self._show_metrics = self.get_from_config('show_metrics', False)
-        self._metrics_values = []
+        self._train_metrics_values = []
 
     def refresh_metrics(self):
         """ Refresh metrics values. """
@@ -32,7 +32,7 @@ class KerasModel(Model, BaseModel):
     @property
     def train_metrics(self):
         """ Return pandas DataFrame containing train metrics. """
-        return pd.DataFrame(self._metrics_values)
+        return pd.DataFrame(self._train_metrics_values)
 
     def build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
@@ -56,7 +56,7 @@ class KerasModel(Model, BaseModel):
         if not isinstance(prediction, (list, tuple)):
             prediction = (prediction, )
 
-        self._metrics_values.append(dict(zip(self.metrics_names, prediction)))
+        self._train_metrics_values.append(dict(zip(self.metrics_names, prediction)))
         if self._show_metrics:
             print(self.train_metrics.iloc[-1, :])
             clear_output(wait=True)
@@ -83,7 +83,3 @@ class KerasModel(Model, BaseModel):
     def save(self, *args, **kwargs):
         """ Wrapper for keras.models.Model.save_weights. """
         return Model.save_weights(self, *args, **kwargs)
-
-    def load_model(self, path, custom_objects):
-        """ Load weights and description of keras model. """
-        self.model = keras.models.load_model(path, custom_objects=custom_objects)
