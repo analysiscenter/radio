@@ -14,7 +14,29 @@ from ..keras_model import KerasModel
 
 
 class KerasVGG16(KerasModel):
-    """ KerasVGG16 model for 3D scans implemented in keras. """
+    """ KerasVGG16 model for 3D scans implemented in keras.
+
+    This class extends KerasModel class.
+    Contains description of three types of blocks:
+    'reduction_block_I', 'reduction_block_II' and 'classification_block'
+    which are implemented as methods.
+    VGG16 architecture is implemented inside _build method using these methods.
+
+    Attributes
+    ----------
+    config : dict
+        config dictionary from dataset pipeline
+        see configuring model section of dataset module
+        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+    name : str
+        name of the model.
+    units : tuple(int, int)
+        number of units in two final dense layers before tensor with predicitons.
+    num_targets : int
+        size of tensor with predicitons.
+    dropout_rate : float
+        probability of dropout.
+    """
 
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
