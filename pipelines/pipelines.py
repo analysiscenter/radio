@@ -7,7 +7,8 @@ from ..dataset import Pipeline
 SPACING = (1.7, 1.0, 1.0) # spacing of scans after spacing unification
 SHAPE = (400, 512, 512) # shape of scans after spacing unification
 RESIZE_FILTER = PIL.Image.LANCZOS # high-quality filter of resize
-kwargs_default = dict(shape=SHAPE, spacing=SPACING, resample=RESIZE_FILTER)
+PADDING = 'reflect' # padding-mode that produces the least amount of artefacts
+kwargs_default = dict(shape=SHAPE, spacing=SPACING, resample=RESIZE_FILTER, padding=PADDING)
 
 # define the number of times each cancerous nodule is dumped.
 # with this number of iterations, the whole luna-dataset will
@@ -44,8 +45,9 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo, fmt='raw', nodul
     kwargs_default.update(kwargs)
 
     # set up all args
-    args_unify_spacing = dict(padding='reflect', **kwargs_default)
-    args_dump_cancer = dict(dst=cancer_path, n_iters=N_ITERS, nodule_size=nodule_shape, variance=variance)
+    args_unify_spacing = dict(**kwargs_default)
+    args_dump_cancer = dict(dst=cancer_path, n_iters=N_ITERS, nodule_size=nodule_shape, variance=variance,
+                            share=1.0, batch_size=None)
     args_sample_ncancer = dict(nodule_size=nodule_shape, histo=histo, batch_size=NON_CANCER_BATCH_SIZE, share=0.0)
 
     # define pipeline. Two separate tasks are performed at once, in one run:
@@ -56,9 +58,9 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo, fmt='raw', nodul
                 .fetch_nodules_info(nodules_df=nodules_df)
                 .unify_spacing(**args_unify_spacing)
                 .create_mask()
-                .sample_dump_cancerous(**args_dump_cancer)   # sample and dump non-cancerous crops
-                .sample_nodules(**args_sample_ncancer)
-                .dump(dst=non_cancer_path)
+                .sample_dump(**args_dump_cancer)   # sample and dump cancerous crops
+                .sample_nodules(**args_sample_ncancer) # sample non-cancerous
+                .dump(dst=non_cancer_path) # dump non-cancerous
                 .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
                )
 
