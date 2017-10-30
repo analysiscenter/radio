@@ -41,9 +41,33 @@ class TFDilatedVnet(TFModel3D):
         with tf.variable_scope(name):
             return repeat_tensor(input_tensor, (1, *_times, 1))
 
-    def bottleneck_block(self, input_tensor, filters, scope, dilation=(1, 1, 1),
-                        pool_size=(2, 2, 2), padding='same'):
+    def bottleneck_block(self, input_tensor, filters, scope, dilation=(1, 1, 1), padding='same'):
         """ Apply bottleneck block transform to input tensor.
+
+        Schematically this block can be represented like this:
+        =======================================================================
+                        Conv3D{1x1x1}[1:1:1](filters)
+                                    ||
+                                    \/
+                             BatchNormalization
+                                    ||
+                                    \/
+                                   ReLu
+                            --------||----------
+                           /                    \\
+                          /                      \\
+                         /                        \\
+                        /                          \\
+    Conv3D{3x3x3}[1:1:1](filters / 2)    Conv3D{3x3x3}[1:1:1](filters / 2)
+         dilation_rate=(1, 1, 1)             dilation_rate=(dilation_rate)
+                         \\                      /
+                          \\                    /
+                           \\                  /
+                            \\                /
+                             (----Concat-----)
+                                    ||
+                                    \/
+        =======================================================================
 
         Parameters
         ----------
@@ -55,8 +79,6 @@ class TFDilatedVnet(TFModel3D):
             name scope of the layer.
         dilation: tuple(int, int, int)
             dilation rate along spatial axes.
-        pool_size : tuple(int, int, int)
-            size of max pooling kernel along spatial axes.
         padding : str
             padding mode, can be 'valid' or 'same'.
 
@@ -106,13 +128,13 @@ class TFDilatedVnet(TFModel3D):
                           /                      \\
                          /                        \\
                         /                          \\
-Conv3D{3x3x3}[1:1:1](filters * (1 - share)) Conv3D{3x3x3}[1:1:1](filters * share)
-            dilation_rate=(1, 1, 1)            dilation_rate=(dilation_rate)
+      Conv3D{3x3x3}[1:1:1](filters / 2)   Conv3D{3x3x3}[1:1:1](filters / 2)
+        dilation_rate=(1, 1, 1)             dilation_rate=(dilation_rate)
                          \\                      /
                           \\                    /
                            \\                  /
                             \\                /
-                             (----Concat------)
+                             (----Concat-----)
                                     ||
                                     \/
                             BatchNormalization
