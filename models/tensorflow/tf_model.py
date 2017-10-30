@@ -29,7 +29,8 @@ class TFModel3D(TFModel):
 
     def refresh(self):
         """ Refresh metrics values. """
-        self._metrics_values = []
+        self._train_metrics_values = []
+        self._test_metrics_values = []
 
     @property
     def train_metrics(self):
