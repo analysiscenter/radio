@@ -32,19 +32,23 @@ class KerasResNet50(KerasModel):
         is concatenated with input tensor along filters dimension and go
         through 'relu' activation.
 
-        Args:
-        - input_tensor: keras tensor, input tensor;
-        - kernel_size: tuple(int, int, int), size of the kernel along three dimensions
-        for all convolution operations in block.
-        - filters: tuple(int, int, int), number of filters in first, second and
-        third 3D-convolution operations;
-        - stage: int, number of stage, on par with block argument
-        used to derive names of inner layers;
-        - block: str, block prefix, on par with stage argument used
-        to derive names of inner layers;
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        kernel_size : tuple(int, int, int)
+            size of the kernel along three dimensions for all convolution operations in block.
+        filters : tuple(int, int, int)
+            number of filters in first, second and third 3D-convolution operations.
+        stage : int
+            number of stage, on par with block argument used to derive names of inner layers.
+        block : str
+            block prefix, on par with stage argument used to derive names of inner layers.
 
-        Returns:
-        - output tensor, keras tensor;
+        Returns
+        -------
+        keras tensor
+            output tensor.
         """
         filters1, filters2, filters3 = filters
 
@@ -82,19 +86,23 @@ class KerasResNet50(KerasModel):
         concatenated with result tensor of 3D-convolution applied to input tensor
         of the block with (2, 2, 2)-strides.
 
-        Args:
-        - input_tensor: keras tensor, input tensor;
-        - kernel_size: tuple(int, int, int), size of the kernel along three dimensions
-        for all convolution operations in block.
-        - filters: tuple(int, int, int), number of filters in first, second and
-        third 3D-convolution operations;
-        - stage: int, number of stage, on par with block argument
-        used to derive names of inner layers;
-        - block: str, block prefix, on par with stage argument used
-        to derive names of inner layers;
+        Parameters
+        ----------
+        input_tensor : keras tensor
+            input tensor.
+        kernel_size : tuple(int, int, int)
+            size of the kernel along three dimensions for all convolution operations in block.
+        filters : tuple(int, int, int)
+            number of filters in first, second and third 3D-convolution operations.
+        stage : int
+            number of stage, on par with block argument used to derive names of inner layers.
+        - block: str
+            block prefix, on par with stage argument used to derive names of inner layers.
 
-        Returns:
-        - output tensor, keras tensor;
+        Returns
+        -------
+        keras tensor
+            output tensor.
         """
         filters1, filters2, filters3 = filters
 
@@ -138,8 +146,11 @@ class KerasResNet50(KerasModel):
     def _build(self, *args, **kwargs):
         """ Build resnet50 model implemented in keras.
 
-        Returns:
-        - tuple([*input_nodes], [*output_nodes]);
+        Returns
+        -------
+        tuple([*input_nodes], [*output_nodes]);
+            list of input nodes and list of output nodes that will be used
+            for Model construction.
         """
         units_1, units_2 = self.units
 
