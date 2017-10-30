@@ -24,6 +24,10 @@ class KerasModel(Model, BaseModel):
         self._show_metrics = self.get_from_config('show_metrics', False)
         self._metrics_values = []
 
+    def refresh_metrics(self):
+        """ Refresh metrics values. """
+        self._metrics_values = []
+
     @property
     def train_metrics(self):
         """ Return pandas DataFrame containing train metrics. """
