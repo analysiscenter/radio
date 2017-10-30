@@ -6,13 +6,19 @@ import tensorflow as tf
 def log_loss(y_true, y_pred, epsilon=10e-7):
     """ Log loss on input tensors.
 
-    Args:
-    - y_true: tf.Tensor, contains true labels;
-    - y_pred: tf.Tensor, contains predicted logits;
-    - epsilon: float, epsilon to avoid computing log(0);
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        tensor with true labels;
+    y_pred : tf.Tensor
+        tensor with predicted logits;
+    epsilon : float or tf.constant(dtype=tf.float32)
+        epsilon to avoid computing log(0);
 
-    Returns:
-    - tf.Variable, log loss on input tensors;
+    Returns
+    -------
+    tf.Tensor
+        log loss on input tensors;
     """
     return tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
                           + (1 - y_true) * tf.log(1 - y_pred + epsilon))
@@ -21,17 +27,24 @@ def log_loss(y_true, y_pred, epsilon=10e-7):
 def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
     """ L2 loss for prediction of cancer tumor's centers, sizes joined with binary classification task.
 
-    Args:
-    - y_true: tf.Tensor, contains true values for sizes of nodules, their centers
-    and classes of crop;
-    - y_pred: tf.Tensor, contains predicted values for sizes of nodules, their centers
-    and classes of crop;
+    Parameters
+    ----------
+    - y_true : tf.Tensor
+        tensor containing true values for sizes of nodules, their centers
+        and classes of crop(1 if cancerous 0 otherwise);
+    - y_pred : tf.Tensor
+        tensor containing predicted values for sizes of nodules, their centers
+        and probability of cancer in given crop;
 
-    Returns:
-    - tf.Variable, l2 loss for regression of cancer tumor center's coordinates,
-    sizes joined with binary classification task.
+    Returns
+    -------
+    tf.Tensor
+        l2 loss for regression of cancer tumor center's coordinates,
+        sizes joined with binary classification task.
 
-    NOTE: y_true and y_pred tensors must have [None, 7] shapes;
+    NOTE
+    ----
+    y_true and y_pred tensors must have [None, 7] shapes;
     y_true[:, :3] and y_pred[:, :3] correspond to normalized (from [0, 1] interval)
     zyx coordinates of cancer tumor, while y_true[:, 3:6] and y_pred[:, 3:6]
     correspond to sizes of cancer tumor along zyx axes(also normalized),
@@ -53,12 +66,17 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
 def iou_3d(y_true, y_pred, epsilon=10e-7):
     """ Compute intersection over union in 3D case for input tensors.
 
-    Args:
-    - y_true: tf.Tensor, contains true values for sizes of nodules and their centers;
-    - y_pred: tf.Tensor, contains predicted values for sizes of nodules and their centers;
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        tensor containg true values for sizes of nodules and their centers.
+    y_pred : tf.Tensor
+        tensor containing predicted values for sizes of nodules and their centers.
 
-    Returns:
-    - tf.Variable containing intersection over union computed on input tensors.
+    Returns
+    -------
+    tf.Tensor
+        tensor containing intersection over union computed on input tensors.
     """
     with tf.variable_scope('IOU'):
         tf_epsilon = tf.constant([epsilon], tf.float32)
@@ -83,12 +101,17 @@ def iou_3d(y_true, y_pred, epsilon=10e-7):
 def dice_coef(y_true, y_pred, smooth=1e-7):
     """ Dice coefficient function implemente via tensorflow.
 
-    Args:
-    - y_true: tf.Tensor with target masks;
-    - y_pred: tf.Tensor with predicted masks;
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        tensor containing target masks.
+    y_pred : tf.Tensor
+        tensor containing predicted masks.
 
-    Returns:
-    - tf.Tensor with dice coefficient value;
+    Returns
+    -------
+    tf.Tensor
+        tensor containing dice coefficient value.
     """
     y_true_f = tf.contrib.layers.flatten(y_true)
     y_pred_f = tf.contrib.layers.flatten(y_pred)
@@ -101,12 +124,17 @@ def dice_coef(y_true, y_pred, smooth=1e-7):
 def tiversky_coef(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tiversky coefficient.
 
-    Args:
-    - y_true: tf.Tensor with target masks;
-    - y_pred: tf.Tensor with predicted masks;
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        containing target masks.
+    y_pred : tf.Tensor
+        containing predicted masks.
 
-    Returns:
-    - tf.Tensor containing tiverky coefficient;
+    Returns
+    -------
+    tf.Tensor
+        tensor containing tiverky coefficient.
     """
     y_true = tf.contrib.layers.flatten(y_true)
     y_pred = tf.contrib.layers.flatten(y_pred)
@@ -120,12 +148,17 @@ def tiversky_coef(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
 def jaccard_coef(y_true, y_pred, smooth=1e-10):
     """ Jaccard coefficient.
 
-    Args:
-    - y_true: tf.Tensor, actual pixel-by-pixel values for all classes;
-    - y_pred: tf.Tensor, predicted pixel-by-pixel values for all classes;
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        tensor containing actual pixel-by-pixel values for all classes.
+    y_pred : tf.Tensor
+        tensor containing predicted pixel-by-pixel values for all classes.
 
-    Returns:
-    - tf.Tensor, jaccard score across all classes;
+    Returns
+    -------
+    - tf.Tensor
+        tensor containing jaccard score across all classes.
     """
     y_true = tf.contrib.layers.flatten(y_true)
     y_pred = tf.contrib.layers.flatten(y_pred)
@@ -139,12 +172,17 @@ def jaccard_coef(y_true, y_pred, smooth=1e-10):
 def tiversky_loss(y_true, y_pred):
     """ Tiversky loss function.
 
-    Args:
-    - y_true: tf.Tensor containing target mask;
-    - y_pred: tf.Tensor containing predicted mask;
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        tensor containing target mask.
+    y_pred : tf.Tensor
+        tensor containing predicted mask.
 
-    Returns:
-    - tf.Tensor containing tiversky loss;
+    Returns
+    -------
+    tf.Tensor
+        tensor containing tiversky loss.
     """
     return -tiversky_coef(y_true, y_pred)
 
@@ -152,12 +190,17 @@ def tiversky_loss(y_true, y_pred):
 def dice_loss(y_true, y_pred):
     """ Loss function base on dice coefficient.
 
-    Args:
-    - y_true: tf.Tensor containing target mask;
-    - y_pred: tf.Tensor containing predicted mask;
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        tensor containing target mask.
+    y_pred : tf.Tensor
+        tensor containing predicted mask.
 
-    Returns:
-    - tf.Tensor containing tiversky loss;
+    Returns
+    -------
+    tf.Tensor
+        tensor containing tiversky loss.
     """
     return -dice_coef(y_true, y_pred)
 
@@ -165,11 +208,16 @@ def dice_loss(y_true, y_pred):
 def jaccard_coef_logloss(y_true, y_pred):
     """ Loss function based on jaccard coefficient.
 
-    Args:
-    - y_true: tf.Tensor containing target mask;
-    - y_pred: tf.Tensor containing predicted mask;
+    Parameters
+    ----------
+    y_true : tf.Tensor
+        tensor containing target mask.
+    y_pred : tf.Tensor
+        tensor containing predicted mask.
 
-    Returns:
-    - tf.Tensor with negative logarithm of jaccard coefficient;
+    Returns
+    -------
+    tf.Tensor
+        tensor containing negative logarithm of jaccard coefficient;
     """
     return -tf.log(jaccard_coef(y_true, y_pred))
