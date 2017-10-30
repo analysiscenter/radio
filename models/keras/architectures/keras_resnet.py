@@ -50,17 +50,12 @@ class KerasResNet50(KerasModel):
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
 
-        This block consists of two convolutions with batch normalization before
-        'relu' activation. After three convolutions are applyed the ouput tensor
-        is concatenated with input tensor along filters dimension and go
-        through 'relu' activation.
-
         Parameters
         ----------
         input_tensor : keras tensor
             input tensor.
         kernel_size : tuple(int, int, int)
-            size of the kernel along three dimensions for all convolution operations in block.
+            size of the kernel along three dimensions for middle convolution operation in block.
         filters : tuple(int, int, int)
             number of filters in first, second and third 3D-convolution operations.
         stage : int
@@ -114,7 +109,7 @@ class KerasResNet50(KerasModel):
         input_tensor : keras tensor
             input tensor.
         kernel_size : tuple(int, int, int)
-            size of the kernel along three dimensions for all convolution operations in block.
+            size of the kernel along three dimensions for middle convolution operation in block.
         filters : tuple(int, int, int)
             number of filters in first, second and third 3D-convolution operations.
         stage : int
