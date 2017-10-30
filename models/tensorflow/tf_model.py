@@ -35,7 +35,7 @@ class TFModel3D(TFModel):
     @property
     def train_metrics(self):
         """ Return pandas DataFrame containing train metrics. """
-        return pd.DataFrame(self._metrics_values)
+        return pd.DataFrame(self._train_metrics_values)
 
     @property
     def test_metrics(self):
