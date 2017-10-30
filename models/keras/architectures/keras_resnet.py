@@ -99,11 +99,6 @@ class KerasResNet50(KerasModel):
     def conv_block(self, input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 2)):
         """ A block that has a conv layer at shortcut.
 
-        This layer consists of three 3D-convolutional layers with batch
-        normalization before 'relu' activation. The output tesnor then
-        concatenated with result tensor of 3D-convolution applied to input tensor
-        of the block with (2, 2, 2)-strides.
-
         Parameters
         ----------
         input_tensor : keras tensor
