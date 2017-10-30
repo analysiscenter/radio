@@ -53,9 +53,9 @@ class KerasResNet50(KerasModel):
         If kernel_size is (3, 3, 3) then
         schematically this block can be represented like this:
         =======================================================================
-                                   input_tensor _________
-                                        ||                \
-                                        \/                 \
+                                   input_tensor ------------|
+                                        ||                  |
+                                        \/                  |
                             Conv3D{1x1x1}[1:1:1](filters1)  |
                                         ||                  |
                                         \/                  |
