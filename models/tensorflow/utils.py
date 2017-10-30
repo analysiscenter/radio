@@ -7,13 +7,17 @@ import tensorflow as tf
 def repeat_tensor(input_tensor, times):
     """ Repeat tensor given times along axes.
 
-    Args:
-    - input_tensor: tf.Tensor, input tensor;
-    - times: tuple(int, int,..., int) number of times to repeat
-    tensor along each axis;
+    Parameters
+    ----------
+    input_tensor : tf.Tensor
+        input tensor for repeat operation.
+    times : tuple(int, int,..., int)
+        number of times to repeat input tensor tensor along each axis.
 
-    Return:
-    - tf.Tensor, repeated tensor;
+    Returns
+    ------
+    tf.Tensor
+        repeated tensor.
     """
     source_shape = get_shape(input_tensor)
     x = tf.expand_dims(input_tensor, axis=len(source_shape))
@@ -24,59 +28,27 @@ def repeat_tensor(input_tensor, times):
     return x
 
 
-def get_shape(input_tensor):
-    """ Return full shape of the input tensor represented by tuple of ints.
-
-    Args:
-    - input_tensor: tf.Variable, input_tensor;
-
-    Return:
-    - shape of input_tensor, tuple(int);
-    """
-    return input_tensor.get_shape().as_list()
-
-
-def batch_size(input_tensor):
-    """ Return batch size of the input tensor represented by first dimension.
-
-    Args:
-    - input_tensor: tf.Variable, input_tensor.
-
-    Return:
-    - number of items in the batch, int;
-    """
-    return get_shape(input_tensor)[0]
-
-
-def num_channels(input_tensor):
-    """ Get number of channels in input tensor.
-
-    Args:
-    - input_tensor, tf.Tensor;
-
-    Returns:
-    - number of channels;
-
-    NOTE: channels last ordering is used;
-    """
-    return get_shape(input_tensor)[-1]
-
-
 def split_channels(input_tensor, size):
     """ Split channels of input tensor into groups of given size.
 
-    Args:
-    - input_tensor: tf.Tensor, input tensor;
-    - size: int, size of each group;
+    Parameters
+    ----------
+    input_tensor : tf.Tensor
+        input tensor for split_channels operation.
+    size : int
+        size of each group.
 
-    Returns:
-    - list of tensors, each corresponds to channels group.
+    Returns
+    -------
+    list of tensors
+        each corresponds to channels group.
     """
     in_filters = num_channels(input_tensor)
     if in_filters <= size:
         return input_tensor
     a, b = int(in_filters / size), int(in_filters % size)
-    main = list(tf.split(input_tensor[..., : a * size], a, axis=len(input_tensor.get_shape()) - 1))
+    main = list(tf.split(input_tensor[..., : a * size], a,
+                         axis=len(input_tensor.get_shape()) - 1))
     if b != 0:
         main.append(input_tensor[..., a * size: ])
     return main
@@ -85,11 +57,15 @@ def split_channels(input_tensor, size):
 def channels_rnd_shuffle(input_tensor):
     """ Perform random shuffle of channels in input tensor.
 
-    Args:
-    - input_tensor: tf.Tensor, input tensor;
+    Parameters
+    ----------
+    input_tensor : tf.Tensor
+        input tensor.
 
-    Returns:
-    - tf.Tensor, tensor with random shuffle of channels.
+    Returns
+    -------
+    tf.Tensor
+        tensor with random shuffle of channels.
     """
     num_filters = num_channels(input_tensor)
     indices = np.random.permutation(num_filters)
