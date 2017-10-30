@@ -45,16 +45,21 @@ def nodules_info_to_rzyx(nodules, scale=True):
 def sphere_overlap(nodule_true, nodule_pred):
     """ Two nodules overlap volume normalized by total volume of second one.
 
-    Args:
-    - nodule_true: ndarray with information about true nodule;
-    nodule_true[1:] - [z,y,x] coordinates of true nodule's center,
-    nodule_true[0] - radius of true nodule;
-    - nodule_pred: ndarray with information about predicted nodule;
-    nodule_pred[1:] - [z,y,x] coordinates of predicted nodule's center,
-    nodule_pred[0] - radius of predicted nodule;
+    Parameters
+    ----------
+    nodule_true : ndarray
+        numpy array with information about true nodule:
+        nodule_true[1:] - [z,y,x] coordinates of true nodule's center,
+        nodule_true[0] - radius of true nodule.
+    - nodule_pred: ndarray
+        numpy array with information about predicted nodule:
+        nodule_pred[1:] - [z,y,x] coordinates of predicted nodule's center,
+        nodule_pred[0] - radius of predicted nodule;
 
-    Returns:
-    - float, normalized overlap volume.
+    Returns
+    -------
+    float
+        overlap volume divided by sum of input nodules' volumes.
     """
     r1, r2 = nodule_true[3], nodule_pred[3]
     pos1, pos2 = nodule_true[:3], nodule_pred[:3]
@@ -85,14 +90,17 @@ def sphere_overlap(nodule_true, nodule_pred):
 def nodules_sets_overlap_jit(nodules_true, nodules_pred):
     """ Compute overlap matrix for two sets of nodules.
 
-    Args:
-    - nodules_true: ndarray(l, 4), contains info about centers of predicted nodules
-    and theirs diameters;
-    - nodules_pred: ndarray(k, 4), contains info about centers of predicted nodules
-    and theirs diameters;
+    Parameters
+    ----------
+    nodules_true : ndarray(l, 4)
+        numpy array containing info about centers of target nodules and theirs diameters.
+    nodules_pred : ndarray(k, 4)
+        numpy array containing info about centers of predicted nodules and theirs diameters;
 
-    Returns:
-    - overlap_matrix, ndarray(l, k);
+    Returns
+    -------
+    ndarray(l, k)
+        overlap matrix.
     """
     num_pred = nodules_pred.shape[0]
     num_true = nodules_true.shape[0]
