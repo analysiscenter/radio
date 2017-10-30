@@ -43,7 +43,7 @@ class TFModel3D(TFModel):
         """ Train model with data provided. """
         _fetches = ('y_pred', )
         train_output = super().train(_fetches, {'x': x, 'y': y})
-        self._metrics_values.append(self.comput_metrics(y, train_output[0]))
+        self._metrics_values.append(self.compute_metrics(y, train_output[0]))
 
         if self._show_metrics:
             print(self.train_metrics.iloc[-1, :])
