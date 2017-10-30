@@ -54,5 +54,3 @@ class TFModel3D(TFModel):
         """ Predict model on data provided. """
         predictions = super().predict(fetches=None, feed_dict={'x': x})
         return predictions
-
-    def test_on_dataset(self, )
