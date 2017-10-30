@@ -22,12 +22,12 @@ class KerasModel(Model, BaseModel):
         BaseModel.__init__(self, *args, **kwargs)
 
         self._show_metrics = self.get_from_config('show_metrics', False)
-        self._train_metrics = []
+        self._metrics_values = []
 
     @property
     def train_metrics(self):
         """ Return pandas DataFrame containing train metrics. """
-        return pd.DataFrame(self._train_metrics)
+        return pd.DataFrame(self._metrics_values)
 
     def build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
@@ -51,7 +51,7 @@ class KerasModel(Model, BaseModel):
             prediction = self.train_on_batch(**feed_dict)
             if not isinstance(prediction, (list, tuple)):
                 prediction = (prediction, )
-            self._train_metrics.append(dict(zip(self.metrics_names, prediction)))
+            self._metrics_values.append(dict(zip(self.metrics_names, prediction)))
         if self._show_metrics:
             print(self.train_metrics.iloc[-1, :])
             clear_output(wait=True)
