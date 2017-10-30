@@ -50,6 +50,39 @@ class KerasResNet50(KerasModel):
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
 
+        If kernel_size is (3, 3, 3) then
+        schematically this block can be represented like this:
+        =======================================================================
+                                   input_tensor _________
+                                        ||                \
+                                        \/                 \
+                            Conv3D{1x1x1}[1:1:1](filters1)  |
+                                        ||                  |
+                                        \/                  |
+                                 BatchNormalization         |
+                                        ||                  |
+                                       ReLu                 |
+                                        ||                  |
+                                        \/                  |
+                            Conv3D{3x3x3}[1:1:1](filters2)  |
+                                        ||                  |
+                                        \/                  |
+                                 BatchNormalization         |
+                                        ||                  |
+                                       ReLu                 |
+                                        ||                  |
+                                        \/                  |
+                            Conv3D{1x1x1}[1:1:1](filter3)   |
+                                        ||                  |
+                                        \/                  |
+                                 BatchNormalization         |
+                                        ||                  |
+                                        \/                  |
+                                       ( + )<---------------|
+                                        ||
+                                        \/
+                                        ReLu
+        =======================================================================
         Parameters
         ----------
         input_tensor : keras tensor
