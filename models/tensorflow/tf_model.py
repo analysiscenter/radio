@@ -18,12 +18,12 @@ class TFModel3D(TFModel):
     """ Base class for all tensorflow models. """
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
-        self._show_metrics = self.get_from_config('show_metrics', False)
         _metrics = self.get_from_config('metrics', [])
         if not isinstance(_metrics, (list, tuple)):
             _metrics = [_metrics]
         self._metrics = _metrics
         self._metrics_values = []
+        self._show_metrics = self.get_from_config('show_metrics', False)
 
     def refresh_metrics(self):
         """ Refresh metrics values. """
@@ -54,3 +54,5 @@ class TFModel3D(TFModel):
         """ Predict model on data provided. """
         predictions = super().predict(fetches=None, feed_dict={'x': x})
         return predictions
+
+    def test_on_dataset(self, )
