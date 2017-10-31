@@ -20,9 +20,9 @@ def get_initializer(initializer):
     tensorflow initializer.
     """
     if initializer == 'xavier':
-        kernel_init_fn = tf.contrib.layers.xavier_initializer
+        return tf.contrib.layers.xavier_initializer
     elif initializer == 'normal':
-        kernel_init_fn = tf.random_normal_initializer
+        return tf.random_normal_initializer
     else:
         raise ValueError("Argument kernel_init must have 'str' type " +
                          "and be 'xavier' or 'normal'")
