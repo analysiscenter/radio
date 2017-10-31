@@ -3,11 +3,11 @@
 """ Contains DenseNet model class. """
 
 import tensorflow as tf
-from ..tf_model import TFModel3D
+from ..tf_model import TFModelCT
 from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d, global_average_pool3d
 
 
-class TFDenseNet(TFModel3D):
+class TFDenseNet(TFModelCT):
     """ This class implements 3D DenseNet architecture via tensorflow.
 
     Full description of similar 2D model architecture can be downloaded from here:
