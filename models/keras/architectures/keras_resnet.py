@@ -2,7 +2,6 @@
 """ Contains implementation of ResNet via keras. """
 
 from keras import layers
-from keras.models import Model
 
 from keras.layers import Input
 from keras.layers import Dense, Dropout
