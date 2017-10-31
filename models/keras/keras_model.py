@@ -2,7 +2,6 @@
 
 import functools
 import numpy as np
-import keras
 from keras.models import Model
 from ...dataset.dataset.models import BaseModel
 
