@@ -299,7 +299,8 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
         test_pipeline = batch.pipeline.config.get('test_pipeline', None)
         test_pipeline.reset_iter()
 
-    batch.pipeline.set_variable('iter', train_iter + 1)
+        test_metrics = batch.pipeline.get_variable('test_metrics')
+
     if len(metrics) and (train_iter % period == 0):
         _model = batch.get_model_by_name(model_name)
         ds_metrics_list = []
@@ -315,6 +316,13 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
 
         ds_metrics = pd.DataFrame(ds_metrics_list).mean()
         batch.pipeline.update_variable('test_metrics', value=ds_metrics.to_dict(), mode='a')
+    else:
+        if len(test_metrics) == 0:
+            value = {m.__name__: np.nan for m in metrics}
+        else:
+            value = test_metrics[-2]
+        batch.pipeline.update_variable('test_metrics', value=value, mode='a')
+    batch.pipeline.set_variable('iter', train_iter + 1)
     return None
 
 
