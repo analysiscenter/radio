@@ -18,9 +18,11 @@ def get_initializer(initializer):
     Returns
     -------
     tensorflow initializer.
+
+    TODO correct error with initializer.
     """
     if initializer == 'xavier':
-        return tf.contrib.layers.xavier_initializer
+        return tf.contrib.layers.xavier_initializer()
     elif initializer == 'normal':
         return tf.random_normal_initializer
     else:
