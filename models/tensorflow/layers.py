@@ -13,7 +13,7 @@ def get_initializer(initializer):
     Parameters
     ----------
     kernel_init : str
-        initializer tyep; can be 'xavier' or 'normal'.
+        initializer type; can be 'xavier' or 'normal'.
 
     Returns
     -------
