@@ -196,18 +196,25 @@ class CTImagesModels(CTImagesMaskedBatch):
     def test_on_dataset(self, model_name, unpacker, batch_size, period, **kwargs):
         """ Compute metrics of model on dataset.
 
-        Args:
-        - model_name: str, name of model;
-        - unpacker: callable or str, if str must be attribute of batch instance;
-        if callable then it is called with '**kwargs' and its output is considered
-        as data flowed in model.predict_on_batch method;
-        - component: str, name of y_component, can be 'masks' or 'labels'(optional);
-        - dim_ordering: str, dimension ordering, can be 'channels_first'
-        or 'channels last'(optional);
-        - period: int, frequency of test_on_dataset runs;
+        Parameters
+        ----------
+        model_name : str
+            name of model.
+        unpacker : callable or str
+            if str must be attribute of batch instance.
+            if callable then it is called with '**kwargs' and its output is considered
+            as data flowed in model.predict_on_batch method.
+        component : str
+            name of y_component, can be 'masks' or 'labels'(optional).
+        dim_ordering : str
+            dimension ordering, can be 'channels_first' or 'channels last'(optional).
+        period: int
+            frequency of test_on_dataset runs.
 
-        Returns:
-        - self, unchanged CTImagesMaskedBatch;
+        Returns
+        -------
+        CTImagesMaskedBatch
+            unchanged self(source batch).
         """
         if self.pipeline is None:
             return self
