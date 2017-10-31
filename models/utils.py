@@ -152,32 +152,32 @@ def unpack_component(batch, model=None, component='images', dim_ordering='channe
     return x
 
 
-    def unpack_seg(batch, model=None, dim_ordering='channels_last'):
-        """ Unpack data from batch in format suitable for segmentation task.
+def unpack_seg(batch, model=None, dim_ordering='channels_last'):
+    """ Unpack data from batch in format suitable for segmentation task.
 
-        Parameters
-        ----------
-        self : CTImagesMaskedBatch
-            batch to unpack.
-        model : dataset.models.BaseModel
-            model where the data from batch will be fed. Is not used here.
-            Required for compatibility with dataset.Pipeline.train_model
-            and dataset.Pipeline.predict_model interfaces.
-        dim_ordering : str
-            can be 'channels_last' or 'channels_first'. Reflects where to put
-            channels dimension: right after batch dimension or after all spatial axes.
+    Parameters
+    ----------
+    self : CTImagesMaskedBatch
+        batch to unpack.
+    model : dataset.models.BaseModel
+        model where the data from batch will be fed. Is not used here.
+        Required for compatibility with dataset.Pipeline.train_model
+        and dataset.Pipeline.predict_model interfaces.
+    dim_ordering : str
+        can be 'channels_last' or 'channels_first'. Reflects where to put
+        channels dimension: right after batch dimension or after all spatial axes.
 
-        Returns:
-        dict
-            {'x': images_array, 'y': labels_array}
+    Returns:
+    dict
+        {'x': images_array, 'y': labels_array}
 
-        NOTE
-        ----
-        'dim_ordering' argument reflects where to put '1'
-        for channels dimension both for images and masks.
-        """
-        return {'x': unpack_component(batch, model, 'images', dim_ordering),
-                'y': unpack_component(batch, model, 'masks', dim_ordering)}
+    NOTE
+    ----
+    'dim_ordering' argument reflects where to put '1'
+    for channels dimension both for images and masks.
+    """
+    return {'x': unpack_component(batch, model, 'images', dim_ordering),
+            'y': unpack_component(batch, model, 'masks', dim_ordering)}
 
 
 def unpack_clf(batch, model, threshold=10, dim_ordering='channels_last'):
