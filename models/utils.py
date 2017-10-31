@@ -323,13 +323,13 @@ def overlap_true_pred_nodules(batch):
             nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
         except KeyError:
             nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
-            pred_out.append(nods_pred.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))
+            pred_out.append(nods_pred.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))  # pylint: disable=cell-var-from-loop
             continue
         try:
             nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
         except KeyError:
             nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
-            true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))
+            true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))  # pylint: disable=cell-var-from-loop
             continue
 
         overlap_matrix = nodules_sets_overlap_jit(nods_true.values, nods_pred.values)
