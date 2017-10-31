@@ -193,7 +193,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         return {'x': x, 'y': y_regression_array}
 
     @action
-    def test_on_dataset(self, model_name, unpacker, batch_size, period, **kwargs):
+    def test_on_dataset(self, model_name, unpacker, **kwargs):
         """ Compute metrics of model on dataset.
 
         Parameters
@@ -222,26 +222,10 @@ class CTImagesModels(CTImagesMaskedBatch):
         if self.pipeline.config is not None:
             train_iter = self.pipeline.get_variable('iter', 0)
 
-            metrics = self.pipeline.config.get('metrics', ())
-            test_pipeline = self.pipeline.config.get('test_pipeline', None)
-            test_pipeline.reset_iter()
-
-            test_metrics = self.pipeline.get_variable('test_metrics', init=list)
-
         if len(metrics) and (train_iter % period == 0):
             _model = self.get_model_by_name(model_name)
-            ds_metrics_list = []
-            for batch in test_pipeline.gen_batch(batch_size):
-                x, y_true = batch._get_by_unpacker(unpacker, **kwargs)
-
-                y_pred = _model.predict_on_batch(x)
-
-                extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
-
-                ds_metrics_list.append(extend_data)
-
-            ds_metrics = pd.DataFrame(ds_metrics_list).mean()
-            test_metrics.append(ds_metrics.to_dict())
+            _model.test_on_dataset(partial(unpacker, **kwargs))
+        self.pipeline.set_variable('iter', train_iter + 1)
         return self
 
     @action
