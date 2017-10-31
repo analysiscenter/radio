@@ -303,8 +303,8 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
     if len(metrics) and (train_iter % period == 0):
         _model = batch.get_model_by_name(model_name)
         ds_metrics_list = []
-        for batch in test_pipeline.gen_batch(batch_size):
-            feed_dict = unpacker(batch, _model, **kwargs)
+        for test_batch in test_pipeline.gen_batch(batch_size):
+            feed_dict = unpacker(test_batch, _model, **kwargs)
 
             y_pred = _model.predict(x=feed_dict.get('x', None))
             y_true = feed_dict.get('y', None)
