@@ -47,13 +47,17 @@ class KerasModel(Model, BaseModel):
         """ Return pandas DataFrame containing train metrics. """
         return pd.DataFrame(self._test_metrics_values)
 
+    def compute_metrics(self, y_true, y_pred):
+        """ Compute all attached metrics on train and return result. """
+        return {metric.__name__: metric(y_true, y_pred)
+                for metric in self._metrics}
+
     def build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
         input_nodes, output_nodes = self._build(**self.config)
         Model.__init__(self, input_nodes, output_nodes)
         self.compile(loss=self.get_from_config('loss', None),
-                     optimizer=self.get_from_config('optimizer', 'sgd'),
-                     metrics=self.get_from_config('metrics', []))
+                     optimizer=self.get_from_config('optimizer', 'sgd'))
 
     def _build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
