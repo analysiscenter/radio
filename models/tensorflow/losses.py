@@ -13,7 +13,7 @@ def log_loss(y_true, y_pred, epsilon=10e-7):
     y_pred : tf.Tensor
         tensor with predicted logits;
     epsilon : float or tf.constant(dtype=tf.float32)
-        epsilon to avoid computing log(0);
+        small real value to avoid computing log(0);
 
     Returns
     -------
@@ -127,9 +127,9 @@ def tiversky_coef(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     Parameters
     ----------
     y_true : tf.Tensor
-        containing target masks.
+        tensor containing target masks.
     y_pred : tf.Tensor
-        containing predicted masks.
+        tensor containing predicted masks.
 
     Returns
     -------
