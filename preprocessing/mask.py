@@ -5,6 +5,37 @@ from numba import njit
 
 
 @njit(nogil=True)
+def create_mask_reg_jit(masks, start, end):
+    """ Jit-decorated function for fast computation of masks by regression data.
+
+    This function is usually called inside create_mask_reg function.
+    """
+    num_items = start.shape[0]
+    for i in range(num_items):
+        masks[i,
+              start[i, 0]: end[i, 0],
+              start[i, 1]: end[i, 1],
+              start[i, 2]: end[i, 2]] = 1.
+    return masks
+
+
+def create_mask_reg(centers, sizes, probs, crop_shape, threshold):
+    """ Create mask by data contained in predictions of regression model. """
+    n_items = centers.shape[0]
+    masks_array = np.zeros(shape=(n_items, *crop_shape), dtype=np.float)
+    _crop_shape = np.asarray(crop_shape)
+
+    start_pixels = np.rint(np.clip(centers - sizes / 2, 0, 1) * _crop_shape).astype(np.int)
+    end_pixels = np.rint(np.clip(centers + sizes / 2, 0, 1) * _crop_shape).astype(np.int)
+    positions = np.array([p > threshold for p in probs])
+
+    masks_array[positions, ...] = create_mask_jit(masks_array[positions, ...],
+                                                  start_pixels[positions, ...],
+                                                  end_pixels[positions, ...])
+    return masks_array
+
+
+@njit(nogil=True)
 def insert_cropped(where, what, origin):
     """ Insert one array in another starting from selected position taking care of
             boundary cases
