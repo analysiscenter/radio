@@ -305,6 +305,7 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
             feed_dict = unpacker(batch, _model, **kwargs)
 
             y_pred = _model.predict(x=feed_dict.get('x', None))
+            y_true = feed_dict.get('y', None)
 
             extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
 
