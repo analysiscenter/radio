@@ -291,9 +291,8 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
     """
     if batch.pipeline is None:
         return batch
-
+    train_iter = batch.pipeline.get_variable('iter')
     if batch.pipeline.config is not None:
-        train_iter = batch.pipeline.get_variable('iter')
 
         metrics = batch.pipeline.config.get('metrics', ())
         test_pipeline = batch.pipeline.config.get('test_pipeline', None)
