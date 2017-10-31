@@ -8,5 +8,5 @@ from .tensorflow.architectures import TFDilatedVnet
 from .keras.architectures import KerasVnet
 from .keras.architectures import KerasResNet50
 from .keras.architectures import KerasVGG16
-from .tensorflow import TFModel3D
-from .keras import KerasModel as KerasModel3D
+from .tensorflow import TFModelCT
+from .keras import KerasModel as KerasModelCT
