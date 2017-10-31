@@ -322,7 +322,7 @@ def overlap_true_pred_nodules(batch):
             continue
         try:
             nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
-        except KeyError
+        except KeyError:
             nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
             true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))
             continue
