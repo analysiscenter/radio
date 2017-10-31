@@ -27,6 +27,10 @@ class TFDenseNet(TFModelCT):
 
     Full description of similar 2D model architecture can be downloaded from here:
     https://arxiv.org/pdf/1608.06993v2.pdf
+
+    NOTE
+    ----
+    This class is descendant of TFModel class from dataset.models.*.
     """
 
     def __init__(self, *args, **kwargs):
