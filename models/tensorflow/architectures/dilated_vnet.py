@@ -129,6 +129,8 @@ class TFDilatedVnet(TFModelCT):
 
         This layer consists of two 3D-convolutional layers with batch normalization
         before 'relu' activation and max_pooling3d layer in the end.
+        Middle layer contains two separate convolutions:
+        one with dilation_rate=(2, 2, 2) and another with dilation_rate=(1, 1, 1).
 
         Schematically this block can be represented like this:
         =======================================================================
