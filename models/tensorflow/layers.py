@@ -1,4 +1,5 @@
 # pylint: disable=not-context-manager
+# pylint: disable=too-many-arguments
 """Helper functions for creating layers """
 
 import tensorflow as tf
