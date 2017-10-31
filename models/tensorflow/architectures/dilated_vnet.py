@@ -1,12 +1,12 @@
 import math
 import numpy as np
 import tensorflow as tf
-from ..tf_model import TFModel3D
+from ..tf_model import TFModelCT
 from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d
 from ..utils import repeat_tensor
 
 
-class TFDilatedVnet(TFModel3D):
+class TFDilatedVnet(TFModelCT):
 
     def upsampling3d(self, input_tensor, times, name):
         """ Apply 3D upsampling operation to input tensor.
