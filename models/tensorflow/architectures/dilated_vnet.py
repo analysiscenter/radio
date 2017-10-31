@@ -13,7 +13,7 @@ from ..utils import repeat_tensor
 
 class TFDilatedVnet(TFModelCT):
 
-    """ This class implements VNet architecture with dilated convolutions via tensorflow.
+    """ This class implements VNet architecture with dilated convolutions using tensorflow.
 
     Attributes
     ----------
