@@ -114,11 +114,11 @@ class TFDenseNet(TFModelCT):
 
         y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='targets')
 
-        x = conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
-                   padding='same', name='initial_convolution', is_training=self.is_training)
+        x = bn_conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
+                      padding='same', name='initial_convolution', is_training=self.is_training)
 
         x = tf.layers.max_pooling3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
-                                    padding=padding, name='maxpool3d')
+                                    padding='same', name='maxpool3d')
 
         x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
         x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
