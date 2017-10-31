@@ -1,2 +1,2 @@
-from .tf_model import TFModel3D
+from .tf_model import TFModelCT
 from .architectures import TFDenseNet, TFResNet, TFDilatedVnet
