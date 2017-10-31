@@ -1,5 +1,5 @@
 # pylint: disable=not-context-manager
-""" Contains lossed used in tensorflow models. """
+""" Contains losses used in tensorflow models. """
 
 import tensorflow as tf
 
