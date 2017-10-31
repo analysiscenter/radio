@@ -274,19 +274,19 @@ class TFDilatedVnet(TFModelCT):
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
         # block_A has shape (None, 32, 64, 64, 32), reduct_block_A has shape (None, 16, 32, 32, 32)
         block_A, reduct_block_A = self.reduction_block(input_tensor, 32,
-                                                       scope='ReductionBlock_A')
+                                                       scope='DownBlock_A')
 
         # block_B has shape (None, 16, 32, 32, 64), reduct_block_B has shape (None, 8, 16, 16, 64)
         block_B, reduct_block_B = self.reduction_block(reduct_block_A, 64,
-                                                       scope='ReductionBlock_B')
+                                                       scope='DownBlock_B')
 
         # block_C has shape (None, 8, 16, 16, 128), reduct_block_C has shape (None, 4, 8, 8, 128)
         block_C, reduct_block_C = self.reduction_block(reduct_block_B, 128,
-                                                       scope='ReductionBlock_C')
+                                                       scope='DownBlock_C')
 
         # block_D has shape (None, 4, 8, 8, 256), reduct_block_D has shape (None, 2, 4, 4, 256)
         block_D, reduct_block_D = self.reduction_block(reduct_block_C, 256,
-                                                       scope='ReductionBlock_D')
+                                                       scope='DownBlock_D')
 
         # Bottleneck layer
         # bottleneck_block has shape (None, 2, 4, 4, 512)
@@ -295,19 +295,19 @@ class TFDilatedVnet(TFModelCT):
         # Upsampling Layers: UpsamplingBlock_D, UpsamplingBlock_C, UpsamplingBlock_B, UpsamplingBlock_A
         # upsample_block_C has shape (None, 4, 8, 8, 256)
         upsample_block_D = self.upsampling_block(bottleneck_block, block_D,
-                                                 256, scope='UpsamplingBlock_D')
+                                                 256, scope='UpBlock_D')
 
         # upsample_block_C has shape (None, 8, 16, 16, 128)
         upsample_block_C = self.upsampling_block(upsample_block_D, block_C,
-                                                 128, scope='UpsamplingBlock_C')
+                                                 128, scope='UpBlock_C')
 
         # upsample_block_B has shape (None, 16, 32, 32, 64)
         upsample_block_B = self.upsampling_block(upsample_block_C, block_B,
-                                                 64, scope='UpsamplingBlock_B')
+                                                 64, scope='UpBlock_B')
 
         # upsample_block_A has shape (None, 32, 64, 64, 32)
         upsample_block_A = self.upsampling_block(upsample_block_B, block_A,
-                                                 32, scope='UpsamplingBlock_A')
+                                                 32, scope='UpBlock_A')
 
         y_pred = bn_conv3d(upsample_block_A, 1, (1, 1, 1), name='final_conv',
                            activation=tf.nn.sigmoid, padding='same',
