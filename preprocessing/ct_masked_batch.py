@@ -788,3 +788,68 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
         return self
+
+    @action
+    def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
+                        batch_size=4, y_component='labels', dim_ordering='channels_last',
+                        show_progress=True):
+        """ Get predictions of the model on data contained in batch.
+
+        Transforms scan data into patches of shape CROP_SHAPE and then feed
+        this patches sequentially into model with name specified by
+        argument 'model_name'; after that loads predicted masks or probabilities
+        into 'masks' component of the current batch and returns it.
+
+        Parameters
+        ----------
+        model_name : str
+            name of model that will be used for predictions.
+        strides : tuple(int, int, int)
+            strides for patching operation
+        batch_size : int
+            number of patches to feed in model in one iteration.
+        y_component: str
+            name of y component, can be 'masks' or labels.
+        dim_ordering: str
+            dimension ordering, can be 'channels_first' or 'channels_last'.
+
+        Returns
+        -------
+        CTImagesMaskedBatch
+            self(source batch).
+        """
+        _model = self.get_model_by_name(model_name)
+
+        patches_arr = self.get_patches(patch_shape=crop_shape,
+                                       stride=strides,
+                                       padding='reflect')
+        if dim_ordering == 'channels_first':
+            patches_arr = patches_arr[:, np.newaxis, ...]
+        elif dim_ordering == 'channels_last':
+            patches_arr = patches_arr[..., np.newaxis]
+
+        predictions = []
+        iterations = range(0, patches_arr.shape[0], batch_size)
+        if show_progress:
+            iterations = tqdm.tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
+        for i in iterations:
+            current_prediction = np.asarray(_model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
+
+            if y_component == 'labels':
+                current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
+                                               for prob in current_prediction.ravel()])
+
+            if y_component == 'regression':
+                masks_patch = create_mask_reg(current_prediction[:, :3],
+                                              current_prediction[:, 3:6],
+                                              current_prediction[:, 6],
+                                              crop_shape, 0.01)
+
+                current_prediction = np.squeeze(masks_patch)
+            predictions.append(current_prediction)
+
+        patches_mask = np.concatenate(predictions, axis=0)
+        self.load_from_patches(patches_mask, stride=strides,
+                               scan_shape=tuple(self.images_shape[0, :]),
+                               data_attr='masks')
+        return self
