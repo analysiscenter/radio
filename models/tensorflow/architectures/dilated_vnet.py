@@ -22,6 +22,10 @@ class TFDilatedVnet(TFModelCT):
         https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
     name : str
         name of the model.
+
+    NOTE
+    ----
+    This class is descendant of TFModel class from dataset.models.*.
     """
 
     def upsampling3d(self, input_tensor, times, name):
