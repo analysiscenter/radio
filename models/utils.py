@@ -314,7 +314,7 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
             ds_metrics_list.append(extend_data)
 
         ds_metrics = pd.DataFrame(ds_metrics_list).mean()
-        return ds_metrics.to_dict()
+        batch.pipeline.update_variable('test_metrics', value=ds_metrics.to_dict(), mode='a')
     return None
 
 
