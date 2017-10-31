@@ -223,7 +223,7 @@ class CTImagesModels(CTImagesMaskedBatch):
             train_iter = self.pipeline.get_variable('iter', 0)
             period = self.pipeline.config.get('period', 32)
 
-        if len(metrics) and (train_iter % period == 0):
+        if (train_iter % period == 0):
             _model = self.get_model_by_name(model_name)
             _model.test_on_dataset(partial(unpacker, **kwargs))
         self.pipeline.set_variable('iter', train_iter + 1)
