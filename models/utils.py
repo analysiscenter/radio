@@ -319,7 +319,7 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
         if len(test_metrics) == 0:
             value = {m.__name__: np.nan for m in metrics}
         else:
-            value = test_metrics[-2]
+            value = test_metrics[-1]
         batch.pipeline.update_variable('test_metrics', value=value, mode='a')
     batch.pipeline.set_variable('iter', train_iter + 1)
     return None
