@@ -130,13 +130,12 @@ class KerasResNet50(KerasModel):
     def conv_block(self, input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 2)):
         """ A block that has a conv layer at shortcut.
 
-        If kernel_size=(3, 3, 3) and strides=(2, 2, 2) then
-        schematically this block can be represented like this:
+        Schematically this block can be represented like this:
         =======================================================================
                                    input_tensor -----------------|
                                         ||                       |
                                         \/                       |
-                            Conv3D{1x1x1}[2:2:2](filters1)       |
+                          Conv3D{1x1x1}[strides](filters1)       |
                                         ||                       |
                                         \/                       |
                                  BatchNormalization              |
@@ -144,12 +143,12 @@ class KerasResNet50(KerasModel):
                                        ReLu                      |
                                         ||                       |
                                         \/                       |
-                            Conv3D{3x3x3}[1:1:1](filters2)       |
+                      Conv3D{kernel_size}[1:1:1](filters2)       |
                                         ||                       |
                                         \/                       |
                                  BatchNormalization              |
                                         ||                       |
-                                       ReLu      Conv3D{1x1x1}[2:2:2](filters3)
+                                       ReLu      Conv3D{1x1x1}[strides](filters3)
                                         ||                       |
                                         \/                       |
                             Conv3D{1x1x1}[1:1:1](filter3)        |
