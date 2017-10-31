@@ -293,12 +293,13 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
         return batch
 
     if batch.pipeline.config is not None:
-        train_iter = batch.pipeline.get_variable('iter', 0, create=True)
+        train_iter = batch.pipeline.get_variable('iter')
 
         metrics = batch.pipeline.config.get('metrics', ())
         test_pipeline = batch.pipeline.config.get('test_pipeline', None)
         test_pipeline.reset_iter()
 
+    batch.pipeline.set_variable('iter', train_iter + 1)
     if len(metrics) and (train_iter % period == 0):
         _model = batch.get_model_by_name(model_name)
         ds_metrics_list = []
@@ -314,8 +315,7 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
 
         ds_metrics = pd.DataFrame(ds_metrics_list).mean()
         return ds_metrics.to_dict()
-    batch.pipeline.set_variable('iter', train_iter + 1)
-    return
+    return None
 
 
 def _create_overlap_index(overlap_matrix):
