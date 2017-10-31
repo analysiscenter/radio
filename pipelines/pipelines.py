@@ -57,8 +57,9 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
                 .unify_spacing(**kwargs_default)
                 .create_mask()
                 .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
+                .sample_nodules(**args_sample_nodules)
                 .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=True)
-                )
+               )
 
     return pipeline
 
