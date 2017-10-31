@@ -1,6 +1,5 @@
 """ Contains base class for all keras models. """
 
-import os
 import functools
 import numpy as np
 import keras
