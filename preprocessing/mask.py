@@ -29,9 +29,9 @@ def create_mask_reg(centers, sizes, probs, crop_shape, threshold):
     end_pixels = np.rint(np.clip(centers + sizes / 2, 0, 1) * _crop_shape).astype(np.int)
     positions = np.array([p > threshold for p in probs])
 
-    masks_array[positions, ...] = create_mask_jit(masks_array[positions, ...],
-                                                  start_pixels[positions, ...],
-                                                  end_pixels[positions, ...])
+    masks_array[positions, ...] = create_mask_reg_jit(masks_array[positions, ...],
+                                                      start_pixels[positions, ...],
+                                                      end_pixels[positions, ...])
     return masks_array
 
 
