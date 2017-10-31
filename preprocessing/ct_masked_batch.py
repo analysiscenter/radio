@@ -833,7 +833,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if show_progress:
             iterations = tqdm.tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
         for i in iterations:
-            current_prediction = np.asarray(_model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
+            current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
             if y_component == 'labels':
                 current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
