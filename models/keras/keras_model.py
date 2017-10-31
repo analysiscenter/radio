@@ -1,3 +1,4 @@
+ # pylint: disable=super-init-not-called
 """ Contains base class for all keras models. """
 
 import functools
@@ -16,7 +17,7 @@ class KerasModel(Model, BaseModel):
     """
     def __init__(self, *args, **kwargs):
         """ Call __init__ of BaseModel not keras.models.Model. """
-        BaseModel.__init__(self, *args, **kwargs)  # pylint: disable=super-init-not-called
+        BaseModel.__init__(self, *args, **kwargs)
 
     def build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
