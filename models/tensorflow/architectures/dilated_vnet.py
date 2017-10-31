@@ -1,4 +1,5 @@
 # pylint: disable=anomalous-backslash-in-string
+# pylint: disable=not-context-manager
 import math
 import numpy as np
 import tensorflow as tf
