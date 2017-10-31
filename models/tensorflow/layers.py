@@ -19,7 +19,6 @@ def get_initializer(initializer):
     -------
     tensorflow initializer.
     """
-    kenel_init_fn = None
     if initializer == 'xavier':
         kernel_init_fn = tf.contrib.layers.xavier_initializer
     elif initializer == 'normal':
