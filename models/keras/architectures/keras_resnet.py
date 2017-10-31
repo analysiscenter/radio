@@ -128,7 +128,7 @@ class KerasResNet50(KerasModel):
         return x
 
     def conv_block(self, input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 2)):
-        """ A block that has a conv layer at shortcut.
+        """ Convolutional block that has a conv layer at shortcut.
 
         Schematically this block can be represented like this:
         =======================================================================
