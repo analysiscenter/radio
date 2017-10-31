@@ -98,3 +98,17 @@ class TFModel3D(TFModel):
         """
         predictions = super().predict(fetches=None, feed_dict={'x': x})
         return predictions
+
+    def test_on_dataset(self, unpacker):
+        if self._test_pipeline is None:
+            return
+        self._test_pipeline.reset_iter()
+        metrics_on_test = []
+        while True:
+            batch = self._test_pipeline.next_batch()
+            feed_dict = unpacker(batch)
+            y_true = feed_dict.get('y', None)
+            y_pred = self.predict(x=feed_dict.get('x', None))
+            metrics_on_test.append(self.compute_metrics(y_true, y_pred))
+        metrics = pd.DataFrame(metrics_on_test).mean()
+        self._test_metrics_values.append(metrics.to_dict(metrics))
