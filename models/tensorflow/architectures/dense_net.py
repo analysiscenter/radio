@@ -4,7 +4,7 @@
 
 import tensorflow as tf
 from ..tf_model import TFModelCT
-from ..layers import bn_conv3d, bn_dilated_conv3d, global_average_pool3d
+from ..layers import bn_conv3d, global_average_pool3d
 
 
 class TFDenseNet(TFModelCT):
