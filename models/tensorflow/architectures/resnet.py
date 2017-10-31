@@ -111,6 +111,7 @@ class TFResNet(TFModelCT):
                           is_training=self.is_training)
 
             output_tensor = tf.add(x, input_tensor)
+            output_tensor = tf.nn.relu(output_tensor)
         return output_tensor
 
     def conv_block(self, input_tensor, kernel_size, filters, name, strides=(2, 2, 2)):
