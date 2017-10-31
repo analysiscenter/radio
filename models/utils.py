@@ -304,7 +304,7 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
         _model = batch.get_model_by_name(model_name)
         ds_metrics_list = []
         for batch in test_pipeline.gen_batch(batch_size):
-            x, y_true = batch._get_by_unpacker(unpacker, **kwargs)
+            x, y_true = unpacker(batch, _model, **kwargs)
 
             y_pred = _model.predict_on_batch(x)
 
