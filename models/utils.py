@@ -314,6 +314,8 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
 
         ds_metrics = pd.DataFrame(ds_metrics_list).mean()
         return ds_metrics.to_dict()
+    batch.pipeline.set_variable('iter', train_iter + 1)
+    return
 
 
 def _create_overlap_index(overlap_matrix):
