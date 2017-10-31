@@ -1,3 +1,4 @@
+# pylint: disable=anomalous-backslash-in-string
 """ Contains implementation of ResNet via keras. """
 
 from keras import layers
