@@ -5,7 +5,6 @@
 from functools import wraps
 import tensorflow as tf
 import keras
-from keras.models import Model
 from keras.layers import (Input,
                           concatenate,
                           Conv3D,
