@@ -78,7 +78,7 @@ class KerasModel(Model, BaseModel):
 
         self._train_metrics_values.append(dict(zip(self.metrics_names, prediction)))
         if self._show_metrics:
-            print(self.train_metrics.iloc[-1, :])
+            print(self._train_metrics_values[-1])
             clear_output(wait=True)
         return prediction
 
