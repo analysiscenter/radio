@@ -93,7 +93,7 @@ class KerasModel(Model, BaseModel):
         if not isinstance(prediction, (list, tuple)):
             prediction = (prediction, )
 
-        self._train_metrics_values.append(dict(zip(self.metrics_names, prediction)))
+        self._train_metrics_values.append(self.compute_metrics(y, train_output[0]))
         if self._show_metrics:
             print(self._train_metrics_values[-1])
             clear_output(wait=True)
@@ -139,7 +139,6 @@ class KerasModel(Model, BaseModel):
             metrics_on_test.append(self.compute_metrics(y_true, y_pred))
         metrics = pd.DataFrame(metrics_on_test).mean()
         self._test_metrics_values.append(metrics.to_dict(metrics))
-
 
     @functools.wraps(Model.load_weights)
     def load(self, *args, **kwargs):
