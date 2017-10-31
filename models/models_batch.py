@@ -218,9 +218,9 @@ class CTImagesModels(CTImagesMaskedBatch):
         """
         if self.pipeline is None:
             return self
-
+        train_iter = self.pipeline.get_variable('iter', 0)
+        period = 32
         if self.pipeline.config is not None:
-            train_iter = self.pipeline.get_variable('iter', 0)
             period = self.pipeline.config.get('period', 32)
 
         if (train_iter % period == 0):
