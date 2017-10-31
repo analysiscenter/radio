@@ -1,3 +1,4 @@
+# pylint: disable=duplicate-code
 """ Module of nn-models for classification/segmentation of lung-cancer on CT-scans. """
 from .tensorflow.architectures import TFDenseNet
 from .tensorflow.architectures import TFResNet
