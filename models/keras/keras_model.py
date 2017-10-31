@@ -96,7 +96,7 @@ class KerasModel(Model, BaseModel):
 
         self._train_metrics_values.append(self.compute_metrics(y, prediction))
         if self._show_metrics:
-            print(self._train_metrics_values[-1])
+            print(pd.Series(self._train_metrics_values[-1]))
             clear_output(wait=True)
         return prediction
 
