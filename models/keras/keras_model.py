@@ -22,6 +22,11 @@ class KerasModel(Model, BaseModel):
         """ Call __init__ of BaseModel not keras.models.Model. """
         BaseModel.__init__(self, *args, **kwargs)
 
+        _metrics = self.get_from_config('metrics', [])
+        if not isinstance(_metrics, (list, tuple)):
+            _metrics = [_metrics]
+        self._metrics = _metrics
+
         self._show_metrics = self.get_from_config('show_metrics', False)
         self._test_pipeline = self.get_from_config('test_pipeline', None)
         self._train_metrics_values = []
