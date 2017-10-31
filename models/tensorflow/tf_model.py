@@ -49,7 +49,22 @@ class TFModel3D(TFModel):
                 for metric in self._metrics}
 
     def train(self, x=None, y=None, **kargs):
-        """ Train model with data provided. """
+        """ Train model with data provided.
+
+        Parameters
+        ----------
+        x : ndarray(batch_size, ...)
+            numpy array that will be fed into tf.placeholder that can be accessed
+            by 'x' attribute of 'self', typically input of neural network.
+        y : ndarray(batch_size, ...)
+            numpy array that will be fed into tf.placeholder that can be accessed
+            by 'y' attribute of 'self'.
+
+        Returns
+        -------
+        ndarray(batch_size, ...)
+            predicted output.
+        """
         _fetches = ('y_pred', )
         train_output = super().train(_fetches, {'x': x, 'y': y})
         self._train_metrics_values.append(self.compute_metrics(y, train_output[0]))
@@ -60,6 +75,18 @@ class TFModel3D(TFModel):
         return train_output
 
     def predict(self, x=None, **kargs):
-        """ Predict model on data provided. """
+        """ Predict model on data provided.
+
+        Parameters
+        ----------
+        x : ndarray(batch_size, ....)
+            numpy array that will be fed into tf.placeholder that can be accessed
+            by 'x' attribute of 'self', typically input of neural network.
+
+        Returns
+        -------
+        ndarray(batch_size, ...)
+            predicted output.
+        """
         predictions = super().predict(fetches=None, feed_dict={'x': x})
         return predictions
