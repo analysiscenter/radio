@@ -65,7 +65,7 @@ class TFDilatedVnet(TFModelCT):
                          /                        \\
                         /                          \\
     Conv3D{3x3x3}[1:1:1](filters / 2)    Conv3D{3x3x3}[1:1:1](filters / 2)
-         dilation_rate=(1, 1, 1)             dilation_rate=(dilation_rate)
+         dilation_rate=(1, 1, 1)             dilation_rate=(dilation)
                          \\                      /
                           \\                    /
                            \\                  /
