@@ -298,6 +298,8 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
         test_pipeline = batch.pipeline.config.get('test_pipeline', None)
         test_pipeline.reset_iter()
 
+    print('metrics ', metrics)
+    print('test_pipeline', test_pipeline)
     if len(metrics) and (train_iter % period == 0):
         _model = batch.get_model_by_name(model_name)
         ds_metrics_list = []
