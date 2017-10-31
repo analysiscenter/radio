@@ -91,8 +91,8 @@ class KerasModel(Model, BaseModel):
             raise ValueError("Arguments 'x' and 'y' must not be None")
 
         prediction = np.asarray(self.train_on_batch(x=x, y=y))
-        if not isinstance(prediction, (list, tuple)):
-            prediction = (prediction, )
+        # if not isinstance(prediction, (list, tuple)):
+        #     prediction = (prediction, )
 
         self._train_metrics_values.append(self.compute_metrics(y, prediction))
         if self._show_metrics:
