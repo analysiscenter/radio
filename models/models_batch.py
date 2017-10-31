@@ -248,19 +248,29 @@ class CTImagesModels(CTImagesMaskedBatch):
         argument 'model_name'; after that loads predicted masks or probabilities
         into 'masks' component of the current batch and returns it.
 
-        Args:
-        - model_name: str, name of model;
-        - strides: tuple(int, int, int) strides for patching operation;
-        - batch_size: int, number of patches to feed in model in one iteration;
-        - y_component: str, name of y component, can be 'masks' or labels;
-        - dim_ordering: str, dimension ordering, can be 'channels_first' or 'channels_last'
+        Parameters
+        ----------
+        model_name : str
+            name of model that will be used for predictions.
+        strides : tuple(int, int, int)
+            strides for patching operation
+        batch_size : int
+            number of patches to feed in model in one iteration.
+        y_component: str
+            name of y component, can be 'masks' or labels.
+        dim_ordering: str
+            dimension ordering, can be 'channels_first' or 'channels_last'
 
-        Returns:
-        - self, uncahnged CTImagesMaskedBatch;
+        Returns
+        -------
+        CTImagesMaskedBatch
+            unchanged self(source batch).
         """
         _model = self.get_model_by_name(model_name)
 
-        patches_arr = self.get_patches(patch_shape=crop_shape, stride=strides, padding='reflect')
+        patches_arr = self.get_patches(patch_shape=crop_shape,
+                                       stride=strides,
+                                       padding='reflect')
         if dim_ordering == 'channels_first':
             patches_arr = patches_arr[:, np.newaxis, ...]
         elif dim_ordering == 'channels_last':
@@ -278,8 +288,10 @@ class CTImagesModels(CTImagesMaskedBatch):
                                                for prob in current_prediction.ravel()])
 
             if y_component == 'regression':
-                masks_patch = create_mask_reg(current_prediction[:, :3], current_prediction[:, 3:6],
-                                              current_prediction[:, 6], crop_shape, 0.01)
+                masks_patch = create_mask_reg(current_prediction[:, :3],
+                                              current_prediction[:, 3:6],
+                                              current_prediction[:, 6],
+                                              crop_shape, 0.01)
 
                 current_prediction = np.squeeze(masks_patch)
             predictions.append(current_prediction)
