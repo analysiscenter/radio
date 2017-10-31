@@ -23,36 +23,6 @@ class KerasModel(Model, BaseModel):
         """ Call __init__ of BaseModel not keras.models.Model. """
         BaseModel.__init__(self, *args, **kwargs)
 
-        _metrics = self.get_from_config('metrics', [])
-        if not isinstance(_metrics, (list, tuple)):
-            _metrics = [_metrics]
-        self._metrics = _metrics
-
-        self._train_metrics_values = []
-        self._test_metrics_values = []
-        self._show_metrics = self.get_from_config('show_metrics', False)
-        self._test_pipeline = self.get_from_config('test_pipeline', None)
-
-    def refresh_metrics(self):
-        """ Refresh metrics values. """
-        self._train_metrics_values = []
-        self._test_metrics_values = []
-
-    @property
-    def train_metrics(self):
-        """ Return pandas DataFrame containing train metrics. """
-        return pd.DataFrame(self._train_metrics_values)
-
-    @property
-    def test_metrics(self):
-        """ Return pandas DataFrame containing train metrics. """
-        return pd.DataFrame(self._test_metrics_values)
-
-    def compute_metrics(self, y_true, y_pred):
-        """ Compute all attached metrics on train and return result. """
-        return {metric.__name__: metric(y_true, y_pred)
-                for metric in self._metrics}
-
     def build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
         input_nodes, output_nodes = self._build(**self.config)
@@ -91,10 +61,6 @@ class KerasModel(Model, BaseModel):
             raise ValueError("Arguments 'x' and 'y' must not be None")
 
         prediction = np.asarray(self.train_on_batch(x=x, y=y))
-        self._train_metrics_values.append(self.compute_metrics(y, prediction))
-        if self._show_metrics:
-            print(pd.Series(self._train_metrics_values[-1]))
-            clear_output(wait=True)
         return prediction
 
     def predict(self, x=None, **kwargs):
@@ -123,20 +89,6 @@ class KerasModel(Model, BaseModel):
         else:
             raise ValueError("Argument 'x' must not be None")
         return None
-
-    def test_on_dataset(self, unpacker):
-        if self._test_pipeline is None:
-            return
-        self._test_pipeline.reset_iter()
-        metrics_on_test = []
-        while True:
-            batch = self._test_pipeline.next_batch()
-            feed_dict = unpacker(batch)
-            y_true = feed_dict.get('y', None)
-            y_pred = self.predict(x=feed_dict.get('x', None))
-            metrics_on_test.append(self.compute_metrics(y_true, y_pred))
-        metrics = pd.DataFrame(metrics_on_test).mean()
-        self._test_metrics_values.append(metrics.to_dict(metrics))
 
     @functools.wraps(Model.load_weights)
     def load(self, *args, **kwargs):
