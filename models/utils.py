@@ -306,7 +306,7 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
         for batch in test_pipeline.gen_batch(batch_size):
             x, y_true = unpacker(batch, _model, **kwargs)
 
-            y_pred = _model.predict_on_batch(x)
+            y_pred = _model.predict(x)
 
             extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
 
