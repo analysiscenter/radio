@@ -12,7 +12,17 @@ from ..utils import repeat_tensor
 
 class TFDilatedVnet(TFModelCT):
 
-    """ This class contains implementation of VNet architecture with dilated convolutions. """
+    """ This class contains implementation of VNet architecture with dilated convolutions.
+    
+    Attributes
+    ----------
+    config : dict
+        config dictionary from dataset pipeline
+        see configuring model section of dataset module
+        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+    name : str
+        name of the model.
+    """
 
     def upsampling3d(self, input_tensor, times, name):
         """ Apply 3D upsampling operation to input tensor.
