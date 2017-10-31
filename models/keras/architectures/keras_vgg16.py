@@ -152,7 +152,7 @@ class KerasVGG16(KerasModel):
             layer = Flatten(name='flatten')(input_tensor)
             layer = Dense(units_1, activation='relu', name='fc1')(layer)
             layer = BatchNormalization(axis=-1)(layer)
-            layer = Dropout(dropout_rate)(layer)
+            layer = Dropout(self.dropout_rate)(layer)
             layer = Dense(units_2, activation='relu', name='fc2')(layer)
             layer = BatchNormalization(axis=-1)(layer)
             layer = Dropout(self.dropout_rate)(layer)
