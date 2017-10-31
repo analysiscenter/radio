@@ -2,7 +2,6 @@
 
 import os
 import functools
-import shutil
 import numpy as np
 import keras
 from keras.models import Model
