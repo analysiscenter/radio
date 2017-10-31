@@ -192,7 +192,7 @@ class TFResNet(TFModelCT):
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='x')
         y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='targets')
 
-        x = bn_conv3d(input_tensor, filters=32, kernel_size=(7, 3, 3),
+        x = bn_conv3d(input_tensor, filters=32, kernel_size=(5, 3, 3),
                       name='initial_conv', padding='same',
                       is_training=self.is_training)
 
