@@ -93,7 +93,7 @@ class KerasModel(Model, BaseModel):
         if not isinstance(prediction, (list, tuple)):
             prediction = (prediction, )
 
-        self._train_metrics_values.append(self.compute_metrics(y, train_output[0]))
+        self._train_metrics_values.append(self.compute_metrics(y, prediction))
         if self._show_metrics:
             print(self._train_metrics_values[-1])
             clear_output(wait=True)
