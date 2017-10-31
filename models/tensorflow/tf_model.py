@@ -3,10 +3,6 @@
 # pylint: disable=not-context-manager
 """ Contains base class for all tensorflow models. """
 
-import os
-import functools
-import tensorflow as tf
-
 from ...dataset.dataset.models.tf import TFModel
 
 
