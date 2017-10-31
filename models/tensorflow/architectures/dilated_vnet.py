@@ -3,7 +3,7 @@ import math
 import numpy as np
 import tensorflow as tf
 from ..tf_model import TFModelCT
-from ..layers import conv3d, bn_conv3d, bn_dilated_conv3d
+from ..layers import bn_conv3d, bn_dilated_conv3d
 from ..utils import repeat_tensor
 
 
