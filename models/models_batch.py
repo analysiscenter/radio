@@ -18,47 +18,58 @@ class CTImagesModels(CTImagesMaskedBatch):
     that can be fed into models.
 
     Unpack methods:
-    - unpack_component: unpack batch component(component can be 'masks' or 'images');
+        unpack_component : unpack batch component(component can be 'masks' or 'images').
 
-    - unpack_seg: unpack batch into dictionary suitable for segmentation neural networks;
-      Ouput dictionary looks like:
-      {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
-       'y': ndarray(batch_size, size_x, size_y, size_z, 1)}
+        unpack_seg : unpack batch into dictionary suitable for segmentation neural networks;
+                     Ouput dictionary looks like:
+                     {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
+                     'y': ndarray(batch_size, size_x, size_y, size_z, 1)}
 
-      'x' contains batch of source crops, 'y' contains batch of corresponding masks;
+                     'x' contains batch of source crops, 'y' contains batch of corresponding masks.
 
-    - unpack_reg: unpack batch into dictionary suitable for regression neural networks;
-      Output dictionary looks like:
-      {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
-       'y': ndarray(batch_size, 7)}
+        unpack_reg : unpack batch into dictionary suitable for regression neural networks.
+                     Output dictionary looks like:
+                     {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
+                      'y': ndarray(batch_size, 7)}
 
-       'x' contains batch of source crops, 'y' contains batch of 7-dim vectors
-       with probabilities of cancer, sizes and centers;
+                     'x' contains batch of source crops, 'y' contains batch of 7-dim vectors
+                     with probabilities of cancer, sizes and centers.
 
-    - unpack_clf: unpack batch into dictionary suitable for classification neural networks;
-      Output dictionary looks like:
-      {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
-       'y': ndarray(batch_size, 1)}
+        unpack_clf : unpack batch into dictionary suitable for classification neural networks.
+                     Output dictionary looks like:
+                     {'x': ndarray(batch_size, size_x, size_y, size_z, 1),
+                      'y': ndarray(batch_size, 1)}
 
-       'x' contains batch of source crops, 'y' contains batch of 1-dim vectors
-       with 0 or 1;
-
+                     'x' contains batch of source crops, 'y' contains batch of 1-dim vectors
+                     with 0 or 1.
     """
 
-    def unpack_component(batch, model, component, dim_ordering):
+    def unpack_component(batch, model=None, component='images', dim_ordering='channels_last'):
         """ Basic way for unpacking 'images' or 'masks' from batch.
 
-        Args:
-        - component: str, component to unpack, can be 'images' or 'masks';
-        in other case AttributeError will be raised;
-        - dim_ordering: str, can be 'channels_last' or 'channels_first';
-        reflects where to put channels dimension: right after batch
-        dimension or after all spatial axes;
+        Parameters
+        ----------
+        batch : CTImagesMaskedBatch
+            batch to unpack.
+        model : dataset.models.BaseModel
+            model where the data from batch will be fed. Is not used here.
+            Required for compatibility with dataset.Pipeline.train_model
+            and dataset.Pipeline.predict_model interfaces.
+        component : str
+            component to unpack, can be 'images' or 'masks'.
+        dim_ordering : str
+            can be 'channels_last' or 'channels_first'. Reflects where to put
+            channels dimension: right after batch dimension or after all spatial axes.
 
-        Returns:
-        - unpacked 'images' or 'masks' component as numpy array of the
-        following shape: [BatchSize, 1, zdim, ydim, xdim]
-        or [BatchSize, zdim, ydim, xdim, 1];
+        Returns
+        -------
+        ndarray(batch_size, zdim, ydim, xdim, 1)
+            unpacked 'images' or 'masks' component of batch as numpy array.
+
+        Raises
+        ------
+        AttributeError
+            if argument component is not 'images' or 'masks'.
         """
         if component not in ('masks', 'images'):
             raise AttributeError("Component must be 'images' or 'masks'")
@@ -69,18 +80,28 @@ class CTImagesModels(CTImagesMaskedBatch):
             x = x[:, np.newaxis, ...]
         return x
 
-    def unpack_seg(batch, model, dim_ordering='channels_last'):
+    def unpack_seg(batch, model=None, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for segmentation task.
 
-        Args:
-        - self: CTImagesModels batch instance;
-        - model: instance of dataset.models.BaseModel, is not used here;
-        - dim_ordering: str, can be 'channels_last' or 'channels_first';
+        Parameters
+        ----------
+        self : CTImagesMaskedBatch
+            batch to unpack.
+        model : dataset.models.BaseModel
+            model where the data from batch will be fed. Is not used here.
+            Required for compatibility with dataset.Pipeline.train_model
+            and dataset.Pipeline.predict_model interfaces.
+        dim_ordering : str
+            can be 'channels_last' or 'channels_first'. Reflects where to put
+            channels dimension: right after batch dimension or after all spatial axes.
 
         Returns:
-        - dict {'x': images_array, 'y': labels_array}
+        dict
+            {'x': images_array, 'y': labels_array}
 
-        XXX 'dim_ordering' argument reflects where to put '1'
+        NOTE
+        ----
+        'dim_ordering' argument reflects where to put '1'
         for channels dimension both for images and masks.
         """
         return {'x': batch.unpack_component(model, 'images', dim_ordering),
@@ -89,17 +110,27 @@ class CTImagesModels(CTImagesMaskedBatch):
     def unpack_clf(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for classification task.
 
-        Args:
-        - self: CTImagesModels batch instance;
-        - model: instance of dataset.models.BaseModel, is not used here;
-        - threshold: int, minimum number of '1' pixels in mask to consider it
-        cancerous;
-        - dim_ordering: str, can be 'channels_last' or 'channels_first';
+        Parameters
+        ----------
+        batch : CTImagesMaskedBatch
+            batch to unpack.
+        model : dataset.models.BaseModel
+            model where the data from batch will be fed. Is not used here.
+            Required for compatibility with dataset.Pipeline.train_model
+            and dataset.Pipeline.predict_model interface.
+        threshold : int
+            minimum number of '1' pixels in mask to consider it cancerous.
+        dim_ordering : str
+            can be 'channels_last' or 'channels_first'. Reflects where to put
+            channels dimension: right after batch dimension or after all spatial axes.
 
         Returns:
-        - dict {'x': images_array, 'y': labels_array}
+        - dict
+            {'x': images_array, 'y': labels_array}
 
-        XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
+        NOTE
+        ----
+        'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
         masks_labels = np.asarray([batch.get(i, 'masks').sum() > threshold
                                    for i in range(len(batch))], dtype=np.int)
@@ -110,18 +141,27 @@ class CTImagesModels(CTImagesMaskedBatch):
     def unpack_reg(batch, model, threshold=10, dim_ordering='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
 
-        Args:
-        - self: CTImagesModels batch instance;
-        - model: instance of dataset.models.BaseModel, is not used here;
-        - theshold: int, minimum number of '1' pixels in mask to consider it
-        cancerous;
-        - dim_ordering: str, can be 'channels_last' or 'channels_first';
+        Parameters
+        ----------
+        batch : CTImagesMaskedBatch
+            batch to unpack
+        model : dataset.models.BaseModel
+            model where the data from batch will be fed. Is not used here.
+            Required for compatibility with dataset.Pipeline.train_model
+            and dataset.Pipeline.predict_model interface.
+        threshold : int
+            minimum number of '1' pixels in mask to consider it cancerous.
 
         Returns:
-        - dict {'x': images_array, 'y': y_regression_array}
+        dict
+            {'x': images_array, 'y': y_regression_array}
 
-        TODO Test this method;
-        XXX 'dim_ordering' argument reflects where to put '1' for channels dimension.
+        NOTE
+        ----
+        'dim_ordering' argument reflects where to put '1' for channels dimension.
+
+        TODO Need more testing.
+
         """
 
         nods = batch.nodules
