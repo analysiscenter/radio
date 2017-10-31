@@ -237,3 +237,112 @@ def unpack_reg(batch, model, threshold=10, dim_ordering='channels_last'):
     y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
 
     return {'x': x, 'y': y_regression_array}
+
+
+def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
+    """ Compute metrics of model on dataset.
+
+    Parameters
+    ----------
+    model_name : str
+        name of model.
+    unpacker : callable
+        function that will be used  for unpacking data from test_pipeline batches.
+    batch_size : int
+        size of batch when making predictions.
+    period : int
+        frequency of test_on_dataset runs.
+    kwargs : dict
+        these parameters will be ignored.
+
+    Returns
+    -------
+    CTImagesMaskedBatch
+        unchanged input batch.
+    """
+    if batch.pipeline is None:
+        return batch
+
+    if batch.pipeline.config is not None:
+        train_iter = batch.pipeline.get_variable('iter', 0)
+
+        metrics = batch.pipeline.config.get('metrics', ())
+        test_pipeline = batch.pipeline.config.get('test_pipeline', None)
+        test_pipeline.reset_iter()
+
+        test_metrics = batch.pipeline.get_variable('test_metrics', init=list)
+
+    if len(metrics) and (train_iter % period == 0):
+        _model = batch.get_model_by_name(model_name)
+        ds_metrics_list = []
+        for batch in test_pipeline.gen_batch(batch_size):
+            x, y_true = batch._get_by_unpacker(unpacker, **kwargs)
+
+            y_pred = _model.predict_on_batch(x)
+
+            extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
+
+            ds_metrics_list.append(extend_data)
+
+        ds_metrics = pd.DataFrame(ds_metrics_list).mean()
+        test_metrics.append(ds_metrics.to_dict())
+    return batch
+
+
+def _create_overlap_index(overlap_matrix):
+    """ Get indices of nodules that overlaps using overlap_matrix. """
+    argmax_ov = overlap_matrix.argmax(axis=1)
+    max_ov = overlap_matrix.max(axis=1).astype(np.bool)
+    return max_ov, argmax_ov
+
+
+def overlap_true_pred_nodules(batch):
+    """ Accumulate info about overlap between true and predicted nodules in pipeline vars. """
+    ppl_nodules_true = batch.pipeline.get_variable('nodules_true', init=list)
+    ppl_nodules_pred = batch.pipeline.get_variable('nodules_pred', init=list)
+
+    batch_nodules_true = batch.nodules
+    batch.fetch_nodules_from_mask()
+    batch_nodules_pred = batch.nodules
+
+    true_df = batch.nodules_to_df(batch_nodules_true).set_index('nodule_id')
+    true_df = true_df.assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+
+    pred_df = batch.nodules_to_df(batch_nodules_pred).set_index('nodule_id')
+    pred_df = pred_df.assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+
+    true_out, pred_out = [], []
+    true_gr, pred_gr = true_df.groupby('source_id'), pred_df.groupby('source_id')
+    for group_name in {**true_gr.groups, **pred_gr.groups}:
+        try:
+            nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
+        except KeyError:
+            nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
+            pred_out.append(nods_pred.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))
+            continue
+        try:
+            nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
+        except KeyError
+            nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX']]
+            true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))
+            continue
+
+        overlap_matrix = nodules_sets_overlap_jit(nods_true.values, nods_pred.values)
+
+        ov_mask_true, ov_ind_true = _create_overlap_index(overlap_matrix)
+        ov_mask_pred, ov_ind_pred = _create_overlap_index(overlap_matrix.T)
+
+        nods_true = nods_true.assign(overlap_index=lambda df: df.index)
+        nods_true.loc[ov_mask_true, 'overlap_index'] = nods_pred.index[ov_ind_true[ov_mask_true]]
+        nods_true.loc[np.logical_not(ov_mask_true), 'overlap_index'] = np.nan
+
+        nods_pred = nods_pred.assign(overlap_index=lambda df: df.index)
+        nods_pred.loc[ov_mask_pred, 'overlap_index'] = nods_true.index[ov_ind_pred[ov_mask_pred]]
+        nods_pred.loc[np.logical_not(ov_mask_pred), 'overlap_index'] = np.nan
+
+        true_out.append(nods_true)
+        pred_out.append(nods_pred)
+
+    ppl_nodules_true.append(pd.concat(true_out))
+    ppl_nodules_pred.append(pd.concat(pred_out))
+    return batch
