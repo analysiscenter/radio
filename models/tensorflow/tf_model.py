@@ -15,7 +15,16 @@ from ...dataset.dataset.models.tf import TFModel
 
 
 class TFModel3D(TFModel):
-    """ Base class for all tensorflow models. """
+    """ Base class for all tensorflow models.
+
+    This class inherits TFModel class from dataset submodule and
+    extends it with metrics accumulating methods. Also
+    train and predict methods were overloaded:
+    train method gets 'x' and 'y',
+    while predict gets only 'x' as arguments instead of 'feed_dict'
+    and 'fetches' as it was in parent class. It's simplifies interface
+    and makes TFModel3D compatible with KerasModel interface.
+    """
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
         _metrics = self.get_from_config('metrics', [])
@@ -46,7 +55,7 @@ class TFModel3D(TFModel):
         self._train_metrics_values.append(self.compute_metrics(y, train_output[0]))
 
         if self._show_metrics:
-            print(self.train_metrics.iloc[-1, :])
+            print(pd.Series(self._train_metrics_values[-1]))
             clear_output(wait=True)
         return train_output
 
