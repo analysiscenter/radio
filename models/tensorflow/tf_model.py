@@ -31,12 +31,13 @@ class TFModel3D(TFModel):
         if not isinstance(_metrics, (list, tuple)):
             _metrics = [_metrics]
         self._metrics = _metrics
+
         self._train_metrics_values = []
         self._test_metrics_values = []
         self._test_pipeline = self.get_from_config('test_pipeline', None)
         self._show_metrics = self.get_from_config('show_metrics', False)
 
-    def refresh(self):
+    def refresh_metrics(self):
         """ Refresh metrics values. """
         self._train_metrics_values = []
         self._test_metrics_values = []
