@@ -51,6 +51,23 @@ class KerasModel(Model, BaseModel):
 
         Checks whether feed_dict is None and unpacks it as kwargs
         of keras.models.Model.train_on_batch method.
+
+        Parameters
+        ----------
+        x : ndarray(batch_size, ...)
+            x argument of keras.models.Model.train_on_batch method, input of
+            neural network.
+        y : ndarray(batch_size, ...)
+            y argument of keras.models.Model.predict_on_batch method.
+
+        Returns
+        -------
+        ndarray(batch_size, ...)
+            predictions of keras model.
+
+        Raises
+        ------
+        ValueError if 'x' or 'y'  is None.
         """
         if x is None or y is None:
             raise ValueError("Arguments 'x' and 'y' must not be None")
@@ -63,13 +80,28 @@ class KerasModel(Model, BaseModel):
         if self._show_metrics:
             print(self.train_metrics.iloc[-1, :])
             clear_output(wait=True)
-        return None
+        return prediction
 
     def predict(self, x=None, **kwargs):
         """ Wrapper for keras.models.Model.predict_on_batch.
 
         Checks whether feed_dict is None and unpacks it
         as kwargs of keras.models.Model.predict_on_batch method.
+
+        Parameters
+        ----------
+        x : ndarray(batch_size, ...)
+            x argument of keras.models.Model.predict_on_batch method, input of
+            neural network.
+
+        Returns
+        -------
+        ndarray(batch_size, ...)
+            predictions of keras model.
+
+        Raises
+        ------
+        ValueError if 'x' argument is None.
         """
         if x is not None:
             return Model.predict_on_batch(self, x=x)
