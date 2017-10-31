@@ -298,15 +298,13 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
         test_pipeline = batch.pipeline.config.get('test_pipeline', None)
         test_pipeline.reset_iter()
 
-    print('metrics ', metrics)
-    print('test_pipeline', test_pipeline)
     if len(metrics) and (train_iter % period == 0):
         _model = batch.get_model_by_name(model_name)
         ds_metrics_list = []
         for batch in test_pipeline.gen_batch(batch_size):
-            x, y_true = unpacker(batch, _model, **kwargs)
+            feed_dict = unpacker(batch, _model, **kwargs)
 
-            y_pred = _model.predict(x)
+            y_pred = _model.predict(x=feed_dict.get('x', None))
 
             extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
 
