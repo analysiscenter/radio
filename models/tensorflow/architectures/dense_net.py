@@ -10,6 +10,21 @@ from ..layers import bn_conv3d, global_average_pool3d
 class TFDenseNet(TFModelCT):
     """ This class implements 3D DenseNet architecture via tensorflow.
 
+    Attributes
+    ----------
+    config : dict
+        config dictionary from dataset pipeline
+        see configuring model section of dataset module
+        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+    name : str
+        name of the model.
+    units : tuple(int, int)
+        number of units in two final dense layers before tensor with predicitons.
+    num_targets : int
+        size of tensor with predicitons.
+    dropout_rate : float
+        probability of dropout.
+
     Full description of similar 2D model architecture can be downloaded from here:
     https://arxiv.org/pdf/1608.06993v2.pdf
     """
