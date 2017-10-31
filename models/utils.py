@@ -1,3 +1,5 @@
+""" Different useful functions when working with models and CTImagesMaskedBatch. """
+
 import numpy as np
 import pandas as pd
 from numba import njit
