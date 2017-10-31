@@ -1,5 +1,6 @@
 # pylint: disable=anomalous-backslash-in-string
 # pylint: disable=not-context-manager
+# pylint: disable=duplicate-code
 """ Contains implementation of VNet architecture with dilated convolutions in tensorflow. """
 
 import math
