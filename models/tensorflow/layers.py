@@ -26,7 +26,6 @@ def get_initializer(initializer):
     else:
         raise ValueError("Argument kernel_init must have 'str' type " +
                          "and be 'xavier' or 'normal'")
-    return kenel_init_fn
 
 
 def selu(x):
