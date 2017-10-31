@@ -266,7 +266,7 @@ class CTImagesModels(CTImagesMaskedBatch):
         y_component: str
             name of y component, can be 'masks' or labels.
         dim_ordering: str
-            dimension ordering, can be 'channels_first' or 'channels_last'
+            dimension ordering, can be 'channels_first' or 'channels_last'.
 
         Returns
         -------
