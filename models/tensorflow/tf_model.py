@@ -14,7 +14,7 @@ import tensorflow as tf
 from ...dataset.dataset.models.tf import TFModel
 
 
-class TFModel3D(TFModel):
+class TFModelCT(TFModel):
     """ Base class for all tensorflow models.
 
     This class inherits TFModel class from dataset submodule and
