@@ -38,12 +38,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     for subsetting individual patient's 3D scan (_bounds, origin, spacing) and
     various methods to preprocess the data.
 
-    Properties
+    Attributes
     ----------
     components : tuple of strings.
                  List names of data components of a batch, which are `images`,
                  `origin` and `spacing`.
                  NOTE: Implementation of this property is required by Base class.
+    images :     ndarray
+                 contains ct-scans for all patients in batch.
 
     Note
     ----
@@ -889,9 +891,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         **kwargs
-                shape : tuple
-                        (z,y,x); shape of every image in image component after action is performed.
-                        spacing: if supplied, assume that unify_spacing is performed
+                shape :   list, tuple or ndarray
+                          (z,y,x); shape of every image in image component after action is performed.
+                spacing : list, tuple or ndarray
+                          if supplied, assume that unify_spacing is performed
 
         Returns
         -------
@@ -935,6 +938,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         new_batch :   bool
                       if True, returns new batch with data agregated
                       from all_ouputs. if False, changes self.
+        **kwargs
+                shape :   list, tuple or ndarray
+                          (z,y,x); shape of every image in image component after action is performed.
+                spacing : list, tuple or ndarray
+                          if supplied, assume that unify_spacing is performed
         """
         if any_action_failed(all_outputs):
             raise ValueError("Failed while parallelizing")
@@ -1081,7 +1089,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         padding :      str
                        mode of padding, any supported by np.pad.
                        Should be passed as key-argument.
-        axes_pairs :   tuple/list of tuples with pairs
+        axes_pairs :   tuple, list of tuples with pairs
                        pairs of axes that will be used consequentially
                        for performing pil-simd resize.
                        Should be passed as key-argument.
@@ -1223,7 +1231,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def central_crop(self, crop_size, **kwargs):
-        """ Make crop with given size from center of images.
+        """ Make crop of crop_size from center of images.
 
         Parameters
         ----------
@@ -1251,9 +1259,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        patch_shape : tuple/list or ndarray
+        patch_shape : tuple, list or ndarray
                       (z_dim,y_dim,x_dim), shape of a single patch.
-        stride :      tuple/list or ndarray 
+        stride :      tuple, list or ndarray 
                       (int, int, int), stride to slide over each patient's data.
         padding:      str
                       padding-type (see doc of np.pad for available types).
@@ -1301,9 +1309,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----------
         patches :    ndarray
                      4d-array of patches, with dims: `(patch_nb, z, y, x)`.
-        scan_shape : tuple/list or ndarray
+        scan_shape : tuple, list or ndarray
                      (z,y,x), shape of individual scan (should be same for all scans).
-        stride :     tuple/list or ndarray
+        stride :     tuple, list or ndarray
                      stride-step used for gathering data from patches.
         data_attr :  str
                      batch component name to store new data.
