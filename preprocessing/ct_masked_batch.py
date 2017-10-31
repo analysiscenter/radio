@@ -9,6 +9,12 @@ import numpy as np
 import pandas as pd
 from numba import njit
 from skimage import measure
+
+try:
+    from tqdm import tqdm_notebook
+except ImportError:
+    tqdm_notebook = lambda x: x
+
 from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .histo import sample_histo3d
@@ -831,7 +837,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         predictions = []
         iterations = range(0, patches_arr.shape[0], batch_size)
         if show_progress:
-            iterations = tqdm.tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
+            iterations = tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
         for i in iterations:
             current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
