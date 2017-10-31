@@ -29,6 +29,10 @@ class TFResNet(TFModelCT):
         size of tensor with predicitons.
     dropout_rate : float
         probability of dropout.
+
+    NOTE
+    ----
+    This class is descendant of TFModel class from dataset.models.*.
     """
 
     def __init__(self, *args, **kwargs):
