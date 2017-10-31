@@ -89,7 +89,7 @@ class KerasModel(Model, BaseModel):
         if x is None or y is None:
             raise ValueError("Arguments 'x' and 'y' must not be None")
 
-        prediction = self.train_on_batch(x=x, y=y)
+        prediction = np.asarray(self.train_on_batch(x=x, y=y))
         if not isinstance(prediction, (list, tuple)):
             prediction = (prediction, )
 
