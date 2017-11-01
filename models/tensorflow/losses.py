@@ -99,77 +99,6 @@ def iou_3d(y_true, y_pred, epsilon=10e-7):
     return iou_tensor
 
 
-def dice_coef(y_true, y_pred, smooth=1e-7):
-    """ Dice coefficient function implemente via tensorflow.
-
-    Parameters
-    ----------
-    y_true : tf.Tensor
-        tensor containing target masks.
-    y_pred : tf.Tensor
-        tensor containing predicted masks.
-
-    Returns
-    -------
-    tf.Tensor
-        tensor containing dice coefficient value.
-    """
-    y_true_f = tf.contrib.layers.flatten(y_true)
-    y_pred_f = tf.contrib.layers.flatten(y_pred)
-    intersection = tf.reduce_sum(y_true_f * y_pred_f)
-    answer = (2. * intersection + smooth) / (tf.reduce_sum(y_true_f)
-                                             + tf.reduce_sum(y_pred_f) + smooth)
-    return answer
-
-
-def tiversky_coef(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
-    """ Tiversky coefficient.
-
-    Parameters
-    ----------
-    y_true : tf.Tensor
-        tensor containing target masks.
-    y_pred : tf.Tensor
-        tensor containing predicted masks.
-
-    Returns
-    -------
-    tf.Tensor
-        tensor containing tiverky coefficient.
-    """
-    y_true = tf.contrib.layers.flatten(y_true)
-    y_pred = tf.contrib.layers.flatten(y_pred)
-    truepos = tf.reduce_sum(y_true * y_pred)
-    fp_and_fn = (alpha * tf.reduce_sum(y_pred * (1 - y_true))
-                 + beta * tf.reduce_sum((1 - y_pred) * y_true))
-
-    return (truepos + smooth) / (truepos + smooth + fp_and_fn)
-
-
-def jaccard_coef(y_true, y_pred, smooth=1e-10):
-    """ Jaccard coefficient.
-
-    Parameters
-    ----------
-    y_true : tf.Tensor
-        tensor containing actual pixel-by-pixel values for all classes.
-    y_pred : tf.Tensor
-        tensor containing predicted pixel-by-pixel values for all classes.
-
-    Returns
-    -------
-    - tf.Tensor
-        tensor containing jaccard score across all classes.
-    """
-    y_true = tf.contrib.layers.flatten(y_true)
-    y_pred = tf.contrib.layers.flatten(y_pred)
-    truepos = tf.reduce_sum(y_true * y_pred)
-    falsepos = tf.reduce_sum(y_pred) - truepos
-    falseneg = tf.reduce_sum(y_true) - truepos
-    jaccard = (truepos + smooth) / (smooth + truepos + falseneg + falsepos)
-    return jaccard
-
-
 def tiversky_loss(y_true, y_pred):
     """ Tiversky loss function.
 
@@ -185,7 +114,13 @@ def tiversky_loss(y_true, y_pred):
     tf.Tensor
         tensor containing tiversky loss.
     """
-    return -tiversky_coef(y_true, y_pred)
+    y_true = tf.contrib.layers.flatten(y_true)
+    y_pred = tf.contrib.layers.flatten(y_pred)
+    truepos = tf.reduce_sum(y_true * y_pred)
+    fp_and_fn = (alpha * tf.reduce_sum(y_pred * (1 - y_true))
+                 + beta * tf.reduce_sum((1 - y_pred) * y_true))
+
+    return -(truepos + smooth) / (truepos + smooth + fp_and_fn)
 
 
 def dice_loss(y_true, y_pred):
@@ -203,7 +138,12 @@ def dice_loss(y_true, y_pred):
     tf.Tensor
         tensor containing tiversky loss.
     """
-    return -dice_coef(y_true, y_pred)
+    y_true_f = tf.contrib.layers.flatten(y_true)
+    y_pred_f = tf.contrib.layers.flatten(y_pred)
+    intersection = tf.reduce_sum(y_true_f * y_pred_f)
+    answer = (2. * intersection + smooth) / (tf.reduce_sum(y_true_f)
+                                             + tf.reduce_sum(y_pred_f) + smooth)
+    return -answer
 
 
 def jaccard_coef_logloss(y_true, y_pred):
@@ -221,4 +161,10 @@ def jaccard_coef_logloss(y_true, y_pred):
     tf.Tensor
         tensor containing negative logarithm of jaccard coefficient.
     """
-    return -tf.log(jaccard_coef(y_true, y_pred))
+    y_true = tf.contrib.layers.flatten(y_true)
+    y_pred = tf.contrib.layers.flatten(y_pred)
+    truepos = tf.reduce_sum(y_true * y_pred)
+    falsepos = tf.reduce_sum(y_pred) - truepos
+    falseneg = tf.reduce_sum(y_true) - truepos
+    jaccard = (truepos + smooth) / (smooth + truepos + falseneg + falsepos)
+    return -tf.log(jaccard)
