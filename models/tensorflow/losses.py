@@ -146,7 +146,7 @@ def dice_loss(y_true, y_pred, smooth=1e-7):
     return -answer
 
 
-def jaccard_coef_logloss(y_true, y_pred):
+def jaccard_coef_logloss(y_true, y_pred, smooth=1e-10):
     """ Loss function based on jaccard coefficient.
 
     Parameters
