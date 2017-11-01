@@ -99,7 +99,7 @@ def iou_3d(y_true, y_pred, epsilon=10e-7):
     return iou_tensor
 
 
-def tiversky_loss(y_true, y_pred):
+def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tiversky loss function.
 
     Parameters
