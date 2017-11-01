@@ -32,10 +32,10 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
     ----------
     - y_true : tf.Tensor
         tensor containing true values for sizes of nodules, their centers
-        and classes of crop(1 if cancerous 0 otherwise);
+        and classes of crop(1 if cancerous 0 otherwise).
     - y_pred : tf.Tensor
         tensor containing predicted values for sizes of nodules, their centers
-        and probability of cancer in given crop;
+        and probability of cancer in given crop.
 
     Returns
     -------
@@ -50,7 +50,7 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
     zyx coordinates of cancer tumor, while y_true[:, 3:6] and y_pred[:, 3:6]
     correspond to sizes of cancer tumor along zyx axes(also normalized),
     finally, y_true[:, 6] and y_pred[:, 6] represent whether cancer tumor presents
-    or not in the current crop;
+    or not in the current crop.
     """
     clf_true, clf_pred = y_true[:, 6], y_pred[:, 6]
     centers_true, centers_pred = y_true[:, :3], y_pred[:, :3]
@@ -108,6 +108,12 @@ def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
         tensor containing target mask.
     y_pred : tf.Tensor
         tensor containing predicted mask.
+    alpha : float
+        real value, weight of '0' class.
+    beta : float
+        real value, weight of '1' class.
+    smooth : float
+        small real value used for avoiding division by zero error.
 
     Returns
     -------
@@ -132,6 +138,8 @@ def dice_loss(y_true, y_pred, smooth=1e-7):
         tensor containing target mask.
     y_pred : tf.Tensor
         tensor containing predicted mask.
+    smooth : float
+        small real value used for avoiding division by zero error.
 
     Returns
     -------
@@ -155,6 +163,8 @@ def jaccard_coef_logloss(y_true, y_pred, smooth=1e-10):
         tensor containing target mask.
     y_pred : tf.Tensor
         tensor containing predicted mask.
+    smooth : float
+        small real value used for avoiding division by zero error.
 
     Returns
     -------
@@ -167,4 +177,4 @@ def jaccard_coef_logloss(y_true, y_pred, smooth=1e-10):
     falsepos = tf.reduce_sum(y_pred) - truepos
     falseneg = tf.reduce_sum(y_true) - truepos
     jaccard = (truepos + smooth) / (smooth + truepos + falseneg + falsepos)
-    return -tf.log(jaccard)
+    return -tf.log(jaccard + smooth)
