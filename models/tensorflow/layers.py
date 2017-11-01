@@ -5,31 +5,6 @@
 import tensorflow as tf
 
 
-def get_initializer(initializer):
-    """ Get tensorflow initializer.
-
-    Returns normal initializer or xavier initializer.
-
-    Parameters
-    ----------
-    kernel_init : str
-        initializer type; can be 'xavier' or 'normal'.
-
-    Returns
-    -------
-    tensorflow initializer.
-
-    TODO correct error with initializer.
-    """
-    if initializer == 'xavier':
-        return tf.contrib.layers.xavier_initializer()
-    elif initializer == 'normal':
-        return tf.random_normal_initializer
-    else:
-        raise ValueError("Argument kernel_init must have 'str' type " +
-                         "and be 'xavier' or 'normal'")
-
-
 def selu(x):
     """ Selu activation function.
 
@@ -51,7 +26,7 @@ def selu(x):
 
 def conv3d(input_tensor, filters, kernel_size, name,
            strides=(1, 1, 1), padding='same', activation=tf.nn.relu,
-           use_bias=True, kernel_init='xavier', is_training=True):
+           use_bias=True, is_training=True):
     """ Apply 3D convolution operation to input tensor.
 
     Parameters
@@ -72,8 +47,6 @@ def conv3d(input_tensor, filters, kernel_size, name,
         this function will be applied to output tensor.
     use_bias : bool
         whether use bias or not.
-    kernel_init : str
-        initializer for kernel, can be 'xavier' or 'normal'.
 
     Returns
     -------
@@ -88,8 +61,7 @@ def conv3d(input_tensor, filters, kernel_size, name,
                                          strides=strides,
                                          use_bias=use_bias,
                                          name='conv3d',
-                                         padding=padding,
-                                         kernel_initializer=init_fn)
+                                         padding=padding)
 
         output_tensor = activation(output_tensor)
     return output_tensor
@@ -97,7 +69,7 @@ def conv3d(input_tensor, filters, kernel_size, name,
 
 def bn_conv3d(input_tensor, filters, kernel_size, name,
               strides=(1, 1, 1), padding='same', activation=tf.nn.relu,
-              use_bias=False, kernel_init='xavier', is_training=True):
+              use_bias=False, is_training=True):
     """ Apply 3D convolution operation with batch normalization to input tensor.
 
     Parameters
@@ -118,8 +90,6 @@ def bn_conv3d(input_tensor, filters, kernel_size, name,
         this function will be applied to output tensor.
     use_bias : bool
         whether use bias or not.
-    kernel_init : str
-        initializer for kernel, can be 'xavier' or 'normal'.
     is_training : tf.Tensor or bool
         whether model is in training state of prediction state.
 
@@ -136,8 +106,7 @@ def bn_conv3d(input_tensor, filters, kernel_size, name,
                                          strides=strides,
                                          use_bias=use_bias,
                                          name='conv3d',
-                                         padding=padding,
-                                         kernel_initializer=init_fn)
+                                         padding=padding)
 
         output_tensor = tf.layers.batch_normalization(output_tensor, axis=-1,
                                                       training=is_training)
@@ -148,7 +117,7 @@ def bn_conv3d(input_tensor, filters, kernel_size, name,
 def bn_dilated_conv3d(input_tensor, filters,
                       kernel_size, name, activation=tf.nn.relu,
                       dilation=(1, 1, 1), padding='same',
-                      is_training=True, kernel_init='xavier'):
+                      is_training=True):
     """ Apply 3D-dilated-convolution operation with batch normalization to input tensor.
 
     Parameters
@@ -171,8 +140,6 @@ def bn_dilated_conv3d(input_tensor, filters,
         this function will be applied to output tensor.
     use_bias : bool
         whether use bias or not.
-    kernel_init : str
-        initializer for kernel, can be 'xavier' or 'normal'.
     is_training : tf.Tensor or bool
         whether model is in training state of prediction state.
 
@@ -183,7 +150,7 @@ def bn_dilated_conv3d(input_tensor, filters,
     """
 
     in_filters = input_tensor.get_shape().as_list()[-1]
-    init_fn = get_initializer(kernel_init)
+    init_fn = tf.contrib.layers.xavier_initializer()
     with tf.variable_scope(name):
         w = tf.get_variable(name='W', shape=(*kernel_size, in_filters, filters),
                             initializer=init_fn)
