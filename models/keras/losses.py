@@ -2,7 +2,7 @@
 from keras import backend as K
 
 
-def dice_loss(y_true, y_pred):
+def dice_loss(y_true, y_pred, smooth=1e-6):
     """ Loss function base on dice coefficient.
 
     Parameters
