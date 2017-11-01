@@ -874,7 +874,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     def _init_images(self, **kwargs):
-        """ Get list of patient's arrays for all ids in batch indices. 
+        """ Fetch args for loading `images` using inbatch_parallel.
+
+        Args-fetcher for parallelization using inbatch_parallel.
 
         Returns
         -------
@@ -884,9 +886,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return [self.get(patient_id, 'images') for patient_id in self.indices]
 
     def _init_rebuild(self, **kwargs):
-        """ Args-fetcher for parallelization using inbatch_parallel.
+        """ Fetch args for `images` rebuilding using inbatch_parallel.
 
-        Used when 'images' component is rebuild from scratch.
+
+        Args-fetcher for parallelization using inbatch_parallel
 
         Parameters
         ----------

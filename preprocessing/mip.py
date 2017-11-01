@@ -1,6 +1,6 @@
 # pylint: disable=invalid-name
 # pylint: disable=missing-docstring
-""" Numba-rized functions for MIP calculation """
+""" Numba-rized functions for XIP intensity projection (maximum, minimum, average) calculation """
 
 import numpy as np
 from numba import njit
@@ -19,16 +19,26 @@ _NUMBA_FUNC = {'max': 0, 'min': 1, 'mean': 2}
 
 @njit(nogil=True)
 def min_max_sum_fn(a, b, flag):
-    """Apply njit binary opertaion to a, b.
+    """ Apply njit binary opertaion to `a` and `b`.
 
-    Binary operation defined by flag of type int.
-    Args:
-    - a: int or float, left operand;
-    - b: int or float, right operand;
-    - flag: int, one of [0, 1, 2] values.
-            0 value corresponds to max function;
-            1 value corresponds to min function;
-            2 value corresponds to sum function;
+    Binary operation defined by flag.
+
+    Parameters
+    ----------
+    a :    int or float
+           left operand.
+    b :    int or float
+           right operand;
+    flag : int
+           either 0, 1 or 2.
+            0 for max function;
+            1 for min function;
+            2 for sum function.
+
+    Returns
+    -------
+    int or float
+                result of function or 0.
     """
     if flag == 0:
         return max(a, b)
@@ -41,15 +51,27 @@ def min_max_sum_fn(a, b, flag):
 
 @njit(nogil=True)
 def numba_xip(arr, l, m, n, flag, fill_value):
-    """Compute njit xip for given slice.
+    """ Compute njit xip (intensity projection) for given slice.
 
-    Args:
-    - arr: ndarray(l, m, n) with source slice's data;
-    - l: int;
-    - m: int;
-    - n: int;
-    - flag: int, each of [0, 1, 2] corresponds to max, min and average
-    functions for xip operation;
+    Parameters
+    ----------
+    arr :        ndarray(l, m, n) 
+                 input array for computing xip.
+    l :          int
+                 z-dim of `arr`.
+    m :          int
+                 y-dim of `arr`.
+    n :          int
+                 x-dim of `arr`.
+    flag :       int
+                 0, 1 or 2; corresponds to max, min and average
+                 functions for xip operation.
+    fill_value : int
+                 default value to fill resulting array.
+    Returns
+    -------
+    ndarray
+            xip ndarray.
     """
     res = np.full((m, n), fill_value, dtype=arr.dtype)
     for j in range(m):
@@ -62,15 +84,32 @@ def numba_xip(arr, l, m, n, flag, fill_value):
 @njit(nogil=True)
 def make_xip(data, step, depth,
              start=0, stop=-1, func=0, fill_value=0):
-    """Apply xip operation to CTImage scan of one patient.
+    """ Apply xip operation to scan of one patient.
 
-    This function takes 3d picture represented by np.ndarray image,
-    start position for 0-axis index, stop position for 0-axis index,
-    step parameter which represents the step across 0-axis and, finally,
-    depth parameter which is associated with the depth of slices across
-    0-axis made on each step for computing MAX.
-    Code inside the body of function is precompiled
-    with numba.
+    Parameters
+    ----------
+    data :       ndarray
+                 3d array, patient scan or crop
+    step :       int
+                 stride-step along axe, to apply the func.
+    depth :      int
+                 depth of slices (aka `kernel`) along axe made on each step for computing.
+    start :      int
+                 number of slize by 0-axis to start operation
+    end :        int
+                 number of slize by 0-axis to stop operation
+    func :       int
+                 either 0, 1 or 2.
+                 0 for max function;
+                 1 for min function;
+                 2 for sum function.
+    fill_value : int
+                 default value to fill resulting array.
+
+    Returns
+    -------
+    ndarray
+           xip ndarray
     """
     if data.shape[0] < depth:
         depth = data.shape[0]
@@ -94,24 +133,30 @@ def make_xip(data, step, depth,
 
 
 def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
-    """
-    This function takes 3d picture represented by np.ndarray image,
-    start position for 0-axis index, stop position for 0-axis index,
-    step parameter which represents the step across 0-axis and, finally,
-    depth parameter which is associated with the depth of slices across
-    0-axis made on each step for computing MEAN, MAX, MIN
-    depending on func argument.
-    Possible values for func are 'max', 'min' and 'avg'.
-    Notice that 0-axis in this annotation is defined in accordance with
-    projection argument which may take the following values: 'axial',
-    'coroanal', 'sagital'.
-    Suppose that input 3d-picture has axis associations [z, x, y], then
-    axial projection doesn't change the order of axis and 0-axis will
-    be correspond to 0-axis of the input array.
-    However in case of 'coronal' and 'sagital' projections the source tensor
-    axises will be transposed as [x, z, y] and [y, z, x]
-    for 'coronal' and 'sagital' projections correspondingly.
-    """
+    """ Make intensity projection (maximum, minimum, average)
+
+        Popular radiologic transformation: max, min, avg applyied along an axe.
+        Notice that axe is chosen in accordance with projection argument.
+
+        Parameters
+        ----------
+        step :       int
+                     stride-step along axe, to apply the func.
+        depth :      int
+                     depth of slices (aka `kernel`) along axe made on each step for computing.
+        func :       str
+                     Possible values are 'max', 'min' and 'avg'.
+        projection : str
+                     Possible values: 'axial', 'coroanal', 'sagital'.
+                     In case of 'coronal' and 'sagital' projections tensor
+                     will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
+
+        Returns
+        -------
+        ndarray
+               resulting ndarray after func is applied.
+
+        """
     _projection = _PROJECTIONS[projection]
     _reverse_projection = _REVERSE_PROJECTIONS[projection]
     _function = _NUMBA_FUNC[func]

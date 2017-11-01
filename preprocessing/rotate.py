@@ -8,15 +8,23 @@ import scipy.ndimage
 def rotate_3D(image, angle, axes=(1, 2)):
     """ Rotate 3D image in plane specified by two axes.
 
-    Args:
-    - image: ndarray(l, k, m), 3D image;
-    - angle: float, angle of rotation;
-    - axes: tuple(int, int), axes that specify rotation plane;
+    Parameters
+    ----------
+    image : ndarray
+            3D scan, (z,y,x).
+    angle : float
+            angle of rotation.
+    axes :  tuple
+            (int, int), axes that specify rotation plane.
 
-    Returns:
-    - ndarray(l, k, m), 3D rotated image;
+    Returns
+    -------
+    ndarray
+           3D rotated scan
 
-    *NOTE: zero padding automatically added after rotation;
+    Note
+    ----
+    Zero-padding automatically added after rotation.
     """
     rotated_image = scipy.ndimage.interpolation.rotate(image, angle, axes, reshape=False)
     image[...] = rotated_image[...]

@@ -533,7 +533,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         num_nodules : int
                       number of nodules to sample from dataset.
         nodule_size : ndarray(3, ) 
-                      nodule size in number of voxels.
+                      crop shape along (z,y,x).
         histo :       tuple
                       np.histogram()'s output.
                       3d-histogram, represented by tuple (bins, edges)
@@ -587,7 +587,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                         if True, resulting batch will contain only cancerous
                         crops, `batch_size` in this case is ignored.
         nodule_size :   tuple, list or ndarray of int
-                        size of `images` crop along (z,y,x).
+                        crop shape along (z,y,x).
         share :         float
                         share of cancer crops in the batch.
                         if input CTImagesBatch contains less cancer
@@ -597,7 +597,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                         nodules' start positions
         mask_shape :    tuple, list or ndarray
                         size of `masks` crop in (z, y, x)-order. If not None,
-                        masks of nodules will be scaled to shape=mask_shape
+                        crops with masks would be of mask_shape.
+                        If None, mask crop shape would be equal to crop_size.
         histo :         tuple
                         np.histogram()'s output.
                         Used for sampling non-cancerous crops
@@ -1024,8 +1025,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """ Get predictions of the model on whole 3d scan from batch.
 
         Transforms scan data into crops (patches) of `crop_shape` and  feed
-        these patches sequentially into model of 'model_name';
-        Loads predicted masks/probabilities into 'masks'/`labels` component.
+        these patches sequentially into model of `model_name`;
+        Loads predicted masks/probabilities into `masks`/`labels` component.
 
         Parameters
         ----------
