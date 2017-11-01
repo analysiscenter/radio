@@ -24,7 +24,7 @@ def dice_loss(y_true, y_pred, smooth=1e-6):
     return -answer
 
 
-def tiversky_loss(y_true, y_pred):
+def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tiversky loss function.
 
     Parameters
