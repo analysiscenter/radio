@@ -123,7 +123,7 @@ def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     return -(truepos + smooth) / (truepos + smooth + fp_and_fn)
 
 
-def dice_loss(y_true, y_pred):
+def dice_loss(y_true, y_pred, smooth=1e-7):
     """ Loss function base on dice coefficient.
 
     Parameters
