@@ -15,7 +15,7 @@ from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
 
 from ..keras_model import KerasModel
-from ..losses import dice_coef_loss
+from ..losses import dice_loss
 
 
 class KerasVnet(KerasModel):
@@ -215,6 +215,6 @@ class KerasVnet(KerasModel):
         return [input_tensor], [final_conv]
 
     @wraps(keras.models.Model.compile)
-    def compile(self, optimizer='adam', loss=dice_coef_loss, **kwargs):
+    def compile(self, optimizer='adam', loss=dice_loss, **kwargs):
         """ Compile vnet model. """
         super().compile(optimizer=optimizer, loss=loss)
