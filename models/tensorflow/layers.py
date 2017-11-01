@@ -53,7 +53,6 @@ def conv3d(input_tensor, filters, kernel_size, name,
     tf.Tensor
         output tensor.
     """
-    init_fn = get_initializer(kernel_init)
     with tf.variable_scope(name):
         output_tensor = tf.layers.conv3d(input_tensor,
                                          filters=filters,
@@ -98,7 +97,6 @@ def bn_conv3d(input_tensor, filters, kernel_size, name,
     tf.Tensor
         output tensor.
     """
-    init_fn = get_initializer(kernel_init)
     with tf.variable_scope(name):
         output_tensor = tf.layers.conv3d(input_tensor,
                                          filters=filters,
