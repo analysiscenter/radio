@@ -73,6 +73,8 @@ def iou_3d(y_true, y_pred, epsilon=10e-7):
         tensor containg true values for sizes of nodules and their centers.
     y_pred : tf.Tensor
         tensor containing predicted values for sizes of nodules and their centers.
+    epsilon : float
+        small real value used for avoiding division by zero error.
 
     Returns
     -------
