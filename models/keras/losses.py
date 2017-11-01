@@ -47,7 +47,7 @@ def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     return -answer
 
 
-def jaccard_coef_logloss(y_true, y_pred):
+def jaccard_coef_logloss(y_true, y_pred, smooth=1e-10):
     """ Loss function based on jaccard coefficient.
 
     Parameters
