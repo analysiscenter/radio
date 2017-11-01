@@ -253,7 +253,8 @@ def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
     period : int
         frequency of test_on_dataset runs.
     kwargs : dict
-        these parameters will be ignored.
+        these parameters will be fed into
+        unpacker function after batch and model arguments.
 
     Returns
     -------
