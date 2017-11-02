@@ -461,15 +461,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return np.asarray(samples + offset, dtype=np.int), sampled_indices
 
     @action
-    def sample_nodules(self, nodule_size=(32, 64, 64), batch_size=20, share=0.8, variance=None,        # pylint: disable=too-many-locals, too-many-statements
+    def sample_nodules(self, batch_size, nodule_size=(32, 64, 64), share=0.8, variance=None,        # pylint: disable=too-many-locals, too-many-statements
                        mask_shape=None, histo=None):
         """ Fetch random cancer and non-cancer nodules from batch.
 
         Fetch nodules from CTImagesBatchMasked into ndarray(l, m, k).
 
         Args:
-        - nodules_df: dataframe of csv file with information
-            about nodules location;
         - batch_size: number of nodules in the output batch. Must be supplied
             whenever share=0.0. If batch_size is None and share > 0, the size of
             resulting batch will be set to (1 / share) * (number of cancerous nodules in a self)
