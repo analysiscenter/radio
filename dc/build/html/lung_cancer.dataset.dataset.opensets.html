@@ -1,0 +1,262 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lung_cancer.dataset.dataset.opensets package &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lung-cancer-dataset-dataset-opensets-package">
+<h1>lung_cancer.dataset.dataset.opensets package<a class="headerlink" href="#lung-cancer-dataset-dataset-opensets-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-lung_cancer.dataset.dataset.opensets.base">
+<span id="lung-cancer-dataset-dataset-opensets-base-module"></span><h2>lung_cancer.dataset.dataset.opensets.base module<a class="headerlink" href="#module-lung_cancer.dataset.dataset.opensets.base" title="Permalink to this headline">¶</a></h2>
+<p>Contains the base class for open datasets</p>
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.opensets.base.ImagesOpenset">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.opensets.base.</code><code class="descname">ImagesOpenset</code><span class="sig-paren">(</span><em>index=None</em>, <em>batch_class=&lt;class 'lung_cancer.dataset.dataset.image.batch_image.ImagesBatch'&gt;</em>, <em>train_test=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.base.ImagesOpenset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.dataset.dataset.opensets.base.Openset" title="lung_cancer.dataset.dataset.opensets.base.Openset"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.opensets.base.Openset</span></code></a></p>
+<p>The base class for open datasets with images</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.opensets.base.Openset">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.opensets.base.</code><code class="descname">Openset</code><span class="sig-paren">(</span><em>index=None</em>, <em>batch_class=None</em>, <em>train_test=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.base.Openset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dataset.Dataset" title="lung_cancer.dataset.dataset.dataset.Dataset"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.dataset.Dataset</span></code></a></p>
+<p>The base class for open datasets</p>
+<dl class="staticmethod">
+<dt id="lung_cancer.dataset.dataset.opensets.base.Openset.build_index">
+<em class="property">static </em><code class="descname">build_index</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.base.Openset.build_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create an index</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.opensets.base.Openset.cv_split">
+<code class="descname">cv_split</code><span class="sig-paren">(</span><em>shares=0.8</em>, <em>shuffle=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.base.Openset.cv_split" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.opensets.base.Openset.download">
+<code class="descname">download</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.base.Openset.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download a dataset from the source web-site</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.dataset.dataset.opensets.cifar">
+<span id="lung-cancer-dataset-dataset-opensets-cifar-module"></span><h2>lung_cancer.dataset.dataset.opensets.cifar module<a class="headerlink" href="#module-lung_cancer.dataset.dataset.opensets.cifar" title="Permalink to this headline">¶</a></h2>
+<p>Contains CIFAR datasets</p>
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.opensets.cifar.</code><code class="descname">BaseCIFAR</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.dataset.dataset.opensets.base.ImagesOpenset" title="lung_cancer.dataset.dataset.opensets.base.ImagesOpenset"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.opensets.base.ImagesOpenset</span></code></a></p>
+<p>The base class for the CIFAR dataset</p>
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.LABELS_KEY">
+<code class="descname">LABELS_KEY</code><em class="property"> = None</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.LABELS_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.SOURCE_URL">
+<code class="descname">SOURCE_URL</code><em class="property"> = None</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.SOURCE_URL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.TEST_NAME_ID">
+<code class="descname">TEST_NAME_ID</code><em class="property"> = None</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.TEST_NAME_ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.TRAIN_NAME_ID">
+<code class="descname">TRAIN_NAME_ID</code><em class="property"> = None</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.TRAIN_NAME_ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.download">
+<code class="descname">download</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data from a web site and extract into numpy arrays</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR10">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.opensets.cifar.</code><code class="descname">CIFAR10</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR10" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR" title="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR</span></code></a></p>
+<p>CIFAR10 dataset</p>
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.LABELS_KEY">
+<code class="descname">LABELS_KEY</code><em class="property"> = b'labels'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.LABELS_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.SOURCE_URL">
+<code class="descname">SOURCE_URL</code><em class="property"> = 'https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.SOURCE_URL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.TEST_NAME_ID">
+<code class="descname">TEST_NAME_ID</code><em class="property"> = 'test_batch'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.TEST_NAME_ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.TRAIN_NAME_ID">
+<code class="descname">TRAIN_NAME_ID</code><em class="property"> = 'data_batch'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR10.TRAIN_NAME_ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR100">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.opensets.cifar.</code><code class="descname">CIFAR100</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR100" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR" title="lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.opensets.cifar.BaseCIFAR</span></code></a></p>
+<p>CIFAR100 dataset</p>
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.LABELS_KEY">
+<code class="descname">LABELS_KEY</code><em class="property"> = b'fine_labels'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.LABELS_KEY" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.SOURCE_URL">
+<code class="descname">SOURCE_URL</code><em class="property"> = 'https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.SOURCE_URL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.TEST_NAME_ID">
+<code class="descname">TEST_NAME_ID</code><em class="property"> = 'test'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.TEST_NAME_ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.TRAIN_NAME_ID">
+<code class="descname">TRAIN_NAME_ID</code><em class="property"> = 'train'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.cifar.CIFAR100.TRAIN_NAME_ID" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.dataset.dataset.opensets.mnist">
+<span id="lung-cancer-dataset-dataset-opensets-mnist-module"></span><h2>lung_cancer.dataset.dataset.opensets.mnist module<a class="headerlink" href="#module-lung_cancer.dataset.dataset.opensets.mnist" title="Permalink to this headline">¶</a></h2>
+<p>Contains MNIST dataset</p>
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.opensets.mnist.MNIST">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.opensets.mnist.</code><code class="descname">MNIST</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.mnist.MNIST" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.dataset.dataset.opensets.base.ImagesOpenset" title="lung_cancer.dataset.dataset.opensets.base.ImagesOpenset"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.opensets.base.ImagesOpenset</span></code></a></p>
+<p>MNIST dataset</p>
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.mnist.MNIST.ALL_URLS">
+<code class="descname">ALL_URLS</code><em class="property"> = ['http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz', 'http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz', 'http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz', 'http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz']</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.mnist.MNIST.ALL_URLS" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.mnist.MNIST.TEST_IMAGES_URL">
+<code class="descname">TEST_IMAGES_URL</code><em class="property"> = 'http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.mnist.MNIST.TEST_IMAGES_URL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.mnist.MNIST.TEST_LABELS_URL">
+<code class="descname">TEST_LABELS_URL</code><em class="property"> = 'http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.mnist.MNIST.TEST_LABELS_URL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.mnist.MNIST.TRAIN_IMAGES_URL">
+<code class="descname">TRAIN_IMAGES_URL</code><em class="property"> = 'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.mnist.MNIST.TRAIN_IMAGES_URL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.opensets.mnist.MNIST.TRAIN_LABELS_URL">
+<code class="descname">TRAIN_LABELS_URL</code><em class="property"> = 'http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz'</em><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.mnist.MNIST.TRAIN_LABELS_URL" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.opensets.mnist.MNIST.download">
+<code class="descname">download</code><span class="sig-paren">(</span><em>url</em>, <em>content</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.dataset.dataset.opensets.mnist.MNIST.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data from the web site</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.dataset.dataset.opensets">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lung_cancer.dataset.dataset.opensets" title="Permalink to this headline">¶</a></h2>
+<p>Open datasets</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

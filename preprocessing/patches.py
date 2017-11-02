@@ -123,7 +123,7 @@ def calc_padding_size(img_shape, patch_shape, stride):
     Returns
     -------
     list or None
-                list of tuples with padding sizes 
+                list of tuples with padding sizes
                 Pad widths in four dims; the first dim enumerates patients,
                 others are spatial axes (z,y,x)
                 if no padding is needed, return None

@@ -26,7 +26,7 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
     out_patient : ndarray
                   resulting array
     res :         ndarray
-                  resulting `skyscraper` for the whole batch. 
+                  resulting `skyscraper` for the whole batch.
                   used later by `_post`-func in _inbatch_parallel
     order :       int
                   order of interpolation
@@ -39,7 +39,7 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
 
     Returns
     -------
-    tuple 
+    tuple
           (res, out_patient.shape), resulting `skyscraper` and shape of
           resized scan inside this `scyscraper`.
 
@@ -81,7 +81,7 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
     ouput_array :   ndarray
                     array, where the result should be put.
     res :           ndarray
-                    resulting `skyscraper` for the whole batch. 
+                    resulting `skyscraper` for the whole batch.
                     used later by `_post`-func in _inbatch_parallel
     axes_pairs :    tuple, list of tuples or None
                     pairs of axes for 2d resizes, then averaging is performed,
@@ -99,7 +99,7 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
 
     Returns
     -------
-    tuple 
+    tuple
           (res, out_patient.shape), resulting `skyscraper` and shape of
           resized scan inside this `scyscraper`.
     """
@@ -213,7 +213,7 @@ def to_shape(data, shape, padding):
               data shape after crop or pad
     padding : str
               mode of padding, any of the modes of np.pad()
-              
+
     Returns
     -------
     ndarray

@@ -16,9 +16,9 @@ def largest_label_volume(image, background=-1):
 
     Parameters
     ----------
-    image :     ndarray
-    background: int or float
-                image background color
+    image :      ndarray
+    background : int or float
+                 image background color
     Returns
     -------
     int
@@ -39,7 +39,7 @@ def largest_label_volume(image, background=-1):
 @jit('void(double[:,:,:], double[:,:,:], double[:,:,:], int64)', nogil=True)
 def calc_lung_mask_numba(patient, out_patient, res, erosion_radius=7):
     """ Compute lungs-segmenting mask for a patient
-    
+
     Parameters
     ----------
     patient :        ndarray
@@ -48,10 +48,12 @@ def calc_lung_mask_numba(patient, out_patient, res, erosion_radius=7):
                      resulting array with segmented lungs
     erosion_radius : int
                      radius to use to erod the lungs' border
-    res :            `skyscraper` where to put the resized patient
-    
+    res :            ndarray
+                     `skyscraper` where to put the resized patient
+
     Returns
     -------
+    tuple
           (res, out_patient.shape), resulting `skyscraper` and shape of
           segmented scan inside this `scyscraper`.
 

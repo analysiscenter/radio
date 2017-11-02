@@ -19,7 +19,7 @@ def flip_patient_numba(patient, out_patient, res):
     -------
     tuple
         (res, out_patient.shape), `skyscraper` and shape of flipped item.
-    
+
     """
     out_patient[:, :, :] = patient[::-1, :, :]
     return res, out_patient.shape

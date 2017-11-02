@@ -9,9 +9,9 @@ def make_central_crop(image, crop_size):
 
     Parameters
     ----------
-    image :     ndarray 
+    image :     ndarray
                 3D image of shape `(dim1, dim2, dim3)`.
-    crop_size : ndarray or tuple 
+    crop_size : ndarray or tuple
                 Size of crop along three dimensions `(int, int, int)`
     Returns
     -------
@@ -30,7 +30,7 @@ def make_central_crop(image, crop_size):
 @njit(nogil=True)
 def detect_black_border(masked_image):
     """ Get number of black (empty) slices from top and bottom of 3d-scan
-    
+
     Parameters
     ----------
     masked_image : ndarray
@@ -80,7 +80,7 @@ def return_black_border_array(input_image, background=-2000):
     ndarray
             info with top and bottom number of black (empty) slices,
             and mean value for non-empty part of scan.
-    
+
     """
     out_array = np.zeros((3, 3))
 

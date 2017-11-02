@@ -33,7 +33,7 @@ DARK_HU = -2000
 class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     """ Batch class for storing batch of CT-scans in 3D.
 
-    Contains a component `images` = 3d-array of stacked scans 
+    Contains a component `images` = 3d-array of stacked scans
     along number_of_slices (z) axis (aka "skyscraper"), associated information
     for subsetting individual patient's 3D scan (_bounds, origin, spacing) and
     various methods to preprocess the data.
@@ -126,10 +126,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @property
     def components(self):
-        """ Components' property. 
+        """ Components' property.
 
         See doc of Base batch in dataset for information.
-            
+
         Returns
         -------
         (str, str, str)
@@ -147,20 +147,20 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----------
         source :  ndarray(n_patients * z, y, x) or None
                   data to be put as a component `images` in self.images, where
-                  n_patients is total number of patients in array and `z, y, x` 
+                  n_patients is total number of patients in array and `z, y, x`
                   is a shape of each patient 3D array.
-                  Note, that each patient should have same and constant 
+                  Note, that each patient should have same and constant
                   `z, y, x` shape.
         bounds :  ndarray(n_patients, dtype=np.int) or None
                   1d-array of bound-floors for each scan 3D array,
                   has length = number of items in batch + 1, to be put in self._bounds.
         origin :  ndarray(n_patients, 3) or None
                   2d-array contains origin coordinates of patients scans
-                  in `z,y,x`-format in world coordinates to be put in self.origin. 
+                  in `z,y,x`-format in world coordinates to be put in self.origin.
                   None value will be converted to zero-array.
         spacing : ndarray(n_patients, 3) or None
-                  2d-array [number of items X 3] of spacings between slices 
-                  along each of `z,y,x` axes for each patient's 3D array 
+                  2d-array [number of items X 3] of spacings between slices
+                  along each of `z,y,x` axes for each patient's 3D array
                   in world coordinates to be put in self.spacing.
                   None value will be converted to ones-array.
         """
@@ -177,10 +177,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        batch :      Batch class instance 
+        batch :      Batch class instance
                      batch to be splitted in two
         batch_size : int
-                     length of first returned batch. 
+                     length of first returned batch.
                      If batch_size >= len(batch), return None instead of a 2nd batch
 
         Returns
@@ -240,7 +240,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def concat(cls, batches):
-        """ Concatenate several batches in one large batch. 
+        """ Concatenate several batches in one large batch.
 
         Assume that same components are filled in all supplied batches.
 
@@ -256,7 +256,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Note
         ----
-        Old batches' indexes are dropped. New large batch has new 
+        Old batches' indexes are dropped. New large batch has new
         np-arange index.
         if None-entries or batches of len=0 are included in the list of batches,
         they will be dropped after concat.
@@ -347,7 +347,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     input array with `skyscraper` (stacked scans),
                     needed iff fmt = 'ndarray'.
         bounds :    ndarray(n_patients, dtype=np.int) or None
-                    bound-floors index for patients. 
+                    bound-floors index for patients.
                     Needed iff fmt='ndarray'
         origin :    ndarray(n_patients, 3) or None
                     origins of scans in world coordinates.
@@ -404,8 +404,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         patient_id : str
-                     patient dicom file index from batch, to be loaded and 
-        
+                     patient dicom file index from batch, to be loaded and
+
         Returns
         -------
         ndarray
@@ -437,10 +437,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return patient_data
 
     def _preload_shapes(self):
-        """ Read shapes of scans dumped with blosc, update self._bounds. 
+        """ Read shapes of scans dumped with blosc, update self._bounds.
 
         `_preload_shapes` is used in _init_load_blosc.
-            
+
             Returns
             -------
             (int,int)
@@ -493,7 +493,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                      and stack with others in images component.
         **kwargs
                  src : tuple
-                       tuple of strings with names ofcomponents of data 
+                       tuple of strings with names ofcomponents of data
                        that should be loaded into self
         Returns
         -------
@@ -533,7 +533,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw images (with meta in .mhd)
-            
+
             Note
             ----
             NO conversion to HU is done
@@ -567,7 +567,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         data_items : dict
                      dict of data items for dump in form {item_name.ext: item}
                      (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing})
-        folder :     str 
+        folder :     str
                      folder to dump data-items in
 
         Returns
@@ -669,7 +669,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Fetch correct position inside batch for an item, looks for it
         in `data`, if provided, or in `component` in self.
-        
+
         Parameters
         ----------
         data :      None or ndarray
@@ -761,7 +761,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @property
     def upper_bounds(self):
         """ Get upper bounds of patients data in CTImagesBatch.
-        
+
         Returns
         -------
         ndarray
@@ -838,7 +838,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def _post_components(self, list_of_dicts, **kwargs):
         """ Gather outputs of different workers, update many components.
-        
+
         Parameters
         ----------
         list_of_dicts : list
@@ -1034,7 +1034,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         shape :      tuple
                      (z, y, x) shape that should be AFTER resize.
                      Note, that ct-scan dim_ordering also should be `z,y,x`
-        method :     str 
+        method :     str
                      interpolation package to be used. Either 'pil-simd' or 'scipy'.
                      Pil-simd ensures better quality and speed on configurations
                      with average number of cores. On the contrary, scipy is better scaled and
@@ -1077,7 +1077,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         spacing :      tuple
-                       (z,y,x) spacing after resize. 
+                       (z,y,x) spacing after resize.
                        Should be passed as key-argument.
         shape :        tuple
                        (z,y,x,) shape after crop/pad.
@@ -1264,7 +1264,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----------
         patch_shape : tuple, list or ndarray
                       (z_dim,y_dim,x_dim), shape of a single patch.
-        stride :      tuple, list or ndarray 
+        stride :      tuple, list or ndarray
                       (int, int, int), stride to slide over each patient's data.
         padding:      str
                       padding-type (see doc of np.pad for available types).
@@ -1305,7 +1305,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def load_from_patches(self, patches, stride, scan_shape, data_attr='images'):
         """ Get skyscraper from 4d-array of patches, put it to `data_attr` component in batch.
-        
+
         Let reconstruct original skyscraper from patches (if same arguments are passed)
 
         Parameters

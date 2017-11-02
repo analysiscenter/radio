@@ -55,7 +55,7 @@ def numba_xip(arr, l, m, n, flag, fill_value):
 
     Parameters
     ----------
-    arr :        ndarray(l, m, n) 
+    arr :        ndarray(l, m, n)
                  input array for computing xip.
     l :          int
                  z-dim of `arr`.

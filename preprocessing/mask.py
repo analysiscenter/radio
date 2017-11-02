@@ -14,7 +14,7 @@ def insert_cropped(where, what, origin):
              3d-array, in which to insert new data.
     what :   ndarray
              3d-array, which is inserted.
-    origin : ndarray 
+    origin : ndarray
              starting positions of insertion along (z,y,x).
 
     Returns
@@ -79,7 +79,7 @@ def make_mask_numba(batch_mask, img_start, img_end, nodules_start, nodules_size)
                     by (nodule_index, z_start, y_start, x_start)
     nodules_start : ndarray(4,)
                     array, first dim is nodule index, others (z,y,x)
-                    are start coordinates of nodules 
+                    are start coordinates of nodules
                     (smallest voxel with nodule).
     nodules_size : tuple, list or ndarray
                    (z,y,x) shape of nodule

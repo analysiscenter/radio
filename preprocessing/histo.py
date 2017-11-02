@@ -5,14 +5,14 @@ import numpy as np
 
 def cart_triples(*arrs):
     """ Get array of element-wise triples from sequence of 3 arrays
-        
+
     Match elements of arrays at each position (first-with-first) into triples.
 
     Parameters
     ----------
     arrs : tuple, list or ndarray
            Any sequence of 3d ndarrays.
-           
+
     Returns
     -------
     ndarray
@@ -26,10 +26,10 @@ def sample_histo3d(histo, size):
     """ Create a sample of size=size from distribution represented by 3d-histogram
 
     Parameters
-    ----------        
+    ----------
     histo : tuple
-            (bins, edges) of np.histogram(). `bins` is a 3d-array, number of points in a specific cube. 
-            `edges` is a list of 3 arrays of len = (nbins_in_dimension + 1), 
+            (bins, edges) of np.histogram(). `bins` is a 3d-array, number of points in a specific cube.
+            `edges` is a list of 3 arrays of len = (nbins_in_dimension + 1),
             represents bounds of bins' boxes.
     size :  int
             length of sample to be generated
