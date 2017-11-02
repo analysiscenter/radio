@@ -12,7 +12,7 @@ from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba
 from .histo import sample_histo3d
 from .crop import make_central_crop
-from ..dataset import action, any_action_failed, DatasetIndex
+from ..dataset import action, any_action_failed, DatasetIndex, SkipBatchException
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
@@ -512,6 +512,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         cancer_n = int(share * batch_size)
         batch_size = int(batch_size)
         cancer_n = self.num_nodules if cancer_n > self.num_nodules else cancer_n
+
+        if batch_size == 0:
+            raise SkipBatchException('Batch of zero size cannot be passed further through the workflow')
 
         # choose cancerous nodules' starting positions
         nodule_size = np.asarray(nodule_size, dtype=np.int)
