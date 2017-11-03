@@ -33,9 +33,6 @@ class KerasModel(Model, BaseModel):
     def train(self, x=None, y=None, **kwargs):
         """ Wrapper for keras.models.Model.train_on_batch.
 
-        Checks whether feed_dict is None and unpacks it as kwargs
-        of keras.models.Model.train_on_batch method.
-
         Parameters
         ----------
         x : ndarray(batch_size, ...)
