@@ -3,7 +3,7 @@
 # pylint: disable=not-context-manager
 """ Contains base class for all tensorflow models. """
 
-from ...dataset.dataset.models.tf import TFModel
+from dataset.dataset.models.tf import TFModel
 
 
 class TFModelCT(TFModel):
