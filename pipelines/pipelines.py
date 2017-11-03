@@ -1,6 +1,7 @@
 """ Helper functions describing pipelines for creating large samples of nodules """
 
 import PIL
+from copy import copy
 from ..dataset import Pipeline
 
 # global constants defining args of some actions in pipeline
@@ -44,7 +45,8 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
         resulting pipeline run in lazy-mode.
     """
     # update args of unify spacing
-    kwargs_default.update(kwargs)
+    args_unify_spacing = copy(kwargs_default)
+    args_unify_spacing.update(kwargs)
 
     # set up other args-dicts
     args_sample_nodules = dict(nodule_size=nodule_shape, batch_size=batch_size, share=share,
@@ -54,7 +56,7 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
     pipeline = (Pipeline()
                 .load(fmt=fmt)
                 .fetch_nodules_info(nodules_df=nodules_df)
-                .unify_spacing(**kwargs_default)
+                .unify_spacing(**args_unify_spacing)
                 .create_mask()
                 .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
                 .sample_nodules(**args_sample_nodules)
@@ -85,7 +87,8 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', 
         resulting pipeline run in lazy-mode.
     """
     # update args of unify spacing
-    kwargs_default.update(kwargs)
+    args_unify_spacing = copy(kwargs_default)
+    args_unify_spacing.update(kwargs)
 
     # set up args-dicts
     args_dump_cancer = dict(dst=cancer_path, n_iters=N_ITERS, nodule_size=nodule_shape, variance=variance,
@@ -98,7 +101,7 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', 
     pipeline = (Pipeline()
                 .load(fmt=fmt)
                 .fetch_nodules_info(nodules_df=nodules_df)
-                .unify_spacing(**kwargs_default)
+                .unify_spacing(**args_unify_spacing)
                 .create_mask()
                 .sample_dump(**args_dump_cancer)  # sample and dump cancerous crops
                 .sample_nodules(**args_sample_ncancer)  # sample non-cancerous
@@ -122,13 +125,14 @@ def update_histo(nodules_df, histo, fmt='raw', **kwargs):
         resulting pipeline run in lazy-mode.
     """
     # update args of unify spacing
-    kwargs_default.update(kwargs)
+    args_unify_spacing = copy(kwargs_default)
+    args_unify_spacing.update(kwargs)
 
     # perform unify_spacing and call histo-updating action
     pipeline = (Pipeline()
                 .load(fmt=fmt)
                 .fetch_nodules_info(nodules_df=nodules_df)
-                .unify_spacing(**kwargs_default)
+                .unify_spacing(**args_unify_spacing)
                 .create_mask()
                 .update_nodules_histo(histo)
                 .run(lazy=True, batch_size=RUN_BATCH_SIZE, shuffle=False)
