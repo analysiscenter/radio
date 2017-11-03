@@ -4,7 +4,7 @@
 import functools
 import numpy as np
 from keras.models import Model
-from ...dataset.dataset.models import BaseModel
+from dataset.dataset.models import BaseModel
 
 
 class KerasModel(Model, BaseModel):
