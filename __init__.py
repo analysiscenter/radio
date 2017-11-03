@@ -3,4 +3,3 @@
 """3d ct-scans preprocessing module with dataset submodule."""
 import dataset
 from .preprocessing import *
-from .models import *
