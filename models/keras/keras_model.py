@@ -62,9 +62,6 @@ class KerasModel(Model, BaseModel):
     def predict(self, x=None, **kwargs):
         """ Wrapper for keras.models.Model.predict_on_batch.
 
-        Checks whether feed_dict is None and unpacks it
-        as kwargs of keras.models.Model.predict_on_batch method.
-
         Parameters
         ----------
         x : ndarray(batch_size, ...)
