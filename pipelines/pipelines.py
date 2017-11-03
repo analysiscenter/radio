@@ -1,7 +1,7 @@
 """ Helper functions describing pipelines for creating large samples of nodules """
 
-import PIL
 from copy import copy
+import PIL
 from ..dataset import Pipeline
 
 # global constants defining args of some actions in pipeline
