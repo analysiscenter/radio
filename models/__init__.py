@@ -1,11 +1,9 @@
-""" Module of nn-models for classification/segmentation of
-lung-cancer on CT-scans
-"""
-from .models_batch import CTImagesModels
-from .dense_net import DenseNet
-from .tf_resnet import TFResNet
-from .keras_unet import KerasUnet
-from .keras_resnet import KerasResNet50
-from .keras_vgg16 import KerasVGG16
-from .keras_model import KerasModel
-from .tf_model import TFModel
+""" Module of nn-models for classification/segmentation of lung-cancer on CT-scans. """
+from .tensorflow.architectures import TFDenseNet
+from .tensorflow.architectures import TFResNet
+from .tensorflow.architectures import TFDilatedVnet
+from .keras.architectures import KerasVnet
+from .keras.architectures import KerasResNet50
+from .keras.architectures import KerasVGG16
+from .tensorflow import TFModelCT
+from .keras import KerasModel as KerasModelCT

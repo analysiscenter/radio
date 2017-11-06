@@ -8,10 +8,17 @@
 import logging
 
 import numpy as np
+import pandas as pd
 from numba import njit
 from skimage import measure
+
+try:
+    from tqdm import tqdm_notebook
+except ImportError:
+    tqdm_notebook = lambda x: x
+
 from .ct_batch import CTImagesBatch
-from .mask import make_mask_numba
+from .mask import make_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
 from ..dataset import action, any_action_failed, DatasetIndex, SkipBatchException
@@ -240,9 +247,38 @@ class CTImagesMaskedBatch(CTImagesBatch):
             src = tuple(src) + ('images_shape', )
 
         # execute parent-method
-        super().dump(dst=dst, src=src, fmt=fmt)
+        super().dump(dst=dst, src=src, fmt=fmt)  # pylint: disable=no-value-for-parameter
 
         return self
+
+    def nodules_to_df(self, nodules):
+        """ Convert nodules_info ndarray into pandas dataframe.
+
+        Pandas DataFrame will contain following columns:
+        'source_id' - id of source element of batch;
+        'nodule_id' - generated id for nodules;
+        'locZ', 'locY', 'locX' - coordinates of nodules' centers;
+        'diamZ', 'diamY', 'diamX' - sizes of nodules along zyx axes;
+
+        Args:
+        - nodules: ndarray of type nodules_info(this type is defined
+        inside of CTImagesMaskedBatch class);
+
+        Returns:
+        - pd.DataFrame with centers, ids and sizes of nodules;
+        """
+        columns = ['nodule_id', 'source_id', 'locZ', 'locY',
+                   'locX', 'diamZ', 'diamY', 'diamX']
+
+        nodule_id = self.make_indices(nodules.shape[0])
+        return pd.DataFrame({'source_id': self.indices[nodules.patient_pos],
+                             'nodule_id': nodule_id,
+                             'locZ': nodules.nodule_center[:, 0],
+                             'locY': nodules.nodule_center[:, 1],
+                             'locX': nodules.nodule_center[:, 2],
+                             'diamZ': nodules.nodule_size[:, 0],
+                             'diamY': nodules.nodule_size[:, 1],
+                             'diamX': nodules.nodule_size[:, 2]}, columns=columns)
 
     def get_pos(self, data, component, index):
         """ Return a positon of an item for a given index in data
@@ -1029,157 +1065,75 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def create_labels_by_mask(self, threshold):
-        """ Create `labels` component with `labels` corresponding to masks.
+    def binarize_mask(self, threshold=0.35):
+        """ Binarize masks by threshold.
 
-        Parameters
-        ----------
-        threshold : int
-                    thresholding number of voxels for considering
-                    crop with cancer
+        Args:
+        - threshold: float, threshold for masks binarization;
 
+        Returns:
+        - self, source CTImagesMaskedBatch with binarized masks.
         """
-        self.labels = np.asarray([np.sum(self.get(i, 'masks')) > threshold
-                                  for i in range(len(self))], dtype=np.float)
-        return self
-
-    def unpack_data(self, y_component, dim_ordering='channels_last', **kwargs):
-        """ Unpack data contained in batch for feeding in model.
-
-        Parameters
-        ----------
-        y_component :  str
-                       either 'masks' or 'labels'.
-                       name of y_component to fetch into nnet.
-        dim_ordering : str
-                       either 'channels_last' or 'channels_first'.
-                       dim ordering of nnet.
-
-        Returns
-        -------
-        tuple
-             (x_ndarray, y_ndarray), input for nnet.
-        """
-        x, y = [], [] if y_component is not None else None
-        for i in range(len(self)):
-            x.append(self.get(i, 'images'))
-            if y_component == 'no_y':
-                y.append(np.nan)
-                continue
-            elif y_component == 'masks':
-                y.append(self.get(i, 'masks'))
-            elif y_component == 'labels':
-                y.append(self.labels[i])
-        x, y = np.stack(x), np.stack(y)
-        if dim_ordering == 'channels_last':
-            x, y = x[..., np.newaxis], y[..., np.newaxis]
-        elif dim_ordering == 'channels_first':
-            x = x[:, np.newaxis, ...]
-            if y_component == 'masks':
-                y = y[:, np.newaxis, ...]
-        return x, y
-
-    @action
-    def train_on_crop(self, model_name, y_component='labels',
-                      dim_ordering='channels_last', **kwargs):
-        """ Train model on crops from batch.
-
-        Parameters
-        ----------
-        model_name :   str
-                       name of model, your model should exist
-                       in namespace with this name.
-        y_component :  str
-                       either 'masks' or 'labels'.
-                       name of y_component to fetch into nnet.
-        dim_ordering : str
-                       either 'channels_last' or 'channels_first'.
-                       dim ordering of nnet.
-
-        """
-        _model = self.get_model_by_name(model_name)
-        x, y_true = self.unpack_data(dim_ordering=dim_ordering,
-                                     y_component=y_component, **kwargs)
-        _model.train_on_batch(x, y_true)
-        return self
-
-    @action
-    def predict_on_crop(self, model_name, dst_dict, y_component='labels',
-                        dim_ordering='channels_last', **kwargs):
-        """ Get predictions of model on crops contained in batch.
-
-        Parameters
-        ----------
-        model_name :   str
-                       name of model, your model should exist
-                       in namespace with this name.
-        dst_dict :     dict
-                       Method will update dst_dict by {index: prediction}.
-        y_component :  str
-                       either 'masks' or 'labels'.
-                       name of y_component to fetch into nnet.
-        dim_ordering : str
-                       either 'channels_last' or 'channels_first'.
-                       dim ordering of nnet.
-
-        """
-        _model = self.get_model_by_name(model_name)
-        x, _ = self.unpack_data(dim_ordering=dim_ordering,
-                                y_component=y_component, **kwargs)
-        predicted_labels = _model.predict_on_batch(x)
-        dst_dict.update(zip(self.indices, predicted_labels))
+        self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
         return self
 
     @action
     def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
-                        batch_size=4, y_component='labels', dim_ordering='channels_last'):
-        """ Get predictions of the model on whole 3d scan from batch.
+                        batch_size=4, y_component='labels', dim_ordering='channels_last',
+                        show_progress=True):
+        """ Get predictions of the model on data contained in batch.
 
-        Transforms scan data into crops (patches) of `crop_shape` and  feed
-        these patches sequentially into model of `model_name`;
-        Loads predicted masks/probabilities into `masks`/`labels` component.
+        Transforms scan data into patches of shape CROP_SHAPE and then feed
+        this patches sequentially into model with name specified by
+        argument 'model_name'; after that loads predicted masks or probabilities
+        into 'masks' component of the current batch and returns it.
 
         Parameters
         ----------
-        strides :      tuple, list or ndarray
-                       (int, int, int), stride to slide over each patient's data.
-        batch_size :   int
-                       batch size to run model prediction.
-        crop_shape :   tuple, list or ndarray of int.
-                       (z_dim,y_dim,x_dim), scan will be split
-                       into patches of that shape.
-        model_name :   str
-                       name of model, your model should exist
-                       in namespace with this name.
-        dst_dict :     dict
-                       Method will update dst_dict by {index: prediction}.
-        y_component :  str
-                       either 'masks' or 'labels'.
-                       name of y_component to fetch into nnet.
-        dim_ordering : str
-                       either 'channels_last' or 'channels_first'.
-                       dim ordering of nnet.
+        model_name : str
+            name of model that will be used for predictions.
+        strides : tuple(int, int, int)
+            strides for patching operation
+        batch_size : int
+            number of patches to feed in model in one iteration.
+        y_component: str
+            name of y component, can be 'masks' or labels.
+        dim_ordering: str
+            dimension ordering, can be 'channels_first' or 'channels_last'.
 
+        Returns
+        -------
+        CTImagesMaskedBatch
+            self(source batch).
         """
         _model = self.get_model_by_name(model_name)
 
-        patches_arr = self.get_patches(
-            patch_shape=crop_shape, stride=strides, padding='reflect')
+        patches_arr = self.get_patches(patch_shape=crop_shape,
+                                       stride=strides,
+                                       padding='reflect')
         if dim_ordering == 'channels_first':
             patches_arr = patches_arr[:, np.newaxis, ...]
         elif dim_ordering == 'channels_last':
             patches_arr = patches_arr[..., np.newaxis]
 
         predictions = []
-        for i in range(0, patches_arr.shape[0], batch_size):
-            current_prediction = np.asarray(
-                _model.predict_on_batch(patches_arr[i: i + batch_size, ...]))
+        iterations = range(0, patches_arr.shape[0], batch_size)
+        if show_progress:
+            iterations = tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
+        for i in iterations:
+            current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
             if y_component == 'labels':
                 current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
                                                for prob in current_prediction.ravel()])
 
-            current_prediction = np.squeeze(current_prediction)
+            if y_component == 'regression':
+                masks_patch = create_mask_reg(current_prediction[:, :3],
+                                              current_prediction[:, 3:6],
+                                              current_prediction[:, 6],
+                                              crop_shape, 0.01)
+
+                current_prediction = np.squeeze(masks_patch)
             predictions.append(current_prediction)
 
         patches_mask = np.concatenate(predictions, axis=0)
