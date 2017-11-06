@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.dataset.dataset.opensets.mnist &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.dataset.dataset.opensets.mnist</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Contains MNIST dataset &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">urllib.request</span>
+<span class="kn">import</span> <span class="nn">gzip</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">ImagesOpenset</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">DatasetIndex</span><span class="p">,</span> <span class="n">parallel</span><span class="p">,</span> <span class="n">any_action_failed</span>
+
+
+<div class="viewcode-block" id="MNIST"><a class="viewcode-back" href="../../../../../lung_cancer.dataset.dataset.opensets.html#lung_cancer.dataset.dataset.opensets.mnist.MNIST">[docs]</a><span class="k">class</span> <span class="nc">MNIST</span><span class="p">(</span><span class="n">ImagesOpenset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; MNIST dataset &quot;&quot;&quot;</span>
+    <span class="n">TRAIN_IMAGES_URL</span> <span class="o">=</span> <span class="s2">&quot;http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz&quot;</span>
+    <span class="n">TRAIN_LABELS_URL</span> <span class="o">=</span> <span class="s2">&quot;http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz&quot;</span>
+    <span class="n">TEST_IMAGES_URL</span> <span class="o">=</span> <span class="s2">&quot;http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz&quot;</span>
+    <span class="n">TEST_LABELS_URL</span> <span class="o">=</span> <span class="s2">&quot;http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz&quot;</span>
+    <span class="n">ALL_URLS</span> <span class="o">=</span> <span class="p">[</span><span class="n">TRAIN_IMAGES_URL</span><span class="p">,</span> <span class="n">TRAIN_LABELS_URL</span><span class="p">,</span> <span class="n">TEST_IMAGES_URL</span><span class="p">,</span> <span class="n">TEST_LABELS_URL</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="n">train_test</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cv_split</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_get_from_urls</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; List of URLs and type of content (0 - images, 1 - labels) &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">ALL_URLS</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">i</span> <span class="o">%</span> <span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ALL_URLS</span><span class="p">))]</span>
+
+    <span class="k">def</span> <span class="nf">_gather_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">all_res</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">any_action_failed</span><span class="p">(</span><span class="n">all_res</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;Could not download files:&#39;</span><span class="p">,</span> <span class="n">all_res</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">train_data</span> <span class="o">=</span> <span class="n">all_res</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">all_res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">test_data</span> <span class="o">=</span> <span class="n">all_res</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">all_res</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_train_index</span> <span class="o">=</span> <span class="n">DatasetIndex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">train_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_test_index</span> <span class="o">=</span> <span class="n">DatasetIndex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">test_data</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+        <span class="k">return</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span>
+
+    <span class="nd">@parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_get_from_urls&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_gather_data&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="MNIST.download"><a class="viewcode-back" href="../../../../../lung_cancer.dataset.dataset.opensets.html#lung_cancer.dataset.dataset.opensets.mnist.MNIST.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">url</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>    <span class="c1"># pylint:disable=arguments-differ</span>
+        <span class="sd">&quot;&quot;&quot; Load data from the web site &quot;&quot;&quot;</span>
+        <span class="n">tmpdir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+        <span class="n">localname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tmpdir</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">localname</span><span class="p">):</span>
+            <span class="n">urllib</span><span class="o">.</span><span class="n">request</span><span class="o">.</span><span class="n">urlretrieve</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">localname</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Downloaded&quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">localname</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_images</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">if</span> <span class="n">content</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extract_labels</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+    <span class="c1">#</span>
+    <span class="c1">#  _read32, extract_images, extract_labels are taken from tensorflow</span>
+    <span class="c1">#</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_read32</span><span class="p">(</span><span class="n">bytestream</span><span class="p">):</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">uint32</span><span class="p">)</span><span class="o">.</span><span class="n">newbyteorder</span><span class="p">(</span><span class="s1">&#39;&gt;&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">bytestream</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">4</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_extract_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract the images into a 4D uint8 numpy array [index, y, x, depth].</span>
+<span class="sd">        Args:</span>
+<span class="sd">          f: A file object that can be passed into a gzip reader.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">          data: A 4D uint8 numpy array [index, y, x, depth].</span>
+<span class="sd">        Raises:</span>
+<span class="sd">          ValueError: If the bytestream does not start with 2051.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Extracting&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">f</span><span class="p">)</span> <span class="k">as</span> <span class="n">bytestream</span><span class="p">:</span>
+            <span class="n">magic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read32</span><span class="p">(</span><span class="n">bytestream</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">magic</span> <span class="o">!=</span> <span class="mi">2051</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid magic number </span><span class="si">%d</span><span class="s1"> in MNIST image file: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">magic</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">num_images</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read32</span><span class="p">(</span><span class="n">bytestream</span><span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read32</span><span class="p">(</span><span class="n">bytestream</span><span class="p">)</span>
+            <span class="n">cols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read32</span><span class="p">(</span><span class="n">bytestream</span><span class="p">)</span>
+            <span class="n">buf</span> <span class="o">=</span> <span class="n">bytestream</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">rows</span> <span class="o">*</span> <span class="n">cols</span> <span class="o">*</span> <span class="n">num_images</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">num_images</span><span class="p">,</span> <span class="n">rows</span><span class="p">,</span> <span class="n">cols</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_extract_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Extract the labels into a 1D uint8 numpy array [index].</span>
+<span class="sd">        Args:</span>
+<span class="sd">          f: A file object that can be passed into a gzip reader.</span>
+<span class="sd">        Returns:</span>
+<span class="sd">          labels: a 1D uint8 numpy array.</span>
+<span class="sd">        Raises:</span>
+<span class="sd">          ValueError: If the bystream doesn&#39;t start with 2049.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Extracting&#39;</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">gzip</span><span class="o">.</span><span class="n">GzipFile</span><span class="p">(</span><span class="n">fileobj</span><span class="o">=</span><span class="n">f</span><span class="p">)</span> <span class="k">as</span> <span class="n">bytestream</span><span class="p">:</span>
+            <span class="n">magic</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read32</span><span class="p">(</span><span class="n">bytestream</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">magic</span> <span class="o">!=</span> <span class="mi">2049</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Invalid magic number </span><span class="si">%d</span><span class="s1"> in MNIST label file: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">magic</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+            <span class="n">num_items</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read32</span><span class="p">(</span><span class="n">bytestream</span><span class="p">)</span>
+            <span class="n">buf</span> <span class="o">=</span> <span class="n">bytestream</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">num_items</span><span class="p">)</span>
+            <span class="n">labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">labels</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

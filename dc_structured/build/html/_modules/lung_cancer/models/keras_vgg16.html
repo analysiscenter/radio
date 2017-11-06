@@ -1,0 +1,245 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.models.keras_vgg16 &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.keras_vgg16</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=not-context-manager</span>
+<span class="sd">&quot;&quot;&quot; Contains implementation of VGG16 architecture in keras. &quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">wraps</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">import</span> <span class="nn">keras</span>
+<span class="kn">from</span> <span class="nn">keras.models</span> <span class="k">import</span> <span class="n">Model</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Input</span><span class="p">,</span> <span class="n">Flatten</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Conv3D</span><span class="p">,</span> <span class="n">MaxPooling3D</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Dropout</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">BatchNormalization</span>
+
+<span class="kn">from</span> <span class="nn">.keras_model</span> <span class="k">import</span> <span class="n">KerasModel</span>
+
+
+<div class="viewcode-block" id="KerasVGG16"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.keras_vgg16.KerasVGG16">[docs]</a><span class="k">class</span> <span class="nc">KerasVGG16</span><span class="p">(</span><span class="n">KerasModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; KerasVGG16 model for 3D scans implemented in keras. &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KerasVGG16.reduction_block_I"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.keras_vgg16.KerasVGG16.reduction_block_I">[docs]</a>    <span class="k">def</span> <span class="nf">reduction_block_I</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reduction block of type I for VGG16 architecture.</span>
+
+<span class="sd">        Applyes 3D-convolution with kernel size (3, 3, 3), (1, 1, 1) strides</span>
+<span class="sd">        and &#39;relu&#39; activation, after performs batch noramlization, then</span>
+<span class="sd">        again 3D-convolution with kernel size (3, 3, 3),</span>
+<span class="sd">        strides (1, 1, 1) and &#39;relu&#39; activation,  that batch normalization;</span>
+<span class="sd">        After all applyes 3D maxpooling operation with strides (2, 2, 2)</span>
+<span class="sd">        and pooling size (2, 2, 2).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: keras tensor, input tensor;</span>
+<span class="sd">        - filters: int, number of filters in 3D-convolutional layers;</span>
+<span class="sd">        - scope: str, name of the scope;</span>
+<span class="sd">        - padding: str, padding mode can be &#39;same&#39; or &#39;valid&#39;;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - output tensor, keras tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="n">conv1</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                           <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv_1&#39;</span><span class="p">)(</span><span class="n">input_tensor</span><span class="p">)</span>
+            <span class="n">conv1</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)(</span><span class="n">conv1</span><span class="p">)</span>
+
+            <span class="n">conv2</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                           <span class="n">activaton</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv2&#39;</span><span class="p">)(</span><span class="n">conv1</span><span class="p">)</span>
+            <span class="n">conv2</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)(</span><span class="n">conv2</span><span class="p">)</span>
+
+            <span class="n">max_pool</span> <span class="o">=</span> <span class="n">MaxPooling3D</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;max_pool_3D&#39;</span><span class="p">)(</span><span class="n">conv2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">max_pool</span></div>
+
+
+<div class="viewcode-block" id="KerasVGG16.reduction_block_II"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.keras_vgg16.KerasVGG16.reduction_block_II">[docs]</a>    <span class="k">def</span> <span class="nf">reduction_block_II</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Reduction block of type II for VGG16 architecture.</span>
+
+<span class="sd">        Applyes 3D-convolution with kernel size (3, 3, 3), strides (1, 1, 1)</span>
+<span class="sd">        and &#39;relu&#39; activation, after that preform batch noramlization,</span>
+<span class="sd">        repeates this combo three times;</span>
+<span class="sd">        Finally, adds 3D maxpooling layer with</span>
+<span class="sd">        strides (2, 2, 2) and pooling size (2, 2, 2).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: keras tensor, input tensor;</span>
+<span class="sd">        - filters: int, number of filters in 3D-convolutional layers;</span>
+<span class="sd">        - scope: str, name of the scope;</span>
+<span class="sd">        - padding: str, padding mode can be &#39;same&#39; or &#39;valid&#39;;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - output tensor, keras tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="n">conv1</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                           <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv1&#39;</span><span class="p">)(</span><span class="n">input_tensor</span><span class="p">)</span>
+            <span class="n">conv1</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)(</span><span class="n">conv1</span><span class="p">)</span>
+
+            <span class="n">conv2</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                           <span class="n">activaton</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv2&#39;</span><span class="p">)(</span><span class="n">conv1</span><span class="p">)</span>
+            <span class="n">conv2</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)(</span><span class="n">conv2</span><span class="p">)</span>
+
+            <span class="n">conv3</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                           <span class="n">activaton</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv3&#39;</span><span class="p">)(</span><span class="n">conv2</span><span class="p">)</span>
+            <span class="n">conv3</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)(</span><span class="n">conv3</span><span class="p">)</span>
+
+            <span class="n">max_pool</span> <span class="o">=</span> <span class="n">MaxPooling3D</span><span class="p">((</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                    <span class="n">name</span><span class="o">=</span><span class="s1">&#39;max_pool_3D&#39;</span><span class="p">)(</span><span class="n">conv3</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">max_pool</span></div>
+
+
+<div class="viewcode-block" id="KerasVGG16.classification_block"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.keras_vgg16.KerasVGG16.classification_block">[docs]</a>    <span class="k">def</span> <span class="nf">classification_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+                             <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;ClassificationBlock&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Classification block of VGG16 architecture.</span>
+
+<span class="sd">        This block consists of flatten operation applied to input_tensor.</span>
+<span class="sd">        Then there is two fully connected layers with &#39;relu&#39; activation,</span>
+<span class="sd">        batch normalization and dropout layers. This block should be put</span>
+<span class="sd">        in the end of the model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: keras tensor, input tensor;</span>
+<span class="sd">        - units: tuple(int, int), number of units in first and second dense layers;</span>
+<span class="sd">        - dropoout_rate: float, probability of dropout;</span>
+<span class="sd">        - scope: str, name of scope;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - output tensor, keras tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="n">units_1</span><span class="p">,</span> <span class="n">units_2</span> <span class="o">=</span> <span class="n">units</span>
+
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">Flatten</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;flatten&#39;</span><span class="p">)(</span><span class="n">input_tensor</span><span class="p">)</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">units_1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fc1&#39;</span><span class="p">)(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_rate</span><span class="p">)(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">units_2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;fc2&#39;</span><span class="p">)(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="n">layer</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">dropout_rate</span><span class="p">)(</span><span class="n">layer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">layer</span></div>
+
+<div class="viewcode-block" id="KerasVGG16.build_model"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.keras_vgg16.KerasVGG16.build_model">[docs]</a>    <span class="k">def</span> <span class="nf">build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="p">(</span><span class="mi">512</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">dropout_rate</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build VGG16 model implemented in keras.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - units: tuple(int, int), number of units in first and second dense layers;</span>
+<span class="sd">        - dropout_rate: float, probability of dropout;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - keras model;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">block_A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block_I</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;Block_A&#39;</span><span class="p">)</span>
+        <span class="n">block_B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block_I</span><span class="p">(</span><span class="n">block_A</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;Block_B&#39;</span><span class="p">)</span>
+        <span class="n">block_C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block_II</span><span class="p">(</span><span class="n">block_B</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;Block_C&#39;</span><span class="p">)</span>
+        <span class="n">block_D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block_II</span><span class="p">(</span><span class="n">block_C</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;Block_D&#39;</span><span class="p">)</span>
+        <span class="n">block_E</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block_II</span><span class="p">(</span><span class="n">block_D</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;Block_E&#39;</span><span class="p">)</span>
+
+        <span class="n">block_F</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">classification_block</span><span class="p">(</span><span class="n">block_E</span><span class="p">,</span> <span class="n">units</span><span class="p">,</span>
+                                            <span class="n">dropout_rate</span><span class="o">=</span><span class="n">dropout_rate</span><span class="p">,</span>
+                                            <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;ClassificationBlock&#39;</span><span class="p">)</span>
+
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">,</span>
+                              <span class="n">name</span><span class="o">=</span><span class="s1">&#39;predictions&#39;</span><span class="p">)(</span><span class="n">block_F</span><span class="p">)</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">output_tensor</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;vgg16&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model</span></div>
+
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="o">.</span><span class="n">compile</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">compile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;adam&#39;</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;binary_crossentropy&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Compile vgg16 model. &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">optimizer</span><span class="o">=</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

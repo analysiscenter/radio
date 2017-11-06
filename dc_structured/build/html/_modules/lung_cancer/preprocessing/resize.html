@@ -1,0 +1,334 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.preprocessing.resize &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.preprocessing.resize</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module with auxillary</span>
+<span class="sd">    jit-compiled functions</span>
+<span class="sd">    for resize of</span>
+<span class="sd">    CT scans</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">numba</span> <span class="k">import</span> <span class="n">jit</span>
+<span class="kn">import</span> <span class="nn">scipy.ndimage</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="k">import</span> <span class="n">Image</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="resize_scipy"><a class="viewcode-back" href="../../../lung_cancer.preprocessing.html#lung_cancer.preprocessing.resize.resize_scipy">[docs]</a><span class="k">def</span> <span class="nf">resize_scipy</span><span class="p">(</span><span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">res_factor</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Resize 3d scan and put it into out_patient.</span>
+
+<span class="sd">    Resize engine is scipy.ndimage.interpolation.zoom.</span>
+<span class="sd">    If res_factor is not supplied, infer resize factor from out_patient.shape.</span>
+<span class="sd">    otherwise, use res_factor for resize and then crop/pad resized array to out_patient.shape.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    patient :     ndarray</span>
+<span class="sd">                  3D array</span>
+<span class="sd">    out_patient : ndarray</span>
+<span class="sd">                  resulting array</span>
+<span class="sd">    res :         ndarray</span>
+<span class="sd">                  resulting `skyscraper` for the whole batch.</span>
+<span class="sd">                  used later by `_post`-func in _inbatch_parallel</span>
+<span class="sd">    order :       int</span>
+<span class="sd">                  order of interpolation</span>
+<span class="sd">    res_factor :  tuple or None</span>
+<span class="sd">                  resize factor along (z,y,x) in int ir float for interpolation.</span>
+<span class="sd">                  If not None, can yield array of shape != out_patient.shape,</span>
+<span class="sd">                  then crop/pad is used</span>
+<span class="sd">    padding :     str</span>
+<span class="sd">                  mode of padding, any mode of np.pad()</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">          (res, out_patient.shape), resulting `skyscraper` and shape of</span>
+<span class="sd">          resized scan inside this `scyscraper`.</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    Shape of resulting array has to be inferred</span>
+<span class="sd">    from out_patient</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># infer shape of resulting array</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">out_patient</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># define resize factor, perform resizing and put the result into out_patient</span>
+    <span class="k">if</span> <span class="n">res_factor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">res_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">out_patient</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">patient</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">out_patient</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">interpolation</span><span class="o">.</span><span class="n">zoom</span><span class="p">(</span><span class="n">patient</span><span class="p">,</span> <span class="n">res_factor</span><span class="p">,</span>
+                                                                <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out_patient</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">to_shape</span><span class="p">((</span><span class="n">scipy</span><span class="o">.</span><span class="n">ndimage</span><span class="o">.</span><span class="n">interpolation</span><span class="o">.</span>
+                                         <span class="n">zoom</span><span class="p">(</span><span class="n">patient</span><span class="p">,</span> <span class="n">res_factor</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)),</span>
+                                        <span class="n">shape</span><span class="o">=</span><span class="n">shape</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
+
+    <span class="c1"># return out-array for the whole batch</span>
+    <span class="c1"># and shape of out_patient</span>
+    <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">out_patient</span><span class="o">.</span><span class="n">shape</span></div>
+
+
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="resize_pil"><a class="viewcode-back" href="../../../lung_cancer.preprocessing.html#lung_cancer.preprocessing.resize.resize_pil">[docs]</a><span class="k">def</span> <span class="nf">resize_pil</span><span class="p">(</span><span class="n">input_array</span><span class="p">,</span> <span class="n">output_array</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">axes_pairs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">shape_resize</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">resample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Resize 3D scan.</span>
+
+<span class="sd">    Uses _seq_resize over a pair of axes for applying many 2d-resizes,</span>
+<span class="sd">    then averages over different pairs for obtaining more precise results.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array :   ndarray</span>
+<span class="sd">                    array to be resized.</span>
+<span class="sd">    ouput_array :   ndarray</span>
+<span class="sd">                    array, where the result should be put.</span>
+<span class="sd">    res :           ndarray</span>
+<span class="sd">                    resulting `skyscraper` for the whole batch.</span>
+<span class="sd">                    used later by `_post`-func in _inbatch_parallel</span>
+<span class="sd">    axes_pairs :    tuple, list of tuples or None</span>
+<span class="sd">                    pairs of axes for 2d resizes, then averaging is performed,</span>
+<span class="sd">                    e.g., ((0,1),(1,2),(0,2))</span>
+<span class="sd">                    if None, defaults to ((0, 1), (1, 2))</span>
+<span class="sd">    shape_resize :  tuple, list, ndarray or None</span>
+<span class="sd">                    shape of array after resize.</span>
+<span class="sd">                    If None, infer shape from `ouput_array.shape`.</span>
+<span class="sd">    resample :      str or None</span>
+<span class="sd">                    type of PIL resize&#39;s resampling method, e.g.</span>
+<span class="sd">                    `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.</span>
+<span class="sd">                    If None, `BILINEAR` is used.</span>
+<span class="sd">    padding :       str</span>
+<span class="sd">                    mode of padding, any mode of np.pad()</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">          (res, out_patient.shape), resulting `skyscraper` and shape of</span>
+<span class="sd">          resized scan inside this `scyscraper`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># if resample not given, set to bilinear</span>
+    <span class="n">resample</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">BILINEAR</span> <span class="k">if</span> <span class="n">resample</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">resample</span>
+
+    <span class="c1"># if axes_pairs not supplied, set the arg to two default axes pairs</span>
+    <span class="n">axes_pairs</span> <span class="o">=</span> <span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span> <span class="k">if</span> <span class="n">axes_pairs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">axes_pairs</span>
+
+    <span class="c1"># if shape is not supplied, infer it from output_array</span>
+    <span class="n">shape_resize</span> <span class="o">=</span> <span class="n">shape_resize</span> <span class="k">if</span> <span class="n">shape_resize</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">output_array</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="k">if</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shape_resize</span><span class="p">)</span> <span class="o">==</span> <span class="n">output_array</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">axes</span> <span class="ow">in</span> <span class="n">axes_pairs</span><span class="p">:</span>
+            <span class="n">output_array</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">_seq_resize</span><span class="p">(</span><span class="n">input_array</span><span class="p">,</span> <span class="n">shape_resize</span><span class="p">,</span> <span class="n">axes</span><span class="p">,</span> <span class="n">resample</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">axes</span> <span class="ow">in</span> <span class="n">axes_pairs</span><span class="p">:</span>
+            <span class="n">output_array</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">to_shape</span><span class="p">(</span><span class="n">_seq_resize</span><span class="p">(</span><span class="n">input_array</span><span class="p">,</span> <span class="n">shape_resize</span><span class="p">,</span> <span class="n">axes</span><span class="p">,</span> <span class="n">resample</span><span class="p">),</span>
+                                              <span class="n">shape</span><span class="o">=</span><span class="n">output_array</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
+
+    <span class="c1"># normalize result of resize (average over resizes with different pairs of axes)</span>
+    <span class="n">output_array</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">axes_pairs</span><span class="p">)</span>
+
+    <span class="c1"># for post-function</span>
+    <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">output_array</span><span class="o">.</span><span class="n">shape</span></div>
+
+
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_seq_resize</span><span class="p">(</span><span class="n">input_array</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">axes</span><span class="p">,</span> <span class="n">resample</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Perform 3d-resize based on sequence of 2d-resizes performed on slices.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array: ndarray</span>
+<span class="sd">                 3D array</span>
+<span class="sd">    shape :      tuple, list or ndarray</span>
+<span class="sd">                 shape of 3d scan after resize, (z,y,x).</span>
+<span class="sd">    axes :       tuple, list or ndarray</span>
+<span class="sd">                 axes for slicing. E.g., `shape` = (z, y, x) and axes = (0, 1). We first loop over</span>
+<span class="sd">                 2d-slices [i, :, :] and reshape input to shape = (input_array.shape[0], y, x).</span>
+<span class="sd">                 then loop over slices [:, i, :] and reshape the result to shape = (z, y, x).</span>
+<span class="sd">    resample :   str or None</span>
+<span class="sd">                 type of PIL resize&#39;s resampling method, e.g.</span>
+<span class="sd">                 `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.</span>
+<span class="sd">                 If None, `BILINEAR` is used.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">            resized 3D array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">input_array</span>
+
+    <span class="c1"># loop over axes</span>
+    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+        <span class="n">slice_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">axis</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_slice_and_resize</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">slice_shape</span><span class="p">,</span> <span class="n">resample</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="nd">@jit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_slice_and_resize</span><span class="p">(</span><span class="n">input_array</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">slice_shape</span><span class="p">,</span> <span class="n">resample</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Slice 3D array along `axis` and resize each slice to `slice_shape`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array : ndarray</span>
+<span class="sd">                  3D array</span>
+<span class="sd">    axis :        int</span>
+<span class="sd">                  axis along which slices are taken</span>
+<span class="sd">    slice_shape : tuple,list or ndarray</span>
+<span class="sd">                  (y,x) shape of each slice after resize</span>
+<span class="sd">    resample :    str or None</span>
+<span class="sd">                  type of PIL resize&#39;s resampling method, e.g.</span>
+<span class="sd">                  `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.</span>
+<span class="sd">                  If None, `BILINEAR` is used.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">            3D array in which each slice along chosen axis is resized</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># init the resulting array</span>
+    <span class="n">result_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">slice_shape</span><span class="p">),</span> <span class="n">axis</span><span class="p">,</span> <span class="n">input_array</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">])</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">result_shape</span><span class="p">)</span>
+
+    <span class="c1"># invert slice shape for PIL.resize</span>
+    <span class="n">slice_shape</span> <span class="o">=</span> <span class="n">slice_shape</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># loop over the axis given by axis</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">axis</span><span class="p">]):</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">)])</span>
+        <span class="n">slices</span><span class="p">[</span><span class="n">axis</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">slices</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">slices</span><span class="p">)</span>
+
+        <span class="c1"># resize the slice and put the result in result-array</span>
+        <span class="n">result</span><span class="p">[</span><span class="n">slices</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">input_array</span><span class="p">[</span><span class="n">slices</span><span class="p">])</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">slice_shape</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="n">resample</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<div class="viewcode-block" id="to_shape"><a class="viewcode-back" href="../../../lung_cancer.preprocessing.html#lung_cancer.preprocessing.resize.to_shape">[docs]</a><span class="k">def</span> <span class="nf">to_shape</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">padding</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Crop or pad 3D array to resize it to `shape`</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    data :    ndarray</span>
+<span class="sd">              3D array for reshaping</span>
+<span class="sd">    shape :   tuple, list or ndarray</span>
+<span class="sd">              data shape after crop or pad</span>
+<span class="sd">    padding : str</span>
+<span class="sd">              mode of padding, any of the modes of np.pad()</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">            cropped and padded data</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># calculate shapes discrepancy</span>
+    <span class="n">data_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">overshoot</span> <span class="o">=</span> <span class="n">data_shape</span> <span class="o">-</span> <span class="n">shape</span>
+
+    <span class="c1"># calclate crop params and perform crop</span>
+    <span class="n">crop_dims</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">overshoot</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">crop_first</span> <span class="o">=</span> <span class="n">crop_dims</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">crop_trailing</span> <span class="o">=</span> <span class="n">crop_dims</span> <span class="o">-</span> <span class="n">crop_first</span>
+    <span class="n">slices</span> <span class="o">=</span> <span class="p">[</span><span class="nb">slice</span><span class="p">(</span><span class="n">first</span><span class="p">,</span> <span class="n">dim_shape</span> <span class="o">-</span> <span class="n">trailing</span><span class="p">)</span>
+              <span class="k">for</span> <span class="n">first</span><span class="p">,</span> <span class="n">trailing</span><span class="p">,</span> <span class="n">dim_shape</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">crop_first</span><span class="p">,</span> <span class="n">crop_trailing</span><span class="p">,</span> <span class="n">data_shape</span><span class="p">)]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">slices</span><span class="p">]</span>
+
+    <span class="c1"># calculate padding params and perform padding</span>
+    <span class="n">pad_dims</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">overshoot</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">pad_first</span> <span class="o">=</span> <span class="n">pad_dims</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">pad_trailing</span> <span class="o">=</span> <span class="n">pad_dims</span> <span class="o">-</span> <span class="n">pad_first</span>
+    <span class="n">pad_params</span> <span class="o">=</span> <span class="p">[(</span><span class="n">first</span><span class="p">,</span> <span class="n">trailing</span><span class="p">)</span>
+                  <span class="k">for</span> <span class="n">first</span><span class="p">,</span> <span class="n">trailing</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">pad_first</span><span class="p">,</span> <span class="n">pad_trailing</span><span class="p">)]</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">pad_width</span><span class="o">=</span><span class="n">pad_params</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
+
+    <span class="c1"># return cropped/padded array</span>
+    <span class="k">return</span> <span class="n">data</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

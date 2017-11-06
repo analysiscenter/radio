@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.dataset.dataset.models.tf.layers.conv &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../layers.html" accesskey="U">lung_cancer.dataset.dataset.models.tf.layers</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.dataset.dataset.models.tf.layers.conv</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Contains 2d conv layers &quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+
+<div class="viewcode-block" id="conv1d_block"><a class="viewcode-back" href="../../../../../../../lung_cancer.dataset.dataset.models.tf.layers.html#lung_cancer.dataset.dataset.models.tf.layers.conv.conv1d_block">[docs]</a><span class="k">def</span> <span class="nf">conv1d_block</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;cnap&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">strides</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+                 <span class="n">pool_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">pool_strides</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">is_training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Complex 1d convolution with batch normalization, activation and pooling layers</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor: tf.Tensor</span>
+<span class="sd">    filters: int - number of filters in the ouput tensor</span>
+<span class="sd">    kernel_size: int - kernel size</span>
+<span class="sd">    layout: str - a sequence of layers</span>
+<span class="sd">        c - convolution</span>
+<span class="sd">        n - batch normalization</span>
+<span class="sd">        a - activation</span>
+<span class="sd">        p - max pooling</span>
+<span class="sd">    name: str -  name of the layer that will be used as a scope</span>
+<span class="sd">    strides: int</span>
+<span class="sd">    padding: str - padding mode, can be &#39;same&#39; or &#39;valid&#39;;</span>
+<span class="sd">    use_bias: bool</span>
+<span class="sd">    activation: callable</span>
+<span class="sd">    pool_size: int</span>
+<span class="sd">    pool_strides: int</span>
+<span class="sd">    is_training: bool or tf.Tensor</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    output tensor: tf.Tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+
+    <span class="n">tensor</span> <span class="o">=</span> <span class="n">input_tensor</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layout</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv1d</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                                      <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="n">use_bias</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">is_training</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling1d</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">pool_strides</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tensor</span></div>
+
+
+<div class="viewcode-block" id="conv2d_block"><a class="viewcode-back" href="../../../../../../../lung_cancer.dataset.dataset.models.tf.layers.html#lung_cancer.dataset.dataset.models.tf.layers.conv.conv2d_block">[docs]</a><span class="k">def</span> <span class="nf">conv2d_block</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;cnap&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+                 <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">pool_strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">is_training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Complex 2d convolution with batch normalization, activation and pooling layers</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor: tf.Tensor</span>
+<span class="sd">    filters: int - number of filters in the ouput tensor</span>
+<span class="sd">    kernel_size: int or tuple(int, int) - kernel size</span>
+<span class="sd">    layout: str - a sequence of layers</span>
+<span class="sd">        c - convolution</span>
+<span class="sd">        n - batch normalization</span>
+<span class="sd">        a - activation</span>
+<span class="sd">        p - max pooling</span>
+<span class="sd">    name: str -  name of the layer that will be used as a scope</span>
+<span class="sd">    strides: tuple(int, int)</span>
+<span class="sd">    padding: str - padding mode, can be &#39;same&#39; or &#39;valid&#39;;</span>
+<span class="sd">    use_bias: bool</span>
+<span class="sd">    activation: callable</span>
+<span class="sd">    pool_size: tuple(int, int)</span>
+<span class="sd">    pool_strides: tuple(int, int)</span>
+<span class="sd">    is_training: bool or tf.Tensor</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    output tensor: tf.Tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+
+    <span class="n">tensor</span> <span class="o">=</span> <span class="n">input_tensor</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layout</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                                      <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="n">use_bias</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">is_training</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling2d</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">pool_strides</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tensor</span></div>
+
+<div class="viewcode-block" id="conv3d_block"><a class="viewcode-back" href="../../../../../../../lung_cancer.dataset.dataset.models.tf.layers.html#lung_cancer.dataset.dataset.models.tf.layers.conv.conv3d_block">[docs]</a><span class="k">def</span> <span class="nf">conv3d_block</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s1">&#39;cnap&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+                 <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">pool_strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">is_training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Complex 3d convolution with batch normalization, activation and pooling layers</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor: tf.Tensor</span>
+<span class="sd">    filters: int - number of filters in the ouput tensor</span>
+<span class="sd">    kernel_size: int or tuple(int, int, int) - kernel size</span>
+<span class="sd">    layout: str - a sequence of layers</span>
+<span class="sd">        c - convolution</span>
+<span class="sd">        n - batch normalization</span>
+<span class="sd">        a - activation</span>
+<span class="sd">        p - max pooling</span>
+<span class="sd">    name: str -  name of the layer that will be used as a scope</span>
+<span class="sd">    strides: tuple(int, int, int)</span>
+<span class="sd">    padding: str - padding mode, can be &#39;same&#39; or &#39;valid&#39;;</span>
+<span class="sd">    use_bias: bool</span>
+<span class="sd">    activation: callable</span>
+<span class="sd">    pool_size: tuple(int, int, int)</span>
+<span class="sd">    pool_strides: tuple(int, int, int)</span>
+<span class="sd">    is_training: bool or tf.Tensor</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    output tensor: tf.Tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">context</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">context</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+
+    <span class="n">tensor</span> <span class="o">=</span> <span class="n">input_tensor</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layout</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv3d</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                                      <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">use_bias</span><span class="o">=</span><span class="n">use_bias</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">is_training</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="s1">&#39;p&#39;</span><span class="p">:</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling3d</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">pool_strides</span><span class="p">,</span> <span class="n">padding</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">context</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tensor</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../../../index.html" >Module code</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="../layers.html" >lung_cancer.dataset.dataset.models.tf.layers</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

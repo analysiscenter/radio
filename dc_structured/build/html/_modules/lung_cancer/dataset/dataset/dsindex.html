@@ -1,0 +1,409 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.dataset.dataset.dsindex &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.dataset.dataset.dsindex</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; DatasetIndex &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">Iterable</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Baseset</span>
+
+
+<div class="viewcode-block" id="DatasetIndex"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex">[docs]</a><span class="k">class</span> <span class="nc">DatasetIndex</span><span class="p">(</span><span class="n">Baseset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Stores an index for a dataset</span>
+<span class="sd">    The index should be 1-d array-like, e.g. numpy array, pandas Series, etc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_pos</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_random_state</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="DatasetIndex.from_index"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.from_index">[docs]</a>    <span class="k">def</span> <span class="nf">from_index</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create index from another index &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="DatasetIndex.concat"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.concat">[docs]</a>    <span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">index_list</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create index by concatenating other indices &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">DatasetIndex</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">i</span><span class="o">.</span><span class="n">index</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">index_list</span><span class="p">]))</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="DatasetIndex.build_index"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.build_index">[docs]</a>    <span class="k">def</span> <span class="nf">build_index</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check index type and structure &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+            <span class="n">_index</span> <span class="o">=</span> <span class="n">index</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_index</span> <span class="o">=</span> <span class="n">index</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_index</span><span class="p">,</span> <span class="n">DatasetIndex</span><span class="p">):</span>
+            <span class="n">_index</span> <span class="o">=</span> <span class="n">_index</span><span class="o">.</span><span class="n">indices</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># index should allow for advance indexing (i.e. subsetting)</span>
+            <span class="n">_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_index</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_index</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Index cannot be empty&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_index</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Index should be 1-dimensional&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_index</span></div>
+
+<div class="viewcode-block" id="DatasetIndex.build_pos"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.build_pos">[docs]</a>    <span class="k">def</span> <span class="nf">build_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a dictionary with positions in the index &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))))</span></div>
+
+<div class="viewcode-block" id="DatasetIndex.get_pos"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.get_pos">[docs]</a>    <span class="k">def</span> <span class="nf">get_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return position of an item in the index &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span><span class="p">[</span><span class="n">index</span><span class="o">.</span><span class="n">start</span><span class="p">]</span> <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span><span class="p">[</span><span class="n">index</span><span class="o">.</span><span class="n">stop</span><span class="p">]</span> <span class="k">if</span> <span class="n">index</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="nb">slice</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">index</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_pos</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span> <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="n">index</span><span class="p">])</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos</span><span class="p">[</span><span class="n">index</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DatasetIndex.subset_by_pos"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.subset_by_pos">[docs]</a>    <span class="k">def</span> <span class="nf">subset_by_pos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return subset of index by given positions in the index &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="DatasetIndex.create_subset"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.create_subset">[docs]</a>    <span class="k">def</span> <span class="nf">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a new index object based on the subset of indices given &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DatasetIndex.cv_split"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.cv_split">[docs]</a>    <span class="k">def</span> <span class="nf">cv_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shares</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Split index into train, test and validation subsets</span>
+<span class="sd">        Shuffles index if necessary.</span>
+<span class="sd">        Subsets are available as .train, .test and .validation respectively</span>
+
+<span class="sd">        Usage:</span>
+<span class="sd">           # split into train / test in 80/20 ratio</span>
+<span class="sd">           di.cv_split()</span>
+<span class="sd">           # split into train / test / validation in 60/30/10 ratio</span>
+<span class="sd">           di.cv_split([0.6, 0.3])</span>
+<span class="sd">           # split into train / test / validation in 50/30/20 ratio</span>
+<span class="sd">           di.cv_split([0.5, 0.3, 0.2])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">test_share</span><span class="p">,</span> <span class="n">valid_share</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_cv_split</span><span class="p">(</span><span class="n">shares</span><span class="p">)</span>
+
+        <span class="c1"># TODO: make a view not copy if not shuffled</span>
+        <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shuffle</span><span class="p">(</span><span class="n">shuffle</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">valid_share</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">validation_pos</span> <span class="o">=</span> <span class="n">order</span><span class="p">[:</span><span class="n">valid_share</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">validation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_by_pos</span><span class="p">(</span><span class="n">validation_pos</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">test_share</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">test_pos</span> <span class="o">=</span> <span class="n">order</span><span class="p">[</span><span class="n">valid_share</span> <span class="p">:</span> <span class="n">valid_share</span> <span class="o">+</span> <span class="n">test_share</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_by_pos</span><span class="p">(</span><span class="n">test_pos</span><span class="p">))</span>
+        <span class="n">train_pos</span> <span class="o">=</span> <span class="n">order</span><span class="p">[</span><span class="n">valid_share</span> <span class="o">+</span> <span class="n">test_share</span><span class="p">:]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subset_by_pos</span><span class="p">(</span><span class="n">train_pos</span><span class="p">))</span></div>
+
+
+    <span class="k">def</span> <span class="nf">_shuffle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">,</span> <span class="n">iter_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">iter_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">iter_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_params</span>
+
+        <span class="k">if</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shuffle</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span>
+                <span class="n">order</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shuffle</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_random_state&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_random_state&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">seed</span> <span class="o">!=</span> <span class="n">shuffle</span><span class="p">:</span>
+                <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_random_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">shuffle</span><span class="p">)</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_random_state&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shuffle</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_random_state&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="n">shuffle</span><span class="p">:</span>
+                <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_random_state&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">shuffle</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_random_state&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="n">shuffle</span><span class="p">):</span>
+            <span class="n">order</span> <span class="o">=</span> <span class="n">shuffle</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;shuffle could be bool, int, numpy.random.RandomState or callable&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">order</span>
+
+
+<div class="viewcode-block" id="DatasetIndex.next_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.next_batch">[docs]</a>    <span class="k">def</span> <span class="nf">next_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_params</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return next batch</span>
+<span class="sd">        Args:</span>
+<span class="sd">            batch_size: int - desired number of items in the batch (the actual batch could contain fewer items)</span>
+
+<span class="sd">            shuffle: specifies the order of items, could be:</span>
+<span class="sd">                bool: False - items from the dataset go sequentionally, one after another as they appear in the index</span>
+<span class="sd">                      True - items are shuffled randomly before each epoch</span>
+<span class="sd">                int: seed number for a random shuffle</span>
+<span class="sd">                an instance of np.random.RandomState object for a random shuffle</span>
+<span class="sd">                callable: your function which takes an array of item indices in the initial order</span>
+<span class="sd">                          (as they appear in the index) and returns the order of items</span>
+
+<span class="sd">            n_epochs: int - the number of epochs required</span>
+
+<span class="sd">            drop_last: bool - if True, drops the last batch (in each epoch) if it contains fewer than batch_size items.</span>
+<span class="sd">            If False, than the last batch in each epoch could contain repeting indices (which might be a problem)</span>
+<span class="sd">            and the very last batch could contain fewer than batch_size items.</span>
+<span class="sd">            For instance, next_batch(3, shuffle=False, n_epochs=2, drop_last=False) for a dataset with 4 items returns</span>
+<span class="sd">            indices [0,1,2], [3,0,1], [2,3].</span>
+<span class="sd">            While next_batch(3, shuffle=False, n_epochs=2, drop_last=True) returns indices [0,1,2], [0,1,2].</span>
+
+<span class="sd">            Take into account that next_batch(3, shuffle=True, n_epochs=2, drop_last=False) could return batches</span>
+<span class="sd">            [3,0,1], [2,0,2], [1,3]. Here the second batch contains two items with the same index &quot;2&quot;.</span>
+<span class="sd">            This might become a problem if some action uses batch.get_pos or batch.index.get_pos methods so that</span>
+<span class="sd">            one of the identical items will be missed.</span>
+<span class="sd">            However, there is nothing to worry about if you don&#39;t iterate over batch items explicitly</span>
+<span class="sd">            (i.e. for item in batch) or implicitly (through batch[ix]).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">iter_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">iter_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_iter_params</span>
+
+        <span class="k">if</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_stop_iter&#39;</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">StopIteration</span><span class="p">(</span><span class="s2">&quot;Dataset is over. No more batches left.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shuffle</span><span class="p">(</span><span class="n">shuffle</span><span class="p">,</span> <span class="n">iter_params</span><span class="p">)</span>
+        <span class="n">num_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">])</span>
+
+        <span class="n">rest_items</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_start_index&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">&gt;=</span> <span class="n">num_items</span><span class="p">:</span>
+            <span class="n">rest_items</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">][</span><span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_start_index&#39;</span><span class="p">]:])</span>
+            <span class="n">rest_of_batch</span> <span class="o">=</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_start_index&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">batch_size</span> <span class="o">-</span> <span class="n">num_items</span>
+            <span class="k">if</span> <span class="n">rest_of_batch</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">drop_last</span><span class="p">:</span>
+                    <span class="n">rest_items</span> <span class="o">=</span> <span class="kc">None</span>
+                    <span class="n">rest_of_batch</span> <span class="o">=</span> <span class="n">batch_size</span>
+            <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_start_index&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_n_epochs&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shuffle</span><span class="p">(</span><span class="n">shuffle</span><span class="p">,</span> <span class="n">iter_params</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rest_of_batch</span> <span class="o">=</span> <span class="n">batch_size</span>
+
+        <span class="n">new_items</span> <span class="o">=</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_order&#39;</span><span class="p">][</span><span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_start_index&#39;</span><span class="p">]</span> <span class="p">:</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_start_index&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">rest_of_batch</span><span class="p">]</span>
+        <span class="c1"># TODO: concat not only numpy arrays</span>
+        <span class="k">if</span> <span class="n">rest_items</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">batch_items</span> <span class="o">=</span> <span class="n">new_items</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">batch_items</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">rest_items</span><span class="p">,</span> <span class="n">new_items</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">n_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_n_epochs&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">n_epochs</span><span class="p">:</span> <span class="c1"># and rest_items is not None:</span>
+            <span class="k">if</span> <span class="n">drop_last</span> <span class="ow">and</span> <span class="p">(</span><span class="n">rest_items</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">rest_items</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">batch_size</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">StopIteration</span><span class="p">(</span><span class="s2">&quot;Dataset is over. No more batches left.&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_stop_iter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">rest_items</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_start_index&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rest_of_batch</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">batch_items</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DatasetIndex.gen_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.gen_batch">[docs]</a>    <span class="k">def</span> <span class="nf">gen_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generate batches &quot;&quot;&quot;</span>
+        <span class="n">iter_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_iter_params</span><span class="p">()</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">n_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">iter_params</span><span class="p">[</span><span class="s1">&#39;_n_epochs&#39;</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">n_epochs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">StopIteration</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">drop_last</span><span class="p">,</span> <span class="n">iter_params</span><span class="p">)</span>
+                <span class="k">yield</span> <span class="n">batch</span></div>
+
+
+<div class="viewcode-block" id="DatasetIndex.create_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.DatasetIndex.create_batch">[docs]</a>    <span class="k">def</span> <span class="nf">create_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">as_array</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>   <span class="c1"># pylint: disable=arguments-differ</span>
+        <span class="sd">&quot;&quot;&quot; Create a batch from given indices</span>
+<span class="sd">        if pos is False then batch_indices contains the value of indices</span>
+<span class="sd">        which should be included in the batch (so expected batch is just the very same batch_indices)</span>
+<span class="sd">        otherwise batch_indices contains positions in the index</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">batch_indices</span><span class="p">,</span> <span class="n">DatasetIndex</span><span class="p">):</span>
+            <span class="n">_batch_indices</span> <span class="o">=</span> <span class="n">batch_indices</span><span class="o">.</span><span class="n">indices</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_batch_indices</span> <span class="o">=</span> <span class="n">batch_indices</span>
+        <span class="k">if</span> <span class="n">pos</span><span class="p">:</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subset_by_pos</span><span class="p">(</span><span class="n">_batch_indices</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="n">_batch_indices</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">as_array</span><span class="p">:</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subset</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">batch</span></div></div>
+
+
+<div class="viewcode-block" id="FilesIndex"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex">[docs]</a><span class="k">class</span> <span class="nc">FilesIndex</span><span class="p">(</span><span class="n">DatasetIndex</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Index with the list of files or directories with the given path pattern</span>
+
+<span class="sd">        Usage:</span>
+<span class="sd">        Create sorted index of files in a directory:</span>
+<span class="sd">        fi = FilesIndex(&#39;/path/to/data/files/*&#39;, sort=True)</span>
+<span class="sd">        Create unsorted index of directories through all subdirectories:</span>
+<span class="sd">        fi = FilesIndex(&#39;/path/to/data/archive*/patient*&#39;, dirs=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paths</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirs</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="FilesIndex.build_index"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex.build_index">[docs]</a>    <span class="k">def</span> <span class="nf">build_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>     <span class="c1"># pylint: disable=arguments-differ</span>
+        <span class="sd">&quot;&quot;&quot; Build index from a path string or an index given &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_from_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_from_path</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="FilesIndex.build_from_index"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex.build_from_index">[docs]</a>    <span class="k">def</span> <span class="nf">build_from_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">paths</span><span class="p">,</span> <span class="n">dirs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build index from another index for indices given &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_paths</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">file</span><span class="p">,</span> <span class="n">paths</span><span class="p">[</span><span class="n">file</span><span class="p">])</span> <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">index</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_paths</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">file</span><span class="p">,</span> <span class="n">paths</span><span class="p">[</span><span class="n">pos</span><span class="p">])</span> <span class="k">for</span> <span class="n">pos</span><span class="p">,</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">ndenumerate</span><span class="p">(</span><span class="n">index</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirs</span> <span class="o">=</span> <span class="n">dirs</span>
+        <span class="k">return</span> <span class="n">index</span></div>
+
+<div class="viewcode-block" id="FilesIndex.build_from_path"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex.build_from_path">[docs]</a>    <span class="k">def</span> <span class="nf">build_from_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_ext</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">sort</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build index from a path/glob or a sequence of paths/globs &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">paths</span> <span class="o">=</span> <span class="n">path</span>
+
+        <span class="n">_all_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">_all_paths</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">one_path</span> <span class="ow">in</span> <span class="n">paths</span><span class="p">:</span>
+            <span class="n">_index</span><span class="p">,</span> <span class="n">_paths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_from_one_path</span><span class="p">(</span><span class="n">one_path</span><span class="p">,</span> <span class="n">dirs</span><span class="p">,</span> <span class="n">no_ext</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">_all_index</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_all_index</span> <span class="o">=</span> <span class="n">_index</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_all_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">_all_index</span><span class="p">,</span> <span class="n">_index</span><span class="p">))</span>
+            <span class="n">_all_paths</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">_paths</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sort</span><span class="p">:</span>
+            <span class="n">_all_index</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_paths</span> <span class="o">=</span> <span class="n">_all_paths</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirs</span> <span class="o">=</span> <span class="n">dirs</span>
+
+        <span class="k">return</span> <span class="n">_all_index</span></div>
+
+<div class="viewcode-block" id="FilesIndex.build_from_one_path"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex.build_from_one_path">[docs]</a>    <span class="k">def</span> <span class="nf">build_from_one_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">no_ext</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build index from a path/glob &quot;&quot;&quot;</span>
+        <span class="n">check_fn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span> <span class="k">if</span> <span class="n">dirs</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span>
+        <span class="n">pathlist</span> <span class="o">=</span> <span class="n">glob</span><span class="o">.</span><span class="n">iglob</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="n">_full_index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">build_key</span><span class="p">(</span><span class="n">fname</span><span class="p">,</span> <span class="n">no_ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">pathlist</span> <span class="k">if</span> <span class="n">check_fn</span><span class="p">(</span><span class="n">fname</span><span class="p">)])</span>
+        <span class="k">if</span> <span class="n">_full_index</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_index</span> <span class="o">=</span> <span class="n">_full_index</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">_paths</span> <span class="o">=</span> <span class="n">_full_index</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_index</span><span class="p">,</span> <span class="n">_paths</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+        <span class="n">_paths</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">_index</span><span class="p">,</span> <span class="n">_paths</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">_index</span><span class="p">,</span> <span class="n">_paths</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="FilesIndex.build_key"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex.build_key">[docs]</a>    <span class="k">def</span> <span class="nf">build_key</span><span class="p">(</span><span class="n">fullpathname</span><span class="p">,</span> <span class="n">no_ext</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create index item from full path name &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">no_ext</span><span class="p">:</span>
+            <span class="n">key_name</span> <span class="o">=</span> <span class="s1">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fullpathname</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;.&#39;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">key_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">fullpathname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">key_name</span><span class="p">,</span> <span class="n">fullpathname</span></div>
+
+<div class="viewcode-block" id="FilesIndex.get_fullpath"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex.get_fullpath">[docs]</a>    <span class="k">def</span> <span class="nf">get_fullpath</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the full path name for an item in the index &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_paths</span><span class="p">[</span><span class="n">key</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="FilesIndex.create_subset"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dsindex.FilesIndex.create_subset">[docs]</a>    <span class="k">def</span> <span class="nf">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a new FilesIndex based on the subset of indices given &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">from_index</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">index</span><span class="p">,</span> <span class="n">paths</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_paths</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dirs</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

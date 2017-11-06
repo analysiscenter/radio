@@ -1,0 +1,79 @@
+# Preprocessing
+
+The module allows to perform a number of preprocessing operations on a dataset of scans.
+
+## Data storage in `lung-cancer`
+`lung-cancer` works with batches of scans, wrapped in a class `CTImagesBatch`.
+The class stores scans' data in [components](https://github.com/analysiscenter/dataset), which represent main attributes of scans. E.g., scans itself are stacked in one tall 3d `numpy`-array and stored in `images`-component. The other components are `spacing` and `origin`, which store important meta.
+
+So, what can we do with the data?
+## Load/dump
+The first thing we should learn to do is how to fill the components with the data from disk.
+
+The `preprocessing`-module is primarily adapted to work with two large datasets, available in open access: [Luna-dataset](link_luna) (**.raw**-format) and [DsBowl-dataset](link_dicom) (**.dicom**-format). Say, we have one of these two datasets (or a part of it) downloaded in folder `path/to/scans`. The first step is to set up an index. `FilesIndex` from `dataset`-module reduces the task to defining a `glob`-mask for a needed set of scans:
+```python
+from lung_cancer import CTImagesBatch
+from lung_cancer.dataset import FilesIndex, Dataset
+ctset = FilesIndex(path='path/to/scans/*', no_ext=True)
+```
+In order to load the scans we only need to call action `load` specifying the format of the dataset:
+```python
+batch = ctset.next_batch(BATCH_SIZE=10) # generate a batch of 10 scans
+batch = batch.load(fmt='raw') # use fmt = 'dicom' for load of dicom-scans
+```
+After performing some preprocessing operations we may need to save the results on disk. Action `dump` is of help here:
+```python
+batch = ... # some preprocessing actions
+batch = batch.dump(dst='path/to/preprocessed/')
+```
+In the result, data of each scan from the batch will be packed with `blosc` and dumped in a needed folder. Importantly, dumped scans can be loaded later using the same methodology. We only need to specify `blosc`-format when performing `load`:
+```python
+dumpset = FilesIndex(path='path/to/preprocessed/*', dirs=True)
+batch = dumpset.next_batch(BATCH_SIZE=10)
+batch = batch.load(fmt='blosc')
+```
+What's more, both `dump` and `load` from `blosc`-format can work component-wise:
+```python
+batch = batch.dump(fmt='blosc', src=['spacing', 'origin']) # dump spacing, origin components
+batch = batch.dump(dst='path/to/preprocessed/', fmt='blosc', src='images') # dumps scans itself
+dumpset = FilesIndex(path='path/to/preprocessed/*', dirs=True)
+batch = dumpset.next_batch(BATCH_SIZE=10)
+batch = batch.load(fmt='blosc', src_blosc=['spacing', 'origin', 'images']) # equivalent to src_blosc=None
+```
+
+## Resize & spacing-unification
+
+Another important step of preprocessing is the resize of scans in batch to a specific shape. `preprocessing`-module implements this step via `resize`-action:
+```python
+batch = batch.resize(shape=(128, 256, 256))
+```
+Currently the module supports two different resize-engines: `scipy.interpolate` and `PIL-simd`. While the second engine is more robust and works faster on systems with small number of cores, the first allows greater degree of parallelization and can be more precise is some cases. One can choose the engine in a following way:
+```python
+batch = batch.resize(shape=(128, 256, 256), method='scipy')
+```
+Sometimes, though, we want to do more than just equalize pixel shapes of different items. Rather, it may be useful to convert scans to the same real-world scale, so that parts of scans with similar real-world shapes have the same pixel-sizes. This can be achieved through `unify_spacing`-action:
+```python
+batch = batch.unify_spacing(spacing=(3.0, 2.0, 2.0), shape=(128, 256, 256))
+```
+In order to control the real-world world scale of scans, one can use the parameter `spacing`, that represents the distances in millimeters between adjacent pixels along three axes. The action works in two steps. The first step stands for spacing unification by means of resize, while the second one crops/pads resized scan so that it fits in the supplied shape. One can specify resize parameters and the mode of padding:
+```python
+batch = batch.unify_spacing(spacing=(3.0, 2.0, 2.0), shape=(128, 256, 256),
+                            padding='reflect', engine='pil-simd')
+```
+
+Still, out goal is to simplify building deep learning systems as much as possible. Naturally, `images`-components can be viewed as an **X**-input of a net.
+As we see, there is little preprocessing we cannot do with `images`. What about **Y**-input?
+## Masked batch.
+Preparing **Y**-part revolves around `masks`-component. The component has the same shape as `images` and stores cancer-masks of different items in a batch in a binary format, where value of each pixel is either **0** (non-cancerous pixel) or **1** (cancerous pixel).
+`masks` can be filled in two steps. We first load info about cancerous nodules in a batch:
+```python
+pipe = (Pipeline()
+        .fetch_nodules_info(nodules_df=nodules_df) # nodules_df is a Pandas.DataFrame
+                                                   # containing info about nodules
+        )
+```
+Then we can fill the `masks`-components using the loaded info:
+```python
+pipe = (pipe
+        .create_mask())
+```

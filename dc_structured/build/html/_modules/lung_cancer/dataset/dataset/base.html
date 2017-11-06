@@ -1,0 +1,229 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.dataset.dataset.base &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.dataset.dataset.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Base class &quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+
+<div class="viewcode-block" id="Baseset"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset">[docs]</a><span class="k">class</span> <span class="nc">Baseset</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Base class &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build_index</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validation</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iter_params</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_iter</span><span class="p">()</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Baseset.build_index"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.build_index">[docs]</a>    <span class="k">def</span> <span class="nf">build_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create the index. Child classes should generate index from the arguments given &quot;&quot;&quot;</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+        <span class="k">return</span> <span class="n">index</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the index &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">indices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return an array-like with the indices &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">Baseset</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">indices</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">is_splitted</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; True if dataset was splitted into train / test / validation sub-datasets &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">train</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Baseset.calc_cv_split"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.calc_cv_split">[docs]</a>    <span class="k">def</span> <span class="nf">calc_cv_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shares</span><span class="o">=</span><span class="mf">0.8</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Calculate split into train, test and validation subsets</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        a tuple which contains number of items in train, test and validation subsets</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Split into train / test in 80/20 ratio</span>
+<span class="sd">        &gt;&gt;&gt; bs.calc_cv_split()</span>
+
+<span class="sd">        Split into train / test / validation in 60/30/10 ratio</span>
+<span class="sd">        &gt;&gt;&gt; bs.calc_cv_split([0.6, 0.3])</span>
+
+<span class="sd">        Split into train / test / validation in 50/30/20 ratio</span>
+<span class="sd">        &gt;&gt;&gt; bs.calc_cv_split([0.5, 0.3, 0.2])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_shares</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">shares</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span> <span class="c1"># pylint: disable=no-member</span>
+
+        <span class="k">if</span> <span class="n">_shares</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Shares must have no more than 3 elements&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">_shares</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Shares must sum to 1&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">_shares</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="mf">1.</span> <span class="o">-</span> <span class="n">_shares</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span> <span class="mf">0.</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Shares must sum to 1&quot;</span><span class="p">)</span>
+            <span class="n">train_share</span><span class="p">,</span> <span class="n">test_share</span><span class="p">,</span> <span class="n">valid_share</span> <span class="o">=</span> <span class="n">_shares</span>
+        <span class="k">elif</span> <span class="n">_shares</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">train_share</span><span class="p">,</span> <span class="n">test_share</span><span class="p">,</span> <span class="n">valid_share</span> <span class="o">=</span> <span class="n">_shares</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_shares</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">_shares</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">train_share</span><span class="p">,</span> <span class="n">test_share</span><span class="p">,</span> <span class="n">valid_share</span> <span class="o">=</span> <span class="n">_shares</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">_shares</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">0.</span>
+
+        <span class="n">n_items</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">train_share</span><span class="p">,</span> <span class="n">test_share</span><span class="p">,</span> <span class="n">valid_share</span> <span class="o">=</span> \
+            <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">train_share</span><span class="p">,</span> <span class="n">test_share</span><span class="p">,</span> <span class="n">valid_share</span><span class="p">])</span> <span class="o">*</span> <span class="n">n_items</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+        <span class="n">train_share</span> <span class="o">=</span> <span class="n">n_items</span> <span class="o">-</span> <span class="n">test_share</span> <span class="o">-</span> <span class="n">valid_share</span>
+
+        <span class="k">return</span> <span class="n">train_share</span><span class="p">,</span> <span class="n">test_share</span><span class="p">,</span> <span class="n">valid_share</span></div>
+
+
+<div class="viewcode-block" id="Baseset.create_subset"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.create_subset">[docs]</a>    <span class="k">def</span> <span class="nf">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a new subset based on the given index subset &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;create_subset should be defined in child classes&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Baseset.cv_split"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.cv_split">[docs]</a>    <span class="k">def</span> <span class="nf">cv_split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shares</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Split the dataset into train, test and validation sub-datasets</span>
+<span class="sd">        Subsets are available as .train, .test and .validation respectively</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Split into train / test in 80/20 ratio</span>
+<span class="sd">        &gt;&gt;&gt; ds.cv_split()</span>
+
+<span class="sd">        Split into train / test / validation in 60/30/10 ratio</span>
+<span class="sd">        &gt;&gt;&gt; ds.cv_split([0.6, 0.3])</span>
+
+<span class="sd">        Split into train / test / validation in 50/30/20 ratio</span>
+<span class="sd">        &gt;&gt;&gt; ds.cv_split([0.5, 0.3, 0.2])</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">cv_split</span><span class="p">(</span><span class="n">shares</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">train</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">train</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">test</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">test</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">validation</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">validation</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">validation</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Baseset.get_default_iter_params"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.get_default_iter_params">[docs]</a>    <span class="k">def</span> <span class="nf">get_default_iter_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return iteration params with default values to start iteration from scratch &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">_stop_iter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">_start_index</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_order</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">_n_epochs</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">_random_state</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Baseset.reset_iter"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.reset_iter">[docs]</a>    <span class="k">def</span> <span class="nf">reset_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Clear all iteration metadata in order to start iterating from scratch &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_iter_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_default_iter_params</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="s1">&#39;reset_iter&#39;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">reset_iter</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Baseset.gen_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.gen_batch">[docs]</a>    <span class="k">def</span> <span class="nf">gen_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generate batches &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">ix_batch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">gen_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">drop_last</span><span class="p">):</span>
+            <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">ix_batch</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">batch</span></div>
+
+<div class="viewcode-block" id="Baseset.next_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.next_batch">[docs]</a>    <span class="k">def</span> <span class="nf">next_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">iter_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a batch &quot;&quot;&quot;</span>
+        <span class="n">batch_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">drop_last</span><span class="p">,</span> <span class="n">iter_params</span><span class="p">)</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">batch_index</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">batch</span></div>
+
+<div class="viewcode-block" id="Baseset.create_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.base.Baseset.create_batch">[docs]</a>    <span class="k">def</span> <span class="nf">create_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create batch with indices given &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;create_batch should be implemented in child classes&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.dataset.dataset.dataset &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.dataset.dataset.dataset</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Dataset &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Baseset</span>
+<span class="kn">from</span> <span class="nn">.dsindex</span> <span class="k">import</span> <span class="n">DatasetIndex</span>
+<span class="kn">from</span> <span class="nn">.pipeline</span> <span class="k">import</span> <span class="n">Pipeline</span>
+
+
+<div class="viewcode-block" id="Dataset"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dataset.Dataset">[docs]</a><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="n">Baseset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Dataset &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">batch_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">preloaded</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_class</span> <span class="o">=</span> <span class="n">batch_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">preloaded</span> <span class="o">=</span> <span class="n">preloaded</span>
+
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Dataset.from_dataset"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dataset.Dataset.from_dataset">[docs]</a>    <span class="k">def</span> <span class="nf">from_dataset</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">batch_class</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create Dataset from another dataset with new index</span>
+<span class="sd">            (usually subset of the source dataset index)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">batch_class</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="p">(</span><span class="n">batch_class</span> <span class="o">==</span> <span class="n">dataset</span><span class="o">.</span><span class="n">batch_class</span><span class="p">))</span> <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_is_same_index</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">index</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">dataset</span>
+        <span class="n">bcl</span> <span class="o">=</span> <span class="n">batch_class</span> <span class="k">if</span> <span class="n">batch_class</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">dataset</span><span class="o">.</span><span class="n">batch_class</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">batch_class</span><span class="o">=</span><span class="n">bcl</span><span class="p">,</span> <span class="n">preloaded</span><span class="o">=</span><span class="n">dataset</span><span class="o">.</span><span class="n">preloaded</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="Dataset.build_index"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dataset.Dataset.build_index">[docs]</a>    <span class="k">def</span> <span class="nf">build_index</span><span class="p">(</span><span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create index &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">DatasetIndex</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">index</span>
+        <span class="k">return</span> <span class="n">DatasetIndex</span><span class="p">(</span><span class="n">index</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_is_same_index</span><span class="p">(</span><span class="n">index1</span><span class="p">,</span> <span class="n">index2</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">index1</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">index2</span><span class="p">))</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index2</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">index1</span><span class="p">)))</span> <span class="ow">and</span> \
+               <span class="n">index1</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">index2</span><span class="o">.</span><span class="n">indices</span><span class="o">.</span><span class="n">shape</span> <span class="ow">and</span> \
+               <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">index1</span><span class="o">.</span><span class="n">indices</span> <span class="o">==</span> <span class="n">index2</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Dataset.create_subset"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dataset.Dataset.create_subset">[docs]</a>    <span class="k">def</span> <span class="nf">create_subset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a dataset based on the given subset of indices &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">from_dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Dataset.create_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dataset.Dataset.create_batch">[docs]</a>    <span class="k">def</span> <span class="nf">create_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_indices</span><span class="p">,</span> <span class="n">pos</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a batch from given indices</span>
+<span class="sd">            if pos is False then batch_indices contains the value of indices</span>
+<span class="sd">            which should be included in the batch</span>
+<span class="sd">            otherwise batch_indices contains positions in the index</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">batch_ix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">batch_indices</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_class</span><span class="p">(</span><span class="n">batch_ix</span><span class="p">,</span> <span class="n">preloaded</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">preloaded</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Dataset.pipeline"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.dataset.Dataset.pipeline">[docs]</a>    <span class="k">def</span> <span class="nf">pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Start a new data processing workflow &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">p</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; A short alias for `pipeline()` &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__rshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Pipeline</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Pipeline is expected, but got </span><span class="si">%s</span><span class="s2">. Use as dataset &gt;&gt; pipeline&quot;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">))</span>
+        <span class="n">new_p</span> <span class="o">=</span> <span class="n">other</span><span class="o">.</span><span class="n">from_pipeline</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+        <span class="n">new_p</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">new_p</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

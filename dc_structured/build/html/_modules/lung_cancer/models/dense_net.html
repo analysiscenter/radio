@@ -1,0 +1,279 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.models.dense_net &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.dense_net</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=too-many-arguments</span>
+<span class="c1"># pylint: disable=not-context-manager</span>
+<span class="sd">&quot;&quot;&quot; Contains DenseNet model class. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">.tf_model</span> <span class="k">import</span> <span class="n">TFModel</span><span class="p">,</span> <span class="n">restore_nodes</span>
+
+
+<div class="viewcode-block" id="DenseNet"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet">[docs]</a><span class="k">class</span> <span class="nc">DenseNet</span><span class="p">(</span><span class="n">TFModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; This class implements 3D DenseNet architecture via tensorflow. &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="DenseNet.max_pool3d"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet.max_pool3d">[docs]</a>    <span class="k">def</span> <span class="nf">max_pool3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">strides</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply max pooling 3D operation to input_tensor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: tf.Variable, input_tensor;</span>
+<span class="sd">        - pool_size: tuple(int, int, int), size of pooling kernel along 3 dimensions;</span>
+<span class="sd">        - strides: tuple(int, int, int), size of strides along 3 dimensions;</span>
+<span class="sd">        - name: str, name of layer that will be used as an argument of tf.variable_scope;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - tf.Variable, output tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">out_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span>
+                                                 <span class="n">pool_size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">,</span>
+                                                 <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                                                 <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                                                 <span class="n">name</span><span class="o">=</span><span class="s1">&#39;maxpool3d&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out_tensor</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="DenseNet.average_pool3d"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet.average_pool3d">[docs]</a>    <span class="k">def</span> <span class="nf">average_pool3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">pool_size</span><span class="p">,</span> <span class="n">strides</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply average pooling 3D operation to input_tensor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: tf.Variable, input tensor;</span>
+<span class="sd">        - pool_size: tuple(int, int, int), size of pooling kernel along 3 dimensions;</span>
+<span class="sd">        - strides: tuple(int, int, int), size of strides along 3 dimensions;</span>
+<span class="sd">        - name: str, name of layer that will be used as an argument of tf.variable_scope;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - tf.Variable, output tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">out_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">average_pooling3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span>
+                                                     <span class="n">pool_size</span><span class="o">=</span><span class="n">pool_size</span><span class="p">,</span>
+                                                     <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                                                     <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                                                     <span class="n">name</span><span class="o">=</span><span class="s1">&#39;average_pool3d&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out_tensor</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="DenseNet.global_average_pool3d"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet.global_average_pool3d">[docs]</a>    <span class="k">def</span> <span class="nf">global_average_pool3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply global average pooling 3D operation to input tensor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: tf.Variable, input tensor;</span>
+<span class="sd">        - name: str, name of layer that will be used as an argument of tf.variable_scope;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - tf.Variable, output tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">output_layer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">output_layer</span></div>
+
+<div class="viewcode-block" id="DenseNet.dropout"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet.dropout">[docs]</a>    <span class="k">def</span> <span class="nf">dropout</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add dropout layer with given dropout rate to the input tensor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: tf.Variable, input tensor;</span>
+<span class="sd">        - rate: float, dropout rate;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - tf.Variable, output tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="n">rate</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_phase</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DenseNet.dense_block"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet.dense_block">[docs]</a>    <span class="k">def</span> <span class="nf">dense_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">block_size</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Dense block which is used as a build block of densenet model.</span>
+
+<span class="sd">        Schematically this layer can be represented like this:</span>
+<span class="sd">        ==================================================================================</span>
+<span class="sd">        input =&gt; conv3D{1x1x1}[1:1:1](filters) =&gt; conv3D{3x3x3}[1:1:1](filters) =&gt; output_1</span>
+<span class="sd">        ----------------------------------------------------------------------------------</span>
+<span class="sd">        concat([input, output_1]) =&gt; conv3D{1x1x1}[1:1:1](filters) =&gt;</span>
+<span class="sd">        =&gt; conv3D{3x3x3}[1:1:1](filters) =&gt; ouput_2</span>
+<span class="sd">        ----------------------------------------------------------------------------------</span>
+<span class="sd">        ...</span>
+<span class="sd">        ----------------------------------------------------------------------------------</span>
+<span class="sd">        ...</span>
+<span class="sd">        ----------------------------------------------------------------------------------</span>
+<span class="sd">        concat([input, output_1, ..., output_(n - 1)]) =&gt; conv3D{1x1x1}[1:1:1](filters) =&gt;</span>
+<span class="sd">        =&gt; conv3D{3x3x3}[1:1:1](filters) =&gt; output_n</span>
+<span class="sd">        =================================================================================</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: tf.Variable, input_tensor;</span>
+<span class="sd">        - filters: int, number of filters in output tensor of each convolution layer;</span>
+<span class="sd">        - block_size: int, how many time repeat conv3d{1x1x1} =&gt; conv3d{3x3x3}</span>
+<span class="sd">        sequentially;</span>
+<span class="sd">        - name: str, name of the layer that will be used as an argument of tf.variable_scope;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - tf.Variable, output_tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">previous_input</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">block_size</span><span class="p">):</span>
+                <span class="n">subblock_name</span> <span class="o">=</span> <span class="s1">&#39;sub_block_&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn_conv3d</span><span class="p">(</span><span class="n">previous_input</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+                                   <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                   <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                   <span class="n">name</span><span class="o">=</span><span class="n">subblock_name</span> <span class="o">+</span> <span class="s1">&#39;_conv3d_1_1&#39;</span><span class="p">,</span>
+                                   <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+
+                <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn_conv3d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+                                   <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                                   <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                   <span class="n">name</span><span class="o">=</span><span class="n">subblock_name</span> <span class="o">+</span> <span class="s1">&#39;_conv3d_3_3&#39;</span><span class="p">,</span>
+                                   <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+
+                <span class="n">previous_input</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">previous_input</span><span class="p">,</span> <span class="n">x</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">previous_input</span></div>
+
+<div class="viewcode-block" id="DenseNet.transition_layer"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet.transition_layer">[docs]</a>    <span class="k">def</span> <span class="nf">transition_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Transition layer which is used as a dimension reduction block in densenset model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">        - input_tensor: tf.Variable, input tensor;</span>
+<span class="sd">        - filters: int, number of filters in output tensor;</span>
+<span class="sd">        - name: str, name of the layer that will be used as an argument of tf.variable_scope;</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">        - tf.Variable, output tensor;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">output_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn_conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+                                           <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                           <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                           <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv3d_1_1&#39;</span><span class="p">)</span>
+
+            <span class="n">output_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">average_pool3d</span><span class="p">(</span><span class="n">output_tensor</span><span class="p">,</span>
+                                                <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                                <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;averagepool_2_2&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">output_tensor</span></div>
+
+    <span class="nd">@restore_nodes</span><span class="p">(</span><span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="s1">&#39;y_true&#39;</span><span class="p">,</span> <span class="s1">&#39;y_pred&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="DenseNet.build_model"><a class="viewcode-back" href="../../../lung_cancer.models.html#lung_cancer.models.dense_net.DenseNet.build_model">[docs]</a>    <span class="k">def</span> <span class="nf">build_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build densenet model implemented via tensorflow. &quot;&quot;&quot;</span>
+        <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                      <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;input&#39;</span><span class="p">)</span>
+
+        <span class="n">y_true</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;y_true&#39;</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                        <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;initial_convolution&#39;</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_pool3d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                            <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;initial_pooling&#39;</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_phase</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dense_block_1&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;transition_layer_1&#39;</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_phase</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dense_block_2&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;transition_layer_2&#39;</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_phase</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dense_block_3&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;transition_layer_3&#39;</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">rate</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">learning_phase</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">block_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dense_block_4&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transition_layer</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;transition_layer_4&#39;</span><span class="p">)</span>
+
+        <span class="n">z</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">global_average_pool3d</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;global_average_pool3d&#39;</span><span class="p">)</span>
+
+        <span class="n">z</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;dense32=&gt;1&#39;</span><span class="p">)</span>
+        <span class="n">z</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;y_pred&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>
