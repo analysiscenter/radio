@@ -1106,7 +1106,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                      (int, int), plane of rotation specified by two axes.
         random :     bool
                      if True, then degree specifies maximum angle of rotation.
-        index:       int
+        index :      int
                      index of patient in batch.
                      Note: this argument is passed by inbatch_parallel
 
