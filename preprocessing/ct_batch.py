@@ -321,20 +321,21 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Example
         -------
-        #: DICOM example
-        # initialize batch for storing batch of 3 patients
-        # with following IDs
-        index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
-        batch = CTImagesBatch(index)
-        batch.load(fmt='dicom')
+        DICOM example
+        initialize batch for storing batch of 3 patients with following IDs:
+        >>> index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
+        >>> batch = CTImagesBatch(index)
+        >>> batch.load(fmt='dicom')
 
-        #: Ndarray example:
-        # source_array stores a batch (concatted 3d-scans, skyscraper)
-        # say, ndarray with shape (400, 256, 256)
+        Ndarray example
 
-        # bounds stores ndarray of last floors for each patient
-        # say, source_ubounds = np.asarray([0, 100, 400])
-        batch.load(source=source_array, fmt='ndarray', bounds=bounds)
+        Source_array stores a batch (concatted 3d-scans, skyscraper)
+        say, ndarray with shape (400, 256, 256)
+
+        bounds stores ndarray of last floors for each patient
+        say, source_ubounds = np.asarray([0, 100, 400])
+
+        >>> batch.load(source=source_array, fmt='ndarray', bounds=bounds)
 
         """
         # if ndarray
@@ -397,10 +398,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         `_preload_shapes` is used in _init_load_blosc.
 
-            Returns
-            -------
-            (int,int)
-                    `y, x` dims shape of a scan.
+        Returns
+        -------
+        (int,int)
+            `y, x` dims shape of a scan.
         """
         shapes = np.zeros((len(self), 3), dtype=np.int)
         for ix in self.indices:
