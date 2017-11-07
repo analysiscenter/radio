@@ -41,7 +41,7 @@ class TFModelCT(TFModel):
         train_output = super().train(_fetches, {'x': x, 'y': y})
         return train_output
 
-    def predict(self, x=None, **kargs):
+    def predict(self, x=None, **kwargs):
         """ Predict model on data provided.
 
         Parameters
