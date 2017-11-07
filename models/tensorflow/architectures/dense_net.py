@@ -99,6 +99,10 @@ class TFDenseNet(TFModelCT):
     def transition_layer(self, input_tensor, filters, name):
         """ Transition layer which is used as a dimension reduction block in densenset model.
 
+        Apply 3D-convolution with batch normalization and `relu` activation
+        followed by 3D-maxpooling operation with kernel_size=(2, 2, 2)
+        and strides=(2, 2, 2).
+
         Parameters
         ----------
         input_tensor : tf.Tensor
