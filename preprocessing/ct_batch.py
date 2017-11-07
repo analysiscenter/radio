@@ -1117,16 +1117,16 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                      if True, then degree specifies maximum angle of rotation.
         index :      int
                      index of patient in batch.
-                     Note: this argument is passed by inbatch_parallel
+                     This argument is passed by inbatch_parallel
 
         Returns
         -------
         ndarray
-                ndarray of 3D rotated image;
+                ndarray of 3D rotated image.
 
         Note
         ----
-        zero padding automatically added after rotation;
+        zero padding automatically added after rotation.
         """
         if not isinstance(components, (tuple, list)):
             _components = (components, )
