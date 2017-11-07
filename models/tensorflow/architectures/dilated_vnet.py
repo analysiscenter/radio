@@ -136,38 +136,6 @@ class TFDilatedVnet(TFModelCT):
         Middle layer contains two separate convolutions:
         one with dilation_rate=(2, 2, 2) and another with dilation_rate=(1, 1, 1).
 
-        Schematically this block can be represented like this:
-        =======================================================================
-                        Conv3D{1x1x1}[1:1:1](filters)
-                                    ||
-                                    \/
-                             BatchNormalization
-                                    ||
-                                    \/
-                                   ReLu
-                            --------||----------
-                           /                    \\
-                          /                      \\
-                         /                        \\
-                        /                          \\
-      Conv3D{3x3x3}[1:1:1](filters / 2)   Conv3D{3x3x3}[1:1:1](filters / 2)
-        dilation_rate=(1, 1, 1)             dilation_rate=(dilation_rate)
-                         \\                      /
-                          \\                    /
-                           \\                  /
-                            \\                /
-                             (----Concat-----)
-                                    ||
-                                    \/
-                            BatchNormalization
-                                    ||
-                                    \/
-                                   ReLu
-                                    ||
-                                    \/
-                        MaxPooling3D{pool_size}[2:2:2]
-        =======================================================================
-
         Parameters
         ----------
         input_tensor : tf.Tensor
