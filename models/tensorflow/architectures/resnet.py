@@ -20,7 +20,7 @@ class TFResNet(TFModelCT):
     config : dict
         config dictionary from dataset pipeline
         see configuring model section of dataset module
-        https://analysiscenter.github.io/dataset/intro/tf_models.html.
+        https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model.
     units : tuple(int, int)
