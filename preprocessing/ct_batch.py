@@ -1080,6 +1080,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Note
         ----
         see CTImagesBatch.resize for more info about methods' params.
+
+        Example
+        -------
+        >>> shape = (128, 256, 256)
+        >>> batch = batch.unify_spacing(shape=shape, spacing=(1.0, 1.0, 1.0),
+                                        order=2, method='scipy', padding='reflect')
+        >>> batch = batch.unify_spacing(shape=shape, spacing=(1.0, 1.0, 1.0),
+                                        resample=PIL.Image.BILINEAR)
         """
         if method == 'scipy':
             args_resize = dict(patient=patient, out_patient=out_patient,
