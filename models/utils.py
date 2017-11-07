@@ -129,7 +129,7 @@ def unpack_seg(batch, model=None, dim_ordering='channels_last'):
 
     Parameters
     ----------
-    self : CTImagesMaskedBatch
+    batch : CTImagesMaskedBatch
         batch to unpack.
     model : dataset.models.BaseModel
         model where the data from batch will be fed. Is not used here.
