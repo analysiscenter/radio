@@ -153,8 +153,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Returns
         -------
-        (str, str, str, str)
-                       names of components returned from __getitem__.
+        tuple
+            names of components returned from __getitem__.
         """
         return 'images', 'masks', 'spacing', 'origin'
 
