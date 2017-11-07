@@ -1090,8 +1090,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Returns
         -------
-        CTImagesMaskedBatch
-            self(source batch).
+        CTImagesMaskedBatch.
         """
         _model = self.get_model_by_name(model_name)
 
