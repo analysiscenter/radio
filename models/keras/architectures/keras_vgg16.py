@@ -24,7 +24,7 @@ class KerasVGG16(KerasModel):
     config : dict
         config dictionary from dataset pipeline
         see configuring model section of dataset module
-        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+        https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model.
     units : tuple(int, int)
