@@ -305,7 +305,7 @@ def precision(y_true, y_pred, threshold=0.5, epsilon=10e-7):
 
     Returns
     -------
-    - float
+    float
         precision metric value.
     """
     tp_value = tp(y_pred, y_true, threshold)
