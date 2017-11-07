@@ -29,9 +29,9 @@ def mse(y_true, y_pred):
     Parameters
     ----------
     y_pred : ndarray(batch_size, ...)
-        numpy array containing predictions of model;
+        numpy array containing predictions of model.
     y_true : np.ndarray(batch_size, ...)
-        numpy array containing true target values;
+        numpy array containing true target values.
 
     Returns
     -------
