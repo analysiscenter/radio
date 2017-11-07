@@ -575,6 +575,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Example
         -------
         Initialize batch and load data
+
         >>> ind = ['1ae34g90', '3hf82s76']
         >>> batch = CTImagesBatch(ind)
         >>> batch.load(...)
