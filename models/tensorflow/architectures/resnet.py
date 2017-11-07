@@ -56,38 +56,6 @@ class TFResNet(TFModelCT):
         Number of filters in third convolution must be the same as in the input
         tensor.
 
-        Schematically this block can be represented like this:
-        =======================================================================
-                                   input_tensor ------------|
-                                        ||                  |
-                                        \/                  |
-                            Conv3D{1x1x1}[1:1:1](filters1)  |
-                                        ||                  |
-                                        \/                  |
-                                 BatchNormalization         |
-                                        ||                  |
-                                       ReLu                 |
-                                        ||                  |
-                                        \/                  |
-                      Conv3D{kernel_size}[1:1:1](filters2)  |
-                                        ||                  |
-                                        \/                  |
-                                 BatchNormalization         |
-                                        ||                  |
-                                       ReLu                 |
-                                        ||                  |
-                                        \/                  |
-                            Conv3D{1x1x1}[1:1:1](filter3)   |
-                                        ||                  |
-                                        \/                  |
-                                 BatchNormalization         |
-                                        ||                  |
-                                        \/                  |
-                                       ( + )<---------------|
-                                        ||
-                                        \/
-                                        ReLu
-        =======================================================================
         Parameters
         ----------
         input_tensor : tf.Tensor
