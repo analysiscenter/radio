@@ -1245,9 +1245,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                       (z_dim,y_dim,x_dim), shape of a single patch.
         stride :      tuple, list or ndarray
                       (int, int, int), stride to slide over each patient's data.
-        padding:      str
+        padding :      str
                       padding-type (see doc of np.pad for available types).
-        data_attr:    str
+        data_attr :    str
                       component to get data from.
 
         Returns
