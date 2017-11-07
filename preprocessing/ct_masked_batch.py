@@ -249,12 +249,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
         'locZ', 'locY', 'locX' - coordinates of nodules' centers;
         'diamZ', 'diamY', 'diamX' - sizes of nodules along zyx axes;
 
-        Args:
-        - nodules: ndarray of type nodules_info(this type is defined
-        inside of CTImagesMaskedBatch class);
+        Parameters
+        ----------
+        nodules : ndarray of type nodules_info
+            nodules_info type is defined inside of CTImagesMaskedBatch class.
 
-        Returns:
-        - pd.DataFrame with centers, ids and sizes of nodules;
+        Returns
+        -------
+        pd.DataFrame
+            centers, ids and sizes of nodules.
         """
         columns = ['nodule_id', 'source_id', 'locZ', 'locY',
                    'locX', 'diamZ', 'diamY', 'diamX']
