@@ -77,9 +77,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self.spacing = None
         self._init_data()
 
-        self._crop_centers = np.array([], dtype=np.int32)
-        self._crop_sizes = np.array([], dtype=np.int32)
-
     @property
     def components(self):
         """ Components' property.
