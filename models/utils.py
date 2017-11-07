@@ -21,12 +21,12 @@ def sphere_overlap(nodule_true, nodule_pred):
     ----------
     nodule_true : ndarray
         numpy array with information about true nodule:
-        nodule_true[1:] - [z,y,x] coordinates of true nodule's center,
-        nodule_true[0] - radius of true nodule.
+        nodule_true[:3] - [z,y,x] coordinates of true nodule's center,
+        nodule_true[3] - radius of true nodule.
     nodule_pred : ndarray
         numpy array with information about predicted nodule:
-        nodule_pred[1:] - [z,y,x] coordinates of predicted nodule's center,
-        nodule_pred[0] - radius of predicted nodule;
+        nodule_pred[:3] - [z,y,x] coordinates of predicted nodule's center,
+        nodule_pred[3] - radius of predicted nodule;
 
     Returns
     -------
