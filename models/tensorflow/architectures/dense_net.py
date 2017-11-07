@@ -43,20 +43,9 @@ class TFDenseNet(TFModelCT):
     def dense_block(self, input_tensor, filters, block_size, name):
         """ Dense block which is used as a build block of densenet model.
 
-        Schematically this layer can be represented like this:
-        ==================================================================================
-        input => conv3D{1x1x1}[1:1:1](filters) => conv3D{3x3x3}[1:1:1](filters) => output_1
-        ----------------------------------------------------------------------------------
-        concat([input, output_1]) => conv3D{1x1x1}[1:1:1](filters) =>
-        => conv3D{3x3x3}[1:1:1](filters) => ouput_2
-        ----------------------------------------------------------------------------------
-        ...
-        ----------------------------------------------------------------------------------
-        ...
-        ----------------------------------------------------------------------------------
-        concat([input, output_1, ..., output_(n - 1)]) => conv3D{1x1x1}[1:1:1](filters) =>
-        => conv3D{3x3x3}[1:1:1](filters) => output_n
-        =================================================================================
+        Repeat block of two convolutions: conv3d{1x1x1} => conv3d{3x3x3}.
+        On each iteration outputs of all previous iterations are stacked and
+        used as inputs of the current iteration's block.
 
         Parameters
         ----------
