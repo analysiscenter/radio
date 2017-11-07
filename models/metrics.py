@@ -318,9 +318,9 @@ def recall(y_true, y_pred, threshold=0.5, epsilon=10e-7):
 
     Parameters
     ----------
-    - y_true: ndarray(batch_size, ...)
+    y_true: ndarray(batch_size, ...)
         numpy array containing true target values.
-    - y_pred: ndarray(batch_size, ...)
+    y_pred: ndarray(batch_size, ...)
         numpy array containing predictions of model.
     threshold : float
         threshold for mapping probabilities into class.
