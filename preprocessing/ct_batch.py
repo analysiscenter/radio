@@ -14,7 +14,7 @@ import blosc
 import dicom
 import SimpleITK as sitk
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
