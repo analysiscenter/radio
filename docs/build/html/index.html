@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Welcome to RadIO’s documentation! &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    './',
@@ -28,7 +25,7 @@
     <link rel="search" title="Search" href="search.html" />
     <link rel="next" title="Preprocessing" href="modules/preprocessing.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -51,7 +48,7 @@
           <div class="body" role="main">
             
   <div class="section" id="welcome-to-radio-s-documentation">
-<h1>Welcome to RadIO&#8217;s documentation!<a class="headerlink" href="#welcome-to-radio-s-documentation" title="Permalink to this headline">¶</a></h1>
+<h1>Welcome to RadIO’s documentation!<a class="headerlink" href="#welcome-to-radio-s-documentation" title="Permalink to this headline">¶</a></h1>
 <p><cite>RadIO</cite> is a framework for processing of batches of computational
 tomography (CT)-scans, with purpose of detecting cancerous nodules.
 The framework incorporates several modules:</p>
@@ -67,10 +64,13 @@ The framework incorporates several modules:</p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="modules/preprocessing.html">Preprocessing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="modules/pipelines.html">Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/models.html">Models</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api/api.html">API</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="api/ct_batch.html">CTImagesBatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/masked_batch.html">CTImagesMaskedBatch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="api/pipelines.html">Pipelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/models.html">Models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/unpackers.html">Unpack functions</a></li>
 </ul>
 </li>
 </ul>
@@ -109,7 +109,7 @@ preprocessing actions implemented in the module.</p>
 <div class="section" id="pipelines">
 <h2>Pipelines<a class="headerlink" href="#pipelines" title="Permalink to this headline">¶</a></h2>
 <p>This module contains helper-functions that generate useful pipelines.
-In essence, pipelines represent ready-to-use workflows of scans&#8217; data
+In essence, pipelines represent ready-to-use workflows of scans’ data
 processing. E.g., if one wants to experiment with training of
 [Vnet](linkvnet) on dataset of luna-scans <cite>ctset</cite>, he can simply
 execute the following pipeline-creator (without spending time on
@@ -126,7 +126,7 @@ implemented workflows.</p>
 </div>
 <div class="section" id="working-with-neural-nets">
 <h2>Working with neural nets<a class="headerlink" href="#working-with-neural-nets" title="Permalink to this headline">¶</a></h2>
-<p>The module contains neural nets&#8217; architectures suitable for
+<p>The module contains neural nets’ architectures suitable for
 tasks of classification, segmentation, detection. Importantly,
 the module incorporates structures, that explicitly show how
 to apply the nets for task at hand (cancer detection). Both
@@ -162,7 +162,7 @@ crops of shape <strong>[32, 64, 64]</strong> can be implemented as follows:</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table Of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">Welcome to RadIO&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#">Welcome to RadIO’s documentation!</a></li>
 <li><a class="reference internal" href="#contents">Contents</a><ul>
 <li><a class="reference internal" href="#preprocessing">Preprocessing</a></li>
 <li><a class="reference internal" href="#pipelines">Pipelines</a></li>
@@ -212,7 +212,7 @@ crops of shape <strong>[32, 64, 64]</strong> can be implemented as follows:</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

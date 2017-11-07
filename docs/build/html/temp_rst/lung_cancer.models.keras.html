@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.models.keras package &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -90,11 +87,11 @@ Also implements train and predict methods.</p>
 <code class="descname">load</code><span class="sig-paren">(</span><em>filepath</em>, <em>by_name=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.models.keras.keras_model.KerasModel.load" title="Permalink to this definition">¶</a></dt>
 <dd><p>Loads all layer weights from a HDF5 save file.</p>
 <p>If <cite>by_name</cite> is False (default) weights are loaded
-based on the network&#8217;s topology, meaning the architecture
+based on the network’s topology, meaning the architecture
 should be the same as when the weights were saved.
-Note that layers that don&#8217;t have weights are not taken
+Note that layers that don’t have weights are not taken
 into account in the topological ordering, so adding or
-removing layers is fine as long as they don&#8217;t have weights.</p>
+removing layers is fine as long as they don’t have weights.</p>
 <p>If <cite>by_name</cite> is True, weights are loaded into layers
 only if they share the same name. This is useful
 for fine-tuning or transfer-learning models where
@@ -119,14 +116,14 @@ by_name: Boolean, whether to load weights by name</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; x argument of keras.models.Model.predict_on_batch method, input of
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) – x argument of keras.models.Model.predict_on_batch method, input of
 neural network.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">predictions of keras model.</td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray(batch_size, ..)</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">ValueError if &#8216;x&#8217; argument is None.</td>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">ValueError if ‘x’ argument is None.</td>
 </tr>
 </tbody>
 </table>
@@ -184,9 +181,9 @@ overwrite: Whether to silently overwrite any existing file at the</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; x argument of keras.models.Model.train_on_batch method, input of
+<li><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) – x argument of keras.models.Model.train_on_batch method, input of
 neural network.</li>
-<li><strong>y</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; y argument of keras.models.Model.predict_on_batch method.</li>
+<li><strong>y</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) – y argument of keras.models.Model.predict_on_batch method.</li>
 </ul>
 </td>
 </tr>
@@ -196,7 +193,7 @@ neural network.</li>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">ndarray(batch_size, ..)</p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">ValueError if &#8216;x&#8217; or &#8216;y&#8217;  is None.</p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">ValueError if ‘x’ or ‘y’  is None.</p>
 </td>
 </tr>
 </tbody>
@@ -218,9 +215,9 @@ neural network.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>keras tensor</em>) &#8211; tensor containing target mask.</li>
-<li><strong>y_pred</strong> (<em>keras tensor</em>) &#8211; tensor containing predicted mask.</li>
-<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+<li><strong>y_true</strong> (<em>keras tensor</em>) – tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>keras tensor</em>) – tensor containing predicted mask.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – small real value used for avoiding division by zero error.</li>
 </ul>
 </td>
 </tr>
@@ -243,9 +240,9 @@ neural network.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>keras tensor</em>) &#8211; tensor containing target mask.</li>
-<li><strong>y_pred</strong> (<em>keras tensor</em>) &#8211; tensor containing predicted mask.</li>
-<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+<li><strong>y_true</strong> (<em>keras tensor</em>) – tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>keras tensor</em>) – tensor containing predicted mask.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – small real value used for avoiding division by zero error.</li>
 </ul>
 </td>
 </tr>
@@ -268,11 +265,11 @@ neural network.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>keras tensor</em>) &#8211; tensor containing target mask.</li>
-<li><strong>y_pred</strong> (<em>keras tensor</em>) &#8211; tensor containing predicted mask.</li>
-<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; real value, weight of &#8216;0&#8217; class.</li>
-<li><strong>beta</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; real value, weight of &#8216;1&#8217; class.</li>
-<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+<li><strong>y_true</strong> (<em>keras tensor</em>) – tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>keras tensor</em>) – tensor containing predicted mask.</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – real value, weight of ‘0’ class.</li>
+<li><strong>beta</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – real value, weight of ‘1’ class.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – small real value used for avoiding division by zero error.</li>
 </ul>
 </td>
 </tr>
@@ -346,7 +343,7 @@ neural network.</li>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

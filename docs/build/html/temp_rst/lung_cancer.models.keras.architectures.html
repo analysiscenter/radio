@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.models.keras.architectures package &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -61,39 +58,40 @@
 <p>ResNet50 model for 3D scans implemented in keras.</p>
 <p>This class extends KerasModel class.</p>
 <p>Contains description of three types of blocks:
-&#8216;identity_block&#8217; and &#8216;conv_block&#8217;. ResNet architercture is implemented inside
+‘identity_block’ and ‘conv_block’. ResNet architercture is implemented inside
 _build method using these blocks. Full description of similar 2D model
 architecture can be downloaded from here: <a class="reference external" href="https://arxiv.org/pdf/1512.03385v1.pdf">https://arxiv.org/pdf/1512.03385v1.pdf</a></p>
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.config">
 <code class="descname">config</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.config" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> &#8211; config dictionary from dataset pipeline
+<dd><p><em>dict</em> – config dictionary from dataset pipeline
 see configuring model section of dataset module
-<a class="reference external" href="https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model">https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model</a>.</p>
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models.html">https://analysiscenter.github.io/dataset/intro/models.html</a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.name">
 <code class="descname">name</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.name" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; name of the model.</p>
+<dd><p><em>str</em> – name of the model, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.units">
 <code class="descname">units</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.units" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>tuple(int, int)</em> &#8211; number of units in two final dense layers before tensor with predicitons.</p>
+<dd><p><em>tuple(int, int)</em> – number of units in two final dense layers before tensor with predicitons,
+can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.num_targets">
 <code class="descname">num_targets</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.num_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> &#8211; size of tensor with predicitons.</p>
+<dd><p><em>int</em> – size of tensor with predicitons, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.dropout_rate">
 <code class="descname">dropout_rate</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.dropout_rate" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> &#8211; probability of dropout.</p>
+<dd><p><em>float</em> – probability of dropout, can be specified in config dict.</p>
 </dd></dl>
 
 <p class="rubric">Attributes</p>
@@ -102,91 +100,65 @@ see configuring model section of dataset module
 <dt id="lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.conv_block">
 <code class="descname">conv_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>kernel_size</em>, <em>filters</em>, <em>stage</em>, <em>block</em>, <em>strides=(2</em>, <em>2</em>, <em>2)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/keras/architectures/keras_resnet.html#KerasResNet50.conv_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.conv_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convolutional block that has a conv layer at shortcut.</p>
+<p>First of all, 3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
+batch normalization and <cite>relu</cite> activation is applied. Then the result
+flows into 3D-convolution with (3, 3, 3) kernel size, batch normalization
+and <cite>relu</cite> activation. Finally, the result of previous convolution goes
+into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+without activation and its output is summed with the result
+of 3D-convolution with kernel_size=(1, 1, 1), strides=(2, 2, 2) and
+batch normalization of input_tensor. After that <cite>relu</cite> activation
+is applied to the result of <cite>add</cite> operation.
+Argument <cite>filters</cite> should be tuple(int, int, int) and specifies
+number of filters in first, second and third convolution correspondingly.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of the kernel along three dimensions for middle convolution operation in block.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number of filters in first, second and third 3D-convolution operations.</li>
+<li><strong>stage</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of stage, on par with block argument used to derive names of inner layers.</li>
+<li><strong>block</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – block prefix, on par with stage argument used to derive names of inner layers.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.identity_block">
 <code class="descname">identity_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>kernel_size</em>, <em>filters</em>, <em>stage</em>, <em>block</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/keras/architectures/keras_resnet.html#KerasResNet50.identity_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.identity_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>The identity block is the block that has no conv layer at shortcut.</p>
-<blockquote>
-<div><blockquote>
-<div><blockquote>
-<div><dl class="docutils">
-<dt>input_tensor &#8212;&#8212;&#8212;&#8212;|</dt>
-<dd>||                  |
-/                  |</dd>
-</dl>
-</div></blockquote>
-<dl class="docutils">
-<dt>Conv3D{1x1x1}[1:1:1](filters1)  |</dt>
-<dd><blockquote class="first">
-<div>||                  |
-/                  |</div></blockquote>
-<dl class="last docutils">
-<dt>BatchNormalization         |</dt>
-<dd><blockquote class="first">
-<div>||                  |</div></blockquote>
-<dl class="last docutils">
-<dt>ReLu                 |</dt>
-<dd>||                  |
-/                  |</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</div></blockquote>
-<dl class="docutils">
-<dt>Conv3D{kernel_size}[1:1:1](filters2)  |</dt>
-<dd><blockquote class="first">
-<div><blockquote>
-<div>||                  |
-/                  |</div></blockquote>
-<dl class="docutils">
-<dt>BatchNormalization         |</dt>
-<dd><blockquote class="first">
-<div>||                  |</div></blockquote>
-<dl class="last docutils">
-<dt>ReLu                 |</dt>
-<dd>||                  |
-/                  |</dd>
-</dl>
-</dd>
-</dl>
-</div></blockquote>
-<dl class="last docutils">
-<dt>Conv3D{1x1x1}[1:1:1](filter3)   |</dt>
-<dd><blockquote class="first">
-<div>||                  |
-/                  |</div></blockquote>
-<dl class="last docutils">
-<dt>BatchNormalization         |</dt>
-<dd><blockquote class="first">
-<div>||                  |
-/                  |</div></blockquote>
-<dl class="last docutils">
-<dt>( + )&lt;&#8212;&#8212;&#8212;&#8212;&#8212;|</dt>
-<dd>||
-/
-ReLu</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd>
-</dl>
-</div></blockquote>
+<p>First of all, 3D-convolution with (1, 1, 1) kernel size, batch normalization
+and relu activation is applied. Then the result flows into
+3D-convolution with (3, 3, 3) kernel size, batch normalization and
+relu activation. Finally, the result of previous convolution goes
+into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+without activation and its output is summed with the input tensor
+and <cite>relu</cite> activation is applied.
+Argument <cite>filters</cite> should be tuple(int, int, int) and specifies
+number of filters in first, second and third convolution correspondingly.
+Number of filters in third convolution must be the same as in the input
+tensor.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>keras tensor</em>) &#8211; input tensor.</li>
-<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; size of the kernel along three dimensions for middle convolution operation in block.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; number of filters in first, second and third 3D-convolution operations.</li>
-<li><strong>stage</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of stage, on par with block argument used to derive names of inner layers.</li>
-<li><strong>block</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; block prefix, on par with stage argument used to derive names of inner layers.</li>
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of the kernel along three dimensions for middle convolution operation in block.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number of filters in first, second and third 3D-convolution operations.</li>
+<li><strong>stage</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of stage, on par with block argument used to derive names of inner layers.</li>
+<li><strong>block</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – block prefix, on par with stage argument used to derive names of inner layers.</li>
 </ul>
 </td>
 </tr>
@@ -213,38 +185,39 @@ ReLu</dd>
 <p>KerasVGG16 model for 3D scans implemented in keras.</p>
 <p>This class extends KerasModel class.</p>
 <p>Contains description of three types of blocks:
-&#8216;reduction_block_I&#8217;, &#8216;reduction_block_II&#8217; and &#8216;classification_block&#8217;.
+‘reduction_block_I’, ‘reduction_block_II’ and ‘classification_block’.
 VGG16 architecture is implemented inside _build method using these blocks.</p>
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.config">
 <code class="descname">config</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.config" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> &#8211; config dictionary from dataset pipeline
+<dd><p><em>dict</em> – config dictionary from dataset pipeline
 see configuring model section of dataset module
-<a class="reference external" href="https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model">https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model</a>.</p>
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models.html">https://analysiscenter.github.io/dataset/intro/models.html</a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.name">
 <code class="descname">name</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.name" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; name of the model.</p>
+<dd><p><em>str</em> – name of the model, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.units">
 <code class="descname">units</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.units" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>tuple(int, int)</em> &#8211; number of units in two final dense layers before tensor with predicitons.</p>
+<dd><p><em>tuple(int, int)</em> – number of units in two final dense layers before tensor with predicitons,
+can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.num_targets">
 <code class="descname">num_targets</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.num_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> &#8211; size of tensor with predicitons.</p>
+<dd><p><em>int</em> – size of tensor with predicitons, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.dropout_rate">
 <code class="descname">dropout_rate</code><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.dropout_rate" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> &#8211; probability of dropout.</p>
+<dd><p><em>float</em> – probability of dropout, can be specified in config dict.</p>
 </dd></dl>
 
 <p class="rubric">Attributes</p>
@@ -254,7 +227,7 @@ see configuring model section of dataset module
 <code class="descname">classification_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>scope='ClassificationBlock'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/keras/architectures/keras_vgg16.html#KerasVGG16.classification_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.classification_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Classification block of VGG16 architecture.</p>
 <p>This block consists of flatten operation applied to input_tensor.
-Then there is two fully connected layers with &#8216;relu&#8217; activation,
+Then there is two fully connected layers with ‘relu’ activation,
 batch normalization and dropout layers. This block should be put
 in the end of the model.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -262,12 +235,12 @@ in the end of the model.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>input_tensor</strong> (<em>keras tensor</em>) &#8211; input tensor.</li>
-<li><strong>units</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; number of units in first and second dense layers.</li>
-<li><strong>dropoout_rate</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; probability of dropout.</li>
-<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; scope name for this block, will be used as an argument of tf.variable_scope.</li>
-<li><strong>Returns</strong> &#8211; </li>
-<li><strong>tensor</strong> (<a class="reference internal" href="lung_cancer.models.keras.html#module-lung_cancer.models.keras" title="lung_cancer.models.keras"><em>keras</em></a>) &#8211; output tensor.</li>
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>units</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number of units in first and second dense layers.</li>
+<li><strong>dropoout_rate</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – probability of dropout.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – scope name for this block, will be used as an argument of tf.variable_scope.</li>
+<li><strong>Returns</strong> – </li>
+<li><strong>tensor</strong> (<a class="reference internal" href="lung_cancer.models.keras.html#module-lung_cancer.models.keras" title="lung_cancer.models.keras"><em>keras</em></a>) – output tensor.</li>
 </ul>
 </td>
 </tr>
@@ -280,9 +253,9 @@ in the end of the model.</p>
 <code class="descname">reduction_block_I</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>filters</em>, <em>scope</em>, <em>padding='same'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/keras/architectures/keras_vgg16.html#KerasVGG16.reduction_block_I"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.reduction_block_I" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reduction block of type I for VGG16 architecture.</p>
 <p>Applyes 3D-convolution with kernel size (3, 3, 3), (1, 1, 1) strides
-and &#8216;relu&#8217; activation, after performs batch noramlization, then
+and ‘relu’ activation, after performs batch noramlization, then
 again 3D-convolution with kernel size (3, 3, 3),
-strides (1, 1, 1) and &#8216;relu&#8217; activation,  that batch normalization;
+strides (1, 1, 1) and ‘relu’ activation,  that batch normalization;
 After all applyes 3D maxpooling operation with strides (2, 2, 2)
 and pooling size (2, 2, 2).</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -290,10 +263,10 @@ and pooling size (2, 2, 2).</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>keras tensor</em>) &#8211; input tensor.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in 3D-convolutional layers.</li>
-<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; scope name for this block, will be used as an argument of tf.variable_scope.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in 3D-convolutional layers.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – scope name for this block, will be used as an argument of tf.variable_scope.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode can be ‘same’ or ‘valid’.</li>
 </ul>
 </td>
 </tr>
@@ -312,7 +285,7 @@ and pooling size (2, 2, 2).</p>
 <code class="descname">reduction_block_II</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>filters</em>, <em>scope</em>, <em>padding='same'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/keras/architectures/keras_vgg16.html#KerasVGG16.reduction_block_II"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vgg16.KerasVGG16.reduction_block_II" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reduction block of type II for VGG16 architecture.</p>
 <p>Applyes 3D-convolution with kernel size (3, 3, 3), strides (1, 1, 1)
-and &#8216;relu&#8217; activation, after that preform batch noramlization,
+and ‘relu’ activation, after that preform batch noramlization,
 repeates this combo three times;
 Finally, adds 3D maxpooling layer with
 strides (2, 2, 2) and pooling size (2, 2, 2).</p>
@@ -321,10 +294,10 @@ strides (2, 2, 2) and pooling size (2, 2, 2).</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>keras tensor</em>) &#8211; input tensor.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in 3D-convolutional layers.</li>
-<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; scope name for this block, will be used as an argument of tf.variable_scope.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in 3D-convolutional layers.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – scope name for this block, will be used as an argument of tf.variable_scope.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode can be ‘same’ or ‘valid’.</li>
 </ul>
 </td>
 </tr>
@@ -350,8 +323,8 @@ strides (2, 2, 2) and pooling size (2, 2, 2).</p>
 <dd><p>Bases: <a class="reference internal" href="lung_cancer.models.keras.html#lung_cancer.models.keras.keras_model.KerasModel" title="lung_cancer.models.keras.keras_model.KerasModel"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.models.keras.keras_model.KerasModel</span></code></a></p>
 <p>Model incapsulating VNet architecture for 3D scans implemented in keras.</p>
 <p>This class extends KerasModel class.</p>
-<p>Contains description of &#8216;bottleneck_block&#8217;, &#8216;reduction_block&#8217; and
-&#8216;upsampling_block&#8217;. Current Vnet architecture is implemented
+<p>Contains description of ‘bottleneck_block’, ‘reduction_block’ and
+‘upsampling_block’. Current Vnet architecture is implemented
 inside _build method using these blocks.</p>
 <p>This architecture is inspired by <a class="reference external" href="https://arxiv.org/pdf/1606.04797.pdf">https://arxiv.org/pdf/1606.04797.pdf</a>.</p>
 <p class="rubric">Attributes</p>
@@ -365,14 +338,14 @@ inside _build method using these blocks.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>keras tensor</em>) &#8211; input tensor.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of output filters required by Conv3D operation.</li>
-<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; scope name for this block, will be used as an argument of tf.variable_scope.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode, can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of output filters required by Conv3D operation.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – scope name for this block, will be used as an argument of tf.variable_scope.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode, can be ‘same’ or ‘valid’.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
@@ -380,6 +353,10 @@ inside _build method using these blocks.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><cite>channels_first</cite> dim-ordering is used.</p>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -399,10 +376,10 @@ The loss value that will be minimized by the model
 will then be the sum of all individual losses.</dd>
 <dt>metrics: List of metrics to be evaluated by the model</dt>
 <dd>during training and testing.
-Typically you will use <cite>metrics=[&#8216;accuracy&#8217;]</cite>.
+Typically you will use <cite>metrics=[‘accuracy’]</cite>.
 To specify different metrics for different outputs of a
 multi-output model, you could also pass a dictionary,
-such as <cite>metrics={&#8216;output_a&#8217;: &#8216;accuracy&#8217;}</cite>.</dd>
+such as <cite>metrics={‘output_a’: ‘accuracy’}</cite>.</dd>
 <dt>loss_weights: Optional list or dictionary specifying scalar</dt>
 <dd>coefficients (Python floats) to weight the loss contributions
 of different model outputs.
@@ -410,10 +387,10 @@ The loss value that will be minimized by the model
 will then be the <em>weighted sum</em> of all individual losses,
 weighted by the <cite>loss_weights</cite> coefficients.
 If a list, it is expected to have a 1:1 mapping
-to the model&#8217;s outputs. If a tensor, it is expected to map
+to the model’s outputs. If a tensor, it is expected to map
 output names (strings) to scalar coefficients.</dd>
 <dt>sample_weight_mode: If you need to do timestep-wise</dt>
-<dd>sample weighting (2D weights), set this to <cite>&#8220;temporal&#8221;</cite>.
+<dd>sample weighting (2D weights), set this to <cite>“temporal”</cite>.
 <cite>None</cite> defaults to sample-wise weights (1D).
 If the model has multiple outputs, you can use a different
 <cite>sample_weight_mode</cite> on each output by passing a
@@ -421,7 +398,7 @@ dictionary or a list of modes.</dd>
 <dt>weighted_metrics: List of metrics to be evaluated and weighted</dt>
 <dd>by sample_weight or class_weight during training and testing.</dd>
 <dt>target_tensors: By default, Keras will create placeholders for the</dt>
-<dd>model&#8217;s target, which will be fed with the target data during
+<dd>model’s target, which will be fed with the target data during
 training. If instead you would like to use your own
 target tensors (in turn, Keras will not expect external
 Numpy data for these targets at training time), you
@@ -447,7 +424,32 @@ these arguments are passed into <cite>tf.Session.run</cite>.</dd>
 <code class="descname">reduction_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>filters</em>, <em>scope</em>, <em>pool_size=(2</em>, <em>2</em>, <em>2)</em>, <em>padding='same'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/keras/architectures/keras_vnet.html#KerasVnet.reduction_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.architectures.keras_vnet.KerasVnet.reduction_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply reduction block transform to input tensor.</p>
 <p>This layer consists of two 3D-convolutional layers with batch normalization
-before &#8216;relu&#8217; activation and max_pooling3d layer in the end.</p>
+before ‘relu’ activation and max_pooling3d layer in the end.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in first and second covnolutions.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – scope name for this block, will be used as an argument of tf.variable_scope.</li>
+<li><strong>pool_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of pooling kernel along three axis, required by Conv3D operation.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode for convolutions, can be ‘same’ or ‘valid’.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><cite>channels_first</cite> dim-ordering is used.</p>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -456,18 +458,18 @@ before &#8216;relu&#8217; activation and max_pooling3d layer in the end.</p>
 <dd><p>Apply upsampling transform to two input tensors.</p>
 <p>First of all, UpSampling3D transform is applied to input_tensor. Then output
 tensor of this operation is concatenated with skip_connect_tensor. After this
-two 3D-convolutions with batch normalization before &#8216;relu&#8217; activation
+two 3D-convolutions with batch normalization before ‘relu’ activation
 are applied.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>keras tensor</em>) &#8211; input tensor from previous layer.</li>
-<li><strong>skip_connect_tensor</strong> (<em>keras tensor</em>) &#8211; input tensor from simmiliar layer from reduction branch of VNet.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in convolutional layers.</li>
-<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of scope for this block.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode for convolutions, can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
+<li><strong>input_tensor</strong> (<em>keras tensor</em>) – input tensor from previous layer.</li>
+<li><strong>skip_connect_tensor</strong> (<em>keras tensor</em>) – input tensor from simmiliar layer from reduction branch of VNet.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in convolutional layers.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of scope for this block.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode for convolutions, can be ‘same’ or ‘valid’.</li>
 </ul>
 </td>
 </tr>
@@ -479,6 +481,10 @@ are applied.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><cite>channels_first</cite> dim-ordering is used.</p>
+</div>
 </dd></dl>
 
 </dd></dl>
@@ -543,7 +549,7 @@ are applied.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

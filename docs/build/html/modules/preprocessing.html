@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>Preprocessing &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -25,9 +22,11 @@
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Pipelines" href="pipelines.html" />
+    <link rel="prev" title="Welcome to RadIO’s documentation!" href="../index.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -37,6 +36,12 @@
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="pipelines.html" title="Pipelines"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to RadIO’s documentation!"
+             accesskey="P">previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>  
@@ -52,7 +57,7 @@
 <div class="section" id="data-storage-in-radio">
 <h2>Data storage in <cite>RadIO</cite><a class="headerlink" href="#data-storage-in-radio" title="Permalink to this headline">¶</a></h2>
 <p><cite>RadIO</cite> works with batches of scans, wrapped in a class <cite>CTImagesBatch</cite>.
-The class stores scans&#8217; data in <a class="reference external" href="https://github.com/analysiscenter/dataset">components</a>, which represent
+The class stores scans’ data in <a class="reference external" href="https://github.com/analysiscenter/dataset">components</a>, which represent
 main attributes of scans. E.g., scans itself are stacked in one
 tall 3d <cite>numpy</cite>-array and stored in <cite>images</cite>-component. The other
 components are <cite>spacing</cite> and <cite>origin</cite>, which store important meta.</p>
@@ -95,7 +100,7 @@ specify <cite>blosc</cite>-format when performing <cite>load</cite>:</p>
 <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>What&#8217;s more, both <cite>dump</cite> and <cite>load</cite> from <cite>blosc</cite>-format can work
+<p>What’s more, both <cite>dump</cite> and <cite>load</cite> from <cite>blosc</cite>-format can work
 component-wise:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span><span class="p">])</span> <span class="c1"># dump spacing, origin components</span>
 <span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dst</span><span class="o">=</span><span class="s1">&#39;path/to/preprocessed/&#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">)</span> <span class="c1"># dumps scans itself</span>
@@ -185,6 +190,12 @@ We first load info about cancerous nodules in a batch:</p>
 </li>
 </ul>
 
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Welcome to RadIO’s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pipelines.html"
+                        title="next chapter">Pipelines</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -215,12 +226,18 @@ We first load info about cancerous nodules in a batch:</p>
         <li class="right" >
           <a href="../py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
+        <li class="right" >
+          <a href="pipelines.html" title="Pipelines"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to RadIO’s documentation!"
+             >previous</a> |</li>
         <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

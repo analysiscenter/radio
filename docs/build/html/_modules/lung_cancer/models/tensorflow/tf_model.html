@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.models.tensorflow.tf_model &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -56,7 +53,7 @@
 <span class="kn">from</span> <span class="nn">...dataset.dataset.models.tf</span> <span class="k">import</span> <span class="n">TFModel</span>
 
 
-<div class="viewcode-block" id="TFModelCT"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.tf_model.TFModelCT">[docs]</a><span class="k">class</span> <span class="nc">TFModelCT</span><span class="p">(</span><span class="n">TFModel</span><span class="p">):</span>
+<div class="viewcode-block" id="TFModelCT"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.TFModelCT">[docs]</a><span class="k">class</span> <span class="nc">TFModelCT</span><span class="p">(</span><span class="n">TFModel</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Base class for all tensorflow models.</span>
 
 <span class="sd">    This class inherits TFModel class from dataset submodule and</span>
@@ -70,7 +67,7 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TFModelCT.train"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.tf_model.TFModelCT.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">):</span>
+<div class="viewcode-block" id="TFModelCT.train"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.TFModelCT.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fetches</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="sd">&quot;&quot;&quot; Train model with data provided.</span>
 
 <span class="sd">        Parameters</span>
@@ -81,17 +78,18 @@
 <span class="sd">        y : ndarray(batch_size, ...)</span>
 <span class="sd">            numpy array that will be fed into tf.placeholder that can be accessed</span>
 <span class="sd">            by &#39;y&#39; attribute of &#39;self&#39;.</span>
+<span class="sd">        fetches : list or tuple</span>
+<span class="sd">            `tf.Operation`s and `tf.Tensor`s to calculate.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        ndarray(batch_size, ...)</span>
 <span class="sd">            predicted output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_fetches</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;y_pred&#39;</span><span class="p">,</span> <span class="p">)</span>
-        <span class="n">train_output</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">_fetches</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">})</span>
+        <span class="n">train_output</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="n">fetches</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y</span><span class="p">})</span>
         <span class="k">return</span> <span class="n">train_output</span></div>
 
-<div class="viewcode-block" id="TFModelCT.predict"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.tf_model.TFModelCT.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kargs</span><span class="p">):</span>
+<div class="viewcode-block" id="TFModelCT.predict"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.TFModelCT.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fetches</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="sd">&quot;&quot;&quot; Predict model on data provided.</span>
 
 <span class="sd">        Parameters</span>
@@ -99,13 +97,15 @@
 <span class="sd">        x : ndarray(batch_size, ....)</span>
 <span class="sd">            numpy array that will be fed into tf.placeholder that can be accessed</span>
 <span class="sd">            by &#39;x&#39; attribute of &#39;self&#39;, typically input of neural network.</span>
+<span class="sd">        fetches : list or tuple</span>
+<span class="sd">            `tf.Operation`s and `tf.Tensor`s to calculate.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        ndarray(batch_size, ...)</span>
 <span class="sd">            predicted output.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">predictions</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">fetches</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">})</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">fetches</span><span class="o">=</span><span class="n">fetches</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">})</span>
         <span class="k">return</span> <span class="n">predictions</span></div></div>
 </pre></div>
 
@@ -143,7 +143,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

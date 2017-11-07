@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.models.utils &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -55,7 +52,7 @@
 <span class="kn">from</span> <span class="nn">numba</span> <span class="k">import</span> <span class="n">njit</span>
 
 
-<div class="viewcode-block" id="nodules_info_to_rzyx"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.nodules_info_to_rzyx">[docs]</a><span class="k">def</span> <span class="nf">nodules_info_to_rzyx</span><span class="p">(</span><span class="n">nodules</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="nodules_info_to_rzyx"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.nodules_info_to_rzyx">[docs]</a><span class="k">def</span> <span class="nf">nodules_info_to_rzyx</span><span class="p">(</span><span class="n">nodules</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Transform data contained in nodules_info array to rzyx format. &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">scale</span><span class="p">:</span>
         <span class="n">_centers</span> <span class="o">=</span> <span class="p">(</span><span class="n">nodules</span><span class="o">.</span><span class="n">nodule_center</span> <span class="o">-</span> <span class="n">nodules</span><span class="o">.</span><span class="n">origin</span><span class="p">)</span> <span class="o">/</span> <span class="n">nodules</span><span class="o">.</span><span class="n">spacing</span>
@@ -63,8 +60,8 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">hstack</span><span class="p">([</span><span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">_rads</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">_centers</span><span class="p">])</span></div>
 
 
-<span class="nd">@njit</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="sphere_overlap"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.sphere_overlap">[docs]</a><span class="k">def</span> <span class="nf">sphere_overlap</span><span class="p">(</span><span class="n">nodule_true</span><span class="p">,</span> <span class="n">nodule_pred</span><span class="p">):</span>
+<div class="viewcode-block" id="sphere_overlap"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.sphere_overlap">[docs]</a><span class="nd">@njit</span><span class="p">(</span><span class="n">cache</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">sphere_overlap</span><span class="p">(</span><span class="n">nodule_true</span><span class="p">,</span> <span class="n">nodule_pred</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Two nodules overlap volume normalized by total volume of second one.</span>
 
 <span class="sd">    Parameters</span>
@@ -72,19 +69,19 @@
 <span class="sd">    nodule_true : ndarray</span>
 <span class="sd">        numpy array with information about true nodule:</span>
 <span class="sd">        nodule_true[1:] - [z,y,x] coordinates of true nodule&#39;s center,</span>
-<span class="sd">        nodule_true[0] - radius of true nodule.</span>
+<span class="sd">        nodule_true[0] - diameter of true nodule.</span>
 <span class="sd">    nodule_pred : ndarray</span>
 <span class="sd">        numpy array with information about predicted nodule:</span>
 <span class="sd">        nodule_pred[1:] - [z,y,x] coordinates of predicted nodule&#39;s center,</span>
-<span class="sd">        nodule_pred[0] - radius of predicted nodule;</span>
+<span class="sd">        nodule_pred[0] - diameter of predicted nodule;</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    float</span>
 <span class="sd">        overlap volume divided by sum of input nodules&#39; volumes.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">r1</span><span class="p">,</span> <span class="n">r2</span> <span class="o">=</span> <span class="n">nodule_true</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">nodule_pred</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
-    <span class="n">pos1</span><span class="p">,</span> <span class="n">pos2</span> <span class="o">=</span> <span class="n">nodule_true</span><span class="p">[:</span><span class="mi">3</span><span class="p">],</span> <span class="n">nodule_pred</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">r1</span><span class="p">,</span> <span class="n">r2</span> <span class="o">=</span> <span class="n">nodule_true</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">nodule_pred</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>
+    <span class="n">pos1</span><span class="p">,</span> <span class="n">pos2</span> <span class="o">=</span> <span class="n">nodule_true</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">nodule_pred</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
 
     <span class="n">pos1_area</span> <span class="o">=</span> <span class="mf">4.</span> <span class="o">/</span> <span class="mf">3.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r1</span> <span class="o">**</span> <span class="mi">3</span>
     <span class="n">pos2_area</span> <span class="o">=</span> <span class="mf">4.</span> <span class="o">/</span> <span class="mf">3.</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">r2</span> <span class="o">**</span> <span class="mi">3</span>
@@ -108,8 +105,8 @@
     <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">volume</span> <span class="o">/</span> <span class="p">(</span><span class="n">pos2_area</span> <span class="o">+</span> <span class="n">pos1_area</span> <span class="o">+</span> <span class="mf">10e-7</span><span class="p">)</span></div>
 
 
-<span class="nd">@njit</span>
-<div class="viewcode-block" id="nodules_sets_overlap_jit"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.nodules_sets_overlap_jit">[docs]</a><span class="k">def</span> <span class="nf">nodules_sets_overlap_jit</span><span class="p">(</span><span class="n">nodules_true</span><span class="p">,</span> <span class="n">nodules_pred</span><span class="p">):</span>
+<div class="viewcode-block" id="nodules_sets_overlap_jit"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.nodules_sets_overlap_jit">[docs]</a><span class="nd">@njit</span>
+<span class="k">def</span> <span class="nf">nodules_sets_overlap_jit</span><span class="p">(</span><span class="n">nodules_true</span><span class="p">,</span> <span class="n">nodules_pred</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Compute overlap matrix for two sets of nodules.</span>
 
 <span class="sd">    Parameters</span>
@@ -137,7 +134,7 @@
     <span class="k">return</span> <span class="n">overlap_matrix</span></div>
 
 
-<div class="viewcode-block" id="unpack_component"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.unpack_component">[docs]</a><span class="k">def</span> <span class="nf">unpack_component</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="unpack_component"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.unpack_component">[docs]</a><span class="k">def</span> <span class="nf">unpack_component</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Basic way for unpacking &#39;images&#39; or &#39;masks&#39; from batch.</span>
 
 <span class="sd">    Parameters</span>
@@ -174,12 +171,12 @@
     <span class="k">return</span> <span class="n">x</span></div>
 
 
-<div class="viewcode-block" id="unpack_seg"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.unpack_seg">[docs]</a><span class="k">def</span> <span class="nf">unpack_seg</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="unpack_seg"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.unpack_seg">[docs]</a><span class="k">def</span> <span class="nf">unpack_seg</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Unpack data from batch in format suitable for segmentation task.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    self : CTImagesMaskedBatch</span>
+<span class="sd">    batch : CTImagesMaskedBatch</span>
 <span class="sd">        batch to unpack.</span>
 <span class="sd">    model : dataset.models.BaseModel</span>
 <span class="sd">        model where the data from batch will be fed. Is not used here.</span>
@@ -202,7 +199,7 @@
             <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">unpack_component</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="s1">&#39;masks&#39;</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="p">)}</span></div>
 
 
-<div class="viewcode-block" id="unpack_clf"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.unpack_clf">[docs]</a><span class="k">def</span> <span class="nf">unpack_clf</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="unpack_clf"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.unpack_clf">[docs]</a><span class="k">def</span> <span class="nf">unpack_clf</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Unpack data from batch in format suitable for classification task.</span>
 
 <span class="sd">    Parameters</span>
@@ -234,7 +231,7 @@
             <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">masks_labels</span><span class="p">[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]}</span></div>
 
 
-<div class="viewcode-block" id="unpack_reg"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.unpack_reg">[docs]</a><span class="k">def</span> <span class="nf">unpack_reg</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
+<div class="viewcode-block" id="unpack_reg"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.unpack_reg">[docs]</a><span class="k">def</span> <span class="nf">unpack_reg</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Unpack data from batch in format suitable for regression task.</span>
 
 <span class="sd">    Parameters</span>
@@ -252,7 +249,7 @@
 <span class="sd">    dict</span>
 <span class="sd">        {&#39;x&#39;: images_array, &#39;y&#39;: y_regression_array}</span>
 
-<span class="sd">    NOTE</span>
+<span class="sd">    Note</span>
 <span class="sd">    ----</span>
 <span class="sd">    &#39;dim_ordering&#39; argument reflects where to put &#39;1&#39; for channels dimension.</span>
 
@@ -289,7 +286,7 @@
     <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;x&#39;</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">:</span> <span class="n">y_regression_array</span><span class="p">}</span></div>
 
 
-<div class="viewcode-block" id="test_on_dataset"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.test_on_dataset">[docs]</a><span class="k">def</span> <span class="nf">test_on_dataset</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">unpacker</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="test_on_dataset"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.test_on_dataset">[docs]</a><span class="k">def</span> <span class="nf">test_on_dataset</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">unpacker</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">period</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Compute metrics of model on dataset.</span>
 
 <span class="sd">    Parameters</span>
@@ -354,7 +351,7 @@
     <span class="k">return</span> <span class="n">max_ov</span><span class="p">,</span> <span class="n">argmax_ov</span>
 
 
-<div class="viewcode-block" id="overlap_true_pred_nodules"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.utils.overlap_true_pred_nodules">[docs]</a><span class="k">def</span> <span class="nf">overlap_true_pred_nodules</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+<div class="viewcode-block" id="overlap_true_pred_nodules"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.models.html#lung_cancer.models.overlap_true_pred_nodules">[docs]</a><span class="k">def</span> <span class="nf">overlap_true_pred_nodules</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Accumulate info about overlap between true and predicted nodules in pipeline vars. &quot;&quot;&quot;</span>
     <span class="n">ppl_nodules_true</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s1">&#39;nodules_true&#39;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">ppl_nodules_pred</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="s1">&#39;nodules_pred&#39;</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
@@ -440,7 +437,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.preprocessing.mask &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -54,8 +51,8 @@
 <span class="kn">from</span> <span class="nn">numba</span> <span class="k">import</span> <span class="n">njit</span>
 
 
-<span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="create_mask_reg_jit"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.mask.create_mask_reg_jit">[docs]</a><span class="k">def</span> <span class="nf">create_mask_reg_jit</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
+<div class="viewcode-block" id="create_mask_reg_jit"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.mask.create_mask_reg_jit">[docs]</a><span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">create_mask_reg_jit</span><span class="p">(</span><span class="n">masks</span><span class="p">,</span> <span class="n">start</span><span class="p">,</span> <span class="n">end</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Jit-decorated function for fast computation of masks by regression data.</span>
 
 <span class="sd">    This function is usually called inside create_mask_reg function.</span>
@@ -85,8 +82,8 @@
     <span class="k">return</span> <span class="n">masks_array</span></div>
 
 
-<span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="insert_cropped"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.mask.insert_cropped">[docs]</a><span class="k">def</span> <span class="nf">insert_cropped</span><span class="p">(</span><span class="n">where</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
+<div class="viewcode-block" id="insert_cropped"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.mask.insert_cropped">[docs]</a><span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">insert_cropped</span><span class="p">(</span><span class="n">where</span><span class="p">,</span> <span class="n">what</span><span class="p">,</span> <span class="n">origin</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Insert `what` into `where` starting from `origin`</span>
 
 <span class="sd">    Parameters</span>
@@ -141,8 +138,8 @@
                                             <span class="n">st_what</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">end_what</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span></div>
 
 
-<span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="make_mask_numba"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.mask.make_mask_numba">[docs]</a><span class="k">def</span> <span class="nf">make_mask_numba</span><span class="p">(</span><span class="n">batch_mask</span><span class="p">,</span> <span class="n">img_start</span><span class="p">,</span> <span class="n">img_end</span><span class="p">,</span> <span class="n">nodules_start</span><span class="p">,</span> <span class="n">nodules_size</span><span class="p">):</span>
+<div class="viewcode-block" id="make_mask_numba"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.mask.make_mask_numba">[docs]</a><span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">make_mask_numba</span><span class="p">(</span><span class="n">batch_mask</span><span class="p">,</span> <span class="n">img_start</span><span class="p">,</span> <span class="n">img_end</span><span class="p">,</span> <span class="n">nodules_start</span><span class="p">,</span> <span class="n">nodules_size</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Make mask using information about nodules location and sizes.</span>
 
 <span class="sd">    Takes batch_masks already filled with zeros,</span>
@@ -213,7 +210,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

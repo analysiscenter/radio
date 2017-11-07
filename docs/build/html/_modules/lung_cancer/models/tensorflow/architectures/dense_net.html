@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.models.tensorflow.architectures.dense_net &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -57,7 +54,7 @@
 <span class="kn">from</span> <span class="nn">..layers</span> <span class="k">import</span> <span class="n">bn_conv3d</span><span class="p">,</span> <span class="n">global_average_pool3d</span>
 
 
-<div class="viewcode-block" id="TFDenseNet"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet">[docs]</a><span class="k">class</span> <span class="nc">TFDenseNet</span><span class="p">(</span><span class="n">TFModelCT</span><span class="p">):</span>
+<div class="viewcode-block" id="TFDenseNet"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDenseNet">[docs]</a><span class="k">class</span> <span class="nc">TFDenseNet</span><span class="p">(</span><span class="n">TFModelCT</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; This class implements 3D DenseNet architecture via tensorflow.</span>
 
 <span class="sd">    Attributes</span>
@@ -65,15 +62,16 @@
 <span class="sd">    config : dict</span>
 <span class="sd">        config dictionary from dataset pipeline</span>
 <span class="sd">        see configuring model section of dataset module</span>
-<span class="sd">        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.</span>
+<span class="sd">        https://analysiscenter.github.io/dataset/intro/models.html.</span>
 <span class="sd">    name : str</span>
-<span class="sd">        name of the model.</span>
+<span class="sd">        name of the model, can be specified in config dict.</span>
 <span class="sd">    units : tuple(int, int)</span>
-<span class="sd">        number of units in two final dense layers before tensor with predicitons.</span>
+<span class="sd">        number of units in two final dense layers before tensor with predicitons,</span>
+<span class="sd">        can be specified in config dict.</span>
 <span class="sd">    num_targets : int</span>
-<span class="sd">        size of tensor with predicitons.</span>
+<span class="sd">        size of tensor with predicitons, can be specified in config dict.</span>
 <span class="sd">    dropout_rate : float</span>
-<span class="sd">        probability of dropout.</span>
+<span class="sd">        probability of dropout, can be specified in config dict.</span>
 
 <span class="sd">    Full description of similar 2D model architecture can be downloaded from here:</span>
 <span class="sd">    https://arxiv.org/pdf/1608.06993v2.pdf</span>
@@ -89,23 +87,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_from_config</span><span class="p">(</span><span class="s1">&#39;dropout_rate&#39;</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="TFDenseNet.dense_block"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.dense_block">[docs]</a>    <span class="k">def</span> <span class="nf">dense_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">block_size</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<div class="viewcode-block" id="TFDenseNet.dense_block"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDenseNet.dense_block">[docs]</a>    <span class="k">def</span> <span class="nf">dense_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">block_size</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Dense block which is used as a build block of densenet model.</span>
 
-<span class="sd">        Schematically this layer can be represented like this:</span>
-<span class="sd">        ==================================================================================</span>
-<span class="sd">        input =&gt; conv3D{1x1x1}[1:1:1](filters) =&gt; conv3D{3x3x3}[1:1:1](filters) =&gt; output_1</span>
-<span class="sd">        ----------------------------------------------------------------------------------</span>
-<span class="sd">        concat([input, output_1]) =&gt; conv3D{1x1x1}[1:1:1](filters) =&gt;</span>
-<span class="sd">        =&gt; conv3D{3x3x3}[1:1:1](filters) =&gt; ouput_2</span>
-<span class="sd">        ----------------------------------------------------------------------------------</span>
-<span class="sd">        ...</span>
-<span class="sd">        ----------------------------------------------------------------------------------</span>
-<span class="sd">        ...</span>
-<span class="sd">        ----------------------------------------------------------------------------------</span>
-<span class="sd">        concat([input, output_1, ..., output_(n - 1)]) =&gt; conv3D{1x1x1}[1:1:1](filters) =&gt;</span>
-<span class="sd">        =&gt; conv3D{3x3x3}[1:1:1](filters) =&gt; output_n</span>
-<span class="sd">        =================================================================================</span>
+<span class="sd">        Repeat block of two convolutions: conv3d{1x1x1} =&gt; conv3d{3x3x3}.</span>
+<span class="sd">        On each iteration outputs of all previous iterations are stacked and</span>
+<span class="sd">        used as inputs of the current iteration&#39;s block.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -145,8 +132,12 @@
 
         <span class="k">return</span> <span class="n">previous_input</span></div>
 
-<div class="viewcode-block" id="TFDenseNet.transition_layer"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.transition_layer">[docs]</a>    <span class="k">def</span> <span class="nf">transition_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+<div class="viewcode-block" id="TFDenseNet.transition_layer"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDenseNet.transition_layer">[docs]</a>    <span class="k">def</span> <span class="nf">transition_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Transition layer which is used as a dimension reduction block in densenset model.</span>
+
+<span class="sd">        Apply 3D-convolution with batch normalization and `relu` activation</span>
+<span class="sd">        followed by 3D-maxpooling operation with kernel_size=(2, 2, 2)</span>
+<span class="sd">        and strides=(2, 2, 2).</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -251,7 +242,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

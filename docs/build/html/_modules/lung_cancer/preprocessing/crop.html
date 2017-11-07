@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.preprocessing.crop &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -75,81 +72,6 @@
                         <span class="n">halfsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">crop_halfsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">halfsize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">crop_size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">crop_halfsize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
                         <span class="n">halfsize</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">crop_halfsize</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="n">halfsize</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">crop_size</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">crop_halfsize</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
     <span class="k">return</span> <span class="n">cropped_img</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
-
-
-<span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="detect_black_border"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.crop.detect_black_border">[docs]</a><span class="k">def</span> <span class="nf">detect_black_border</span><span class="p">(</span><span class="n">masked_image</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Get number of black (empty) slices from top and bottom of 3d-scan</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    masked_image : ndarray</span>
-<span class="sd">                   3D numpy array</span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    tuple</span>
-<span class="sd">         (int,int), numbers of empty slices on top and bottom by z-axis</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">n</span> <span class="o">=</span> <span class="n">masked_image</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">x_l</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">x_u</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
-
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
-        <span class="n">current_size</span> <span class="o">=</span> <span class="n">masked_image</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:][</span><span class="n">masked_image</span><span class="p">[:</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]]</span><span class="o">.</span><span class="n">size</span>
-        <span class="k">if</span> <span class="n">current_size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">break</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">x_l</span> <span class="o">=</span> <span class="n">i</span>
-
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
-        <span class="n">current_size</span> <span class="o">=</span> <span class="n">masked_image</span><span class="p">[</span><span class="n">i</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:][</span><span class="n">masked_image</span><span class="p">[</span><span class="n">i</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:]]</span><span class="o">.</span><span class="n">size</span>
-        <span class="k">if</span> <span class="n">current_size</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">break</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">x_u</span> <span class="o">=</span> <span class="n">i</span>
-
-    <span class="k">if</span> <span class="n">x_l</span> <span class="o">&gt;=</span> <span class="n">x_u</span><span class="p">:</span>
-        <span class="k">return</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
-
-    <span class="k">return</span> <span class="n">x_l</span><span class="p">,</span> <span class="n">x_u</span></div>
-
-
-<span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="return_black_border_array"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.crop.return_black_border_array">[docs]</a><span class="k">def</span> <span class="nf">return_black_border_array</span><span class="p">(</span><span class="n">input_image</span><span class="p">,</span> <span class="n">background</span><span class="o">=-</span><span class="mi">2000</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Get array with a black (empty) border.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    input_image : ndarray</span>
-<span class="sd">                  3D numpy array</span>
-<span class="sd">    background : int</span>
-<span class="sd">                 voxel&#39;s value for background color (air in case of CT).</span>
-<span class="sd">                 default is -2000, it is air in HU scale.</span>
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    ndarray</span>
-<span class="sd">            info with top and bottom number of black (empty) slices,</span>
-<span class="sd">            and mean value for non-empty part of scan.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">out_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-
-    <span class="n">masked_image</span> <span class="o">=</span> <span class="p">(</span><span class="n">input_image</span> <span class="o">!=</span> <span class="n">background</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">axis</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">masked_image</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-
-        <span class="n">data_for_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">moveaxis</span><span class="p">(</span><span class="n">masked_image</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-
-        <span class="n">_centr</span> <span class="o">=</span> <span class="p">(</span><span class="n">data_for_mean</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">data_for_mean</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">/</span> <span class="p">(</span><span class="n">data_for_mean</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.01</span><span class="p">)</span>
-
-        <span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">u</span><span class="p">)</span> <span class="o">=</span> <span class="n">detect_black_border</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-
-        <span class="n">out_array</span><span class="p">[</span><span class="n">axis</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">l</span>
-        <span class="n">out_array</span><span class="p">[</span><span class="n">axis</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">u</span>
-        <span class="n">out_array</span><span class="p">[</span><span class="n">axis</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">_centr</span>
-
-    <span class="k">return</span> <span class="n">out_array</span></div>
 </pre></div>
 
           </div>
@@ -186,7 +108,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.models.tensorflow.architectures package &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -62,33 +59,34 @@
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.config">
 <code class="descname">config</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.config" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> &#8211; config dictionary from dataset pipeline
+<dd><p><em>dict</em> – config dictionary from dataset pipeline
 see configuring model section of dataset module
-<a class="reference external" href="https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model">https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model</a>.</p>
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models.html">https://analysiscenter.github.io/dataset/intro/models.html</a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.name">
 <code class="descname">name</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.name" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; name of the model.</p>
+<dd><p><em>str</em> – name of the model, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.units">
 <code class="descname">units</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.units" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>tuple(int, int)</em> &#8211; number of units in two final dense layers before tensor with predicitons.</p>
+<dd><p><em>tuple(int, int)</em> – number of units in two final dense layers before tensor with predicitons,
+can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.num_targets">
 <code class="descname">num_targets</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.num_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> &#8211; size of tensor with predicitons.</p>
+<dd><p><em>int</em> – size of tensor with predicitons, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.dropout_rate">
 <code class="descname">dropout_rate</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.dropout_rate" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> &#8211; probability of dropout.</p>
+<dd><p><em>float</em> – probability of dropout, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -111,20 +109,46 @@ see configuring model section of dataset module
 <dt id="lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.dense_block">
 <code class="descname">dense_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>filters</em>, <em>block_size</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/dense_net.html#TFDenseNet.dense_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.dense_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Dense block which is used as a build block of densenet model.</p>
+<p>Repeat block of two convolutions: conv3d{1x1x1} =&gt; conv3d{3x3x3}.
+On each iteration outputs of all previous iterations are stacked and
+used as inputs of the current iteration’s block.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input_tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in output tensor of each convolution layer.</li>
+<li><strong>block_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – how many time repeat block conv3d{1x1x1} =&gt; conv3d{3x3x3} sequentially.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of the layer that will be used as an argument of tf.variable_scope.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output_tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.transition_layer">
 <code class="descname">transition_layer</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>filters</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/dense_net.html#TFDenseNet.transition_layer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dense_net.TFDenseNet.transition_layer" title="Permalink to this definition">¶</a></dt>
 <dd><p>Transition layer which is used as a dimension reduction block in densenset model.</p>
+<p>Apply 3D-convolution with batch normalization and <cite>relu</cite> activation
+followed by 3D-maxpooling operation with kernel_size=(2, 2, 2)
+and strides=(2, 2, 2).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in output tensor, required by 3D-convolution operation.</li>
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the layer that will be used as an argument of tf.variable_scope.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in output tensor, required by 3D-convolution operation.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of the layer that will be used as an argument of tf.variable_scope.</li>
 </ul>
 </td>
 </tr>
@@ -152,15 +176,15 @@ see configuring model section of dataset module
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.dilated_vnet.TFDilatedVnet.config">
 <code class="descname">config</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dilated_vnet.TFDilatedVnet.config" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> &#8211; config dictionary from dataset pipeline
+<dd><p><em>dict</em> – config dictionary from dataset pipeline
 see configuring model section of dataset module
-<a class="reference external" href="https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model">https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model</a>.</p>
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models.html">https://analysiscenter.github.io/dataset/intro/models.html</a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.dilated_vnet.TFDilatedVnet.name">
 <code class="descname">name</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dilated_vnet.TFDilatedVnet.name" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; name of the model.</p>
+<dd><p><em>str</em> – name of the model, can be specified in config dict.</p>
 </dd></dl>
 
 <div class="admonition note">
@@ -176,32 +200,19 @@ see configuring model section of dataset module
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>input_tensor: tf.Tensor</strong></p>
-<blockquote>
-<div><blockquote>
-<div><p>input tensor.</p>
-</div></blockquote>
-<dl class="docutils">
-<dt>filters: int</dt>
-<dd><p class="first last">number of filters.</p>
-</dd>
-<dt>scope: str</dt>
-<dd><p class="first last">name scope of the layer.</p>
-</dd>
-<dt>dilation: tuple(int, int, int)</dt>
-<dd><p class="first last">dilation rate along spatial axes.</p>
-</dd>
-<dt>padding <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">padding mode, can be &#8216;valid&#8217; or &#8216;same&#8217;.</p>
-</dd>
-</dl>
-</div></blockquote>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name scope of the layer.</li>
+<li><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – dilation rate along spatial axes.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode, can be ‘valid’ or ‘same’.</li>
+</ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">tf.Tensor</p>
-<blockquote class="last">
-<div><p>output tensor.</p>
-</div></blockquote>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
 </td>
 </tr>
 </tbody>
@@ -212,45 +223,29 @@ see configuring model section of dataset module
 <dt id="lung_cancer.models.tensorflow.architectures.dilated_vnet.TFDilatedVnet.reduction_block">
 <code class="descname">reduction_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>filters</em>, <em>scope</em>, <em>dilation=(1</em>, <em>1</em>, <em>1)</em>, <em>pool_size=(2</em>, <em>2</em>, <em>2)</em>, <em>padding='same'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/dilated_vnet.html#TFDilatedVnet.reduction_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.dilated_vnet.TFDilatedVnet.reduction_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply reduction block transform to input tensor.</p>
-<blockquote>
-<div>This layer consists of two 3D-convolutional layers with batch normalization
-before &#8216;relu&#8217; activation and max_pooling3d layer in the end.
+<p>This layer consists of two 3D-convolutional layers with batch normalization
+before ‘relu’ activation and max_pooling3d layer in the end.
 Middle layer contains two separate convolutions:
-one with dilation_rate=(2, 2, 2) and another with dilation_rate=(1, 1, 1).</div></blockquote>
+one with dilation_rate=(2, 2, 2) and another with dilation_rate=(1, 1, 1).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>input_tensor</strong> : tf.Tensor</p>
-<blockquote>
-<div><blockquote>
-<div><p>input tensor.</p>
-</div></blockquote>
-<dl class="docutils">
-<dt>filters <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
-<dd><p class="first last">number of filters in first and second covnolutions.</p>
-</dd>
-<dt>scope <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">name of scope for this reduction block.</p>
-</dd>
-<dt>dilation <span class="classifier-delimiter">:</span> <span class="classifier">tuple(int, int, int)</span></dt>
-<dd><p class="first last">dilation rate along spatial axes.</p>
-</dd>
-<dt>pool_size <span class="classifier-delimiter">:</span> <span class="classifier">tuple(int, int, int)</span></dt>
-<dd><p class="first last">size of pooling kernel along three axis.</p>
-</dd>
-<dt>padding <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">padding mode for convolutions, can be &#8216;same&#8217; or &#8216;valid&#8217;.</p>
-</dd>
-</dl>
-</div></blockquote>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in first and second covnolutions.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of scope for this reduction block.</li>
+<li><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – dilation rate along spatial axes.</li>
+<li><strong>pool_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of pooling kernel along three axis.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode for convolutions, can be ‘same’ or ‘valid’.</li>
+</ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">tuple(tf.Tensor, tf.Tensor)</p>
-<blockquote class="last">
-<div><p>first tensor corresponds to the output of concatenation
-operation before max_pooling, second &#8211; after max_pooling.</p>
-</div></blockquote>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">first tensor corresponds to the output of concatenation
+operation before max_pooling, second – after max_pooling.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a>(tf.Tensor, tf.Tensor)</p>
 </td>
 </tr>
 </tbody>
@@ -267,8 +262,8 @@ operation before max_pooling, second &#8211; after max_pooling.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor.</li>
-<li><strong>times</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; number of times to repeat values along each spatial axis.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>times</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number of times to repeat values along each spatial axis.</li>
 </ul>
 </td>
 </tr>
@@ -293,19 +288,19 @@ along channels and batch axes.</p>
 <dd><p>Apply upsampling transform to two input tensors.</p>
 <p>First of all, UpSampling3D transform is applied to input_tensor. Then output
 tensor of this operation is concatenated with skip_connect_tensor. After this
-two 3D-convolutions with batch normalization before &#8216;relu&#8217; activation
+two 3D-convolutions with batch normalization before ‘relu’ activation
 are applied.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor from previous layer.</li>
-<li><strong>skip_connect_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor from simmiliar layer from reduction branch of VNet.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in convolutional layers.</li>
-<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of scope for this block.</li>
-<li><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; dilation rate along spatial axes.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode for convolutions, can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor from previous layer.</li>
+<li><strong>skip_connect_tensor</strong> (<em>tf.Tensor</em>) – input tensor from simmiliar layer from reduction branch of VNet.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in convolutional layers.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of scope for this block.</li>
+<li><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – dilation rate along spatial axes.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode for convolutions, can be ‘same’ or ‘valid’.</li>
 </ul>
 </td>
 </tr>
@@ -335,33 +330,34 @@ are applied.</p>
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.resnet.TFResNet.config">
 <code class="descname">config</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.resnet.TFResNet.config" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>dict</em> &#8211; config dictionary from dataset pipeline
+<dd><p><em>dict</em> – config dictionary from dataset pipeline
 see configuring model section of dataset module
-<a class="reference external" href="https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model">https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model</a>.</p>
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models.html">https://analysiscenter.github.io/dataset/intro/models.html</a>.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.resnet.TFResNet.name">
 <code class="descname">name</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.resnet.TFResNet.name" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; name of the model.</p>
+<dd><p><em>str</em> – name of the model, can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.resnet.TFResNet.units">
 <code class="descname">units</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.resnet.TFResNet.units" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>tuple(int, int)</em> &#8211; number of units in two final dense layers before tensor with predicitons.</p>
+<dd><p><em>tuple(int, int)</em> – number of units in two final dense layers before tensor with predicitons,
+can be specified in config dict.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.resnet.TFResNet.num_targets">
 <code class="descname">num_targets</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.resnet.TFResNet.num_targets" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>int</em> &#8211; size of tensor with predicitons.</p>
+<dd><p><em>int</em> – size of tensor with predicitons.</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="lung_cancer.models.tensorflow.architectures.resnet.TFResNet.dropout_rate">
 <code class="descname">dropout_rate</code><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.resnet.TFResNet.dropout_rate" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>float</em> &#8211; probability of dropout.</p>
+<dd><p><em>float</em> – probability of dropout, can be specified in config dict.</p>
 </dd></dl>
 
 <div class="admonition note">
@@ -373,12 +369,73 @@ see configuring model section of dataset module
 <dt id="lung_cancer.models.tensorflow.architectures.resnet.TFResNet.conv_block">
 <code class="descname">conv_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>kernel_size</em>, <em>filters</em>, <em>name</em>, <em>strides=(2</em>, <em>2</em>, <em>2)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/resnet.html#TFResNet.conv_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.resnet.TFResNet.conv_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convolutional block that has a conv layer as shortcut.</p>
+<p>First of all, 3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
+batch normalization and ‘relu’ activation is applied. Then the result
+flows into 3D-convolution with (3, 3, 3) kernel size, batch normalization
+and ‘relu’ activation. Finally, the result of previous convolution goes
+into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+without activation and its output is summed with the result
+of 3D-convolution with kernel_size=(1, 1, 1), strides=(2, 2, 2) and
+batch normalization of input_tensor. After that ‘relu’ activation
+is applied to the result of ‘add’ operation.
+Argument <cite>filters</cite> should be tuple(int, int, int) and specifies
+number of filters in first, second and third convolution correspondingly.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of kernel along three dimensions for middle convolution operation in block.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number of filters in first, second, and third 3D-convolution operations.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="lung_cancer.models.tensorflow.architectures.resnet.TFResNet.identity_block">
 <code class="descname">identity_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>kernel_size</em>, <em>filters</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/resnet.html#TFResNet.identity_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.architectures.resnet.TFResNet.identity_block" title="Permalink to this definition">¶</a></dt>
 <dd><p>The identity block is the block that has no conv layer at shortcut.</p>
+<p>First of all, 3D-convolution with (1, 1, 1) kernel size, batch normalization
+and relu activation is applied. Then the result flows into
+3D-convolution with (3, 3, 3) kernel size, batch normalization and
+relu activation. Finally, the result of previous convolution goes
+into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+without activation and its output is summed with the input tensor
+and ‘relu’ activation is applied.
+Argument <cite>filters</cite> should be tuple(int, int, int) and specifies
+number of filters in first, second and third convolution correspondingly.
+Number of filters in third convolution must be the same as in the input
+tensor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of kernel along three dimensions for middle convolution operation in block.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number for filters in first, second and third 3D-convolution operations.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of block that will be used as argument of of tf.variable_scope.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -443,7 +500,7 @@ see configuring model section of dataset module
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

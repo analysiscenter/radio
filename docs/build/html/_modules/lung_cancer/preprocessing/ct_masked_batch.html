@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.preprocessing.ct_masked_batch &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -71,7 +68,7 @@
 <span class="kn">from</span> <span class="nn">.mask</span> <span class="k">import</span> <span class="n">make_mask_numba</span><span class="p">,</span> <span class="n">create_mask_reg</span>
 <span class="kn">from</span> <span class="nn">.histo</span> <span class="k">import</span> <span class="n">sample_histo3d</span>
 <span class="kn">from</span> <span class="nn">.crop</span> <span class="k">import</span> <span class="n">make_central_crop</span>
-<span class="kn">from</span> <span class="nn">..dataset</span> <span class="k">import</span> <span class="n">action</span><span class="p">,</span> <span class="n">any_action_failed</span><span class="p">,</span> <span class="n">DatasetIndex</span><span class="p">,</span> <span class="n">SkipBatchException</span>
+<span class="kn">from</span> <span class="nn">..dataset</span> <span class="k">import</span> <span class="n">action</span><span class="p">,</span> <span class="n">any_action_failed</span><span class="p">,</span> <span class="n">DatasetIndex</span><span class="p">,</span> <span class="n">SkipBatchException</span>  <span class="c1"># pylint: disable=no-name-in-module</span>
 
 <span class="n">LOGGING_FMT</span> <span class="o">=</span> <span class="p">(</span><span class="sa">u</span><span class="s2">&quot;</span><span class="si">%(filename)s</span><span class="s2">[LINE:</span><span class="si">%(lineno)d</span><span class="s2">]#&quot;</span> <span class="o">+</span>
                <span class="s2">&quot;</span><span class="si">%(levelname)-8s</span><span class="s2"> [</span><span class="si">%(asctime)s</span><span class="s2">]  </span><span class="si">%(message)s</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -80,8 +77,8 @@
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>  <span class="c1"># pylint: disable=invalid-name</span>
 
 
-<span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="get_nodules_numba"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.get_nodules_numba">[docs]</a><span class="k">def</span> <span class="nf">get_nodules_numba</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+<div class="viewcode-block" id="get_nodules_numba"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.get_nodules_numba">[docs]</a><span class="nd">@njit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_nodules_numba</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Fetch nodules from array by starting positions.</span>
 
 <span class="sd">    Takes array with data of shape (z, y, x) from `batch`,</span>
@@ -166,8 +163,8 @@
                               <span class="p">(</span><span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,)),</span>
                               <span class="p">(</span><span class="s1">&#39;origin&#39;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,))])</span>
 
-    <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.make_indices"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_indices">[docs]</a>    <span class="k">def</span> <span class="nf">make_indices</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.make_indices"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_indices">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">make_indices</span><span class="p">(</span><span class="n">size</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Generate list of batch indices of given `size`.</span>
 
 <span class="sd">        Parameters</span>
@@ -203,13 +200,13 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        (str, str, str, str)</span>
-<span class="sd">                       names of components returned from __getitem__.</span>
+<span class="sd">        tuple</span>
+<span class="sd">            names of components returned from __getitem__.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="s1">&#39;images&#39;</span><span class="p">,</span> <span class="s1">&#39;masks&#39;</span><span class="p">,</span> <span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.load"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;dicom&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>      <span class="c1"># pylint: disable=arguments-differ</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.load"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.load">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;dicom&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>      <span class="c1"># pylint: disable=arguments-differ</span>
              <span class="n">origin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodules</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">masks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
              <span class="n">src_blosc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Load data in batch with scans and masks.</span>
@@ -255,8 +252,8 @@
             <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">,</span> <span class="n">src_blosc</span><span class="o">=</span><span class="n">src_blosc</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.dump"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.dump">[docs]</a>    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">):</span>                <span class="c1"># pylint: disable=arguments-differ</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.dump"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.dump">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">):</span>                <span class="c1"># pylint: disable=arguments-differ</span>
         <span class="sd">&quot;&quot;&quot; Dump scans to dst-folder in specified format.</span>
 
 <span class="sd">        Parameters</span>
@@ -299,12 +296,15 @@
 <span class="sd">        &#39;locZ&#39;, &#39;locY&#39;, &#39;locX&#39; - coordinates of nodules&#39; centers;</span>
 <span class="sd">        &#39;diamZ&#39;, &#39;diamY&#39;, &#39;diamX&#39; - sizes of nodules along zyx axes;</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">        - nodules: ndarray of type nodules_info(this type is defined</span>
-<span class="sd">        inside of CTImagesMaskedBatch class);</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nodules : ndarray of type nodules_info</span>
+<span class="sd">            nodules_info type is defined inside of CTImagesMaskedBatch class.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">        - pd.DataFrame with centers, ids and sizes of nodules;</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        pd.DataFrame</span>
+<span class="sd">            centers, ids and sizes of nodules.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;nodule_id&#39;</span><span class="p">,</span> <span class="s1">&#39;source_id&#39;</span><span class="p">,</span> <span class="s1">&#39;locZ&#39;</span><span class="p">,</span> <span class="s1">&#39;locY&#39;</span><span class="p">,</span>
                    <span class="s1">&#39;locX&#39;</span><span class="p">,</span> <span class="s1">&#39;diamZ&#39;</span><span class="p">,</span> <span class="s1">&#39;diamY&#39;</span><span class="p">,</span> <span class="s1">&#39;diamX&#39;</span><span class="p">]</span>
@@ -374,8 +374,8 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.fetch_nodules_info"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_nodules_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodules_df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodules_records</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">images_loaded</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.fetch_nodules_info"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">fetch_nodules_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodules_df</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">nodules_records</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">images_loaded</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Extract nodules&#39; info from nodules_df into attribute self.nodules.</span>
 
 <span class="sd">        Parameters</span>
@@ -453,8 +453,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_nodules_info</span><span class="p">(</span><span class="n">images_loaded</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.fetch_nodules_from_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_from_mask">[docs]</a>    <span class="k">def</span> <span class="nf">fetch_nodules_from_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images_loaded</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.fetch_nodules_from_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_from_mask">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">fetch_nodules_from_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">images_loaded</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Fetch nodules info (centers and sizes) from masks.</span>
 
 <span class="sd">        Runs skimage.measure.labels for fetching nodules regions</span>
@@ -541,8 +541,8 @@
 
         <span class="k">return</span> <span class="p">(</span><span class="n">start_pix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodules</span><span class="o">.</span><span class="n">offset</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.create_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.create_mask">[docs]</a>    <span class="k">def</span> <span class="nf">create_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.create_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.create_mask">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">create_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Create `masks` component from `nodules` component.</span>
 
 <span class="sd">        Note</span>
@@ -659,8 +659,8 @@
 
         <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">samples</span> <span class="o">+</span> <span class="n">offset</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">),</span> <span class="n">sampled_indices</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.sample_nodules"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules">[docs]</a>    <span class="k">def</span> <span class="nf">sample_nodules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>        <span class="c1"># pylint: disable=too-many-locals, too-many-statements</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.sample_nodules"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">sample_nodules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>        <span class="c1"># pylint: disable=too-many-locals, too-many-statements</span>
                        <span class="n">mask_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">histo</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Sample random crops of `images` and `masks` from batch.</span>
 
@@ -809,8 +809,8 @@
 
         <span class="k">return</span> <span class="n">nodules_batch</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.sample_dump"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_dump">[docs]</a>    <span class="k">def</span> <span class="nf">sample_dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">n_iters</span><span class="p">,</span> <span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.sample_dump"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_dump">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">sample_dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">n_iters</span><span class="p">,</span> <span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Perform sample_nodules and dump on the same batch n_iters times.</span>
 
 <span class="sd">        Can be used for fast creation of large datasets of cancerous/non-cancerous crops.</span>
@@ -838,8 +838,8 @@
 
         <span class="k">return</span> <span class="bp">self</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.update_nodules_histo"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.update_nodules_histo">[docs]</a>    <span class="k">def</span> <span class="nf">update_nodules_histo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">histo</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.update_nodules_histo"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.update_nodules_histo">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">update_nodules_histo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">histo</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Update histogram of nodules&#39; locations using nodules locations from batch.</span>
 
 <span class="sd">        Parameters</span>
@@ -1012,8 +1012,8 @@
             <span class="n">batch</span><span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">batch</span>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.make_xip"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_xip">[docs]</a>    <span class="k">def</span> <span class="nf">make_xip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.make_xip"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_xip">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">make_xip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span>
                  <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;axial&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Make intensity projection (maximum, minimum, average) and corresponding masks.</span>
 
@@ -1058,16 +1058,14 @@
             <span class="n">batch</span><span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">batch</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.central_crop"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop">[docs]</a>    <span class="k">def</span> <span class="nf">central_crop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crop_size</span><span class="p">,</span> <span class="n">crop_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.central_crop"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">central_crop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crop_size</span><span class="p">,</span> <span class="n">crop_mask</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Make crop of crop_size from center of images.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        crop_size : tuple</span>
-
-<span class="sd">        #TODO: this method should be rewritten with the use of</span>
-<span class="sd">        inheritance;</span>
+<span class="sd">        crop_size : tuple(int, int, int)</span>
+<span class="sd">            shape of central crop along three axes(z,y,x order is used).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crop_size</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">crop_size</span><span class="p">)</span>
         <span class="n">img_shapes</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s1">&#39;images&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
@@ -1103,21 +1101,21 @@
                        <span class="s2">&quot;CTIMagesMaskedBatch. Nothing happened&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.binarize_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.binarize_mask">[docs]</a>    <span class="k">def</span> <span class="nf">binarize_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.35</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.binarize_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.binarize_mask">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">binarize_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.35</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Binarize masks by threshold.</span>
 
-<span class="sd">        Args:</span>
-<span class="sd">        - threshold: float, threshold for masks binarization;</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        threshold : float</span>
+<span class="sd">            threshold for masks binarization.</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">        - self, source CTImagesMaskedBatch with binarized masks.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">masks</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">masks</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesMaskedBatch.predict_on_scan"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan">[docs]</a>    <span class="k">def</span> <span class="nf">predict_on_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">crop_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
+<div class="viewcode-block" id="CTImagesMaskedBatch.predict_on_scan"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">predict_on_scan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_name</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">),</span> <span class="n">crop_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
                         <span class="n">batch_size</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">y_component</span><span class="o">=</span><span class="s1">&#39;labels&#39;</span><span class="p">,</span> <span class="n">dim_ordering</span><span class="o">=</span><span class="s1">&#39;channels_last&#39;</span><span class="p">,</span>
                         <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Get predictions of the model on data contained in batch.</span>
@@ -1142,8 +1140,7 @@
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        CTImagesMaskedBatch</span>
-<span class="sd">            self(source batch).</span>
+<span class="sd">        CTImagesMaskedBatch.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_by_name</span><span class="p">(</span><span class="n">model_name</span><span class="p">)</span>
 
@@ -1216,7 +1213,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

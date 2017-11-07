@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.preprocessing.ct_batch &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -64,13 +61,12 @@
 <span class="kn">import</span> <span class="nn">dicom</span>
 <span class="kn">import</span> <span class="nn">SimpleITK</span> <span class="k">as</span> <span class="nn">sitk</span>
 
-<span class="kn">from</span> <span class="nn">..dataset</span> <span class="k">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">inbatch_parallel</span><span class="p">,</span> <span class="n">any_action_failed</span><span class="p">,</span> <span class="n">DatasetIndex</span>
+<span class="kn">from</span> <span class="nn">..dataset</span> <span class="k">import</span> <span class="n">Batch</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">inbatch_parallel</span><span class="p">,</span> <span class="n">any_action_failed</span><span class="p">,</span> <span class="n">DatasetIndex</span>  <span class="c1"># pylint: disable=no-name-in-module</span>
 
 <span class="kn">from</span> <span class="nn">.resize</span> <span class="k">import</span> <span class="n">resize_scipy</span><span class="p">,</span> <span class="n">resize_pil</span>
 <span class="kn">from</span> <span class="nn">.segment</span> <span class="k">import</span> <span class="n">calc_lung_mask_numba</span>
 <span class="kn">from</span> <span class="nn">.mip</span> <span class="k">import</span> <span class="n">xip_fn_numba</span>
 <span class="kn">from</span> <span class="nn">.flip</span> <span class="k">import</span> <span class="n">flip_patient_numba</span>
-<span class="kn">from</span> <span class="nn">.crop</span> <span class="k">import</span> <span class="n">return_black_border_array</span> <span class="k">as</span> <span class="n">rbba</span>
 <span class="kn">from</span> <span class="nn">.crop</span> <span class="k">import</span> <span class="n">make_central_crop</span>
 <span class="kn">from</span> <span class="nn">.patches</span> <span class="k">import</span> <span class="n">get_patches_numba</span><span class="p">,</span> <span class="n">assemble_patches</span><span class="p">,</span> <span class="n">calc_padding_size</span>
 <span class="kn">from</span> <span class="nn">.rotate</span> <span class="k">import</span> <span class="n">rotate_3D</span>
@@ -127,9 +123,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_data</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_crop_centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_crop_sizes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Components&#39; property.</span>
@@ -144,7 +137,7 @@
         <span class="k">return</span> <span class="s1">&#39;images&#39;</span><span class="p">,</span> <span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span>
 
     <span class="k">def</span> <span class="nf">_init_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Initialize images, _bounds, _crop_centers, _crop_sizes attributes.</span>
+        <span class="sd">&quot;&quot;&quot; Initialize images, _bounds, origin and spacing attributes.</span>
 
 <span class="sd">        `_init_data` is used as initializer of batch inner structures,</span>
 <span class="sd">        called inside __init__ and other methods</span>
@@ -175,8 +168,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">origin</span> <span class="o">=</span> <span class="n">origin</span> <span class="k">if</span> <span class="n">origin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">spacing</span> <span class="o">=</span> <span class="n">spacing</span> <span class="k">if</span> <span class="n">spacing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="mi">3</span><span class="p">))</span>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="CTImagesBatch.split"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesBatch.split"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.split">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Split one batch in two batches.</span>
 
 <span class="sd">        The lens of 2 batches would be `batch_size` and `len(batch) - batch_size`</span>
@@ -244,8 +237,8 @@
 
         <span class="k">return</span> <span class="n">batches</span></div>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="CTImagesBatch.concat"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.concat">[docs]</a>    <span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">batches</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesBatch.concat"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.concat">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">batches</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Concatenate several batches in one large batch.</span>
 
 <span class="sd">        Assume that same components are filled in all supplied batches.</span>
@@ -295,8 +288,8 @@
         <span class="n">large_batch</span><span class="o">.</span><span class="n">_bounds</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="n">n_slices</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>  <span class="c1"># pylint: disable=protected-access</span>
         <span class="k">return</span> <span class="n">large_batch</span></div>
 
-    <span class="nd">@classmethod</span>
-<div class="viewcode-block" id="CTImagesBatch.merge"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.merge">[docs]</a>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">batches</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesBatch.merge"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.merge">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">batches</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Concatenate list of batches and then split the result in two batches of sizes</span>
 <span class="sd">                (batch_size, sum(lens of batches) - batch_size)</span>
 
@@ -310,7 +303,7 @@
 <span class="sd">        -------</span>
 <span class="sd">        (new_batch, rest_batch)</span>
 
-<span class="sd">        NOTE</span>
+<span class="sd">        Note</span>
 <span class="sd">        ----</span>
 <span class="sd">        Merge performs split (of middle-batch) and then two concats</span>
 <span class="sd">        because of speed considerations.</span>
@@ -340,8 +333,8 @@
 
         <span class="k">return</span> <span class="n">merged</span><span class="p">,</span> <span class="n">rest</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesBatch.load"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.load">[docs]</a>    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;dicom&#39;</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># pylint: disable=arguments-differ</span>
+<div class="viewcode-block" id="CTImagesBatch.load"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.load">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;dicom&#39;</span><span class="p">,</span> <span class="n">source</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># pylint: disable=arguments-differ</span>
              <span class="n">origin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">src_blosc</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Load 3d scans data in batch.</span>
 
@@ -371,20 +364,22 @@
 
 <span class="sd">        Example</span>
 <span class="sd">        -------</span>
-<span class="sd">        #: DICOM example</span>
-<span class="sd">        # initialize batch for storing batch of 3 patients</span>
-<span class="sd">        # with following IDs</span>
-<span class="sd">        index = FilesIndex(path=&quot;/some/path/*.dcm&quot;, no_ext=True)</span>
-<span class="sd">        batch = CTImagesBatch(index)</span>
-<span class="sd">        batch.load(fmt=&#39;dicom&#39;)</span>
+<span class="sd">        DICOM example</span>
+<span class="sd">        initialize batch for storing batch of 3 patients with following IDs:</span>
 
-<span class="sd">        #: Ndarray example:</span>
-<span class="sd">        # source_array stores a batch (concatted 3d-scans, skyscraper)</span>
-<span class="sd">        # say, ndarray with shape (400, 256, 256)</span>
+<span class="sd">        &gt;&gt;&gt; index = FilesIndex(path=&quot;/some/path/*.dcm&quot;, no_ext=True)</span>
+<span class="sd">        &gt;&gt;&gt; batch = CTImagesBatch(index)</span>
+<span class="sd">        &gt;&gt;&gt; batch.load(fmt=&#39;dicom&#39;)</span>
 
-<span class="sd">        # bounds stores ndarray of last floors for each patient</span>
-<span class="sd">        # say, source_ubounds = np.asarray([0, 100, 400])</span>
-<span class="sd">        batch.load(source=source_array, fmt=&#39;ndarray&#39;, bounds=bounds)</span>
+<span class="sd">        Ndarray example</span>
+
+<span class="sd">        Source_array stores a batch (concatted 3d-scans, skyscraper)</span>
+<span class="sd">        say, ndarray with shape (400, 256, 256)</span>
+
+<span class="sd">        bounds stores ndarray of last floors for each patient</span>
+<span class="sd">        say, source_ubounds = np.asarray([0, 100, 400])</span>
+
+<span class="sd">        &gt;&gt;&gt; batch.load(source=source_array, fmt=&#39;ndarray&#39;, bounds=bounds)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># if ndarray</span>
@@ -447,10 +442,10 @@
 
 <span class="sd">        `_preload_shapes` is used in _init_load_blosc.</span>
 
-<span class="sd">            Returns</span>
-<span class="sd">            -------</span>
-<span class="sd">            (int,int)</span>
-<span class="sd">                    `y, x` dims shape of a scan.</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        (int, int)</span>
+<span class="sd">            `y, x` dims shape of a scan.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">shapes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">:</span>
@@ -564,8 +559,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_bounds</span> <span class="o">=</span> <span class="n">new_bounds</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="nd">@staticmethod</span>
-<div class="viewcode-block" id="CTImagesBatch.dump_data"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump_data">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">dump_data</span><span class="p">(</span><span class="n">data_items</span><span class="p">,</span> <span class="n">folder</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesBatch.dump_data"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump_data">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">dump_data</span><span class="p">(</span><span class="n">data_items</span><span class="p">,</span> <span class="n">folder</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Dump data from data_items on disk in specified folder</span>
 
 <span class="sd">        Parameters</span>
@@ -603,9 +598,9 @@
 
         <span class="k">return</span> <span class="kc">None</span></div>
 
-    <span class="nd">@action</span>
+<div class="viewcode-block" id="CTImagesBatch.dump"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump">[docs]</a>    <span class="nd">@action</span>
     <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;indices&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_default&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;async&#39;</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<div class="viewcode-block" id="CTImagesBatch.dump"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump">[docs]</a>    <span class="k">async</span> <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patient</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">):</span>
+    <span class="k">async</span> <span class="k">def</span> <span class="nf">dump</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patient</span><span class="p">,</span> <span class="n">dst</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Dump scans data (3d-array) on specified path in specified format</span>
 
 <span class="sd">        Parameters</span>
@@ -621,23 +616,26 @@
 <span class="sd">              is put into images.blk, attributes are put into files attr_name.cpkl</span>
 <span class="sd">              (e.g., spacing.cpkl)</span>
 
-<span class="sd">        example:</span>
-<span class="sd">            # initialize batch and load data</span>
-<span class="sd">            ind = [&#39;1ae34g90&#39;, &#39;3hf82s76&#39;]</span>
-<span class="sd">            batch = CTImagesBatch(ind)</span>
-<span class="sd">            batch.load(...)</span>
-<span class="sd">            batch.dump(dst=&#39;./data/blosc_preprocessed&#39;)</span>
-<span class="sd">            # the command above creates files</span>
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        Initialize batch and load data</span>
 
-<span class="sd">            # ./data/blosc_preprocessed/1ae34g90/images.blk</span>
-<span class="sd">            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl</span>
-<span class="sd">            # ./data/blosc_preprocessed/1ae34g90/origin.cpkl</span>
-<span class="sd">            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl</span>
+<span class="sd">        &gt;&gt;&gt; ind = [&#39;1ae34g90&#39;, &#39;3hf82s76&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; batch = CTImagesBatch(ind)</span>
+<span class="sd">        &gt;&gt;&gt; batch.load(...)</span>
+<span class="sd">        &gt;&gt;&gt; batch.dump(dst=&#39;./data/blosc_preprocessed&#39;)</span>
 
-<span class="sd">            # ./data/blosc_preprocessed/3hf82s76/images.blk</span>
-<span class="sd">            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl</span>
-<span class="sd">            # ./data/blosc_preprocessed/3hf82s76/origin.cpkl</span>
-<span class="sd">            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl</span>
+<span class="sd">        The command above creates following files:</span>
+
+<span class="sd">        - ./data/blosc_preprocessed/1ae34g90/images.blk</span>
+<span class="sd">        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl</span>
+<span class="sd">        - ./data/blosc_preprocessed/1ae34g90/origin.cpkl</span>
+<span class="sd">        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl</span>
+
+<span class="sd">        - ./data/blosc_preprocessed/3hf82s76/images.blk</span>
+<span class="sd">        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl</span>
+<span class="sd">        - ./data/blosc_preprocessed/3hf82s76/origin.cpkl</span>
+<span class="sd">        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># if src is not supplied, dump all components and shapes</span>
         <span class="k">if</span> <span class="n">src</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -993,43 +991,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_init_data</span><span class="p">(</span><span class="o">**</span><span class="n">params</span><span class="p">)</span>
             <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">crop_centers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Get centers of crop for all scans</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        ndarray</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crop_centers</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_crop_params_patients</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crop_centers</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">crop_sizes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Get sizes of crop for all scans</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        ndarray</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crop_sizes</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_crop_params_patients</span><span class="p">()</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_crop_sizes</span>
-
-    <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_init_images&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_crop&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;nogil&#39;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">_crop_params_patients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Calculate params for crop</span>
-
-<span class="sd">        Returns</span>
-<span class="sd">        -------</span>
-<span class="sd">        function</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">rbba</span>
-
-    <span class="nd">@action</span>
+<div class="viewcode-block" id="CTImagesBatch.resize"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.resize">[docs]</a>    <span class="nd">@action</span>
     <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_init_rebuild&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_rebuild&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;threads&#39;</span><span class="p">)</span>
-<div class="viewcode-block" id="CTImagesBatch.resize"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.resize">[docs]</a>    <span class="k">def</span> <span class="nf">resize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;pil-simd&#39;</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">resize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;pil-simd&#39;</span><span class="p">,</span>
                <span class="n">axes_pairs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Resize (change shape of) each CT-scan in the batch.</span>
 
@@ -1058,9 +1022,9 @@
 
 <span class="sd">        Example</span>
 <span class="sd">        -------</span>
-<span class="sd">            shape = (128, 256, 256)</span>
-<span class="sd">            Batch = Batch.resize(shape=shape, order=2, method=&#39;scipy&#39;)</span>
-<span class="sd">            Bacch = Batch.resize(shape=shape, resample=PIL.Image.BILINEAR)</span>
+<span class="sd">        &gt;&gt;&gt; shape = (128, 256, 256)</span>
+<span class="sd">        &gt;&gt;&gt; batch = batch.resize(shape=shape, order=2, method=&#39;scipy&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; batch = batch.resize(shape=shape, resample=PIL.Image.BILINEAR)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;scipy&#39;</span><span class="p">:</span>
             <span class="n">args_resize</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">patient</span><span class="o">=</span><span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="o">=</span><span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
@@ -1070,9 +1034,9 @@
                                <span class="n">res</span><span class="o">=</span><span class="n">res</span><span class="p">,</span> <span class="n">axes_pairs</span><span class="o">=</span><span class="n">axes_pairs</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="n">resample</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">resize_pil</span><span class="p">(</span><span class="o">**</span><span class="n">args_resize</span><span class="p">)</span></div>
 
-    <span class="nd">@action</span>
+<div class="viewcode-block" id="CTImagesBatch.unify_spacing"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.unify_spacing">[docs]</a>    <span class="nd">@action</span>
     <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_init_rebuild&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_rebuild&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;threads&#39;</span><span class="p">)</span>
-<div class="viewcode-block" id="CTImagesBatch.unify_spacing"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.unify_spacing">[docs]</a>    <span class="k">def</span> <span class="nf">unify_spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">res_factor</span><span class="p">,</span>
+    <span class="k">def</span> <span class="nf">unify_spacing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">res_factor</span><span class="p">,</span>
                       <span class="n">shape_resize</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
                       <span class="n">method</span><span class="o">=</span><span class="s1">&#39;pil-simd&#39;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="n">axes_pairs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                       <span class="n">resample</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
@@ -1127,6 +1091,14 @@
 <span class="sd">        Note</span>
 <span class="sd">        ----</span>
 <span class="sd">        see CTImagesBatch.resize for more info about methods&#39; params.</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        &gt;&gt;&gt; shape = (128, 256, 256)</span>
+<span class="sd">        &gt;&gt;&gt; batch = batch.unify_spacing(shape=shape, spacing=(1.0, 1.0, 1.0),</span>
+<span class="sd">                                        order=2, method=&#39;scipy&#39;, padding=&#39;reflect&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; batch = batch.unify_spacing(shape=shape, spacing=(1.0, 1.0, 1.0),</span>
+<span class="sd">                                        resample=PIL.Image.BILINEAR)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;scipy&#39;</span><span class="p">:</span>
             <span class="n">args_resize</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">patient</span><span class="o">=</span><span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="o">=</span><span class="n">out_patient</span><span class="p">,</span>
@@ -1138,9 +1110,9 @@
                                <span class="n">shape_resize</span><span class="o">=</span><span class="n">shape_resize</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">resize_pil</span><span class="p">(</span><span class="o">**</span><span class="n">args_resize</span><span class="p">)</span></div>
 
-    <span class="nd">@action</span>
+<div class="viewcode-block" id="CTImagesBatch.rotate"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.rotate">[docs]</a>    <span class="nd">@action</span>
     <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;indices&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_default&#39;</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;threads&#39;</span><span class="p">)</span>
-<div class="viewcode-block" id="CTImagesBatch.rotate"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.rotate">[docs]</a>    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">components</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">rotate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">angle</span><span class="p">,</span> <span class="n">components</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">random</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Rotate 3D images in batch on specific angle in plane.</span>
 
 <span class="sd">        Parameters</span>
@@ -1150,21 +1122,32 @@
 <span class="sd">        components : list, tuple or str</span>
 <span class="sd">                     name(s) of components to rotate each item in it.</span>
 <span class="sd">        axes :       tuple</span>
-<span class="sd">                     (int, int), plane of rotation specified by two axes.</span>
+<span class="sd">                     (int, int), plane of rotation specified by two axes (zyx-ordering).</span>
 <span class="sd">        random :     bool</span>
 <span class="sd">                     if True, then degree specifies maximum angle of rotation.</span>
-<span class="sd">        index:       int</span>
+<span class="sd">        index :      int</span>
 <span class="sd">                     index of patient in batch.</span>
-<span class="sd">                     Note: this argument is passed by inbatch_parallel</span>
+<span class="sd">                     This argument is passed by inbatch_parallel</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        ndarray</span>
-<span class="sd">                ndarray of 3D rotated image;</span>
+<span class="sd">                ndarray of 3D rotated image.</span>
 
 <span class="sd">        Note</span>
 <span class="sd">        ----</span>
-<span class="sd">        zero padding automatically added after rotation;</span>
+<span class="sd">        zero padding automatically added after rotation.</span>
+
+<span class="sd">        Example</span>
+<span class="sd">        -------</span>
+<span class="sd">        Rotate images on 90 degrees:</span>
+
+<span class="sd">        &gt;&gt;&gt; batch = batch.rotate(angle=90, axes=(1, 2), random=False)</span>
+
+<span class="sd">        Random rotation with maximum angle:</span>
+
+<span class="sd">        &gt;&gt;&gt; batch = batch.rotate(angle=30, axes=(1, 2))</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">components</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
             <span class="n">_components</span> <span class="o">=</span> <span class="p">(</span><span class="n">components</span><span class="p">,</span> <span class="p">)</span>
@@ -1174,9 +1157,9 @@
             <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">index</span><span class="p">,</span> <span class="n">comp</span><span class="p">)</span>
             <span class="n">rotate_3D</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">_angle</span><span class="p">,</span> <span class="n">axes</span><span class="p">)</span></div>
 
-    <span class="nd">@action</span>
+<div class="viewcode-block" id="CTImagesBatch.make_xip"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.make_xip">[docs]</a>    <span class="nd">@action</span>
     <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_init_images&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_default&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;nogil&#39;</span><span class="p">,</span> <span class="n">new_batch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="CTImagesBatch.make_xip"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.make_xip">[docs]</a>    <span class="k">def</span> <span class="nf">make_xip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;axial&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">make_xip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">func</span><span class="o">=</span><span class="s1">&#39;max&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">&#39;axial&#39;</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Make intensity projection (maximum, minimum, average)</span>
 
 <span class="sd">        Popular radiologic transformation: max, min, avg applyied along an axe.</span>
@@ -1203,13 +1186,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">xip_fn_numba</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">projection</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="n">depth</span><span class="p">)</span></div>
 
-    <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_init_rebuild&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_rebuild&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;nogil&#39;</span><span class="p">,</span> <span class="n">new_batch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="CTImagesBatch.calc_lung_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.calc_lung_mask">[docs]</a>    <span class="k">def</span> <span class="nf">calc_lung_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>     <span class="c1"># pylint: disable=unused-argument, no-self-use</span>
+<div class="viewcode-block" id="CTImagesBatch.calc_lung_mask"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.calc_lung_mask">[docs]</a>    <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_init_rebuild&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_rebuild&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;nogil&#39;</span><span class="p">,</span> <span class="n">new_batch</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">calc_lung_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>     <span class="c1"># pylint: disable=unused-argument, no-self-use</span>
         <span class="sd">&quot;&quot;&quot; Return a mask for lungs &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">calc_lung_mask_numba</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesBatch.segment"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.segment">[docs]</a>    <span class="k">def</span> <span class="nf">segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">erosion_radius</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesBatch.segment"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.segment">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">segment</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">erosion_radius</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Segment lungs&#39; content from 3D array.</span>
 
 <span class="sd">        Paramters</span>
@@ -1223,7 +1206,8 @@
 
 <span class="sd">        Example</span>
 <span class="sd">        -------</span>
-<span class="sd">            batch = batch.segment(erosion_radius=4, num_threads=20)</span>
+
+<span class="sd">        &gt;&gt;&gt; batch = batch.segment(erosion_radius=4, num_threads=20)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># get mask with specified params, apply it to scans</span>
         <span class="n">mask_batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calc_lung_mask</span><span class="p">(</span><span class="n">erosion_radius</span><span class="o">=</span><span class="n">erosion_radius</span><span class="p">)</span>
@@ -1238,8 +1222,8 @@
 
         <span class="k">return</span> <span class="bp">self</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesBatch.central_crop"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.central_crop">[docs]</a>    <span class="k">def</span> <span class="nf">central_crop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crop_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesBatch.central_crop"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.central_crop">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">central_crop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crop_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Make crop of crop_size from center of images.</span>
 
 <span class="sd">        Parameters</span>
@@ -1272,9 +1256,9 @@
 <span class="sd">                      (z_dim,y_dim,x_dim), shape of a single patch.</span>
 <span class="sd">        stride :      tuple, list or ndarray</span>
 <span class="sd">                      (int, int, int), stride to slide over each patient&#39;s data.</span>
-<span class="sd">        padding:      str</span>
+<span class="sd">        padding :      str</span>
 <span class="sd">                      padding-type (see doc of np.pad for available types).</span>
-<span class="sd">        data_attr:    str</span>
+<span class="sd">        data_attr :    str</span>
 <span class="sd">                      component to get data from.</span>
 
 <span class="sd">        Returns</span>
@@ -1329,7 +1313,7 @@
 <span class="sd">        ----</span>
 <span class="sd">        If stride != patch.shape(), averaging of overlapped regions is used.</span>
 <span class="sd">        `scan_shape`, patches.shape(), `stride` are used to infer the number of items</span>
-<span class="sd">        in new skyscraper; If patches were padded, padding is removed for skyscraper.</span>
+<span class="sd">        in new skyscraper. If patches were padded, padding is removed for skyscraper.</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">scan_shape</span><span class="p">,</span> <span class="n">stride</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">scan_shape</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">stride</span><span class="p">)</span>
@@ -1364,8 +1348,8 @@
         <span class="n">data_4d</span> <span class="o">=</span> <span class="n">data_4d</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">*</span> <span class="n">scan_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">)</span> <span class="o">+</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">scan_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
         <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data_attr</span><span class="p">,</span> <span class="n">data_4d</span><span class="p">)</span></div>
 
-    <span class="nd">@action</span>
-<div class="viewcode-block" id="CTImagesBatch.normalize_hu"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.normalize_hu">[docs]</a>    <span class="k">def</span> <span class="nf">normalize_hu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_hu</span><span class="o">=-</span><span class="mi">1000</span><span class="p">,</span> <span class="n">max_hu</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
+<div class="viewcode-block" id="CTImagesBatch.normalize_hu"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.normalize_hu">[docs]</a>    <span class="nd">@action</span>
+    <span class="k">def</span> <span class="nf">normalize_hu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_hu</span><span class="o">=-</span><span class="mi">1000</span><span class="p">,</span> <span class="n">max_hu</span><span class="o">=</span><span class="mi">400</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Normalize HU-densities to interval [0, 255].</span>
 
 <span class="sd">        Trim HU that are outside range [min_hu, max_hu], then scale to [0, 255].</span>
@@ -1390,9 +1374,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">images</span> <span class="o">*=</span> <span class="mi">255</span>
         <span class="k">return</span> <span class="bp">self</span></div>
 
-    <span class="nd">@action</span>
+<div class="viewcode-block" id="CTImagesBatch.flip"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.flip">[docs]</a>    <span class="nd">@action</span>
     <span class="nd">@inbatch_parallel</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s1">&#39;_init_rebuild&#39;</span><span class="p">,</span> <span class="n">post</span><span class="o">=</span><span class="s1">&#39;_post_rebuild&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;nogil&#39;</span><span class="p">)</span>
-<div class="viewcode-block" id="CTImagesBatch.flip"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_batch.CTImagesBatch.flip">[docs]</a>    <span class="k">def</span> <span class="nf">flip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>    <span class="c1"># pylint: disable=no-self-use</span>
+    <span class="k">def</span> <span class="nf">flip</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>    <span class="c1"># pylint: disable=no-self-use</span>
         <span class="sd">&quot;&quot;&quot; Invert the order of slices for each patient</span>
 
 <span class="sd">        Example</span>
@@ -1416,9 +1400,10 @@
 
 <span class="sd">        Example</span>
 <span class="sd">        -------</span>
-<span class="sd">         patch = batch.get_axial_slice(5, 0.6)</span>
-<span class="sd">                 patch = batch.get_axial_slice(self.index[5], 0.6)</span>
-<span class="sd">                 # here self.index[5] usually smth like &#39;a1de03fz29kf6h2&#39;</span>
+<span class="sd">        Here self.index[5] usually smth like &#39;a1de03fz29kf6h2&#39;</span>
+
+<span class="sd">        &gt;&gt;&gt; patch = batch.get_axial_slice(5, 0.6)</span>
+<span class="sd">        &gt;&gt;&gt; patch = batch.get_axial_slice(self.index[5], 0.6)</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">margin</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">slice_height</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">person_number</span><span class="p">,</span> <span class="s1">&#39;images&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -1460,7 +1445,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

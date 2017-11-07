@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.models.tensorflow package &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -78,15 +75,15 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor for 3D-convolution.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in the ouput tensor.</li>
-<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; size of kernel for 3D-convolution operation along 3 dimensions.</li>
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the layer that will be used as an argument of tf.variable_scope.</li>
-<li><strong>strides</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; size of strides along 3 dimensions required by tf.layers.conv3d.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode, can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
-<li><strong>activation</strong> (<em>tensorflow activation function</em>) &#8211; this function will be applied to output tensor.</li>
-<li><strong>use_bias</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; whether use bias or not.</li>
-<li><strong>is_training</strong> (<em>tf.Tensor</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; whether model is in training state of prediction state.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor for 3D-convolution.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in the ouput tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of kernel for 3D-convolution operation along 3 dimensions.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of the layer that will be used as an argument of tf.variable_scope.</li>
+<li><strong>strides</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of strides along 3 dimensions required by tf.layers.conv3d.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode, can be ‘same’ or ‘valid’.</li>
+<li><strong>activation</strong> (<em>tensorflow activation function</em>) – this function will be applied to output tensor.</li>
+<li><strong>use_bias</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – whether use bias or not.</li>
+<li><strong>is_training</strong> (<em>tf.Tensor</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – whether model is in training state of prediction state.</li>
 </ul>
 </td>
 </tr>
@@ -109,16 +106,16 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor for 3D-convolution.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in the ouput tensor.</li>
-<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; size of kernel for 3D-convolution operation along 3 dimensions.</li>
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the layer that will be used as an argument of tf.variable_scope.</li>
-<li><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; dilation rate along 3 dimensions.</li>
-<li><strong>strides</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; size of strides along 3 dimensions required by tf.layers.conv3d.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode, can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
-<li><strong>activation</strong> (<em>tensorflow activation function</em>) &#8211; this function will be applied to output tensor.</li>
-<li><strong>use_bias</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; whether use bias or not.</li>
-<li><strong>is_training</strong> (<em>tf.Tensor</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; whether model is in training state of prediction state.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor for 3D-convolution.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in the ouput tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of kernel for 3D-convolution operation along 3 dimensions.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of the layer that will be used as an argument of tf.variable_scope.</li>
+<li><strong>dilation</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – dilation rate along 3 dimensions.</li>
+<li><strong>strides</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of strides along 3 dimensions required by tf.layers.conv3d.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode, can be ‘same’ or ‘valid’.</li>
+<li><strong>activation</strong> (<em>tensorflow activation function</em>) – this function will be applied to output tensor.</li>
+<li><strong>use_bias</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – whether use bias or not.</li>
+<li><strong>is_training</strong> (<em>tf.Tensor</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – whether model is in training state of prediction state.</li>
 </ul>
 </td>
 </tr>
@@ -141,14 +138,14 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor for 3D-convolution.</li>
-<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of filters in the ouput tensor.</li>
-<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; size of kernel for 3D-convolution operation along 3 dimensions.</li>
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of the layer that will be used as an argument of tf.variable_scope.</li>
-<li><strong>strides</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; size of strides along 3 dimensions required by tf.layers.conv3d.</li>
-<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding mode, can be &#8216;same&#8217; or &#8216;valid&#8217;.</li>
-<li><strong>activation</strong> (<em>tensorflow activation function</em>) &#8211; this function will be applied to output tensor.</li>
-<li><strong>use_bias</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; whether use bias or not.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor for 3D-convolution.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – number of filters in the ouput tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of kernel for 3D-convolution operation along 3 dimensions.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of the layer that will be used as an argument of tf.variable_scope.</li>
+<li><strong>strides</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of strides along 3 dimensions required by tf.layers.conv3d.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – padding mode, can be ‘same’ or ‘valid’.</li>
+<li><strong>activation</strong> (<em>tensorflow activation function</em>) – this function will be applied to output tensor.</li>
+<li><strong>use_bias</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) – whether use bias or not.</li>
 </ul>
 </td>
 </tr>
@@ -171,8 +168,8 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor.</li>
-<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of layer that will be used as an argument of tf.variable_scope.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of layer that will be used as an argument of tf.variable_scope.</li>
 </ul>
 </td>
 </tr>
@@ -195,7 +192,7 @@
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>tf.Tensor</em>) &#8211; input tensor.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>tf.Tensor</em>) – input tensor.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"></td>
 </tr>
@@ -218,9 +215,9 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>tf.Tensor</em>) &#8211; tensor containing target mask.</li>
-<li><strong>y_pred</strong> (<em>tf.Tensor</em>) &#8211; tensor containing predicted mask.</li>
-<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+<li><strong>y_true</strong> (<em>tf.Tensor</em>) – tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>tf.Tensor</em>) – tensor containing predicted mask.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – small real value used for avoiding division by zero error.</li>
 </ul>
 </td>
 </tr>
@@ -243,9 +240,9 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>tf.Tensor</em>) &#8211; tensor containg true values for sizes of nodules and their centers.</li>
-<li><strong>y_pred</strong> (<em>tf.Tensor</em>) &#8211; tensor containing predicted values for sizes of nodules and their centers.</li>
-<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+<li><strong>y_true</strong> (<em>tf.Tensor</em>) – tensor containg true values for sizes of nodules and their centers.</li>
+<li><strong>y_pred</strong> (<em>tf.Tensor</em>) – tensor containing predicted values for sizes of nodules and their centers.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – small real value used for avoiding division by zero error.</li>
 </ul>
 </td>
 </tr>
@@ -268,9 +265,9 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>tf.Tensor</em>) &#8211; tensor containing target mask.</li>
-<li><strong>y_pred</strong> (<em>tf.Tensor</em>) &#8211; tensor containing predicted mask.</li>
-<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+<li><strong>y_true</strong> (<em>tf.Tensor</em>) – tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>tf.Tensor</em>) – tensor containing predicted mask.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – small real value used for avoiding division by zero error.</li>
 </ul>
 </td>
 </tr>
@@ -293,9 +290,9 @@
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>tf.Tensor</em>) &#8211; tensor with true labels;</li>
-<li><strong>y_pred</strong> (<em>tf.Tensor</em>) &#8211; tensor with predicted logits;</li>
-<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a><em> or </em><em>tf.constant</em><em>(</em><em>dtype=tf.float32</em><em>)</em>) &#8211; small real value to avoid computing log(0);</li>
+<li><strong>y_true</strong> (<em>tf.Tensor</em>) – tensor with true labels.</li>
+<li><strong>y_pred</strong> (<em>tf.Tensor</em>) – tensor with predicted logits;</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a><em> or </em><em>tf.constant</em><em>(</em><em>dtype=tf.float32</em><em>)</em>) – small real value to avoid computing log(0).</li>
 </ul>
 </td>
 </tr>
@@ -312,20 +309,20 @@
 <dl class="function">
 <dt id="lung_cancer.models.tensorflow.losses.reg_l2_loss">
 <code class="descclassname">lung_cancer.models.tensorflow.losses.</code><code class="descname">reg_l2_loss</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>lambda_coords=0.75</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/losses.html#reg_l2_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.losses.reg_l2_loss" title="Permalink to this definition">¶</a></dt>
-<dd><p>L2 loss for prediction of cancer tumor&#8217;s centers, sizes joined with binary classification task.</p>
+<dd><p>L2 loss for prediction of cancer tumor’s centers, sizes joined with binary classification task.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>-</em>) &#8211; tensor containing true values for sizes of nodules, their centers
+<li><strong>y_true</strong> (<em>-</em>) – tensor containing true values for sizes of nodules, their centers
 and classes of crop(1 if cancerous 0 otherwise).</li>
-<li><strong>y_pred</strong> (<em>-</em>) &#8211; tensor containing predicted values for sizes of nodules, their centers
+<li><strong>y_pred</strong> (<em>-</em>) – tensor containing predicted values for sizes of nodules, their centers
 and probability of cancer in given crop.</li>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">l2 loss for regression of cancer tumor center&#8217;s coordinates,
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">l2 loss for regression of cancer tumor center’s coordinates,
 sizes joined with binary classification task.</p>
 </td>
 </tr>
@@ -354,11 +351,11 @@ or not in the current crop.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>y_true</strong> (<em>tf.Tensor</em>) &#8211; tensor containing target mask.</li>
-<li><strong>y_pred</strong> (<em>tf.Tensor</em>) &#8211; tensor containing predicted mask.</li>
-<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; real value, weight of &#8216;0&#8217; class.</li>
-<li><strong>beta</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; real value, weight of &#8216;1&#8217; class.</li>
-<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+<li><strong>y_true</strong> (<em>tf.Tensor</em>) – tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>tf.Tensor</em>) – tensor containing predicted mask.</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – real value, weight of ‘0’ class.</li>
+<li><strong>beta</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – real value, weight of ‘1’ class.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) – small real value used for avoiding division by zero error.</li>
 </ul>
 </td>
 </tr>
@@ -384,25 +381,31 @@ or not in the current crop.</p>
 <p>This class inherits TFModel class from dataset submodule and
 extends it with metrics accumulating methods. Also
 train and predict methods were overloaded:
-train method gets &#8216;x&#8217; and &#8216;y&#8217;,
-while predict gets only &#8216;x&#8217; as arguments instead of &#8216;feed_dict&#8217;
-and &#8216;fetches&#8217; as it was in parent class. It&#8217;s simplifies interface
+train method gets ‘x’ and ‘y’,
+while predict gets only ‘x’ as arguments instead of ‘feed_dict’
+and ‘fetches’ as it was in parent class. It’s simplifies interface
 and makes TFModel3D compatible with KerasModel interface.</p>
 <p class="rubric">Methods</p>
 <dl class="method">
 <dt id="lung_cancer.models.tensorflow.tf_model.TFModelCT.predict">
-<code class="descname">predict</code><span class="sig-paren">(</span><em>x=None</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/tf_model.html#TFModelCT.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.tf_model.TFModelCT.predict" title="Permalink to this definition">¶</a></dt>
+<code class="descname">predict</code><span class="sig-paren">(</span><em>x=None</em>, <em>fetches=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/tf_model.html#TFModelCT.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.tf_model.TFModelCT.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Predict model on data provided.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>...</em><em>)</em>) &#8211; numpy array that will be fed into tf.placeholder that can be accessed
-by &#8216;x&#8217; attribute of &#8216;self&#8217;, typically input of neural network.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>...</em><em>)</em>) – numpy array that will be fed into tf.placeholder that can be accessed
+by ‘x’ attribute of ‘self’, typically input of neural network.</li>
+<li><strong>fetches</strong> (<em>list</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) – <a href="#id1"><span class="problematic" id="id2">`</span></a>tf.Operation`s and <a href="#id3"><span class="problematic" id="id4">`</span></a>tf.Tensor`s to calculate.</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">predicted output.</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">predicted output.</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray(batch_size, ..)</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray(batch_size, ..)</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -410,17 +413,18 @@ by &#8216;x&#8217; attribute of &#8216;self&#8217;, typically input of neural ne
 
 <dl class="method">
 <dt id="lung_cancer.models.tensorflow.tf_model.TFModelCT.train">
-<code class="descname">train</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>**kargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/tf_model.html#TFModelCT.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.tf_model.TFModelCT.train" title="Permalink to this definition">¶</a></dt>
+<code class="descname">train</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>fetches=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/tf_model.html#TFModelCT.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.tensorflow.tf_model.TFModelCT.train" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train model with data provided.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array that will be fed into tf.placeholder that can be accessed
-by &#8216;x&#8217; attribute of &#8216;self&#8217;, typically input of neural network.</li>
-<li><strong>y</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array that will be fed into tf.placeholder that can be accessed
-by &#8216;y&#8217; attribute of &#8216;self&#8217;.</li>
+<li><strong>x</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) – numpy array that will be fed into tf.placeholder that can be accessed
+by ‘x’ attribute of ‘self’, typically input of neural network.</li>
+<li><strong>y</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) – numpy array that will be fed into tf.placeholder that can be accessed
+by ‘y’ attribute of ‘self’.</li>
+<li><strong>fetches</strong> (<em>list</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) – <a href="#id5"><span class="problematic" id="id6">`</span></a>tf.Operation`s and <a href="#id7"><span class="problematic" id="id8">`</span></a>tf.Tensor`s to calculate.</li>
 </ul>
 </td>
 </tr>
@@ -448,7 +452,7 @@ by &#8216;y&#8217; attribute of &#8216;self&#8217;.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">tensor with random shuffle of channels.</td>
 </tr>
@@ -468,7 +472,7 @@ by &#8216;y&#8217; attribute of &#8216;self&#8217;.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">input tensor&#8217;s shape.</td>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">input tensor’s shape.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a>(<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a>)</td>
 </tr>
@@ -484,10 +488,10 @@ by &#8216;y&#8217; attribute of &#8216;self&#8217;.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>input_tensor</strong> (<em>tf.Variable</em><em> or </em><em>tf.Tensor</em>) &#8211; input_tensor.</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>input_tensor</strong> (<em>tf.Variable</em><em> or </em><em>tf.Tensor</em>) – input_tensor.</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
-<li><em>int</em> &#8211; number of channels.</li>
+<li><em>int</em> – number of channels.</li>
 <li><strong>NOTE</strong> (<em>channels last ordering is used.</em>)</li>
 </ul>
 </td>
@@ -505,8 +509,8 @@ by &#8216;y&#8217; attribute of &#8216;self&#8217;.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor for repeat operation.</li>
-<li><strong>times</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>,</em><em>..</em><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; number of times to repeat input tensor tensor along each axis.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor for repeat operation.</li>
+<li><strong>times</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>,</em><em>..</em><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number of times to repeat input tensor tensor along each axis.</li>
 </ul>
 </td>
 </tr>
@@ -529,8 +533,8 @@ by &#8216;y&#8217; attribute of &#8216;self&#8217;.</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) &#8211; input tensor for split_channels operation.</li>
-<li><strong>size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; size of each group.</li>
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor for split_channels operation.</li>
+<li><strong>size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – size of each group.</li>
 </ul>
 </td>
 </tr>
@@ -606,7 +610,7 @@ by &#8216;y&#8217; attribute of &#8216;self&#8217;.</li>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>

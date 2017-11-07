@@ -1,0 +1,240 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>TFResNet &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="TFDilatedVnet" href="tf_dilated_vnet.html" />
+    <link rel="prev" title="TFDenseNet" href="tf_densenet.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tf_dilated_vnet.html" title="TFDilatedVnet"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="tf_densenet.html" title="TFDenseNet"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="tf_models.html" accesskey="U">TFModelCT</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tfresnet">
+<h1>TFResNet<a class="headerlink" href="#tfresnet" title="Permalink to this headline">¶</a></h1>
+<p>ResNet architecture for 3D images classification implemented
+on tensorflow.</p>
+<dl class="class">
+<dt id="lung_cancer.models.TFResNet">
+<em class="property">class </em><code class="descclassname">lung_cancer.models.</code><code class="descname">TFResNet</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/resnet.html#TFResNet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.TFResNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.tf_model.TFModelCT" title="lung_cancer.models.tensorflow.tf_model.TFModelCT"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.models.tensorflow.tf_model.TFModelCT</span></code></a></p>
+<p>This class implements 3D ResNet architecture via tensorflow.</p>
+<p>Full description of similar 2D model architecture can be downloaded from here:
+<a class="reference external" href="https://arxiv.org/pdf/1512.03385v1.pdf">https://arxiv.org/pdf/1512.03385v1.pdf</a></p>
+<dl class="attribute">
+<dt id="lung_cancer.models.TFResNet.config">
+<code class="descname">config</code><a class="headerlink" href="#lung_cancer.models.TFResNet.config" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dict</em> – config dictionary from dataset pipeline
+see configuring model section of dataset module
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models.html">https://analysiscenter.github.io/dataset/intro/models.html</a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.models.TFResNet.name">
+<code class="descname">name</code><a class="headerlink" href="#lung_cancer.models.TFResNet.name" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> – name of the model, can be specified in config dict.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.models.TFResNet.units">
+<code class="descname">units</code><a class="headerlink" href="#lung_cancer.models.TFResNet.units" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>tuple(int, int)</em> – number of units in two final dense layers before tensor with predicitons,
+can be specified in config dict.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.models.TFResNet.num_targets">
+<code class="descname">num_targets</code><a class="headerlink" href="#lung_cancer.models.TFResNet.num_targets" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> – size of tensor with predicitons.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.models.TFResNet.dropout_rate">
+<code class="descname">dropout_rate</code><a class="headerlink" href="#lung_cancer.models.TFResNet.dropout_rate" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>float</em> – probability of dropout, can be specified in config dict.</p>
+</dd></dl>
+
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This class is descendant of TFModel class from dataset.models.*.</p>
+</div>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="lung_cancer.models.TFResNet.conv_block">
+<code class="descname">conv_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>kernel_size</em>, <em>filters</em>, <em>name</em>, <em>strides=(2</em>, <em>2</em>, <em>2)</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/resnet.html#TFResNet.conv_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.TFResNet.conv_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convolutional block that has a conv layer as shortcut.</p>
+<p>First of all, 3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
+batch normalization and ‘relu’ activation is applied. Then the result
+flows into 3D-convolution with (3, 3, 3) kernel size, batch normalization
+and ‘relu’ activation. Finally, the result of previous convolution goes
+into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+without activation and its output is summed with the result
+of 3D-convolution with kernel_size=(1, 1, 1), strides=(2, 2, 2) and
+batch normalization of input_tensor. After that ‘relu’ activation
+is applied to the result of ‘add’ operation.
+Argument <cite>filters</cite> should be tuple(int, int, int) and specifies
+number of filters in first, second and third convolution correspondingly.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of kernel along three dimensions for middle convolution operation in block.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number of filters in first, second, and third 3D-convolution operations.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.models.TFResNet.identity_block">
+<code class="descname">identity_block</code><span class="sig-paren">(</span><em>input_tensor</em>, <em>kernel_size</em>, <em>filters</em>, <em>name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/tensorflow/architectures/resnet.html#TFResNet.identity_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.TFResNet.identity_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>The identity block is the block that has no conv layer at shortcut.</p>
+<p>First of all, 3D-convolution with (1, 1, 1) kernel size, batch normalization
+and relu activation is applied. Then the result flows into
+3D-convolution with (3, 3, 3) kernel size, batch normalization and
+relu activation. Finally, the result of previous convolution goes
+into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+without activation and its output is summed with the input tensor
+and ‘relu’ activation is applied.
+Argument <cite>filters</cite> should be tuple(int, int, int) and specifies
+number of filters in first, second and third convolution correspondingly.
+Number of filters in third convolution must be the same as in the input
+tensor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_tensor</strong> (<em>tf.Tensor</em>) – input tensor.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – size of kernel along three dimensions for middle convolution operation in block.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) – number for filters in first, second and third 3D-convolution operations.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – name of block that will be used as argument of of tf.variable_scope.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="tf_densenet.html"
+                        title="previous chapter">TFDenseNet</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="tf_dilated_vnet.html"
+                        title="next chapter">TFDilatedVnet</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/tf_resnet.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="tf_dilated_vnet.html" title="TFDilatedVnet"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="tf_densenet.html" title="TFDenseNet"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="tf_models.html" >TFModelCT</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

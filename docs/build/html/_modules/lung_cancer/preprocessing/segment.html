@@ -1,16 +1,13 @@
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    
     <title>lung_cancer.preprocessing.segment &#8212; RadIO 0.1.0 documentation</title>
-    
     <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
-    
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../../',
@@ -27,7 +24,7 @@
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" /> 
   </head>
-  <body role="document">
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -60,8 +57,8 @@
 <span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">measure</span><span class="p">,</span> <span class="n">morphology</span>
 
 
-<span class="nd">@jit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="largest_label_volume"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.segment.largest_label_volume">[docs]</a><span class="k">def</span> <span class="nf">largest_label_volume</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">background</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+<div class="viewcode-block" id="largest_label_volume"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.segment.largest_label_volume">[docs]</a><span class="nd">@jit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">largest_label_volume</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">background</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Determine most frequent color that occupies the largest volume</span>
 
 <span class="sd">    Parameters</span>
@@ -86,8 +83,8 @@
 
 
 <span class="c1"># segmentation of a patient sliced from skyscraper</span>
-<span class="nd">@jit</span><span class="p">(</span><span class="s1">&#39;void(double[:,:,:], double[:,:,:], double[:,:,:], int64)&#39;</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<div class="viewcode-block" id="calc_lung_mask_numba"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.segment.calc_lung_mask_numba">[docs]</a><span class="k">def</span> <span class="nf">calc_lung_mask_numba</span><span class="p">(</span><span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">erosion_radius</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
+<div class="viewcode-block" id="calc_lung_mask_numba"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.segment.calc_lung_mask_numba">[docs]</a><span class="nd">@jit</span><span class="p">(</span><span class="s1">&#39;void(double[:,:,:], double[:,:,:], double[:,:,:], int64)&#39;</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">calc_lung_mask_numba</span><span class="p">(</span><span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">erosion_radius</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Compute lungs-segmenting mask for a patient</span>
 
 <span class="sd">    Parameters</span>
@@ -227,7 +224,7 @@
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2017, analysiscenter.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
     </div>
   </body>
 </html>
