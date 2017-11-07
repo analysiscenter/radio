@@ -123,11 +123,11 @@ def tp(y_true, y_pred, threshold=0.5):
     Parameters
     ----------
     y_true : ndarray(batch_size, ...)
-        numpy array containing true target values;
+        numpy array containing true target values.
     y_pred : ndarray(batch_size, ...)
-        numpy array containing predictions of model;
+        numpy array containing predictions of model.
     threshold : float
-        threshold for mapping probabilities into class;
+        threshold for mapping probabilities into class.
 
     Returns
     -------
