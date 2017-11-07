@@ -20,7 +20,6 @@ from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
-from .crop import return_black_border_array as rbba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
 from .rotate import rotate_3D
