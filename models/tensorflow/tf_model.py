@@ -20,7 +20,7 @@ class TFModelCT(TFModel):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-    def train(self, x=None, y=None, **kwargs):
+    def train(self, x=None, y=None, fetches=None):
         """ Train model with data provided.
 
         Parameters
@@ -31,17 +31,18 @@ class TFModelCT(TFModel):
         y : ndarray(batch_size, ...)
             numpy array that will be fed into tf.placeholder that can be accessed
             by 'y' attribute of 'self'.
+        fetches : list or tuple
+            `tf.Operation`s and `tf.Tensor`s to calculate.
 
         Returns
         -------
         ndarray(batch_size, ...)
             predicted output.
         """
-        _fetches = ('y_pred', )
-        train_output = super().train(_fetches, {'x': x, 'y': y})
+        train_output = super().train(fetches, {'x': x, 'y': y})
         return train_output
 
-    def predict(self, x=None, **kwargs):
+    def predict(self, x=None, fetches=None):
         """ Predict model on data provided.
 
         Parameters
@@ -49,11 +50,13 @@ class TFModelCT(TFModel):
         x : ndarray(batch_size, ....)
             numpy array that will be fed into tf.placeholder that can be accessed
             by 'x' attribute of 'self', typically input of neural network.
+        fetches : list or tuple
+            `tf.Operation`s and `tf.Tensor`s to calculate.
 
         Returns
         -------
         ndarray(batch_size, ...)
             predicted output.
         """
-        predictions = super().predict(fetches=None, feed_dict={'x': x})
+        predictions = super().predict(fetches=fetches, feed_dict={'x': x})
         return predictions
