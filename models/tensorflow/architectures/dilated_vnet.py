@@ -66,13 +66,13 @@ class TFDilatedVnet(TFModelCT):
 
         Parameters
         ----------
-        input_tensor: tf.Tensor
+        input_tensor : tf.Tensor
             input tensor.
-        filters: int
+        filters : int
             number of filters.
-        scope: str
+        scope : str
             name scope of the layer.
-        dilation: tuple(int, int, int)
+        dilation : tuple(int, int, int)
             dilation rate along spatial axes.
         padding : str
             padding mode, can be 'valid' or 'same'.
