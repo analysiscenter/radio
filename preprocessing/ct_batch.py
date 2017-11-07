@@ -91,7 +91,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return 'images', 'spacing', 'origin'
 
     def _init_data(self, source=None, bounds=None, origin=None, spacing=None):
-        """ Initialize images, _bounds, _crop_centers, _crop_sizes attributes.
+        """ Initialize images, _bounds, origin and spacing attributes.
 
         `_init_data` is used as initializer of batch inner structures,
         called inside __init__ and other methods
