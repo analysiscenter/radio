@@ -319,6 +319,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         -------
         DICOM example
         initialize batch for storing batch of 3 patients with following IDs:
+
         >>> index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
         >>> batch = CTImagesBatch(index)
         >>> batch.load(fmt='dicom')
