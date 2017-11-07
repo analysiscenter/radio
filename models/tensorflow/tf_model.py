@@ -20,7 +20,7 @@ class TFModelCT(TFModel):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-    def train(self, x=None, y=None, fetches=None):  #pylint: disable=arguments-differ
+    def train(self, x=None, y=None, fetches=None):  # pylint: disable=arguments-differ
         """ Train model with data provided.
 
         Parameters
