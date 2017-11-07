@@ -572,23 +572,25 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
               is put into images.blk, attributes are put into files attr_name.cpkl
               (e.g., spacing.cpkl)
 
-        example:
-            # initialize batch and load data
-            ind = ['1ae34g90', '3hf82s76']
-            batch = CTImagesBatch(ind)
-            batch.load(...)
-            batch.dump(dst='./data/blosc_preprocessed')
-            # the command above creates files
+        Example
+        -------
+        Initialize batch and load data
+        >>> ind = ['1ae34g90', '3hf82s76']
+        >>> batch = CTImagesBatch(ind)
+        >>> batch.load(...)
+        >>> batch.dump(dst='./data/blosc_preprocessed')
 
-            # ./data/blosc_preprocessed/1ae34g90/images.blk
-            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
-            # ./data/blosc_preprocessed/1ae34g90/origin.cpkl
-            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+        The command above creates following files:
 
-            # ./data/blosc_preprocessed/3hf82s76/images.blk
-            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
-            # ./data/blosc_preprocessed/3hf82s76/origin.cpkl
-            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/images.blk
+        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/origin.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+
+        - ./data/blosc_preprocessed/3hf82s76/images.blk
+        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+        - ./data/blosc_preprocessed/3hf82s76/origin.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl
         """
         # if src is not supplied, dump all components and shapes
         if src is None:
@@ -1009,9 +1011,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Example
         -------
-            shape = (128, 256, 256)
-            Batch = Batch.resize(shape=shape, order=2, method='scipy')
-            Bacch = Batch.resize(shape=shape, resample=PIL.Image.BILINEAR)
+        >>> shape = (128, 256, 256)
+        >>> batch = batch.resize(shape=shape, order=2, method='scipy')
+        >>> batch = batch.resize(shape=shape, resample=PIL.Image.BILINEAR)
         """
         if method == 'scipy':
             args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
