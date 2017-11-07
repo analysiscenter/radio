@@ -1,5 +1,5 @@
 API
-========
+===
 .. toctree::
    :maxdepth: 2
    :titlesonly:
@@ -7,3 +7,5 @@ API
    ct_batch
    masked_batch
    pipelines
+   models
+   unpackers
