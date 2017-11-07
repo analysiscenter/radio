@@ -44,6 +44,18 @@ class TFResNet(TFModelCT):
     def identity_block(self, input_tensor, kernel_size, filters, name):
         """ The identity block is the block that has no conv layer at shortcut.
 
+        First of all, 3D-convolution with (1, 1, 1) kernel size, batch normalization
+        and relu activation is applied. Then the result flows into
+        3D-convolution with (3, 3, 3) kernel size, batch normalization and
+        relu activation. Finally, the result of previous convolution goes
+        into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+        without activation and its output is summed with the input tensor
+        and `relu` activation is applied.
+        Argument `filters` should be tuple(int, int, int) and specifies
+        number of filters in first, second and third convolution correspondingly.
+        Number of filters in third convolution must be the same as in the input
+        tensor.
+
         Schematically this block can be represented like this:
         =======================================================================
                                    input_tensor ------------|
