@@ -20,7 +20,7 @@ class TFModelCT(TFModel):
     def __init__(self, *args, **kwargs):
         super().__init__(self, *args, **kwargs)
 
-    def train(self, x=None, y=None, **kargs):
+    def train(self, x=None, y=None, **kwargs):
         """ Train model with data provided.
 
         Parameters
