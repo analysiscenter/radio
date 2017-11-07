@@ -1014,10 +1014,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Parameters
         ----------
-        crop_size : tuple
-
-        #TODO: this method should be rewritten with the use of
-        inheritance;
+        crop_size : tuple(int, int, int)
+            shape of central crop along three axes(z,y,x order is used).
         """
         crop_size = np.asarray(crop_size)
         img_shapes = [np.asarray(self.get(i, 'images').shape)
