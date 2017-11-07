@@ -1302,7 +1302,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----
         If stride != patch.shape(), averaging of overlapped regions is used.
         `scan_shape`, patches.shape(), `stride` are used to infer the number of items
-        in new skyscraper; If patches were padded, padding is removed for skyscraper.
+        in new skyscraper. If patches were padded, padding is removed for skyscraper.
 
         """
         scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
