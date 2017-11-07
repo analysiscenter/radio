@@ -30,13 +30,14 @@ class KerasResNet50(KerasModel):
         see configuring model section of dataset module
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
-        name of the model.
+        name of the model, can be specified in config dict.
     units : tuple(int, int)
-        number of units in two final dense layers before tensor with predicitons.
+        number of units in two final dense layers before tensor with predicitons,
+        can be specified in config dict.
     num_targets : int
-        size of tensor with predicitons.
+        size of tensor with predicitons, can be specified in config dict.
     dropout_rate : float
-        probability of dropout.
+        probability of dropout, can be specified in config dict.
     """
 
     def __init__(self, *args, **kwargs):
