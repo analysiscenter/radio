@@ -21,7 +21,7 @@ class TFDilatedVnet(TFModelCT):
         see configuring model section of dataset module
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
-        name of the model.
+        name of the model, can be specified in config dict.
 
     NOTE
     ----
