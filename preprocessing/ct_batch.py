@@ -260,7 +260,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         -------
         (new_batch, rest_batch)
 
-        NOTE
+        Note
         ----
         Merge performs split (of middle-batch) and then two concats
         because of speed considerations.
