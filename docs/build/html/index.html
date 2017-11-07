@@ -1,0 +1,218 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Welcome to RadIO’s documentation! &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Preprocessing" href="modules/preprocessing.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="modules/preprocessing.html" title="Preprocessing"
+             accesskey="N">next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-radio-s-documentation">
+<h1>Welcome to RadIO&#8217;s documentation!<a class="headerlink" href="#welcome-to-radio-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p><cite>RadIO</cite> is a framework for processing of batches of computational
+tomography (CT)-scans, with purpose of detecting cancerous nodules.
+The framework incorporates several modules:</p>
+<ul class="simple">
+<li>preprocessing</li>
+<li>models</li>
+<li>pipelines</li>
+</ul>
+</div>
+<div class="section" id="contents">
+<h1>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules/preprocessing.html">Preprocessing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="modules/pipelines.html">Pipelines</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api/api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api/ct_batch.html">CTImagesBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/masked_batch.html">CTImagesMaskedBatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api/pipelines.html">Pipelines</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="preprocessing">
+<h2>Preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this headline">¶</a></h2>
+<p>This module contains implementation of a set of <a class="reference external" href="https://github.com/analysiscenter/dataset">actions</a>, that allow to
+efficiently prepare a dataset of CT-scans for analysis with
+the use of neural nets. Say, we trained a net that allows
+to classify CT-scans of lungs of shape <strong>[128, 256, 256]</strong>
+as having cancerous nodules or not. We also need to classify
+a dataset of scans of shape <strong>[256, 512, 512]</strong> stored in
+<strong>DICOM</strong> format. Moreover, the net is trained on scans
+with pixel densities normalized to range <strong>[0, 255]</strong>. Clearly,
+if we want to obtain sensible results, we need to preprocess
+the scans in a similar way before putting them into the net.
+Preprocessing and dump of a set of scans can be easily done
+with the use of the following <a class="reference external" href="https://github.com/analysiscenter/dataset">pipeline</a>, just like that:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lung_cancer</span> <span class="kn">import</span> <span class="n">CTImagesBatch</span>
+<span class="kn">from</span> <span class="nn">lung_cancer.dataset</span> <span class="kn">import</span> <span class="n">FilesIndex</span><span class="p">,</span> <span class="n">Dataset</span>
+<span class="n">dicomix</span> <span class="o">=</span> <span class="n">FilesIndex</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;path/to/dicom/*&#39;</span><span class="p">,</span> <span class="n">no_ext</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span> <span class="c1"># set up the index</span>
+<span class="n">dicomset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">dicomix</span><span class="p">,</span> <span class="n">batch_class</span><span class="o">=</span><span class="n">CTImagesBatch</span><span class="p">)</span> <span class="c1"># init the dataset of blosc files</span>
+<span class="n">dir_dump</span> <span class="o">=</span> <span class="s1">&#39;/path/to/preprocessed/&#39;</span> <span class="c1"># preprocessed scans are stored here</span>
+<span class="n">prep_ppl</span> <span class="o">=</span> <span class="p">(</span><span class="n">dicomset</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span> <span class="c1"># set up preprocessing workflow</span>
+            <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;dicom&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+            <span class="o">.</span><span class="n">normalize_hu</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dir_dump</span><span class="p">))</span> <span class="c1"># dump results of the preprocessing</span>
+
+<span class="n">prep_ppl</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="c1"># run it only now</span>
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="modules/preprocessing.html"><span class="doc">documentation</span></a> for the description of
+preprocessing actions implemented in the module.</p>
+</div>
+<div class="section" id="pipelines">
+<h2>Pipelines<a class="headerlink" href="#pipelines" title="Permalink to this headline">¶</a></h2>
+<p>This module contains helper-functions that generate useful pipelines.
+In essence, pipelines represent ready-to-use workflows of scans&#8217; data
+processing. E.g., if one wants to experiment with training of
+[Vnet](linkvnet) on dataset of luna-scans <cite>ctset</cite>, he can simply
+execute the following pipeline-creator (without spending time on
+thinking how to chain actions in a preprocessing workflow):</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lung_cancer</span> <span class="kn">import</span> <span class="n">get_preprocessed</span>
+<span class="n">pipe</span> <span class="o">=</span> <span class="n">get_preprocessed</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">nodules_df</span><span class="o">=</span><span class="n">nodules</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                        <span class="n">share</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">nodule_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
+<span class="n">pipe</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">train_model</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="s1">&#39;vnet&#39;</span><span class="p">,</span> <span class="n">model_class</span><span class="o">=</span><span class="n">VnetModel</span><span class="p">)</span>
+<span class="p">(</span><span class="n">pipe</span> <span class="o">&gt;&gt;</span> <span class="n">ctset</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="modules/pipelines.html"><span class="doc">documentation</span></a> for more information about
+implemented workflows.</p>
+</div>
+<div class="section" id="working-with-neural-nets">
+<h2>Working with neural nets<a class="headerlink" href="#working-with-neural-nets" title="Permalink to this headline">¶</a></h2>
+<p>The module contains neural nets&#8217; architectures suitable for
+tasks of classification, segmentation, detection. Importantly,
+the module incorporates structures, that explicitly show how
+to apply the nets for task at hand (cancer detection). Both
+training and inferencing are covered. The list of models
+implemented in TensorFlow/Keras contains a set of high-performing
+architectures, including, but not limited to [VGG](vgglink),
+[ResNet](resnetlink) and [Vnet](vnetlink). Initialization and
+training of a new model (say, [DenseNet](linkondense)) on scan
+crops of shape <strong>[32, 64, 64]</strong> can be implemented as follows:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lung_cancer</span> <span class="kn">import</span> <span class="n">CTImagesModels</span><span class="p">,</span> <span class="n">DenseNet</span>
+<span class="kn">from</span> <span class="nn">lung_cancer.dataset</span> <span class="kn">import</span> <span class="n">FilesIndex</span><span class="p">,</span> <span class="n">Dataset</span>
+<span class="n">prepdir</span> <span class="o">=</span> <span class="s1">&#39;path/to/preprocessed/*&#39;</span> <span class="c1"># preprocessed scans are stored here</span>
+<span class="n">prepix</span> <span class="o">=</span> <span class="n">FilesIndex</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">prepdir</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">prepset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">prepix</span><span class="p">,</span> <span class="n">batch_class</span><span class="o">=</span><span class="n">CTImagesModels</span><span class="p">)</span>
+<span class="n">net</span> <span class="o">=</span> <span class="n">DenseNet</span><span class="p">(</span><span class="s1">&#39;dense_net&#39;</span><span class="p">)</span>
+<span class="n">train_ppl</span> <span class="o">=</span> <span class="p">(</span><span class="n">prepset</span><span class="o">.</span><span class="n">pipeline</span><span class="p">()</span><span class="o">.</span>
+            <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">sample_nodules</span><span class="p">(</span><span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span> <span class="c1"># sample 20 crops from scans</span>
+            <span class="o">.</span><span class="n">train_on_crops</span><span class="p">(</span><span class="s1">&#39;dense_net&#39;</span><span class="p">))</span>
+
+<span class="n">train_ppl</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The [documentation](linkmodels) contains more information about implemented models and their application to cancer detection.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="#">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Welcome to RadIO&#8217;s documentation!</a></li>
+<li><a class="reference internal" href="#contents">Contents</a><ul>
+<li><a class="reference internal" href="#preprocessing">Preprocessing</a></li>
+<li><a class="reference internal" href="#pipelines">Pipelines</a></li>
+<li><a class="reference internal" href="#working-with-neural-nets">Working with neural nets</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Next topic</h4>
+  <p class="topless"><a href="modules/preprocessing.html"
+                        title="next chapter">Preprocessing</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/index.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="modules/preprocessing.html" title="Preprocessing"
+             >next</a> |</li>
+        <li class="nav-item nav-item-0"><a href="#">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

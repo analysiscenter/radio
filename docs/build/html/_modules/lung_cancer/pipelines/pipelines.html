@@ -1,0 +1,348 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.pipelines.pipelines &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.pipelines.pipelines</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Helper functions describing pipelines for creating large samples of nodules &quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">copy</span>
+<span class="kn">import</span> <span class="nn">PIL</span>
+<span class="kn">from</span> <span class="nn">..dataset</span> <span class="k">import</span> <span class="n">Pipeline</span>
+
+<span class="c1"># global constants defining args of some actions in pipeline</span>
+<span class="n">SPACING</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.7</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># spacing of scans after spacing unification</span>
+<span class="n">SHAPE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>  <span class="c1"># shape of scans after spacing unification</span>
+<span class="n">RESIZE_FILTER</span> <span class="o">=</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">LANCZOS</span>  <span class="c1"># high-quality filter of resize</span>
+<span class="n">PADDING</span> <span class="o">=</span> <span class="s1">&#39;reflect&#39;</span>  <span class="c1"># padding-mode that produces the least amount of artefacts</span>
+<span class="n">METHOD</span> <span class="o">=</span> <span class="s1">&#39;pil-simd&#39;</span>  <span class="c1"># robust resize-engine</span>
+<span class="n">kwargs_default</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="n">SHAPE</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="n">SPACING</span><span class="p">,</span> <span class="n">resample</span><span class="o">=</span><span class="n">RESIZE_FILTER</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">PADDING</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="n">METHOD</span><span class="p">)</span>
+
+<span class="c1"># define the number of times each cancerous nodule is dumped.</span>
+<span class="c1"># with this number of iterations, the whole luna-dataset will</span>
+<span class="c1"># produce approximately 115000 cancerous crops</span>
+<span class="n">N_ITERS</span> <span class="o">=</span> <span class="mi">100</span>  <span class="c1"># N_ITERS * (num_luna_nodules=1149) ~ 115000</span>
+
+<span class="c1"># these params ensure that the number of non-cancerous crops will also</span>
+<span class="c1"># be around 115000 (when run on the whole luna-dataset)</span>
+<span class="n">RUN_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="n">NON_CANCER_BATCH_SIZE</span> <span class="o">=</span> <span class="mi">1030</span>  <span class="c1"># NON_CANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000</span>
+
+
+<div class="viewcode-block" id="get_crops"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.pipelines.html#lung_cancer.pipelines.pipelines.get_crops">[docs]</a><span class="k">def</span> <span class="nf">get_crops</span><span class="p">(</span><span class="n">nodules_df</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">nodule_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">histo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+              <span class="n">variance</span><span class="o">=</span><span class="p">(</span><span class="mi">36</span><span class="p">,</span> <span class="mi">144</span><span class="p">,</span> <span class="mi">144</span><span class="p">),</span> <span class="n">hu_lims</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">400</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get pipeline that performs preprocessing and crops cancerous/non-cancerous nodules in</span>
+<span class="sd">    a chosen proportion.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nodules_df :    pd.DataFrame</span>
+<span class="sd">                    contains:</span>
+<span class="sd">                     - &#39;seriesuid&#39;: index of patient or series.</span>
+<span class="sd">                     - &#39;z&#39;,&#39;y&#39;,&#39;x&#39;: coordinates of nodules center.</span>
+<span class="sd">                     - &#39;diameter&#39;: diameter, in mm.</span>
+<span class="sd">    fmt :           str</span>
+<span class="sd">                    can be either &#39;raw&#39;, &#39;blosc&#39; or &#39;dicom&#39;.</span>
+<span class="sd">    nodule_shape :  tuple, list or ndarray of int</span>
+<span class="sd">                    crop shape along (z,y,x).</span>
+<span class="sd">    batch_size :    int</span>
+<span class="sd">                    number of nodules in batch generated by pipeline.</span>
+<span class="sd">    share :         float</span>
+<span class="sd">                    share of cancer crops in the batch.</span>
+<span class="sd">    histo :         tuple</span>
+<span class="sd">                    np.histogram()&#39;s output.</span>
+<span class="sd">                    Used for sampling non-cancerous crops</span>
+<span class="sd">    variance :      tuple, list or ndarray of float</span>
+<span class="sd">                    variances of normally distributed random shifts of</span>
+<span class="sd">                    nodules&#39; start positions</span>
+<span class="sd">    hu_lims :       tuple, list of float</span>
+<span class="sd">                    seq of len=2, representing limits of hu-trimming in normalize_hu-action.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">            spacing :      tuple</span>
+<span class="sd">                           (z,y,x) spacing after resize.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            shape :        tuple</span>
+<span class="sd">                           (z,y,x,) shape after crop/pad.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            method :       str</span>
+<span class="sd">                           interpolation method (&#39;pil-simd&#39; or &#39;resize&#39;).</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">                           See CTImagesBatch.resize for more information.</span>
+<span class="sd">            order :        None or int</span>
+<span class="sd">                           order of scipy-interpolation (&lt;=5), if used.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            padding :      str</span>
+<span class="sd">                           mode of padding, any supported by np.pad.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pipeline</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># update args of unify spacing</span>
+    <span class="n">args_unify_spacing</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">kwargs_default</span><span class="p">)</span>
+    <span class="n">args_unify_spacing</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># set up other args-dicts</span>
+    <span class="n">args_sample_nodules</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nodule_size</span><span class="o">=</span><span class="n">nodule_shape</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="n">share</span><span class="p">,</span>
+                               <span class="n">histo</span><span class="o">=</span><span class="n">histo</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="n">variance</span><span class="p">)</span>
+
+    <span class="c1"># set up the pipeline</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pipeline</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules_df</span><span class="o">=</span><span class="n">nodules_df</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="o">**</span><span class="n">args_unify_spacing</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">normalize_hu</span><span class="p">(</span><span class="n">min_hu</span><span class="o">=</span><span class="n">hu_lims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">max_hu</span><span class="o">=</span><span class="n">hu_lims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">sample_nodules</span><span class="p">(</span><span class="o">**</span><span class="n">args_sample_nodules</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">RUN_BATCH_SIZE</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+               <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pipeline</span></div>
+
+
+<div class="viewcode-block" id="split_dump"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.pipelines.html#lung_cancer.pipelines.pipelines.split_dump">[docs]</a><span class="k">def</span> <span class="nf">split_dump</span><span class="p">(</span><span class="n">cancer_path</span><span class="p">,</span> <span class="n">non_cancer_path</span><span class="p">,</span> <span class="n">nodules_df</span><span class="p">,</span> <span class="n">histo</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">nodule_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
+               <span class="n">variance</span><span class="o">=</span><span class="p">(</span><span class="mi">36</span><span class="p">,</span> <span class="mi">144</span><span class="p">,</span> <span class="mi">144</span><span class="p">),</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get pipeline for dumping cancerous crops in one folder and random noncancerous crops in another.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    cancer_path :     str</span>
+<span class="sd">                      directory to dump cancerous crops in.</span>
+<span class="sd">    non_cancer_path : str</span>
+<span class="sd">                      directory to dump non-cancerous crops in.</span>
+<span class="sd">    nodules_df :      pd.DataFrame</span>
+<span class="sd">                      contains:</span>
+<span class="sd">                       - &#39;seriesuid&#39;: index of patient or series.</span>
+<span class="sd">                       - &#39;z&#39;,&#39;y&#39;,&#39;x&#39;: coordinates of nodules center.</span>
+<span class="sd">                       - &#39;diameter&#39;: diameter, in mm.</span>
+<span class="sd">    histo :           tuple</span>
+<span class="sd">                      np.histogram()&#39;s output.</span>
+<span class="sd">                      Used for sampling non-cancerous crops</span>
+<span class="sd">    fmt :             str</span>
+<span class="sd">                      can be either &#39;raw&#39;, &#39;blosc&#39; or &#39;dicom&#39;.</span>
+<span class="sd">    nodule_shape :    tuple, list or ndarray of int</span>
+<span class="sd">                      crop shape along (z,y,x).</span>
+<span class="sd">    variance :        tuple, list or ndarray of float</span>
+<span class="sd">                      variances of normally distributed random shifts of</span>
+<span class="sd">                      nodules&#39; start positions</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">            spacing :      tuple</span>
+<span class="sd">                           (z,y,x) spacing after resize.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            shape :        tuple</span>
+<span class="sd">                           (z,y,x,) shape after crop/pad.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            method :       str</span>
+<span class="sd">                           interpolation method (&#39;pil-simd&#39; or &#39;resize&#39;).</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">                           See CTImagesBatch.resize for more information.</span>
+<span class="sd">            order :        None or int</span>
+<span class="sd">                           order of scipy-interpolation (&lt;=5), if used.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            padding :      str</span>
+<span class="sd">                           mode of padding, any supported by np.pad.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pipeline</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># update args of unify spacing</span>
+    <span class="n">args_unify_spacing</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">kwargs_default</span><span class="p">)</span>
+    <span class="n">args_unify_spacing</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># set up args-dicts</span>
+    <span class="n">args_dump_cancer</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">dst</span><span class="o">=</span><span class="n">cancer_path</span><span class="p">,</span> <span class="n">n_iters</span><span class="o">=</span><span class="n">N_ITERS</span><span class="p">,</span> <span class="n">nodule_size</span><span class="o">=</span><span class="n">nodule_shape</span><span class="p">,</span> <span class="n">variance</span><span class="o">=</span><span class="n">variance</span><span class="p">,</span>
+                            <span class="n">share</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">args_sample_ncancer</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">nodule_size</span><span class="o">=</span><span class="n">nodule_shape</span><span class="p">,</span> <span class="n">histo</span><span class="o">=</span><span class="n">histo</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">NON_CANCER_BATCH_SIZE</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.0</span><span class="p">)</span>
+
+    <span class="c1"># define pipeline. Two separate tasks are performed at once, in one run:</span>
+    <span class="c1"># 1) sampling and dumping of cancerous crops in wrapper-action sample_sump_cancerous</span>
+    <span class="c1"># 2) sampling and dumping of non-cancerous crops in separate actions</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pipeline</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules_df</span><span class="o">=</span><span class="n">nodules_df</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="o">**</span><span class="n">args_unify_spacing</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">sample_dump</span><span class="p">(</span><span class="o">**</span><span class="n">args_dump_cancer</span><span class="p">)</span>  <span class="c1"># sample and dump cancerous crops</span>
+                <span class="o">.</span><span class="n">sample_nodules</span><span class="p">(</span><span class="o">**</span><span class="n">args_sample_ncancer</span><span class="p">)</span>  <span class="c1"># sample non-cancerous</span>
+                <span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dst</span><span class="o">=</span><span class="n">non_cancer_path</span><span class="p">)</span>  <span class="c1"># dump non-cancerous</span>
+                <span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">RUN_BATCH_SIZE</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+               <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pipeline</span></div>
+
+<div class="viewcode-block" id="update_histo"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.pipelines.html#lung_cancer.pipelines.pipelines.update_histo">[docs]</a><span class="k">def</span> <span class="nf">update_histo</span><span class="p">(</span><span class="n">nodules_df</span><span class="p">,</span> <span class="n">histo</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Pipeline for updating histogram using info in dataset of scans.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nodules_df :  pd.DataFrame</span>
+<span class="sd">                  contains:</span>
+<span class="sd">                   - &#39;seriesuid&#39;: index of patient or series.</span>
+<span class="sd">                   - &#39;z&#39;,&#39;y&#39;,&#39;x&#39;: coordinates of nodules center.</span>
+<span class="sd">                   - &#39;diameter&#39;: diameter, in mm.</span>
+<span class="sd">    histo :       tuple</span>
+<span class="sd">                  np.histogram()&#39;s output.</span>
+<span class="sd">                  Used for sampling non-cancerous crops</span>
+<span class="sd">                  (compare the latter with tuple (bins, edges) returned by np.histogram).</span>
+<span class="sd">    fmt :         str</span>
+<span class="sd">                  can be either &#39;raw&#39;, &#39;blosc&#39; or &#39;dicom&#39;.</span>
+<span class="sd">    **kwargs</span>
+<span class="sd">            spacing :      tuple</span>
+<span class="sd">                           (z,y,x) spacing after resize.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            shape :        tuple</span>
+<span class="sd">                           (z,y,x,) shape after crop/pad.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            method :       str</span>
+<span class="sd">                           interpolation method (&#39;pil-simd&#39; or &#39;resize&#39;).</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">                           See CTImagesBatch.resize for more information.</span>
+<span class="sd">            order :        None or int</span>
+<span class="sd">                           order of scipy-interpolation (&lt;=5), if used.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+<span class="sd">            padding :      str</span>
+<span class="sd">                           mode of padding, any supported by np.pad.</span>
+<span class="sd">                           Should be passed as key-argument.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pipeline</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># update args of unify spacing</span>
+    <span class="n">args_unify_spacing</span> <span class="o">=</span> <span class="n">copy</span><span class="p">(</span><span class="n">kwargs_default</span><span class="p">)</span>
+    <span class="n">args_unify_spacing</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># perform unify_spacing and call histo-updating action</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pipeline</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="n">fmt</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules_df</span><span class="o">=</span><span class="n">nodules_df</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="o">**</span><span class="n">args_unify_spacing</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">update_nodules_histo</span><span class="p">(</span><span class="n">histo</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">RUN_BATCH_SIZE</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+               <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pipeline</span></div>
+
+<div class="viewcode-block" id="combine_crops"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.pipelines.html#lung_cancer.pipelines.pipelines.combine_crops">[docs]</a><span class="k">def</span> <span class="nf">combine_crops</span><span class="p">(</span><span class="n">cancerset</span><span class="p">,</span> <span class="n">ncancerset</span><span class="p">,</span> <span class="n">batch_sizes</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="n">hu_lims</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">400</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot; Pipeline for generating batches of cancerous and non-cancerous crops from</span>
+<span class="sd">    ct-scans in chosen proportion.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ---------</span>
+<span class="sd">    cancerset :     dataset</span>
+<span class="sd">                    dataset of cancerous crops in blosc format.</span>
+<span class="sd">    ncancerset :    dataset</span>
+<span class="sd">                    dataset of non-cancerous crops in blosc format.</span>
+<span class="sd">    batch_sizes :   tuple, list of int</span>
+<span class="sd">                    seq of len=2, (num_cancer_batches, num_noncancer_batches).</span>
+<span class="sd">    hu_lims :       tuple, list of float</span>
+<span class="sd">                    seq of len=2, representing limits of hu-trimming in normalize_hu-action.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    pipeline</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># pipeline generating cancerous crops</span>
+    <span class="n">ppl_cancer</span> <span class="o">=</span> <span class="p">(</span><span class="n">cancerset</span><span class="o">.</span><span class="n">p</span>
+                  <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+                  <span class="o">.</span><span class="n">normalize_hu</span><span class="p">(</span><span class="n">min_hu</span><span class="o">=</span><span class="n">hu_lims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">max_hu</span><span class="o">=</span><span class="n">hu_lims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                  <span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                 <span class="p">)</span>
+
+    <span class="c1"># pipeline generating non-cancerous crops merged with first pipeline</span>
+    <span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span><span class="n">ncancerset</span><span class="o">.</span><span class="n">p</span>
+                <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">normalize_hu</span><span class="p">(</span><span class="n">min_hu</span><span class="o">=</span><span class="n">hu_lims</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">max_hu</span><span class="o">=</span><span class="n">hu_lims</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">ppl_cancer</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">lazy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_sizes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+               <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pipeline</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

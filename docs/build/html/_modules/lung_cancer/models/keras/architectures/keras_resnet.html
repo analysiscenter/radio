@@ -1,0 +1,363 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.models.keras.architectures.keras_resnet &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.keras.architectures.keras_resnet</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=anomalous-backslash-in-string</span>
+<span class="sd">&quot;&quot;&quot; Contains implementation of ResNet via keras. &quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">keras</span> <span class="k">import</span> <span class="n">layers</span>
+
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Input</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Dense</span><span class="p">,</span> <span class="n">Dropout</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Activation</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Flatten</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">Conv3D</span>
+<span class="kn">from</span> <span class="nn">keras.layers</span> <span class="k">import</span> <span class="n">BatchNormalization</span>
+
+<span class="kn">from</span> <span class="nn">..keras_model</span> <span class="k">import</span> <span class="n">KerasModel</span>
+
+
+<div class="viewcode-block" id="KerasResNet50"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.keras.architectures.html#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50">[docs]</a><span class="k">class</span> <span class="nc">KerasResNet50</span><span class="p">(</span><span class="n">KerasModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; ResNet50 model for 3D scans implemented in keras.</span>
+
+<span class="sd">    This class extends KerasModel class.</span>
+
+<span class="sd">    Contains description of three types of blocks:</span>
+<span class="sd">    &#39;identity_block&#39; and &#39;conv_block&#39;. ResNet architercture is implemented inside</span>
+<span class="sd">    _build method using these blocks. Full description of similar 2D model</span>
+<span class="sd">    architecture can be downloaded from here: https://arxiv.org/pdf/1512.03385v1.pdf</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : dict</span>
+<span class="sd">        config dictionary from dataset pipeline</span>
+<span class="sd">        see configuring model section of dataset module</span>
+<span class="sd">        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        name of the model.</span>
+<span class="sd">    units : tuple(int, int)</span>
+<span class="sd">        number of units in two final dense layers before tensor with predicitons.</span>
+<span class="sd">    num_targets : int</span>
+<span class="sd">        size of tensor with predicitons.</span>
+<span class="sd">    dropout_rate : float</span>
+<span class="sd">        probability of dropout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Call __init__ of KerasModel and add specific for KerasResNet50 attributes. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;config&#39;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_from_config</span><span class="p">(</span><span class="s1">&#39;dropout_rate&#39;</span><span class="p">,</span> <span class="mf">0.35</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_targets</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_from_config</span><span class="p">(</span><span class="s1">&#39;num_targets&#39;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">units</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_from_config</span><span class="p">(</span><span class="s1">&#39;units&#39;</span><span class="p">,</span> <span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">128</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<div class="viewcode-block" id="KerasResNet50.identity_block"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.keras.architectures.html#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.identity_block">[docs]</a>    <span class="k">def</span> <span class="nf">identity_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">block</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; The identity block is the block that has no conv layer at shortcut.</span>
+
+<span class="sd">        =======================================================================</span>
+<span class="sd">                                   input_tensor ------------|</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                        \/                  |</span>
+<span class="sd">                            Conv3D{1x1x1}[1:1:1](filters1)  |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                        \/                  |</span>
+<span class="sd">                                 BatchNormalization         |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                       ReLu                 |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                        \/                  |</span>
+<span class="sd">                      Conv3D{kernel_size}[1:1:1](filters2)  |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                        \/                  |</span>
+<span class="sd">                                 BatchNormalization         |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                       ReLu                 |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                        \/                  |</span>
+<span class="sd">                            Conv3D{1x1x1}[1:1:1](filter3)   |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                        \/                  |</span>
+<span class="sd">                                 BatchNormalization         |</span>
+<span class="sd">                                        ||                  |</span>
+<span class="sd">                                        \/                  |</span>
+<span class="sd">                                       ( + )&lt;---------------|</span>
+<span class="sd">                                        ||</span>
+<span class="sd">                                        \/</span>
+<span class="sd">                                        ReLu</span>
+<span class="sd">        =======================================================================</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_tensor : keras tensor</span>
+<span class="sd">            input tensor.</span>
+<span class="sd">        kernel_size : tuple(int, int, int)</span>
+<span class="sd">            size of the kernel along three dimensions for middle convolution operation in block.</span>
+<span class="sd">        filters : tuple(int, int, int)</span>
+<span class="sd">            number of filters in first, second and third 3D-convolution operations.</span>
+<span class="sd">        stage : int</span>
+<span class="sd">            number of stage, on par with block argument used to derive names of inner layers.</span>
+<span class="sd">        block : str</span>
+<span class="sd">            block prefix, on par with stage argument used to derive names of inner layers.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        keras tensor</span>
+<span class="sd">            output tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filters1</span><span class="p">,</span> <span class="n">filters2</span><span class="p">,</span> <span class="n">filters3</span> <span class="o">=</span> <span class="n">filters</span>
+
+        <span class="n">conv_name_base</span> <span class="o">=</span> <span class="s1">&#39;res&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span> <span class="o">+</span> <span class="n">block</span> <span class="o">+</span> <span class="s1">&#39;_branch&#39;</span>
+        <span class="n">bn_name_base</span> <span class="o">=</span> <span class="s1">&#39;bn&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span> <span class="o">+</span> <span class="n">block</span> <span class="o">+</span> <span class="s1">&#39;_branch&#39;</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">conv_name_base</span> <span class="o">+</span> <span class="s1">&#39;2a&#39;</span><span class="p">,</span>
+                   <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">input_tensor</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">bn_name_base</span> <span class="o">+</span> <span class="s1">&#39;2a&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters2</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span>
+                   <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                   <span class="n">name</span><span class="o">=</span><span class="n">conv_name_base</span> <span class="o">+</span> <span class="s1">&#39;2b&#39;</span><span class="p">,</span>
+                   <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">bn_name_base</span> <span class="o">+</span> <span class="s1">&#39;2b&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters3</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                   <span class="n">name</span><span class="o">=</span><span class="n">conv_name_base</span> <span class="o">+</span> <span class="s1">&#39;2c&#39;</span><span class="p">,</span>
+                   <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">bn_name_base</span> <span class="o">+</span> <span class="s1">&#39;2c&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">])</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
+<div class="viewcode-block" id="KerasResNet50.conv_block"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.keras.architectures.html#lung_cancer.models.keras.architectures.keras_resnet.KerasResNet50.conv_block">[docs]</a>    <span class="k">def</span> <span class="nf">conv_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">stage</span><span class="p">,</span> <span class="n">block</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot; Convolutional block that has a conv layer at shortcut.</span>
+
+<span class="sd">        Schematically this block can be represented like this:</span>
+<span class="sd">        =======================================================================</span>
+<span class="sd">                                   input_tensor -----------------|</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                        \/                       |</span>
+<span class="sd">                          Conv3D{1x1x1}[strides](filters1)       |</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                        \/                       |</span>
+<span class="sd">                                 BatchNormalization              |</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                       ReLu                      |</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                        \/                       |</span>
+<span class="sd">                      Conv3D{kernel_size}[1:1:1](filters2)       |</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                        \/                       |</span>
+<span class="sd">                                 BatchNormalization              |</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                       ReLu      Conv3D{1x1x1}[strides](filters3)</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                        \/                       |</span>
+<span class="sd">                            Conv3D{1x1x1}[1:1:1](filter3)        |</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                        \/                       |</span>
+<span class="sd">                                 BatchNormalization              |</span>
+<span class="sd">                                        ||                       |</span>
+<span class="sd">                                        \/                       |</span>
+<span class="sd">                                       ( + )&lt;--------------------|</span>
+<span class="sd">                                        ||</span>
+<span class="sd">                                        \/</span>
+<span class="sd">                                        ReLu</span>
+<span class="sd">        =======================================================================</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_tensor : keras tensor</span>
+<span class="sd">            input tensor.</span>
+<span class="sd">        kernel_size : tuple(int, int, int)</span>
+<span class="sd">            size of the kernel along three dimensions for middle convolution operation in block.</span>
+<span class="sd">        filters : tuple(int, int, int)</span>
+<span class="sd">            number of filters in first, second and third 3D-convolution operations.</span>
+<span class="sd">        stage : int</span>
+<span class="sd">            number of stage, on par with block argument used to derive names of inner layers.</span>
+<span class="sd">        block : str</span>
+<span class="sd">            block prefix, on par with stage argument used to derive names of inner layers.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        keras tensor</span>
+<span class="sd">            output tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filters1</span><span class="p">,</span> <span class="n">filters2</span><span class="p">,</span> <span class="n">filters3</span> <span class="o">=</span> <span class="n">filters</span>
+
+        <span class="n">conv_name_base</span> <span class="o">=</span> <span class="s1">&#39;res&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span> <span class="o">+</span> <span class="n">block</span> <span class="o">+</span> <span class="s1">&#39;_branch&#39;</span>
+        <span class="n">bn_name_base</span> <span class="o">=</span> <span class="s1">&#39;bn&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">stage</span><span class="p">)</span> <span class="o">+</span> <span class="n">block</span> <span class="o">+</span> <span class="s1">&#39;_branch&#39;</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">bn_name_base</span> <span class="o">+</span> <span class="s1">&#39;2a&#39;</span><span class="p">)(</span><span class="n">input_tensor</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                   <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                   <span class="n">name</span><span class="o">=</span><span class="n">conv_name_base</span> <span class="o">+</span> <span class="s1">&#39;2a&#39;</span><span class="p">,</span>
+                   <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">bn_name_base</span> <span class="o">+</span> <span class="s1">&#39;2b&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters2</span><span class="p">,</span>
+                   <span class="n">kernel_size</span><span class="p">,</span>
+                   <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                   <span class="n">name</span><span class="o">=</span><span class="n">conv_name_base</span> <span class="o">+</span> <span class="s1">&#39;2b&#39;</span><span class="p">,</span>
+                   <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">bn_name_base</span> <span class="o">+</span> <span class="s1">&#39;2c&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters3</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                   <span class="n">name</span><span class="o">=</span><span class="n">conv_name_base</span> <span class="o">+</span> <span class="s1">&#39;2c&#39;</span><span class="p">,</span>
+                   <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                   <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">shortcut</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">bn_name_base</span> <span class="o">+</span> <span class="s1">&#39;1&#39;</span><span class="p">)(</span><span class="n">input_tensor</span><span class="p">)</span>
+        <span class="n">shortcut</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters3</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                          <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                          <span class="n">name</span><span class="o">=</span><span class="n">conv_name_base</span> <span class="o">+</span> <span class="s1">&#39;1&#39;</span><span class="p">,</span>
+                          <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                          <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">shortcut</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">layers</span><span class="o">.</span><span class="n">add</span><span class="p">([</span><span class="n">x</span><span class="p">,</span> <span class="n">shortcut</span><span class="p">])</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">x</span></div>
+
+    <span class="k">def</span> <span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build resnet50 model implemented in keras.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple([*input_nodes], [*output_nodes]);</span>
+<span class="sd">            list of input nodes and list of output nodes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">units_1</span><span class="p">,</span> <span class="n">units_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">units</span>
+
+        <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">Input</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Conv3D</span><span class="p">(</span><span class="n">filters</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                   <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;initial_conv&#39;</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                   <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">kernel_initializer</span><span class="o">=</span><span class="s1">&#39;glorot_normal&#39;</span><span class="p">)(</span><span class="n">input_tensor</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;initial_batch_norm&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Activation</span><span class="p">(</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">64</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;d&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;e&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">256</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;f&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span><span class="p">)(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">conv_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity_block</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span> <span class="mi">512</span><span class="p">],</span> <span class="n">stage</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="s1">&#39;c&#39;</span><span class="p">)</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="n">Flatten</span><span class="p">()(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">units_1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">Dropout</span><span class="p">(</span><span class="n">rate</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dropout_rate</span><span class="p">)(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="n">y</span> <span class="o">=</span> <span class="n">BatchNormalization</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="n">units_2</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;relu&#39;</span><span class="p">)(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="n">output_layer</span> <span class="o">=</span> <span class="n">Dense</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_targets</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s1">&#39;sigmoid&#39;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;output&#39;</span><span class="p">)(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">input_tensor</span><span class="p">],</span> <span class="p">[</span><span class="n">output_layer</span><span class="p">]</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

@@ -225,7 +225,7 @@ def combine_crops(cancerset, ncancerset, batch_sizes=(10, 10), hu_lims=(-1000, 4
     """ Pipeline for generating batches of cancerous and non-cancerous crops from
     ct-scans in chosen proportion.
 
-    Paramters
+    Parameters
     ---------
     cancerset :     dataset
                     dataset of cancerous crops in blosc format.

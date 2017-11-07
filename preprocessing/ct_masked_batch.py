@@ -74,11 +74,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
     Allows to load info about cancer nodules, then create cancer-masks
         for each patient. Created masks are stored in self.masks
 
+    Parameters
+    ----------
+    index : dataset.index
+            ids of scans to be put in a batch
+
     Attributes
     ----------
     components :  tuple of strings.
                   List names of data components of a batch, which are `images`,
-                  `origin` and `spacing`.
+                  `masks`, `origin` and `spacing`.
                   NOTE: Implementation of this property is required by Base class.
     num_nodules : int
                   number of nodules in batch
@@ -97,26 +102,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
                      patient data corresponding to nodules;
                    - self.nodules.offset -- ndarray(num_nodules, 3) position of individual
                      patient scan inside batch;
-                   - self.nodules.spacing -- ndarray(num_nodules, 3) of spacinf attribute
+                   - self.nodules.spacing -- ndarray(num_nodules, 3) of spacing attribute
                      of patients which correspond to nodules;
                    - self.nodules.origin -- ndarray(num_nodules, 3) of origin attribute
                      of patients which correspond to nodules.
-
-    Important methods:
-        1. fetch_nodules_info(self, nodules_df)
-            function for loading info about nodules from annotations-df
-
-        2. create_mask()
-            given that self.nodules is filled (e.g. by calling fetch_nodules_info),
-            this method fills self.masks-attribute with cancer-masks
-
-        3. resize(self, shape=(128, 256, 256), order=3)
-            transform shape of all scans in batch to supplied shape
-            if masks are loaded, they are are also resized
-
-    Note
-    ----
-    Spacing, origin are recalculated when resize is executed.
     """
 
     nodules_dtype = np.dtype([('patient_pos', np.int, 1),

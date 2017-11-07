@@ -1,0 +1,272 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.models.tensorflow.losses &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.tensorflow.losses</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=not-context-manager</span>
+<span class="sd">&quot;&quot;&quot; Contains losses used in tensorflow models. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+
+<div class="viewcode-block" id="log_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.losses.log_loss">[docs]</a><span class="k">def</span> <span class="nf">log_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">10e-7</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Log loss on input tensors.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : tf.Tensor</span>
+<span class="sd">        tensor with true labels;</span>
+<span class="sd">    y_pred : tf.Tensor</span>
+<span class="sd">        tensor with predicted logits;</span>
+<span class="sd">    epsilon : float or tf.constant(dtype=tf.float32)</span>
+<span class="sd">        small real value to avoid computing log(0);</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        log loss on input tensors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">y_true</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">y_pred</span> <span class="o">+</span> <span class="n">epsilon</span><span class="p">)</span>
+                          <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y_true</span><span class="p">)</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y_pred</span> <span class="o">+</span> <span class="n">epsilon</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="reg_l2_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.losses.reg_l2_loss">[docs]</a><span class="k">def</span> <span class="nf">reg_l2_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">lambda_coords</span><span class="o">=</span><span class="mf">0.75</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; L2 loss for prediction of cancer tumor&#39;s centers, sizes joined with binary classification task.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    - y_true : tf.Tensor</span>
+<span class="sd">        tensor containing true values for sizes of nodules, their centers</span>
+<span class="sd">        and classes of crop(1 if cancerous 0 otherwise).</span>
+<span class="sd">    - y_pred : tf.Tensor</span>
+<span class="sd">        tensor containing predicted values for sizes of nodules, their centers</span>
+<span class="sd">        and probability of cancer in given crop.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        l2 loss for regression of cancer tumor center&#39;s coordinates,</span>
+<span class="sd">        sizes joined with binary classification task.</span>
+
+<span class="sd">    NOTE</span>
+<span class="sd">    ----</span>
+<span class="sd">    y_true and y_pred tensors must have [None, 7] shapes;</span>
+<span class="sd">    y_true[:, :3] and y_pred[:, :3] correspond to normalized (from [0, 1] interval)</span>
+<span class="sd">    zyx coordinates of cancer tumor, while y_true[:, 3:6] and y_pred[:, 3:6]</span>
+<span class="sd">    correspond to sizes of cancer tumor along zyx axes(also normalized),</span>
+<span class="sd">    finally, y_true[:, 6] and y_pred[:, 6] represent whether cancer tumor presents</span>
+<span class="sd">    or not in the current crop.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">clf_true</span><span class="p">,</span> <span class="n">clf_pred</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">],</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">]</span>
+    <span class="n">centers_true</span><span class="p">,</span> <span class="n">centers_pred</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">],</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">sizes_true</span><span class="p">,</span> <span class="n">sizes_pred</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">],</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+
+    <span class="n">centers_loss</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">((</span><span class="n">centers_true</span> <span class="o">-</span> <span class="n">centers_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sizes_loss</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">((</span><span class="n">tf</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sizes_true</span><span class="p">)</span> <span class="o">-</span> <span class="n">tf</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sizes_pred</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">clf_loss</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">clf_true</span> <span class="o">-</span> <span class="n">clf_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+
+    <span class="n">loss</span> <span class="o">=</span> <span class="n">clf_loss</span> <span class="o">+</span> <span class="n">lambda_coords</span> <span class="o">*</span> <span class="n">clf_true</span> <span class="o">*</span> <span class="p">(</span><span class="n">centers_loss</span> <span class="o">+</span> <span class="n">sizes_loss</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="iou_3d"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.losses.iou_3d">[docs]</a><span class="k">def</span> <span class="nf">iou_3d</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">epsilon</span><span class="o">=</span><span class="mf">10e-7</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compute intersection over union in 3D case for input tensors.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : tf.Tensor</span>
+<span class="sd">        tensor containg true values for sizes of nodules and their centers.</span>
+<span class="sd">    y_pred : tf.Tensor</span>
+<span class="sd">        tensor containing predicted values for sizes of nodules and their centers.</span>
+<span class="sd">    epsilon : float</span>
+<span class="sd">        small real value used for avoiding division by zero error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        tensor containing intersection over union computed on input tensors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s1">&#39;IOU&#39;</span><span class="p">):</span>
+        <span class="n">tf_epsilon</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">constant</span><span class="p">([</span><span class="n">epsilon</span><span class="p">],</span> <span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">r_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+        <span class="n">r_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+
+        <span class="n">s_true</span> <span class="o">=</span> <span class="n">y_true</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+        <span class="n">s_pred</span> <span class="o">=</span> <span class="n">y_pred</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+
+        <span class="n">abs_r_diff</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">r_true</span> <span class="o">-</span> <span class="n">r_pred</span><span class="p">)</span>
+        <span class="n">abs_s_diff</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s_true</span> <span class="o">-</span> <span class="n">s_pred</span><span class="p">)</span>
+
+        <span class="n">iou_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">abs_r_diff</span> <span class="o">&lt;</span> <span class="n">abs_s_diff</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">s_true</span><span class="p">,</span> <span class="n">s_pred</span><span class="p">),</span>
+                              <span class="n">tf</span><span class="o">.</span><span class="n">clip_by_value</span><span class="p">(</span><span class="n">s_true</span> <span class="o">+</span> <span class="n">s_pred</span> <span class="o">-</span> <span class="n">abs_r_diff</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+
+        <span class="n">iou_tensor</span> <span class="o">=</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_prod</span><span class="p">(</span><span class="n">iou_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                      <span class="o">/</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_prod</span><span class="p">(</span><span class="n">s_true</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+                         <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_prod</span><span class="p">(</span><span class="n">s_pred</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">tf_epsilon</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">iou_tensor</span></div>
+
+
+<div class="viewcode-block" id="tiversky_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.losses.tiversky_loss">[docs]</a><span class="k">def</span> <span class="nf">tiversky_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Tiversky loss function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : tf.Tensor</span>
+<span class="sd">        tensor containing target mask.</span>
+<span class="sd">    y_pred : tf.Tensor</span>
+<span class="sd">        tensor containing predicted mask.</span>
+<span class="sd">    alpha : float</span>
+<span class="sd">        real value, weight of &#39;0&#39; class.</span>
+<span class="sd">    beta : float</span>
+<span class="sd">        real value, weight of &#39;1&#39; class.</span>
+<span class="sd">    smooth : float</span>
+<span class="sd">        small real value used for avoiding division by zero error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        tensor containing tiversky loss.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">truepos</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_true</span> <span class="o">*</span> <span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">fp_and_fn</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_pred</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y_true</span><span class="p">))</span>
+                 <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">*</span> <span class="n">y_true</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="o">-</span><span class="p">(</span><span class="n">truepos</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">truepos</span> <span class="o">+</span> <span class="n">smooth</span> <span class="o">+</span> <span class="n">fp_and_fn</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="dice_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.losses.dice_loss">[docs]</a><span class="k">def</span> <span class="nf">dice_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-7</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Loss function base on dice coefficient.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : tf.Tensor</span>
+<span class="sd">        tensor containing target mask.</span>
+<span class="sd">    y_pred : tf.Tensor</span>
+<span class="sd">        tensor containing predicted mask.</span>
+<span class="sd">    smooth : float</span>
+<span class="sd">        small real value used for avoiding division by zero error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        tensor containing tiversky loss.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true_f</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="n">y_pred_f</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_true_f</span> <span class="o">*</span> <span class="n">y_pred_f</span><span class="p">)</span>
+    <span class="n">answer</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">intersection</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_true_f</span><span class="p">)</span>
+                                             <span class="o">+</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_pred_f</span><span class="p">)</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">answer</span></div>
+
+
+<div class="viewcode-block" id="jaccard_coef_logloss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.losses.jaccard_coef_logloss">[docs]</a><span class="k">def</span> <span class="nf">jaccard_coef_logloss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Loss function based on jaccard coefficient.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : tf.Tensor</span>
+<span class="sd">        tensor containing target mask.</span>
+<span class="sd">    y_pred : tf.Tensor</span>
+<span class="sd">        tensor containing predicted mask.</span>
+<span class="sd">    smooth : float</span>
+<span class="sd">        small real value used for avoiding division by zero error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        tensor containing negative logarithm of jaccard coefficient.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">truepos</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_true</span> <span class="o">*</span> <span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">falsepos</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="o">-</span> <span class="n">truepos</span>
+    <span class="n">falseneg</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">-</span> <span class="n">truepos</span>
+    <span class="n">jaccard</span> <span class="o">=</span> <span class="p">(</span><span class="n">truepos</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">smooth</span> <span class="o">+</span> <span class="n">truepos</span> <span class="o">+</span> <span class="n">falseneg</span> <span class="o">+</span> <span class="n">falsepos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">tf</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jaccard</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

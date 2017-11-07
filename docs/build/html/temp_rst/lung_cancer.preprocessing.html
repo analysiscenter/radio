@@ -1,0 +1,2110 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.preprocessing package &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lung-cancer-preprocessing-package">
+<h1>lung_cancer.preprocessing package<a class="headerlink" href="#lung-cancer-preprocessing-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.crop">
+<span id="lung-cancer-preprocessing-crop-module"></span><h2>lung_cancer.preprocessing.crop module<a class="headerlink" href="#module-lung_cancer.preprocessing.crop" title="Permalink to this headline">¶</a></h2>
+<p>Contains auxiliary functions for calculating crop parameters.</p>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.crop.detect_black_border">
+<code class="descclassname">lung_cancer.preprocessing.crop.</code><code class="descname">detect_black_border</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/crop.html#detect_black_border"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.crop.detect_black_border" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get number of black (empty) slices from top and bottom of 3d-scan</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>masked_image</strong> (<em>ndarray</em>) &#8211; 3D numpy array</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">(int,int), numbers of empty slices on top and bottom by z-axis</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.preprocessing.crop.make_central_crop">
+<code class="descclassname">lung_cancer.preprocessing.crop.</code><code class="descname">make_central_crop</code><span class="sig-paren">(</span><em>image</em>, <em>crop_size</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/crop.html#make_central_crop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.crop.make_central_crop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a crop from center of 3D image of given crop_size.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>image</strong> (<em>ndarray</em>) &#8211; 3D image of shape <cite>(dim1, dim2, dim3)</cite>.</li>
+<li><strong>crop_size</strong> (<em>ndarray</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; Size of crop along three dimensions <cite>(int, int, int)</cite></li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">3D crop from image.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.crop.return_black_border_array">
+<code class="descclassname">lung_cancer.preprocessing.crop.</code><code class="descname">return_black_border_array</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/crop.html#return_black_border_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.crop.return_black_border_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get array with a black (empty) border.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_image</strong> (<em>ndarray</em>) &#8211; 3D numpy array</li>
+<li><strong>background</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; voxel&#8217;s value for background color (air in case of CT).
+default is -2000, it is air in HU scale.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">info with top and bottom number of black (empty) slices,
+and mean value for non-empty part of scan.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.ct_batch">
+<span id="lung-cancer-preprocessing-ct-batch-module"></span><h2>lung_cancer.preprocessing.ct_batch module<a class="headerlink" href="#module-lung_cancer.preprocessing.ct_batch" title="Permalink to this headline">¶</a></h2>
+<p>Batch class for storing CT-scans.</p>
+<dl class="class">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch">
+<em class="property">class </em><code class="descclassname">lung_cancer.preprocessing.ct_batch.</code><code class="descname">CTImagesBatch</code><span class="sig-paren">(</span><em>index</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.batch.Batch</span></code></p>
+<p>Batch class for storing batch of CT-scans in 3D.</p>
+<p>Contains a component <cite>images</cite> = 3d-array of stacked scans
+along number_of_slices (z) axis (aka &#8220;skyscraper&#8221;), associated information
+for subsetting individual patient&#8217;s 3D scan (_bounds, origin, spacing) and
+various methods to preprocess the data.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>index</strong> (<em>dataset.index</em>) &#8211; ids of scans to be put in a batch</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.components">
+<code class="descname">components</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.components" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>tuple of strings.</em> &#8211; List names of data components of a batch, which are <cite>images</cite>,
+<cite>origin</cite> and <cite>spacing</cite>.
+NOTE: Implementation of this property is required by Base class.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.index">
+<code class="descname">index</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.index" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>dataset.index</em> &#8211; represents indices of scans from a batch</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.images">
+<code class="descname">images</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.images" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>ndarray</em> &#8211; contains ct-scans for all patients in batch.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.spacing">
+<code class="descname">spacing</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>ndarray of floats</em> &#8211; represents distances between pixels in world coordinates</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.origin">
+<code class="descname">origin</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.origin" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>ndarray of floats</em> &#8211; contains world coordinates of (0, 0, 0)-pixel of scans</p>
+</dd></dl>
+
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.calc_lung_mask">
+<code class="descname">calc_lung_mask</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.calc_lung_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.calc_lung_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a mask for lungs</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.central_crop">
+<code class="descname">central_crop</code><span class="sig-paren">(</span><em>crop_size</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.central_crop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.central_crop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make crop of crop_size from center of images.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>crop_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (int, int, int), size of crop, in <cite>z,y,x</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">components</code></dt>
+<dd><p>Components&#8217; property.</p>
+<p>See doc of Base batch in dataset for information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">names of components returned from __getitem__.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">(<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.concat">
+<em class="property">classmethod </em><code class="descname">concat</code><span class="sig-paren">(</span><em>batches</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.concat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.concat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Concatenate several batches in one large batch.</p>
+<p>Assume that same components are filled in all supplied batches.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>batches</strong> (<em>list</em><em> or </em><em>tuple of batches</em>) &#8211; sequence of batches to be concatenated</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">large batch with length = sum of lengths of concated batches</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">batch</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Old batches&#8217; indexes are dropped. New large batch has new
+np-arange index.
+if None-entries or batches of len=0 are included in the list of batches,
+they will be dropped after concat.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.crop_centers">
+<code class="descname">crop_centers</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.crop_centers" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get centers of crop for all scans</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.crop_sizes">
+<code class="descname">crop_sizes</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.crop_sizes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get sizes of crop for all scans</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump">
+<code class="descname">dump</code><span class="sig-paren">(</span><em>patient</em>, <em>dst</em>, <em>src=None</em>, <em>fmt='blosc'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump scans data (3d-array) on specified path in specified format</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dst</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; destinatio-folder where all patients&#8217; data should be put</li>
+<li><strong>src</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em> or </em><em>list/tuple</em>) &#8211; component(s) that we need to dump (smth iterable or string). If not
+supplied, dump all components + shapes of scans</li>
+<li><strong>fmt</strong> (<em>'blosc'</em>) &#8211; format of dump. Currently only blosc-format is supported;
+in this case folder for each patient is created, patient&#8217;s data
+is put into images.blk, attributes are put into files attr_name.cpkl
+(e.g., spacing.cpkl)</li>
+<li><strong>example</strong> &#8211; <p># initialize batch and load data
+ind = [&#8216;1ae34g90&#8217;, &#8216;3hf82s76&#8217;]
+batch = CTImagesBatch(ind)
+batch.load(...)
+batch.dump(dst=&#8217;./data/blosc_preprocessed&#8217;)
+# the command above creates files</p>
+<p># ./data/blosc_preprocessed/1ae34g90/images.blk
+# ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+# ./data/blosc_preprocessed/1ae34g90/origin.cpkl
+# ./data/blosc_preprocessed/1ae34g90/shape.cpkl</p>
+<p># ./data/blosc_preprocessed/3hf82s76/images.blk
+# ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+# ./data/blosc_preprocessed/3hf82s76/origin.cpkl
+# ./data/blosc_preprocessed/1ae34g90/shape.cpkl</p>
+</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump_data">
+<em class="property">static </em><code class="descname">dump_data</code><span class="sig-paren">(</span><em>data_items</em>, <em>folder</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.dump_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.dump_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump data from data_items on disk in specified folder</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data_items</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; dict of data items for dump in form {item_name.ext: item}
+(e.g.: {&#8216;images.blk&#8217;: scans, &#8216;mask.blk&#8217;: mask, &#8216;spacing.cpkl&#8217;: spacing})</li>
+<li><strong>folder</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; folder to dump data-items in</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)">None</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<dl class="last docutils">
+<dt>Depending on supplied format in data_items, each data-item will be either</dt>
+<dd>cloudpickle-serialized (if .cpkl) or blosc-packed (if .blk)</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.flip">
+<code class="descname">flip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.flip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.flip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invert the order of slices for each patient</p>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">flip</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.get_axial_slice">
+<code class="descname">get_axial_slice</code><span class="sig-paren">(</span><em>person_number</em>, <em>slice_height</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.get_axial_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.get_axial_slice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get axial slice (e.g., for plots)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>person_number</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; Can be either index (int) of person in the batch
+or patient_id (str)</li>
+<li><strong>slice_height</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; scaled from 0 to 1 number of slice.
+e.g. 0.7 means that we take slice with number
+int(0.7 * number of slices for person)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<dl class="docutils">
+<dt>patch = batch.get_axial_slice(5, 0.6)</dt>
+<dd>patch = batch.get_axial_slice(self.index[5], 0.6)
+# here self.index[5] usually smth like &#8216;a1de03fz29kf6h2&#8217;</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.get_patches">
+<code class="descname">get_patches</code><span class="sig-paren">(</span><em>patch_shape</em>, <em>stride</em>, <em>padding='edge'</em>, <em>data_attr='images'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.get_patches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.get_patches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract patches of patch_shape with specified stride.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patch_shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; (z_dim,y_dim,x_dim), shape of a single patch.</li>
+<li><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; (int, int, int), stride to slide over each patient&#8217;s data.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; padding-type (see doc of np.pad for available types).</li>
+<li><strong>data_attr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; component to get data from.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">4d-ndaray of patches; first dimension enumerates patches</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Shape of all patients data is needed to be the same at this step,
+resize/unify_spacing is required before.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.get_pos">
+<code class="descname">get_pos</code><span class="sig-paren">(</span><em>data</em>, <em>component</em>, <em>index</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.get_pos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.get_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a positon of an item for a given index in data
+or in self.`component`.</p>
+<p>Fetch correct position inside batch for an item, looks for it
+in <cite>data</cite>, if provided, or in <cite>component</cite> in self.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a><em> or </em><em>ndarray</em>) &#8211; data from which subsetting is done.
+If None, retrieve position from <cite>component</cite> of batch,
+if ndarray, returns index.</li>
+<li><strong>component</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of a component, f.ex. &#8216;images&#8217;.
+if component provided, data should be None.</li>
+<li><strong>index</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; index of an item to be looked for.
+may be key from dataset (str)
+or index inside batch (int).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Position of item</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This is an overload of get_pos from base Batch-class,
+see corresponding docstring for detailed explanation.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.images_shape">
+<code class="descname">images_shape</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.images_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get shapes for all 3d scans in CTImagesBatch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">shapes of data for each patient, ndarray(patient_pos, 3)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>fmt='dicom'</em>, <em>source=None</em>, <em>bounds=None</em>, <em>origin=None</em>, <em>spacing=None</em>, <em>src_blosc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load 3d scans data in batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; type of data. Can be &#8216;dicom&#8217;|&#8217;blosc&#8217;|&#8217;raw&#8217;|&#8217;ndarray&#8217;</li>
+<li><strong>source</strong> (<em>ndarray</em><em>(</em><em>n_patients * z</em><em>, </em><em>y</em><em>, </em><em>x</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; input array with <cite>skyscraper</cite> (stacked scans),
+needed iff fmt = &#8216;ndarray&#8217;.</li>
+<li><strong>bounds</strong> (<em>ndarray</em><em>(</em><em>n_patients</em><em>, </em><em>dtype=np.int</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; bound-floors index for patients.
+Needed iff fmt=&#8217;ndarray&#8217;</li>
+<li><strong>origin</strong> (<em>ndarray</em><em>(</em><em>n_patients</em><em>, </em><em>3</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; origins of scans in world coordinates.
+Needed only if fmt=&#8217;ndarray&#8217;</li>
+<li><strong>spacing</strong> (<em>ndarray</em><em>(</em><em>n_patients</em><em>, </em><em>3</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; ndarray with spacings of patients along <cite>z,y,x</cite> axes.
+Needed only if fmt=&#8217;ndarray&#8217;</li>
+<li><strong>src_blosc</strong> (<em>list/tuple/string</em>) &#8211; Contains names of batch component(s) that should be loaded from blosc file.
+Needed only if fmt=&#8217;blosc&#8217;. If None, all components are loaded.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">self</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>#: DICOM example
+# initialize batch for storing batch of 3 patients
+# with following IDs
+index = FilesIndex(path=&#8221;/some/path/<a href="#id1"><span class="problematic" id="id2">*</span></a>.dcm&#8221;, no_ext=True)
+batch = CTImagesBatch(index)
+batch.load(fmt=&#8217;dicom&#8217;)</p>
+<p>#: Ndarray example:
+# source_array stores a batch (concatted 3d-scans, skyscraper)
+# say, ndarray with shape (400, 256, 256)</p>
+<p># bounds stores ndarray of last floors for each patient
+# say, source_ubounds = np.asarray([0, 100, 400])
+batch.load(source=source_array, fmt=&#8217;ndarray&#8217;, bounds=bounds)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.load_from_patches">
+<code class="descname">load_from_patches</code><span class="sig-paren">(</span><em>patches</em>, <em>stride</em>, <em>scan_shape</em>, <em>data_attr='images'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.load_from_patches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.load_from_patches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get skyscraper from 4d-array of patches, put it to <cite>data_attr</cite> component in batch.</p>
+<p>Let reconstruct original skyscraper from patches (if same arguments are passed)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>patches</strong> (<em>ndarray</em>) &#8211; 4d-array of patches, with dims: <cite>(patch_nb, z, y, x)</cite>.</li>
+<li><strong>scan_shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; (z,y,x), shape of individual scan (should be same for all scans).</li>
+<li><strong>stride</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; stride-step used for gathering data from patches.</li>
+<li><strong>data_attr</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; batch component name to store new data.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If stride != patch.shape(), averaging of overlapped regions is used.
+<cite>scan_shape</cite>, patches.shape(), <cite>stride</cite> are used to infer the number of items
+in new skyscraper; If patches were padded, padding is removed for skyscraper.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.lower_bounds">
+<code class="descname">lower_bounds</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.lower_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get lower bounds of patients data in CTImagesBatch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">ndarray(n_patients,) containing
+lower bounds of patients data along z-axis.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.make_xip">
+<code class="descname">make_xip</code><span class="sig-paren">(</span><em>step=2</em>, <em>depth=10</em>, <em>func='max'</em>, <em>projection='axial'</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.make_xip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.make_xip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make intensity projection (maximum, minimum, average)</p>
+<p>Popular radiologic transformation: max, min, avg applyied along an axe.
+Notice that axe is chosen in accordance with projection argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>step</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; stride-step along axe, to apply the func.</li>
+<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; depth of slices (aka <cite>kernel</cite>) along axe made on each step for computing.</li>
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Possible values are &#8216;max&#8217;, &#8216;min&#8217; and &#8216;avg&#8217;.</li>
+<li><strong>projection</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Possible values: &#8216;axial&#8217;, &#8216;coroanal&#8217;, &#8216;sagital&#8217;.
+In case of &#8216;coronal&#8217; and &#8216;sagital&#8217; projections tensor
+will be transposed from [z,y,x] to [x, z, y] and [y, z, x].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">resulting ndarray after func is applied.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.merge">
+<em class="property">classmethod </em><code class="descname">merge</code><span class="sig-paren">(</span><em>batches</em>, <em>batch_size=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.merge"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.merge" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Concatenate list of batches and then split the result in two batches of sizes</dt>
+<dd>(batch_size, sum(lens of batches) - batch_size)</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>batches</strong> (<em>list of batches</em>) &#8211; </li>
+<li><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; length of first resulting batch</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">(new_batch, rest_batch)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Merge performs split (of middle-batch) and then two concats
+because of speed considerations.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.normalize_hu">
+<code class="descname">normalize_hu</code><span class="sig-paren">(</span><em>min_hu=-1000</em>, <em>max_hu=400</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.normalize_hu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.normalize_hu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize HU-densities to interval [0, 255].</p>
+<p>Trim HU that are outside range [min_hu, max_hu], then scale to [0, 255].</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>min_hu</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; minimum value for hu that will be used as trimming threshold.</li>
+<li><strong>max_hu</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; maximum value for hu that will be used as trimming threshold.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">normalize_hu</span><span class="p">(</span><span class="n">min_hu</span><span class="o">=-</span><span class="mi">1300</span><span class="p">,</span> <span class="n">max_hu</span><span class="o">=</span><span class="mi">600</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.rescale">
+<code class="descname">rescale</code><span class="sig-paren">(</span><em>new_shape</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.rescale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.rescale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recomputes spacing values for patients&#8217; data after resize.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>new_shape</strong> (<em>ndarray</em><em>(</em><em>dtype=np.int</em><em>)</em>) &#8211; shape of patient 3d array after resize,
+in format np.array([z_dim, y_dim, x_dim], dtype=np.int).</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">ndarray(n_patients, 3) with spacing values for each
+patient along z, y, x axes.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.resize">
+<code class="descname">resize</code><span class="sig-paren">(</span><em>patient</em>, <em>out_patient</em>, <em>res</em>, <em>shape=(128</em>, <em>256</em>, <em>256)</em>, <em>method='pil-simd'</em>, <em>axes_pairs=None</em>, <em>resample=None</em>, <em>order=3</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.resize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.resize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resize (change shape of) each CT-scan in the batch.</p>
+<p>When called from a batch, changes this batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (z, y, x) shape that should be AFTER resize.
+Note, that ct-scan dim_ordering also should be <cite>z,y,x</cite></li>
+<li><strong>method</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; interpolation package to be used. Either &#8216;pil-simd&#8217; or &#8216;scipy&#8217;.
+Pil-simd ensures better quality and speed on configurations
+with average number of cores. On the contrary, scipy is better scaled and
+can show better performance on systems with large number of cores</li>
+<li><strong>axes_pairs</strong> (<a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a><em> or </em><em>list/tuple of tuples with pairs</em>) &#8211; pairs of axes that will be used for performing pil-simd resize,
+as this resize is made in 2d. Min number of pairs to use is 1,
+at max there can be 6 pairs. If None, set to ((0, 1), (1, 2)).
+The more pairs one uses, the more precise is the result.
+(and computation takes more time).</li>
+<li><strong>resample</strong> (<em>filter of pil-simd resize. By default set to bilinear. Can be any of filters</em>) &#8211; supported by PIL.Image.</li>
+<li><strong>order</strong> (<em>the order of scipy-interpolation</em><em> (</em><em>&lt;= 5</em><em>)</em>) &#8211; large value improves precision, but slows down the computaion.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Example</p>
+<p>shape = (128, 256, 256)
+Batch = Batch.resize(shape=shape, order=2, method=&#8217;scipy&#8217;)
+Bacch = Batch.resize(shape=shape, resample=PIL.Image.BILINEAR)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>index</em>, <em>angle</em>, <em>components='images'</em>, <em>axes=(1</em>, <em>2)</em>, <em>random=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate 3D images in batch on specific angle in plane.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>angle</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; degree of rotation.</li>
+<li><strong>components</strong> (<em>list</em><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name(s) of components to rotate each item in it.</li>
+<li><strong>axes</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (int, int), plane of rotation specified by two axes.</li>
+<li><strong>random</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; if True, then degree specifies maximum angle of rotation.</li>
+<li><strong>index</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; index of patient in batch.
+Note: this argument is passed by inbatch_parallel</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray of 3D rotated image;</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">zero padding automatically added after rotation;</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.segment">
+<code class="descname">segment</code><span class="sig-paren">(</span><em>erosion_radius=2</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.segment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.segment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Segment lungs&#8217; content from 3D array.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.slice_shape">
+<code class="descname">slice_shape</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.slice_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get shape of slice in yx-plane.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">ndarray([y_dim, x_dim],dtype=np.int) with shape of scan slice.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.split">
+<em class="property">classmethod </em><code class="descname">split</code><span class="sig-paren">(</span><em>batch</em>, <em>batch_size</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.split"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.split" title="Permalink to this definition">¶</a></dt>
+<dd><p>Split one batch in two batches.</p>
+<p>The lens of 2 batches would be <cite>batch_size</cite> and <cite>len(batch) - batch_size</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>batch</strong> (<em>Batch class instance</em>) &#8211; batch to be splitted in two</li>
+<li><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; length of first returned batch.
+If batch_size &gt;= len(batch), return None instead of a 2nd batch</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">(1st_Batch, 2nd_Batch)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Method does not change the structure of input Batch.index. Indices of output
+batches are simply subsets of input Batch.index.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.unify_spacing">
+<code class="descname">unify_spacing</code><span class="sig-paren">(</span><em>patient</em>, <em>out_patient</em>, <em>res</em>, <em>res_factor</em>, <em>shape_resize</em>, <em>spacing=(1</em>, <em>1</em>, <em>1)</em>, <em>shape=(128</em>, <em>256</em>, <em>256)</em>, <em>method='pil-simd'</em>, <em>order=3</em>, <em>padding='edge'</em>, <em>axes_pairs=None</em>, <em>resample=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_batch.html#CTImagesBatch.unify_spacing"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.unify_spacing" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unify spacing of all patients.</p>
+<p>Resize all patients to meet <cite>spacing</cite>, then crop/pad resized array to meet <cite>shape</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>spacing</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (z,y,x) spacing after resize.
+Should be passed as key-argument.</li>
+<li><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (z,y,x,) shape after crop/pad.
+Should be passed as key-argument.</li>
+<li><strong>method</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; interpolation method (&#8216;pil-simd&#8217; or &#8216;resize&#8217;).
+Should be passed as key-argument.
+See CTImagesBatch.resize for more information.</li>
+<li><strong>order</strong> (<a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; order of scipy-interpolation (&lt;=5), if used.
+Should be passed as key-argument.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; mode of padding, any supported by np.pad.
+Should be passed as key-argument.</li>
+<li><strong>axes_pairs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list of tuples with pairs</em>) &#8211; pairs of axes that will be used consequentially
+for performing pil-simd resize.
+Should be passed as key-argument.</li>
+<li><strong>resample</strong> (<a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; filter of pil-simd resize.
+Should be passed as key-argument</li>
+<li><strong>patient</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; index of patient, that worker is handling.
+Note: this argument is passed by inbatch_parallel</li>
+<li><strong>out_patient</strong> (<em>ndarray</em>) &#8211; result of individual worker after action.
+Note: this argument is passed by inbatch_parallel</li>
+<li><strong>res</strong> (<em>ndarray</em>) &#8211; New <cite>images</cite> to replace data inside <cite>images</cite> component.
+Note: this argument is passed by inbatch_parallel</li>
+<li><strong>res_factor</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (float), factor to make resize by.
+Note: this argument is passed by inbatch_parallel</li>
+<li><strong>shape_resize</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; It is possible provide <cite>shape_resize</cite> (shape after resize)
+instead of spacing. Then array with <cite>shape_resize</cite>
+will be cropped/padded for shape to = <cite>shape</cite> arg.
+Note: this argument is passed by inbatch_parallel</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">see CTImagesBatch.resize for more info about methods&#8217; params.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_batch.CTImagesBatch.upper_bounds">
+<code class="descname">upper_bounds</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch.upper_bounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get upper bounds of patients data in CTImagesBatch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">ndarray(n_patients,) containing
+upper bounds of patients data along z-axis.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.ct_masked_batch">
+<span id="lung-cancer-preprocessing-ct-masked-batch-module"></span><h2>lung_cancer.preprocessing.ct_masked_batch module<a class="headerlink" href="#module-lung_cancer.preprocessing.ct_masked_batch" title="Permalink to this headline">¶</a></h2>
+<p>Batch class CTImagesMaskedBatch for storing CT-scans with masks.</p>
+<dl class="class">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch">
+<em class="property">class </em><code class="descclassname">lung_cancer.preprocessing.ct_masked_batch.</code><code class="descname">CTImagesMaskedBatch</code><span class="sig-paren">(</span><em>index</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.preprocessing.ct_batch.CTImagesBatch" title="lung_cancer.preprocessing.ct_batch.CTImagesBatch"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.preprocessing.ct_batch.CTImagesBatch</span></code></a></p>
+<p>Batch class for storing batch of ct-scans with masks for nodules.</p>
+<dl class="docutils">
+<dt>Allows to load info about cancer nodules, then create cancer-masks</dt>
+<dd>for each patient. Created masks are stored in self.masks</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>index</strong> (<em>dataset.index</em>) &#8211; ids of scans to be put in a batch</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.components">
+<code class="descname">components</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.components" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>tuple of strings.</em> &#8211; List names of data components of a batch, which are <cite>images</cite>,
+<cite>masks</cite>, <cite>origin</cite> and <cite>spacing</cite>.
+NOTE: Implementation of this property is required by Base class.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.num_nodules">
+<code class="descname">num_nodules</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.num_nodules" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> &#8211; number of nodules in batch</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.images">
+<code class="descname">images</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.images" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>ndarray</em> &#8211; contains ct-scans for all patients in batch.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.masks">
+<code class="descname">masks</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.masks" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>ndarray</em> &#8211; contains masks for all patients in batch.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.nodules">
+<code class="descname">nodules</code><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.nodules" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>np.recarray</em> &#8211; contains info on cancer nodules location.
+record array contains the following information about nodules:</p>
+<blockquote>
+<div><ul class="simple">
+<li>self.nodules.nodule_center &#8211; ndarray(num_nodules, 3) centers of
+nodules in world coords;</li>
+<li>self.nodules.nodule_size &#8211; ndarray(num_nodules, 3) sizes of
+nodules along z, y, x in world coord;</li>
+<li>self.nodules.img_size &#8211; ndarray(num_nodules, 3) sizes of images of
+patient data corresponding to nodules;</li>
+<li>self.nodules.offset &#8211; ndarray(num_nodules, 3) position of individual
+patient scan inside batch;</li>
+<li>self.nodules.spacing &#8211; ndarray(num_nodules, 3) of spacing attribute
+of patients which correspond to nodules;</li>
+<li>self.nodules.origin &#8211; ndarray(num_nodules, 3) of origin attribute
+of patients which correspond to nodules.</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.binarize_mask">
+<code class="descname">binarize_mask</code><span class="sig-paren">(</span><em>threshold=0.35</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.binarize_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.binarize_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Binarize masks by threshold.</p>
+<p>Args:
+- threshold: float, threshold for masks binarization;</p>
+<p>Returns:
+- self, source CTImagesMaskedBatch with binarized masks.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop">
+<code class="descname">central_crop</code><span class="sig-paren">(</span><em>crop_size</em>, <em>crop_mask=False</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.central_crop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make crop of crop_size from center of images.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>crop_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; </li>
+<li><strong>#TODO</strong> (<em>this method should be rewritten with the use of</em>) &#8211; </li>
+<li><strong>inheritance;</strong> &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">components</code></dt>
+<dd><p>Components&#8217; property.</p>
+<p>See doc of Base batch in dataset for information.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">names of components returned from __getitem__.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">(<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)">str</a>)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.create_mask">
+<code class="descname">create_mask</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.create_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.create_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create <cite>masks</cite> component from <cite>nodules</cite> component.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><cite>nodules</cite> must be not None before calling this method.
+see fetch_nodules_info() for more details.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.dump">
+<code class="descname">dump</code><span class="sig-paren">(</span><em>dst</em>, <em>src=None</em>, <em>fmt='blosc'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump scans to dst-folder in specified format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dst</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; destinatio-folder where all patients&#8217; data should be put</li>
+<li><strong>src</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em> or </em><em>list/tuple</em>) &#8211; component(s) that we need to dump. If not
+supplied, dump all components + shapes of scans</li>
+<li><strong>fmt</strong> (<em>'blosc'</em>) &#8211; format of dump. Currently only blosc-format is supported;
+in this case folder for each patient is created, patient&#8217;s data
+is put into images.blk, masks.blk,
+attributes are put into files attr_name.cpkl
+(e.g., spacing.cpkl)</li>
+<li><strong>docstring of parent-batch for examples.</strong> (<em>See</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_mask">
+<code class="descname">fetch_mask</code><span class="sig-paren">(</span><em>shape</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.fetch_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create <cite>masks</cite> component of different size then <cite>images</cite>,
+using <cite>nodules</cite> component.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray of int.</em>) &#8211; (z_dim,y_dim,x_dim), shape of mask to be created.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><em>ndarray</em> &#8211; 3d array with masks in form of <cite>skyscraper</cite></li>
+<li><strong># TODO</strong> (<em>one part of code from here repeats create_mask function</em>) &#8211; better to unify these two func</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_from_mask">
+<code class="descname">fetch_nodules_from_mask</code><span class="sig-paren">(</span><em>images_loaded=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.fetch_nodules_from_mask"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_from_mask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch nodules info (centers and sizes) from masks.</p>
+<p>Runs skimage.measure.labels for fetching nodules regions
+from masks. Extracts nodules info from segmented regions
+and put this information in self.nodules np.recarray.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>images_loaded</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; if True, i.e. <cite>images</cite> component is loaded,
+and image_size is used to compute
+correct nodules location inside <cite>skyscraper</cite>.
+If False, it doesn&#8217;t update info of location
+inside <cite>skyscraper</cite>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info">
+<code class="descname">fetch_nodules_info</code><span class="sig-paren">(</span><em>nodules_df=None</em>, <em>nodules_records=None</em>, <em>update=False</em>, <em>images_loaded=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.fetch_nodules_info"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract nodules&#8217; info from nodules_df into attribute self.nodules.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>nodules_df</strong> (<em>pd.DataFrame</em>) &#8211; <dl class="docutils">
+<dt>contains:</dt>
+<dd><ul class="first last">
+<li>&#8216;seriesuid&#8217;: index of patient or series.</li>
+<li>&#8216;z&#8217;,&#8217;y&#8217;,&#8217;x&#8217;: coordinates of nodules center.</li>
+<li>&#8216;diameter&#8217;: diameter, in mm.</li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><strong>nodules_records</strong> (<em>np.recarray</em>) &#8211; if not None, should
+contain the same fields as describe in Note.</li>
+<li><strong>update</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; if False, warning appears to remind that nodules info
+will be earased and recomputed.</li>
+<li><strong>images_loaded</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#bool" title="(in Python v2.7)"><em>bool</em></a>) &#8211; if True, i.e. <cite>images</cite> component is loaded,
+and image_size is used to compute
+correct nodules location inside <cite>skyscraper</cite>.
+If False, it doesn&#8217;t update info of location
+inside <cite>skyscraper</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<dl class="last docutils">
+<dt>The method fills in record array self.nodules that contains the following information about nodules:</dt>
+<dd><ul class="first last simple">
+<li>self.nodules.nodule_center &#8211; ndarray(num_nodules, 3) centers of
+nodules in world coords;</li>
+<li>self.nodules.nodule_size &#8211; ndarray(num_nodules, 3) sizes of
+nodules along z, y, x in world coord;</li>
+<li>self.nodules.img_size &#8211; ndarray(num_nodules, 3) sizes of images of
+patient data corresponding to nodules;</li>
+<li>self.nodules.offset &#8211; ndarray(num_nodules, 3) of biases of
+patients which correspond to nodules;</li>
+<li>self.nodules.spacing &#8211; ndarray(num_nodules, 3) of spacinf attribute
+of patients which correspond to nodules;</li>
+<li>self.nodules.origin &#8211; ndarray(num_nodules, 3) of origin attribute
+of patients which correspond to nodules.</li>
+<li>self.nodules.patient_pos &#8211; ndarray(num_nodules, 1) refers to
+positions of patients which correspond to stored nodules.</li>
+</ul>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.flip">
+<code class="descname">flip</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.flip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.flip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invert the order of slices for each patient</p>
+<p class="rubric">Example</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">flip</span><span class="p">()</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.get_axial_slice">
+<code class="descname">get_axial_slice</code><span class="sig-paren">(</span><em>patient_pos</em>, <em>height</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.get_axial_slice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.get_axial_slice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get tuple of <cite>images</cite> slice and <cite>masks</cite> slice by patient and slice position.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patient_pos</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; patient position in the batch</li>
+<li><strong>height</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; number of slice (z-axis), scaled to [0:1]
+used to get slice with position:
+int(height * number_of slices_for_patient) from
+patient&#8217;s scan and mask.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(images_slice,masks_slice) by patient_pos and number of slice</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.get_pos">
+<code class="descname">get_pos</code><span class="sig-paren">(</span><em>data</em>, <em>component</em>, <em>index</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.get_pos"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.get_pos" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a positon of an item for a given index in data
+or in self.`component`.</p>
+<p>Fetch correct position inside batch for an item, looks for it
+in <cite>data</cite>, if provided, or in <cite>component</cite> in self.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a><em> or </em><em>ndarray</em>) &#8211; data from which subsetting is done.
+If None, retrieve position from <cite>component</cite> of batch,
+if ndarray, returns index.</li>
+<li><strong>component</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of a component, f.ex. &#8216;images&#8217;.
+if component provided, data should be None.</li>
+<li><strong>index</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; index of an item to be looked for.
+may be key from dataset (str)
+or index inside batch (int).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Position of item</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This is an overload of get_pos from base Batch-class,
+see corresponding docstring for detailed explanation.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>source=None</em>, <em>fmt='dicom'</em>, <em>bounds=None</em>, <em>origin=None</em>, <em>spacing=None</em>, <em>nodules=None</em>, <em>masks=None</em>, <em>src_blosc=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data in batch with scans and masks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; type of data. Can be &#8216;dicom&#8217;|&#8217;blosc&#8217;|&#8217;raw&#8217;|&#8217;ndarray&#8217;</li>
+<li><strong>source</strong> (<em>ndarray</em><em>(</em><em>n_patients * z</em><em>, </em><em>y</em><em>, </em><em>x</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; input array with <cite>skyscraper</cite> (stacked scans),
+needed iff fmt = &#8216;ndarray&#8217;.</li>
+<li><strong>bounds</strong> (<em>ndarray</em><em>(</em><em>n_patients</em><em>, </em><em>dtype=np.int</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; bound-floors index for patients.
+Needed iff fmt=&#8217;ndarray&#8217;</li>
+<li><strong>origin</strong> (<em>ndarray</em><em>(</em><em>n_patients</em><em>, </em><em>3</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; origins of scans in world coordinates.
+Needed only if fmt=&#8217;ndarray&#8217;</li>
+<li><strong>spacing</strong> (<em>ndarray</em><em>(</em><em>n_patients</em><em>, </em><em>3</em><em>) or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; ndarray with spacings of patients along <cite>z,y,x</cite> axes.
+Needed only if fmt=&#8217;ndarray&#8217;</li>
+<li><strong>src_blosc</strong> (<em>list/tuple/string</em>) &#8211; Contains names of batch component(s) that should be loaded from blosc file.
+Needed only if fmt=&#8217;blosc&#8217;. If None, all components are loaded.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Examples</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">index</span> <span class="o">=</span> <span class="n">FilesIndex</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;/some/path/*.mhd, no_ext=True&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch</span> <span class="o">=</span> <span class="n">CTImagesMaskedBatch</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">batch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">src</span><span class="o">=</span><span class="n">source_array</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;ndarray&#39;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="n">bounds</span><span class="p">,</span>
+<span class="gp">... </span>           <span class="n">origin</span><span class="o">=</span><span class="n">origin_dict</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="n">spacing_dict</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_indices">
+<em class="property">static </em><code class="descname">make_indices</code><span class="sig-paren">(</span><em>size</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.make_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate list of batch indices of given <cite>size</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; size of list with indices</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">list of random indices</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">list</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_xip">
+<code class="descname">make_xip</code><span class="sig-paren">(</span><em>step=2</em>, <em>depth=10</em>, <em>func='max'</em>, <em>projection='axial'</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.make_xip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.make_xip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make intensity projection (maximum, minimum, average) and corresponding masks.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>step</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; stride-step along axe, to apply the func.</li>
+<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; depth of slices (aka <cite>kernel</cite>) along axe made on each step for computing.</li>
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Possible values are &#8216;max&#8217;, &#8216;min&#8217; and &#8216;avg&#8217;.</li>
+<li><strong>projection</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Possible values: &#8216;axial&#8217;, &#8216;coroanal&#8217;, &#8216;sagital&#8217;.
+In case of &#8216;coronal&#8217; and &#8216;sagital&#8217; projections tensor
+will be transposed from [z,y,x] to [x, z, y] and [y, z, x].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Resulting batch, where <cite>images</cite> are xips and corresponding <cite>masks</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">batch</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Method changes nodules sizes&#8217; and creates new <cite>masks</cite> that corresponds
+to data after xip.</p>
+</div>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.nodules_dtype">
+<code class="descname">nodules_dtype</code><em class="property"> = dtype([('patient_pos', '&lt;i4'), ('offset', '&lt;i4', (3,)), ('img_size', '&lt;i4', (3,)), ('nodule_center', '&lt;f8', (3,)), ('nodule_size', '&lt;f8', (3,)), ('spacing', '&lt;f8', (3,)), ('origin', '&lt;f8', (3,))])</em><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.nodules_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.nodules_to_df">
+<code class="descname">nodules_to_df</code><span class="sig-paren">(</span><em>nodules</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.nodules_to_df"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.nodules_to_df" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert nodules_info ndarray into pandas dataframe.</p>
+<p>Pandas DataFrame will contain following columns:
+&#8216;source_id&#8217; - id of source element of batch;
+&#8216;nodule_id&#8217; - generated id for nodules;
+&#8216;locZ&#8217;, &#8216;locY&#8217;, &#8216;locX&#8217; - coordinates of nodules&#8217; centers;
+&#8216;diamZ&#8217;, &#8216;diamY&#8217;, &#8216;diamX&#8217; - sizes of nodules along zyx axes;</p>
+<p>Args:
+- nodules: ndarray of type nodules_info(this type is defined
+inside of CTImagesMaskedBatch class);</p>
+<p>Returns:
+- pd.DataFrame with centers, ids and sizes of nodules;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">num_nodules</code></dt>
+<dd><p>Get number of nodules in CTImagesMaskedBatch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">number of nodules in CTImagesMaskedBatch.
+if fetch_nodules_info method has not been called yet returns 0.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan">
+<code class="descname">predict_on_scan</code><span class="sig-paren">(</span><em>model_name</em>, <em>strides=(16</em>, <em>32</em>, <em>32)</em>, <em>crop_shape=(32</em>, <em>64</em>, <em>64)</em>, <em>batch_size=4</em>, <em>y_component='labels'</em>, <em>dim_ordering='channels_last'</em>, <em>show_progress=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.predict_on_scan"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get predictions of the model on data contained in batch.</p>
+<p>Transforms scan data into patches of shape CROP_SHAPE and then feed
+this patches sequentially into model with name specified by
+argument &#8216;model_name&#8217;; after that loads predicted masks or probabilities
+into &#8216;masks&#8217; component of the current batch and returns it.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>model_name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of model that will be used for predictions.</li>
+<li><strong>strides</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em>)</em>) &#8211; strides for patching operation</li>
+<li><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of patches to feed in model in one iteration.</li>
+<li><strong>y_component</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of y component, can be &#8216;masks&#8217; or labels.</li>
+<li><strong>dim_ordering</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; dimension ordering, can be &#8216;channels_first&#8217; or &#8216;channels_last&#8217;.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">self(source batch).</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch">CTImagesMaskedBatch</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_dump">
+<code class="descname">sample_dump</code><span class="sig-paren">(</span><em>dst</em>, <em>n_iters</em>, <em>nodule_size=(32</em>, <em>64</em>, <em>64)</em>, <em>batch_size=20</em>, <em>share=0.8</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.sample_dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform sample_nodules and dump on the same batch n_iters times.</p>
+<p>Can be used for fast creation of large datasets of cancerous/non-cancerous crops.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dst</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; folder to dump nodules in.</li>
+<li><strong>n_iters</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of iterations to be performed.</li>
+<li><strong>nodule_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em> or </em><em>list</em>) &#8211; shape of sampled nodules.</li>
+<li><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; size of generated batches.</li>
+<li><strong>share</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; share of cancer nodules. See docstring of sample_nodules for more info
+about possible combinations of parameters share and batch_size.</li>
+<li><strong>**kwargs</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; additional arguments supplied into sample_nodules. See docstring
+of sample_nodules for more info.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules">
+<code class="descname">sample_nodules</code><span class="sig-paren">(</span><em>batch_size</em>, <em>nodule_size=(32</em>, <em>64</em>, <em>64)</em>, <em>share=0.8</em>, <em>variance=None</em>, <em>mask_shape=None</em>, <em>histo=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.sample_nodules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample random crops of <cite>images</cite> and <cite>masks</cite> from batch.</p>
+<p>Create random crops, both with and without nodules in it, from input batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of nodules in the output batch. Required,
+if share=0.0. If None, resulting batch will include all
+cancerous nodules</li>
+<li><strong>nodule_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray of int</em>) &#8211; crop shape along (z,y,x).</li>
+<li><strong>share</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; share of cancer crops in the batch.
+if input CTImagesBatch contains less cancer
+nodules than needed random nodules will be taken;</li>
+<li><strong>variance</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list of float</em>) &#8211; variances of normally distributed random shifts of
+nodules&#8217; start positions</li>
+<li><strong>mask_shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; size of <cite>masks</cite> crop in (z, y, x)-order. If not None,
+crops with masks would be of mask_shape.
+If None, mask crop shape would be equal to crop_size.</li>
+<li><strong>histo</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; np.histogram()&#8217;s output.
+Used for sampling non-cancerous crops</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">batch with cancerous and non-cancerous crops in a proportion defined by
+<cite>share</cite> with total <cite>batch_size</cite> nodules. If <cite>share</cite> == 1.0, <cite>batch_size</cite>
+is None, resulting batch consists of all cancerous crops stored in batch.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">Batch</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_random_nodules">
+<code class="descname">sample_random_nodules</code><span class="sig-paren">(</span><em>num_nodules</em>, <em>nodule_size</em>, <em>histo=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.sample_random_nodules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_random_nodules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample random nodules positions in CTImagesBatchMasked.</p>
+<p>Samples random nodules positions in ndarray. Each nodule have shape
+defined by <cite>nodule_size</cite>. If size of patients&#8217; data along z-axis
+is not the same for different patients, NotImplementedError will be raised.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>num_nodules</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of nodules to sample from dataset.</li>
+<li><strong>nodule_size</strong> (<em>ndarray</em><em>(</em><em>3</em><em>, </em><em>)</em>) &#8211; crop shape along (z,y,x).</li>
+<li><strong>histo</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; np.histogram()&#8217;s output.
+3d-histogram, represented by tuple (bins, edges)</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ndarray(num_nodules, 3). 1st array&#8217;s dim is an index of sampled
+nodules, 2nd points out start positions (integers) of nodules
+in batch <cite>skyscraper</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.update_nodules_histo">
+<code class="descname">update_nodules_histo</code><span class="sig-paren">(</span><em>histo</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.update_nodules_histo"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch.update_nodules_histo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update histogram of nodules&#8217; locations using nodules locations from batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>histo</strong> (<em>list</em>) &#8211; list(np.histogram()), used for sampling cancerous locations.</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Execute action only after .fetch_nodules_info().</p>
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.ct_masked_batch.get_nodules_numba">
+<code class="descclassname">lung_cancer.preprocessing.ct_masked_batch.</code><code class="descname">get_nodules_numba</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/ct_masked_batch.html#get_nodules_numba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.ct_masked_batch.get_nodules_numba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fetch nodules from array by starting positions.</p>
+<p>Takes array with data of shape (z, y, x) from <cite>batch</cite>,
+ndarray(p, 3) with starting indices of nodules where p is number
+of nodules and size of type ndarray(3, ) which contains
+sizes of nodules along each axis. The output is 3d ndarray with nodules
+put in CTImagesBatch-compatible skyscraper structure.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<em>ndarray</em>) &#8211; CTImagesBatch <cite>skyscraper</cite> represented by 3D ndarray.</li>
+<li><strong>positions</strong> (<em>ndarray</em><em>(</em><em>l</em><em>, </em><em>3</em><em>) </em><em>of int</em>) &#8211; Contains nodules&#8217; starting indices along [zyx]-axis accordingly in <cite>data</cite>.</li>
+<li><strong>size</strong> (<em>ndarray</em><em>(</em><em>3</em><em>,</em><em>) </em><em>of int</em>) &#8211; Contains nodules&#8217; sizes along each axis (z,y,x).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Dtypes of positions and size arrays must be the same.</p>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">3d ndarray with nodules</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.flip">
+<span id="lung-cancer-preprocessing-flip-module"></span><h2>lung_cancer.preprocessing.flip module<a class="headerlink" href="#module-lung_cancer.preprocessing.flip" title="Permalink to this headline">¶</a></h2>
+<p>Flip CT-image</p>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.flip.flip_patient_numba">
+<code class="descclassname">lung_cancer.preprocessing.flip.</code><code class="descname">flip_patient_numba</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/flip.html#flip_patient_numba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.flip.flip_patient_numba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Invert the order of slices in scan or crop.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patient</strong> (<em>ndarray</em>) &#8211; one item in batch (patient&#8217;s scan or crop).</li>
+<li><strong>out_patient</strong> (<em>ndarray</em>) &#8211; one item&#8217;s array after inversion of z slixes.</li>
+<li><strong>res</strong> (<em>ndarray</em>) &#8211; <cite>skyscraper</cite> of all  data, see _init_rebuid.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(res, out_patient.shape), <cite>skyscraper</cite> and shape of flipped item.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.histo">
+<span id="lung-cancer-preprocessing-histo-module"></span><h2>lung_cancer.preprocessing.histo module<a class="headerlink" href="#module-lung_cancer.preprocessing.histo" title="Permalink to this headline">¶</a></h2>
+<p>Auxiliary functions for nodules generation</p>
+<dl class="function">
+<dt id="lung_cancer.preprocessing.histo.cart_triples">
+<code class="descclassname">lung_cancer.preprocessing.histo.</code><code class="descname">cart_triples</code><span class="sig-paren">(</span><em>*arrs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/histo.html#cart_triples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.histo.cart_triples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get array of element-wise triples from sequence of 3 arrays</p>
+<p>Match elements of arrays at each position (first-with-first) into triples.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>arrs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; Any sequence of 3d ndarrays.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">2d-array of triples (array1_item_n,array2_item_n,array3_item_n)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.preprocessing.histo.sample_ellipsoid_region">
+<code class="descclassname">lung_cancer.preprocessing.histo.</code><code class="descname">sample_ellipsoid_region</code><span class="sig-paren">(</span><em>center</em>, <em>axes</em>, <em>mult_range</em>, <em>size</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/histo.html#sample_ellipsoid_region"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.histo.sample_ellipsoid_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a sample from <em>almost</em> uniform distribution with support given by a peel of a 3d-ellispoid.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>center</strong> &#8211; seq of len=3 representing center of the ellipsoid to be used for sampling.</li>
+<li><strong>axes</strong> &#8211; seq of len=3 representing three axes of the ellipsoid.</li>
+<li><strong>mult_range</strong> &#8211; seq of len=2 representing range that defines the peel. E.g., mult_range = (1.0, 1.2).
+Then the peel is defined as a region, bounded from inside and outside by surfaces of two ellipsoids.
+The interior one has axes = 1.0 * axes, while the exterior one has axes = 1.2 * axes.</li>
+<li><strong>size</strong> &#8211; len of sample to be generated.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">3d-array of shape = (size, 3) containing generated sample.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.preprocessing.histo.sample_histo3d">
+<code class="descclassname">lung_cancer.preprocessing.histo.</code><code class="descname">sample_histo3d</code><span class="sig-paren">(</span><em>histo</em>, <em>size</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/histo.html#sample_histo3d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.histo.sample_histo3d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a sample of size=size from distribution represented by 3d-histogram</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>histo</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (bins, edges) of np.histogram(). <cite>bins</cite> is a 3d-array, number of points in a specific cube.
+<cite>edges</cite> is a list of 3 arrays of len = (nbins_in_dimension + 1),
+represents bounds of bins&#8217; boxes.</li>
+<li><strong>size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; length of sample to be generated</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">3d-array of shape = (size, 3), contains samples from histo-distribution</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.mask">
+<span id="lung-cancer-preprocessing-mask-module"></span><h2>lung_cancer.preprocessing.mask module<a class="headerlink" href="#module-lung_cancer.preprocessing.mask" title="Permalink to this headline">¶</a></h2>
+<p>Auxiliary functions for mask-creation</p>
+<dl class="function">
+<dt id="lung_cancer.preprocessing.mask.create_mask_reg">
+<code class="descclassname">lung_cancer.preprocessing.mask.</code><code class="descname">create_mask_reg</code><span class="sig-paren">(</span><em>centers</em>, <em>sizes</em>, <em>probs</em>, <em>crop_shape</em>, <em>threshold</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mask.html#create_mask_reg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mask.create_mask_reg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create mask by data contained in predictions of regression model.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.mask.create_mask_reg_jit">
+<code class="descclassname">lung_cancer.preprocessing.mask.</code><code class="descname">create_mask_reg_jit</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mask.html#create_mask_reg_jit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mask.create_mask_reg_jit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Jit-decorated function for fast computation of masks by regression data.</p>
+<p>This function is usually called inside create_mask_reg function.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.mask.insert_cropped">
+<code class="descclassname">lung_cancer.preprocessing.mask.</code><code class="descname">insert_cropped</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mask.html#insert_cropped"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mask.insert_cropped" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert <cite>what</cite> into <cite>where</cite> starting from <cite>origin</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>where</strong> (<em>ndarray</em>) &#8211; 3d-array, in which to insert new data.</li>
+<li><strong>what</strong> (<em>ndarray</em>) &#8211; 3d-array, which is inserted.</li>
+<li><strong>origin</strong> (<em>ndarray</em>) &#8211; starting positions of insertion along (z,y,x).</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">changes <cite>where</cite> array.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)">None</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">What-array is cropped if origin&lt;0 or what-array
+is too large to be put in where-array.</p>
+</div>
+<p class="rubric">Example</p>
+<p>where = np.zeros(shape=(3, 3, 3), dtype=&#8217;int&#8217;)
+what = np.ones(shape=(2, 2, 2), dtype=&#8217;int&#8217;)
+origin = np.asarray([2, 2, 2])</p>
+<p># after execution
+insert_cropped(where, what, origin)
+# where[2, 2, 2] = 1, other elems = 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.mask.make_mask_numba">
+<code class="descclassname">lung_cancer.preprocessing.mask.</code><code class="descname">make_mask_numba</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mask.html#make_mask_numba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mask.make_mask_numba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make mask using information about nodules location and sizes.</p>
+<p>Takes batch_masks already filled with zeros,
+<cite>img_start</cite> and <cite>img_end</cite> positions of coresponding patient&#8217;s data array in batch_mask,</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>batch_mask</strong> (<em>ndarray</em>) &#8211; <cite>masks</cite> from batch, just initialised (filled with zeroes).</li>
+<li><strong>img_start</strong> (<em>ndarray</em>) &#8211; for each nodule, start position of patient in <cite>skyscraper</cite> is given
+by (nodule_index, z_start, y_start, x_start)</li>
+<li><strong>img_end</strong> (<em>ndarray</em>) &#8211; for each nodule, end position of patient in <cite>skyscraper</cite> is given
+by (nodule_index, z_start, y_start, x_start)</li>
+<li><strong>nodules_start</strong> (<em>ndarray</em><em>(</em><em>4</em><em>,</em><em>)</em>) &#8211; array, first dim is nodule index, others (z,y,x)
+are start coordinates of nodules
+(smallest voxel with nodule).</li>
+<li><strong>nodules_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; (z,y,x) shape of nodule</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.mip">
+<span id="lung-cancer-preprocessing-mip-module"></span><h2>lung_cancer.preprocessing.mip module<a class="headerlink" href="#module-lung_cancer.preprocessing.mip" title="Permalink to this headline">¶</a></h2>
+<p>Numba-rized functions for XIP intensity projection (maximum, minimum, average) calculation</p>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.mip.make_xip">
+<code class="descclassname">lung_cancer.preprocessing.mip.</code><code class="descname">make_xip</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mip.html#make_xip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mip.make_xip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply xip operation to scan of one patient.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>ndarray</em>) &#8211; 3d array, patient scan or crop</li>
+<li><strong>step</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; stride-step along axe, to apply the func.</li>
+<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; depth of slices (aka <cite>kernel</cite>) along axe made on each step for computing.</li>
+<li><strong>start</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of slize by 0-axis to start operation</li>
+<li><strong>end</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; number of slize by 0-axis to stop operation</li>
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; either 0, 1 or 2.
+0 for max function;
+1 for min function;
+2 for sum function.</li>
+<li><strong>fill_value</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; default value to fill resulting array.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">xip ndarray</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.mip.min_max_sum_fn">
+<code class="descclassname">lung_cancer.preprocessing.mip.</code><code class="descname">min_max_sum_fn</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mip.html#min_max_sum_fn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mip.min_max_sum_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply njit binary opertaion to <cite>a</cite> and <cite>b</cite>.</p>
+<p>Binary operation defined by flag.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>a</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; left operand.</li>
+<li><strong>b</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; right operand;</li>
+<li><strong>flag</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; <dl class="docutils">
+<dt>either 0, 1 or 2.</dt>
+<dd>0 for max function;
+1 for min function;
+2 for sum function.</dd>
+</dl>
+</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">result of function or 0.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a> or <a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.mip.numba_xip">
+<code class="descclassname">lung_cancer.preprocessing.mip.</code><code class="descname">numba_xip</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mip.html#numba_xip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mip.numba_xip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute njit xip (intensity projection) for given slice.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>arr</strong> (<em>ndarray</em><em>(</em><em>l</em><em>, </em><em>m</em><em>, </em><em>n</em><em>)</em>) &#8211; input array for computing xip.</li>
+<li><strong>l</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; z-dim of <cite>arr</cite>.</li>
+<li><strong>m</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; y-dim of <cite>arr</cite>.</li>
+<li><strong>n</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; x-dim of <cite>arr</cite>.</li>
+<li><strong>flag</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; 0, 1 or 2; corresponds to max, min and average
+functions for xip operation.</li>
+<li><strong>fill_value</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; default value to fill resulting array.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">xip ndarray.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.preprocessing.mip.xip_fn_numba">
+<code class="descclassname">lung_cancer.preprocessing.mip.</code><code class="descname">xip_fn_numba</code><span class="sig-paren">(</span><em>func='max'</em>, <em>projection='axial'</em>, <em>step=2</em>, <em>depth=10</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/mip.html#xip_fn_numba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.mip.xip_fn_numba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make intensity projection (maximum, minimum, average)</p>
+<p>Popular radiologic transformation: max, min, avg applyied along an axe.
+Notice that axe is chosen in accordance with projection argument.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>step</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; stride-step along axe, to apply the func.</li>
+<li><strong>depth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; depth of slices (aka <cite>kernel</cite>) along axe made on each step for computing.</li>
+<li><strong>func</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Possible values are &#8216;max&#8217;, &#8216;min&#8217; and &#8216;avg&#8217;.</li>
+<li><strong>projection</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; Possible values: &#8216;axial&#8217;, &#8216;coroanal&#8217;, &#8216;sagital&#8217;.
+In case of &#8216;coronal&#8217; and &#8216;sagital&#8217; projections tensor
+will be transposed from [z,y,x] to [x, z, y] and [y, z, x].</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">resulting ndarray after func is applied.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.patches">
+<span id="lung-cancer-preprocessing-patches-module"></span><h2>lung_cancer.preprocessing.patches module<a class="headerlink" href="#module-lung_cancer.preprocessing.patches" title="Permalink to this headline">¶</a></h2>
+<p>Auxiliary jit-decorated functions for splitting/assembling arrays into/from patches</p>
+<dl class="function">
+<dt id="lung_cancer.preprocessing.patches.calc_padding_size">
+<code class="descclassname">lung_cancer.preprocessing.patches.</code><code class="descname">calc_padding_size</code><span class="sig-paren">(</span><em>img_shape</em>, <em>patch_shape</em>, <em>stride</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/patches.html#calc_padding_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.patches.calc_padding_size" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Calculate padding width to add to 3d-scan</dt>
+<dd>for fitting integer number of patches.</dd>
+</dl>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>img_shape</strong> (<em>ndarray</em>) &#8211; shape of 3d-scan along (z,y,x)</li>
+<li><strong>patch_shape</strong> (<em>ndarray</em>) &#8211; shape of patch along (z,y,x)</li>
+<li><strong>stride</strong> (<em>ndarray</em>) &#8211; stride to slides over scan, in (z,y,x) dims.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">list of tuples with padding sizes
+Pad widths in four dims; the first dim enumerates patients,
+others are spatial axes (z,y,x)
+if no padding is needed, return None</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list or <a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)">None</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.resize">
+<span id="lung-cancer-preprocessing-resize-module"></span><h2>lung_cancer.preprocessing.resize module<a class="headerlink" href="#module-lung_cancer.preprocessing.resize" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Module with auxillary</dt>
+<dd>jit-compiled functions
+for resize of
+CT scans</dd>
+</dl>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.resize.resize_pil">
+<code class="descclassname">lung_cancer.preprocessing.resize.</code><code class="descname">resize_pil</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/resize.html#resize_pil"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.resize.resize_pil" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resize 3D scan.</p>
+<p>Uses _seq_resize over a pair of axes for applying many 2d-resizes,
+then averages over different pairs for obtaining more precise results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_array</strong> (<em>ndarray</em>) &#8211; array to be resized.</li>
+<li><strong>ouput_array</strong> (<em>ndarray</em>) &#8211; array, where the result should be put.</li>
+<li><strong>res</strong> (<em>ndarray</em>) &#8211; resulting <cite>skyscraper</cite> for the whole batch.
+used later by <cite>_post</cite>-func in _inbatch_parallel</li>
+<li><strong>axes_pairs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list of tuples</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; pairs of axes for 2d resizes, then averaging is performed,
+e.g., ((0,1),(1,2),(0,2))
+if None, defaults to ((0, 1), (1, 2))</li>
+<li><strong>shape_resize</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em>, </em><em>ndarray</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; shape of array after resize.
+If None, infer shape from <cite>ouput_array.shape</cite>.</li>
+<li><strong>resample</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; type of PIL resize&#8217;s resampling method, e.g.
+<cite>BILINEAR</cite>, <cite>BICUBIC</cite>,`LANCZOS` or <cite>NEAREST</cite>.
+If None, <cite>BILINEAR</cite> is used.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; mode of padding, any mode of np.pad()</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(res, out_patient.shape), resulting <cite>skyscraper</cite> and shape of
+resized scan inside this <cite>scyscraper</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.resize.resize_scipy">
+<code class="descclassname">lung_cancer.preprocessing.resize.</code><code class="descname">resize_scipy</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/resize.html#resize_scipy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.resize.resize_scipy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resize 3d scan and put it into out_patient.</p>
+<p>Resize engine is scipy.ndimage.interpolation.zoom.
+If res_factor is not supplied, infer resize factor from out_patient.shape.
+otherwise, use res_factor for resize and then crop/pad resized array to out_patient.shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patient</strong> (<em>ndarray</em>) &#8211; 3D array</li>
+<li><strong>out_patient</strong> (<em>ndarray</em>) &#8211; resulting array</li>
+<li><strong>res</strong> (<em>ndarray</em>) &#8211; resulting <cite>skyscraper</cite> for the whole batch.
+used later by <cite>_post</cite>-func in _inbatch_parallel</li>
+<li><strong>order</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; order of interpolation</li>
+<li><strong>res_factor</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) &#8211; resize factor along (z,y,x) in int ir float for interpolation.
+If not None, can yield array of shape != out_patient.shape,
+then crop/pad is used</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; mode of padding, any mode of np.pad()</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(res, out_patient.shape), resulting <cite>skyscraper</cite> and shape of
+resized scan inside this <cite>scyscraper</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Shape of resulting array has to be inferred
+from out_patient</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.preprocessing.resize.to_shape">
+<code class="descclassname">lung_cancer.preprocessing.resize.</code><code class="descname">to_shape</code><span class="sig-paren">(</span><em>data</em>, <em>shape</em>, <em>padding</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/preprocessing/resize.html#to_shape"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.resize.to_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crop or pad 3D array to resize it to <cite>shape</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>ndarray</em>) &#8211; 3D array for reshaping</li>
+<li><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) &#8211; data shape after crop or pad</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; mode of padding, any of the modes of np.pad()</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">cropped and padded data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.rotate">
+<span id="lung-cancer-preprocessing-rotate-module"></span><h2>lung_cancer.preprocessing.rotate module<a class="headerlink" href="#module-lung_cancer.preprocessing.rotate" title="Permalink to this headline">¶</a></h2>
+<p>Module with jit-compilated functions for rotation operation of 3D scans.</p>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.rotate.rotate_3D">
+<code class="descclassname">lung_cancer.preprocessing.rotate.</code><code class="descname">rotate_3D</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/rotate.html#rotate_3D"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.rotate.rotate_3D" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate 3D image in plane specified by two axes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>image</strong> (<em>ndarray</em>) &#8211; 3D scan, (z,y,x).</li>
+<li><strong>angle</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; angle of rotation.</li>
+<li><strong>axes</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a>) &#8211; (int, int), axes that specify rotation plane.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">3D rotated scan</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Zero-padding automatically added after rotation.</p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing.segment">
+<span id="lung-cancer-preprocessing-segment-module"></span><h2>lung_cancer.preprocessing.segment module<a class="headerlink" href="#module-lung_cancer.preprocessing.segment" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>Module with auxillary</dt>
+<dd>jit-compiled functions
+for lungs&#8217; segmentation
+from DICOM-scans</dd>
+</dl>
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.segment.calc_lung_mask_numba">
+<code class="descclassname">lung_cancer.preprocessing.segment.</code><code class="descname">calc_lung_mask_numba</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/segment.html#calc_lung_mask_numba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.segment.calc_lung_mask_numba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute lungs-segmenting mask for a patient</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patient</strong> (<em>ndarray</em>) &#8211; input 3D scan.</li>
+<li><strong>out_patient</strong> (<em>ndarray</em>) &#8211; resulting array with segmented lungs</li>
+<li><strong>erosion_radius</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; radius to use to erod the lungs&#8217; border</li>
+<li><strong>res</strong> (<em>ndarray</em>) &#8211; <cite>skyscraper</cite> where to put the resized patient</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(res, out_patient.shape), resulting <cite>skyscraper</cite> and shape of
+segmented scan inside this <cite>scyscraper</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.preprocessing.segment.largest_label_volume">
+<code class="descclassname">lung_cancer.preprocessing.segment.</code><code class="descname">largest_label_volume</code><a class="reference internal" href="../_modules/lung_cancer/preprocessing/segment.html#largest_label_volume"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.preprocessing.segment.largest_label_volume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine most frequent color that occupies the largest volume</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>image</strong> (<em>ndarray</em>) &#8211; </li>
+<li><strong>background</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; image background color</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">most frequent color value</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)">int</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.preprocessing">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lung_cancer.preprocessing" title="Permalink to this headline">¶</a></h2>
+<p>CT-scans preprocessing module.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">lung_cancer.preprocessing package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.crop">lung_cancer.preprocessing.crop module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.ct_batch">lung_cancer.preprocessing.ct_batch module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.ct_masked_batch">lung_cancer.preprocessing.ct_masked_batch module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.flip">lung_cancer.preprocessing.flip module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.histo">lung_cancer.preprocessing.histo module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.mask">lung_cancer.preprocessing.mask module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.mip">lung_cancer.preprocessing.mip module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.patches">lung_cancer.preprocessing.patches module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.resize">lung_cancer.preprocessing.resize module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.rotate">lung_cancer.preprocessing.rotate module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing.segment">lung_cancer.preprocessing.segment module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.preprocessing">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/temp_rst/lung_cancer.preprocessing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

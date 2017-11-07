@@ -1,0 +1,234 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.preprocessing.patches &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.preprocessing.patches</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Auxiliary jit-decorated functions for splitting/assembling arrays into/from patches &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numba</span> <span class="k">import</span> <span class="n">guvectorize</span><span class="p">,</span> <span class="n">int64</span><span class="p">,</span> <span class="n">float64</span>
+
+
+<span class="nd">@guvectorize</span><span class="p">([(</span><span class="n">float64</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">int64</span><span class="p">[:],</span> <span class="n">int64</span><span class="p">[:],</span> <span class="n">float64</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">int64</span><span class="p">[:])],</span>
+             <span class="s1">&#39;(n, m, k),(r),(r),(p, l, s, t)-&gt;()&#39;</span><span class="p">,</span>
+             <span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;parallel&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">get_patches_numba</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">shape</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">out_arr</span><span class="p">,</span> <span class="n">fake</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get all patches from padded 3d scan, put them into out_arr</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    img :     ndarray</span>
+<span class="sd">              input 3d scan (ct-scan for one patient),</span>
+<span class="sd">              assumes scan is already padded.</span>
+<span class="sd">    shape :   ndarray</span>
+<span class="sd">              3D array with shape of patch (z,y,x)</span>
+<span class="sd">    stride :  ndarray</span>
+<span class="sd">              3D array with strides of a patch along (z,y,x)</span>
+<span class="sd">              (if not equal to patch_shape, patches will overlap)</span>
+<span class="sd">    out_arr : ndarray</span>
+<span class="sd">              resulting 4d-array, where all patches are put. New dimension (first)</span>
+<span class="sd">              enumerates patches (number_of_patches,z,y,x)</span>
+<span class="sd">    fake :    ndarray</span>
+<span class="sd">              instrumental array for syntax binding of guvectorize</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># for convenience put img.shape in ndarray</span>
+    <span class="n">img_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">img_shape</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">[:]</span>
+
+    <span class="c1"># compute number of patches along all axes</span>
+    <span class="n">num_sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">img_shape</span> <span class="o">-</span> <span class="n">shape</span><span class="p">)</span> <span class="o">//</span> <span class="n">stride</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># iterate over patches, put them into out_arr</span>
+    <span class="n">ctr</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_sections</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+        <span class="k">for</span> <span class="n">iy</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_sections</span><span class="p">[</span><span class="mi">1</span><span class="p">])):</span>
+            <span class="k">for</span> <span class="n">iz</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_sections</span><span class="p">[</span><span class="mi">2</span><span class="p">])):</span>
+                <span class="n">slc_x</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">ix</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ix</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">slc_y</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">iy</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">iy</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">slc_z</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">iz</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">iz</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">out_arr</span><span class="p">[</span><span class="n">ctr</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">img</span><span class="p">[</span><span class="n">slc_x</span><span class="p">,</span> <span class="n">slc_y</span><span class="p">,</span> <span class="n">slc_z</span><span class="p">]</span>
+                <span class="n">ctr</span> <span class="o">+=</span> <span class="mi">1</span>
+
+
+<span class="nd">@guvectorize</span><span class="p">([(</span><span class="n">float64</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">int64</span><span class="p">[:],</span> <span class="n">float64</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">int64</span><span class="p">[:])],</span>
+             <span class="s1">&#39;(p, l, s, t),(q),(m, n, k)-&gt;()&#39;</span><span class="p">,</span>
+             <span class="n">nopython</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="s1">&#39;parallel&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">assemble_patches</span><span class="p">(</span><span class="n">patches</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">out_arr</span><span class="p">,</span> <span class="n">fake</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Assemble patches into one 3d ct-scan with shape scan_shape,</span>
+<span class="sd">    put new scan into out_arr</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    patches : ndarray</span>
+<span class="sd">              4d array of patches, first dim enumerates</span>
+<span class="sd">              patches; other dims are spatial with order (z,y,x)</span>
+<span class="sd">    stride :  ndarray</span>
+<span class="sd">              stride to extract patches in (z,y,x) dims</span>
+<span class="sd">    out_arr : ndarray</span>
+<span class="sd">              3d-array, where assembled scan is put.</span>
+<span class="sd">              Should be filled with zeroes before calling function.</span>
+<span class="sd">    fake :    ndarray</span>
+<span class="sd">              instrumental array for syntax binding of guvectorize</span>
+
+<span class="sd">    Note</span>
+<span class="sd">    ----</span>
+<span class="sd">    `out_arr.shape`, `stride`, `patches.shape` are used to infer</span>
+<span class="sd">    the number of sections for each dimension.</span>
+<span class="sd">    We assume that the number of patches = len(patches)</span>
+<span class="sd">    corresponds to num_sections.</span>
+<span class="sd">    Overlapping patches are allowed (stride != patch.shape).</span>
+<span class="sd">    In this case pixel values are averaged across overlapping patches</span>
+<span class="sd">    We assume that integer number of patches can be put into</span>
+<span class="sd">    out_arr using stride.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">out_arr_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">out_arr_shape</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">out_arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[:]</span>
+
+    <span class="c1"># cast patch.shape to ndarray</span>
+    <span class="n">patch_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">patch_shape</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">patches</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="c1"># compute the number of sections</span>
+    <span class="n">num_sections</span> <span class="o">=</span> <span class="p">(</span><span class="n">out_arr_shape</span> <span class="o">-</span> <span class="n">patch_shape</span><span class="p">)</span> <span class="o">//</span> <span class="n">stride</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># iterate over patches, put them into corresponding place in out_arr</span>
+    <span class="c1"># also increment pixel weight if it belongs to a patch</span>
+    <span class="n">weights_inv</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">out_arr</span><span class="p">)</span>
+    <span class="n">ctr</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_sections</span><span class="p">[</span><span class="mi">0</span><span class="p">])):</span>
+        <span class="k">for</span> <span class="n">iy</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_sections</span><span class="p">[</span><span class="mi">1</span><span class="p">])):</span>
+            <span class="k">for</span> <span class="n">iz</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">num_sections</span><span class="p">[</span><span class="mi">2</span><span class="p">])):</span>
+                <span class="n">slc_x</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">ix</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">ix</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">patch_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">slc_y</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">iy</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">iy</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">patch_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">slc_z</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="n">iz</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">iz</span> <span class="o">*</span> <span class="n">stride</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">patch_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+                <span class="n">out_arr</span><span class="p">[</span><span class="n">slc_x</span><span class="p">,</span> <span class="n">slc_y</span><span class="p">,</span> <span class="n">slc_z</span><span class="p">]</span> <span class="o">+=</span> <span class="n">patches</span><span class="p">[</span><span class="n">ctr</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span>
+                <span class="n">weights_inv</span><span class="p">[</span><span class="n">slc_x</span><span class="p">,</span> <span class="n">slc_y</span><span class="p">,</span> <span class="n">slc_z</span><span class="p">]</span> <span class="o">+=</span> <span class="mf">1.0</span>
+                <span class="n">ctr</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="c1"># weight resulting image</span>
+    <span class="n">out_arr</span> <span class="o">/=</span> <span class="n">weights_inv</span>
+
+
+<div class="viewcode-block" id="calc_padding_size"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.patches.calc_padding_size">[docs]</a><span class="k">def</span> <span class="nf">calc_padding_size</span><span class="p">(</span><span class="n">img_shape</span><span class="p">,</span> <span class="n">patch_shape</span><span class="p">,</span> <span class="n">stride</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Calculate padding width to add to 3d-scan</span>
+<span class="sd">        for fitting integer number of patches.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    img_shape :   ndarray</span>
+<span class="sd">                  shape of 3d-scan along (z,y,x)</span>
+<span class="sd">    patch_shape : ndarray</span>
+<span class="sd">                  shape of patch along (z,y,x)</span>
+<span class="sd">    stride :      ndarray</span>
+<span class="sd">                  stride to slides over scan, in (z,y,x) dims.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list or None</span>
+<span class="sd">                list of tuples with padding sizes</span>
+<span class="sd">                Pad widths in four dims; the first dim enumerates patients,</span>
+<span class="sd">                others are spatial axes (z,y,x)</span>
+<span class="sd">                if no padding is needed, return None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">overshoot</span> <span class="o">=</span> <span class="p">(</span><span class="n">img_shape</span> <span class="o">-</span> <span class="n">patch_shape</span> <span class="o">+</span> <span class="n">stride</span><span class="p">)</span> <span class="o">%</span> <span class="n">stride</span>
+
+    <span class="n">pad_delta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pad_delta</span><span class="p">)):</span>                                        <span class="c1"># pylint: disable=consider-using-enumerate</span>
+        <span class="n">pad_delta</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">overshoot</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">stride</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">overshoot</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="c1"># calculate and return the padding if not zero</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">pad_delta</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="n">before_pad</span> <span class="o">=</span> <span class="p">(</span><span class="n">pad_delta</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+        <span class="n">after_pad</span> <span class="o">=</span> <span class="p">(</span><span class="n">pad_delta</span> <span class="o">-</span> <span class="n">before_pad</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s1">&#39;int&#39;</span><span class="p">)</span>
+        <span class="n">pad_width</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)]</span> <span class="o">+</span> <span class="p">[(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">before_pad</span><span class="p">,</span> <span class="n">after_pad</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="n">pad_width</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

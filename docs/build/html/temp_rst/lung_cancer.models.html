@@ -1,0 +1,810 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.models package &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lung-cancer-models-package">
+<h1>lung_cancer.models package<a class="headerlink" href="#lung-cancer-models-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lung_cancer.models.keras.html">lung_cancer.models.keras package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lung_cancer.models.keras.architectures.html">lung_cancer.models.keras.architectures package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures.keras_resnet">lung_cancer.models.keras.architectures.keras_resnet module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures.keras_vgg16">lung_cancer.models.keras.architectures.keras_vgg16 module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures.keras_vnet">lung_cancer.models.keras.architectures.keras_vnet module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.html#module-lung_cancer.models.keras.keras_model">lung_cancer.models.keras.keras_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.html#module-lung_cancer.models.keras.losses">lung_cancer.models.keras.losses module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.html#module-lung_cancer.models.keras">Module contents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="lung_cancer.models.tensorflow.html">lung_cancer.models.tensorflow package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.tensorflow.html#subpackages">Subpackages</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lung_cancer.models.tensorflow.architectures.html">lung_cancer.models.tensorflow.architectures package</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.tensorflow.architectures.html#submodules">Submodules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.tensorflow.architectures.html#module-lung_cancer.models.tensorflow.architectures.dense_net">lung_cancer.models.tensorflow.architectures.dense_net module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.tensorflow.architectures.html#module-lung_cancer.models.tensorflow.architectures.dilated_vnet">lung_cancer.models.tensorflow.architectures.dilated_vnet module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.tensorflow.architectures.html#module-lung_cancer.models.tensorflow.architectures.resnet">lung_cancer.models.tensorflow.architectures.resnet module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lung_cancer.models.tensorflow.architectures.html#module-lung_cancer.models.tensorflow.architectures">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.tensorflow.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.tensorflow.html#module-lung_cancer.models.tensorflow.layers">lung_cancer.models.tensorflow.layers module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.tensorflow.html#module-lung_cancer.models.tensorflow.losses">lung_cancer.models.tensorflow.losses module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.tensorflow.html#module-lung_cancer.models.tensorflow.tf_model">lung_cancer.models.tensorflow.tf_model module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.tensorflow.html#module-lung_cancer.models.tensorflow.utils">lung_cancer.models.tensorflow.utils module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.tensorflow.html#module-lung_cancer.models.tensorflow">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-lung_cancer.models.metrics">
+<span id="lung-cancer-models-metrics-module"></span><h2>lung_cancer.models.metrics module<a class="headerlink" href="#module-lung_cancer.models.metrics" title="Permalink to this headline">¶</a></h2>
+<p>Contain different metrics functions.</p>
+<dl class="function">
+<dt id="lung_cancer.models.metrics.accuracy">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">accuracy</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#accuracy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.accuracy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute accuracy on input batched y_pred and y_true.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">accuracy metric value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.dice">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">dice</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#dice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.dice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute Dice coefficient.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">dice coefficient.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.fn">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">fn</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#fn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get number of False Negative values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">number of false negative predictions.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.fnr">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">fnr</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#fnr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.fnr" title="Permalink to this definition">¶</a></dt>
+<dd><p>False negative rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real valu for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">false negative rate value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.fp">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">fp</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#fp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.fp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get number of False Positive values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values;</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model;</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">number of false positive predictions;</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.fpr">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">fpr</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#fpr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.fpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>False positive rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">false positive rate value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.log_loss">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">log_loss</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#log_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.log_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute log-loss.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value for avoiding computing log of zero.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">log-loss value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.mae">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">mae</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#mae"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.mae" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute MAE metric.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">mean average error value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.mse">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">mse</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#mse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.mse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute MSE metric.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model;</li>
+<li><strong>y_true</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">mean square error value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.precision">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">precision</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#precision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.precision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute precision metric.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">precision metric value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li>float</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.recall">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">recall</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#recall"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.recall" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute recall metric.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>-</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>-</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">recall metric value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.rmse">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">rmse</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#rmse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.rmse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute RMSE metric.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">root mean square error value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.sym_dice">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">sym_dice</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>alpha</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#sym_dice"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.sym_dice" title="Permalink to this definition">¶</a></dt>
+<dd><p>Symmetric dice coefficient.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>np.ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; weight of dice coeffecient computed by &#8216;1&#8217; class labels.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">symetrized by &#8216;0-1&#8217; class labels dice coefficient.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.tn">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">tn</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#tn"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.tn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get number of True Negative values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">number of true negative predictions.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.tnr">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">tnr</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#tnr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.tnr" title="Permalink to this definition">¶</a></dt>
+<dd><p>True negative rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">true negative rate value.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.tp">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">tp</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#tp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.tp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get number of True Positive values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values;</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model;</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">number of true positive predictions;</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.metrics.tpr">
+<code class="descclassname">lung_cancer.models.metrics.</code><code class="descname">tpr</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>threshold=0.5</em>, <em>epsilon=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/metrics.html#tpr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.metrics.tpr" title="Permalink to this definition">¶</a></dt>
+<dd><p>True positive rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing true target values.</li>
+<li><strong>y_pred</strong> (<em>ndarray</em><em>(</em><em>batch_size</em><em>, </em><em>..</em><em>)</em>) &#8211; numpy array containing predictions of model.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; threshold for mapping probabilities into class.</li>
+<li><strong>epsilon</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">true positive rate value;</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.models.utils">
+<span id="lung-cancer-models-utils-module"></span><h2>lung_cancer.models.utils module<a class="headerlink" href="#module-lung_cancer.models.utils" title="Permalink to this headline">¶</a></h2>
+<p>Different useful functions when working with models and CTImagesMaskedBatch.</p>
+<dl class="function">
+<dt id="lung_cancer.models.utils.nodules_info_to_rzyx">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">nodules_info_to_rzyx</code><span class="sig-paren">(</span><em>nodules</em>, <em>scale=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#nodules_info_to_rzyx"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.nodules_info_to_rzyx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform data contained in nodules_info array to rzyx format.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.models.utils.nodules_sets_overlap_jit">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">nodules_sets_overlap_jit</code><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#nodules_sets_overlap_jit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.nodules_sets_overlap_jit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute overlap matrix for two sets of nodules.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nodules_true</strong> (<em>ndarray</em><em>(</em><em>l</em><em>, </em><em>4</em><em>)</em>) &#8211; numpy array containing info about centers of target nodules and theirs diameters.</li>
+<li><strong>nodules_pred</strong> (<em>ndarray</em><em>(</em><em>k</em><em>, </em><em>4</em><em>)</em>) &#8211; numpy array containing info about centers of predicted nodules and theirs diameters;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">overlap matrix for two sets of nodules.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray(l, k)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.utils.overlap_true_pred_nodules">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">overlap_true_pred_nodules</code><span class="sig-paren">(</span><em>batch</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#overlap_true_pred_nodules"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.overlap_true_pred_nodules" title="Permalink to this definition">¶</a></dt>
+<dd><p>Accumulate info about overlap between true and predicted nodules in pipeline vars.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.models.utils.sphere_overlap">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">sphere_overlap</code><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#sphere_overlap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.sphere_overlap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Two nodules overlap volume normalized by total volume of second one.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>nodule_true</strong> (<em>ndarray</em>) &#8211; numpy array with information about true nodule:
+nodule_true[1:] - [z,y,x] coordinates of true nodule&#8217;s center,
+nodule_true[0] - radius of true nodule.</li>
+<li><strong>nodule_pred</strong> (<em>ndarray</em>) &#8211; numpy array with information about predicted nodule:
+nodule_pred[1:] - [z,y,x] coordinates of predicted nodule&#8217;s center,
+nodule_pred[0] - radius of predicted nodule;</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">overlap volume divided by sum of input nodules&#8217; volumes.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)">float</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.utils.test_on_dataset">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">test_on_dataset</code><span class="sig-paren">(</span><em>batch</em>, <em>model_name</em>, <em>unpacker</em>, <em>batch_size</em>, <em>period</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#test_on_dataset"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.test_on_dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute metrics of model on dataset.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>model_name</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; name of model.</li>
+<li><strong>unpacker</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#callable" title="(in Python v2.7)"><em>callable</em></a>) &#8211; function that will be used  for unpacking data from test_pipeline batches.</li>
+<li><strong>batch_size</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; size of batch when making predictions.</li>
+<li><strong>period</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; frequency of test_on_dataset runs.</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><em>dict</em></a>) &#8211; these parameters will be fed into
+unpacker function after batch and model arguments.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">unchanged input batch.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference internal" href="lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch">CTImagesMaskedBatch</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.utils.unpack_clf">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">unpack_clf</code><span class="sig-paren">(</span><em>batch</em>, <em>model</em>, <em>threshold=10</em>, <em>dim_ordering='channels_last'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#unpack_clf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.unpack_clf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack data from batch in format suitable for classification task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>batch</strong> (<a class="reference internal" href="lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch"><em>CTImagesMaskedBatch</em></a>) &#8211; batch to unpack.</li>
+<li><strong>model</strong> (<em>dataset.models.BaseModel</em>) &#8211; model where the data from batch will be fed. Is not used here.
+Required for compatibility with dataset.Pipeline.train_model
+and dataset.Pipeline.predict_model interface.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; minimum number of &#8216;1&#8217; pixels in mask to consider it cancerous.</li>
+<li><strong>dim_ordering</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; can be &#8216;channels_last&#8217; or &#8216;channels_first&#8217;. Reflects where to put
+channels dimension: right after batch dimension or after all spatial axes.</li>
+<li><strong>Returns</strong> &#8211; </li>
+<li><strong>dict</strong> (<em>-</em>) &#8211; {&#8216;x&#8217;: images_array, &#8216;y&#8217;: labels_array}</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">&#8216;dim_ordering&#8217; argument reflects where to put &#8216;1&#8217; for channels dimension.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.utils.unpack_component">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">unpack_component</code><span class="sig-paren">(</span><em>batch</em>, <em>model=None</em>, <em>component='images'</em>, <em>dim_ordering='channels_last'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#unpack_component"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.unpack_component" title="Permalink to this definition">¶</a></dt>
+<dd><p>Basic way for unpacking &#8216;images&#8217; or &#8216;masks&#8217; from batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>batch</strong> (<a class="reference internal" href="lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch"><em>CTImagesMaskedBatch</em></a>) &#8211; batch to unpack.</li>
+<li><strong>model</strong> (<em>dataset.models.BaseModel</em>) &#8211; model where the data from batch will be fed. Is not used here.
+Required for compatibility with dataset.Pipeline.train_model
+and dataset.Pipeline.predict_model interfaces.</li>
+<li><strong>component</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; component to unpack, can be &#8216;images&#8217; or &#8216;masks&#8217;.</li>
+<li><strong>dim_ordering</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; can be &#8216;channels_last&#8217; or &#8216;channels_first&#8217;. Reflects where to put
+channels dimension: right after batch dimension or after all spatial axes.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">unpacked &#8216;images&#8217; or &#8216;masks&#8217; component of batch as numpy array.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">ndarray(batch_size, zdim, ydim, xdim, 1)</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last"><code class="xref py py-exc docutils literal"><span class="pre">AttributeError</span></code> &#8211; if argument component is not &#8216;images&#8217; or &#8216;masks&#8217;.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.utils.unpack_reg">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">unpack_reg</code><span class="sig-paren">(</span><em>batch</em>, <em>model</em>, <em>threshold=10</em>, <em>dim_ordering='channels_last'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#unpack_reg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.unpack_reg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack data from batch in format suitable for regression task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>batch</strong> (<a class="reference internal" href="lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch"><em>CTImagesMaskedBatch</em></a>) &#8211; batch to unpack</li>
+<li><strong>model</strong> (<em>dataset.models.BaseModel</em>) &#8211; model where the data from batch will be fed. Is not used here.
+Required for compatibility with dataset.Pipeline.train_model
+and dataset.Pipeline.predict_model interface.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) &#8211; minimum number of &#8216;1&#8217; pixels in mask to consider it cancerous.</li>
+<li><strong>Returns</strong> &#8211; </li>
+<li><strong>dict</strong> &#8211; {&#8216;x&#8217;: images_array, &#8216;y&#8217;: y_regression_array}</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>&#8216;dim_ordering&#8217; argument reflects where to put &#8216;1&#8217; for channels dimension.</p>
+<p class="last">TODO Need more testing.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.utils.unpack_seg">
+<code class="descclassname">lung_cancer.models.utils.</code><code class="descname">unpack_seg</code><span class="sig-paren">(</span><em>batch</em>, <em>model=None</em>, <em>dim_ordering='channels_last'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/lung_cancer/models/utils.html#unpack_seg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.utils.unpack_seg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unpack data from batch in format suitable for segmentation task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>self</strong> (<a class="reference internal" href="lung_cancer.preprocessing.html#lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="lung_cancer.preprocessing.ct_masked_batch.CTImagesMaskedBatch"><em>CTImagesMaskedBatch</em></a>) &#8211; batch to unpack.</li>
+<li><strong>model</strong> (<em>dataset.models.BaseModel</em>) &#8211; model where the data from batch will be fed. Is not used here.
+Required for compatibility with dataset.Pipeline.train_model
+and dataset.Pipeline.predict_model interfaces.</li>
+<li><strong>dim_ordering</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) &#8211; can be &#8216;channels_last&#8217; or &#8216;channels_first&#8217;. Reflects where to put
+channels dimension: right after batch dimension or after all spatial axes.</li>
+<li><strong>Returns</strong> &#8211; </li>
+<li><strong>dict</strong> &#8211; {&#8216;x&#8217;: images_array, &#8216;y&#8217;: labels_array}</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">&#8216;dim_ordering&#8217; argument reflects where to put &#8216;1&#8217;
+for channels dimension both for images and masks.</p>
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.models">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lung_cancer.models" title="Permalink to this headline">¶</a></h2>
+<p>Module of nn-models for classification/segmentation of lung-cancer on CT-scans.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">lung_cancer.models package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.models.metrics">lung_cancer.models.metrics module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.models.utils">lung_cancer.models.utils module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.models">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/temp_rst/lung_cancer.models.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

@@ -38,69 +38,25 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     for subsetting individual patient's 3D scan (_bounds, origin, spacing) and
     various methods to preprocess the data.
 
+    Parameters
+    ----------
+    index : dataset.index
+            ids of scans to be put in a batch
+
     Attributes
     ----------
     components : tuple of strings.
                  List names of data components of a batch, which are `images`,
                  `origin` and `spacing`.
                  NOTE: Implementation of this property is required by Base class.
+    index :      dataset.index
+                 represents indices of scans from a batch
     images :     ndarray
                  contains ct-scans for all patients in batch.
-
-    Note
-    ----
-        0. Class is derived from base Batch class defined in dataset submodule.
-
-        1. __init__(self, index):
-           Basic initialization of images batch in accordance
-           with Batch.__init__ given base class Batch.
-
-        2. load(self, source, fmt, upper_bounds, src_blosc):
-           Builds skyscraper of scans from either
-           'dicom'|'raw'|'blosc'|'ndarray' and returns self.
-
-           NOTE: this method uses async-await notation.
-
-        2. resize(self, shape, order):
-           Transforms the shape of all scans to a given shape('shape' argument).
-           The kernel of this method is scipy.ndimage.interpolation.zoom function.
-
-           NOTE: this function is can be executed in parallel via multithreading.
-
-        3. unify_spacing(self, spacing, shape):
-           Resizes each scan so that its spacing changed to supplied spacing,
-           then crop/pad each scan to supplied shape.
-
-        4. dump(self, format, dst)
-           Creates a dump of the batch in the path-folder and returns self.
-
-           NOTE: as of 25.10.2017, only format='blosc' is supported.
-           This method uses async-await notation.
-
-        5. calc_lungs_mask(self, erosion_radius=7)
-           Returns binary-mask for lungs segmentation;
-           the larger erosion_radius the lesser the resulting lungs will be.
-           NOTE: returns mask, not self.
-
-        6. segment(self, erosion_radius=2)
-           This method uses mask from calc_lungs_mask()
-           that is, sets to hu = -2000 of pixels outside mask
-           and returns self.
-
-           NOTE: segment can be applied only before normalize_hu
-           and to batch that contains scans for whole patients.
-
-        7. flip(self)
-           Inverts slices corresponding to each scan,
-           but does not change the order of scans.
-           NOTE: changes self inplace, returns self
-
-        7. normalize_hu(self, min_hu=-1000, max_hu=400):
-           Normalizes hu-densities to interval [0, 255]
-           trims hu's outside range [min_hu, max_hu] and
-           then scales to [0, 255]. After that assigns result to self.images.
-           NOTE: changes self inplace, returns self.
-
+    spacing :    ndarray of floats
+                 represents distances between pixels in world coordinates
+    origin :     ndarray of floats
+                 contains world coordinates of (0, 0, 0)-pixel of scans
     """
 
     def __init__(self, index, *args, **kwargs):

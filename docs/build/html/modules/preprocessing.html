@@ -1,0 +1,226 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Preprocessing &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="preprocessing">
+<h1>Preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this headline">¶</a></h1>
+<p>The module allows to perform a number of preprocessing operations on a dataset of scans.</p>
+<div class="section" id="data-storage-in-radio">
+<h2>Data storage in <cite>RadIO</cite><a class="headerlink" href="#data-storage-in-radio" title="Permalink to this headline">¶</a></h2>
+<p><cite>RadIO</cite> works with batches of scans, wrapped in a class <cite>CTImagesBatch</cite>.
+The class stores scans&#8217; data in <a class="reference external" href="https://github.com/analysiscenter/dataset">components</a>, which represent
+main attributes of scans. E.g., scans itself are stacked in one
+tall 3d <cite>numpy</cite>-array and stored in <cite>images</cite>-component. The other
+components are <cite>spacing</cite> and <cite>origin</cite>, which store important meta.</p>
+<p>So, what can we do with the data?</p>
+</div>
+<div class="section" id="load-dump">
+<h2>Load/dump<a class="headerlink" href="#load-dump" title="Permalink to this headline">¶</a></h2>
+<p>The first thing we should learn to do is how to fill the components
+with the data from disk.</p>
+<p>The <cite>preprocessing</cite>-module is primarily adapted to work with two
+large datasets, available in open access: <a class="reference external" href="link_luna">Luna-dataset</a>
+(<strong>.raw</strong>-format) and <a class="reference external" href="link_dicom">DsBowl-dataset</a> (<strong>.dicom</strong>-format).
+Say, we have one of these two datasets (or a part of it) downloaded in
+folder <cite>path/to/scans</cite>. The first step is to set up an index.
+<cite>FilesIndex</cite> from <cite>dataset</cite>-module reduces the task to defining a
+<cite>glob</cite>-mask for a needed set of scans:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lung_cancer</span> <span class="kn">import</span> <span class="n">CTImagesBatch</span>
+<span class="kn">from</span> <span class="nn">lung_cancer.dataset</span> <span class="kn">import</span> <span class="n">FilesIndex</span><span class="p">,</span> <span class="n">Dataset</span>
+<span class="n">ctset</span> <span class="o">=</span> <span class="n">FilesIndex</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;path/to/scans/*&#39;</span><span class="p">,</span> <span class="n">no_ext</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In order to load the scans we only need to call action <cite>load</cite> specifying
+the format of the dataset:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">ctset</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span> <span class="c1"># generate a batch of 10 scans</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span> <span class="c1"># use fmt = &#39;dicom&#39; for load of dicom-scans</span>
+</pre></div>
+</div>
+<p>After performing some preprocessing operations we may need to save the
+results on disk. Action <cite>dump</cite> is of help here:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># some preprocessing actions</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dst</span><span class="o">=</span><span class="s1">&#39;path/to/preprocessed/&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the result, data of each scan from the batch will be packed with
+<cite>blosc</cite> and dumped in a needed folder. Importantly, dumped scans
+can be loaded later using the same methodology. We only need to
+specify <cite>blosc</cite>-format when performing <cite>load</cite>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">dumpset</span> <span class="o">=</span> <span class="n">FilesIndex</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;path/to/preprocessed/*&#39;</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">dumpset</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>What&#8217;s more, both <cite>dump</cite> and <cite>load</cite> from <cite>blosc</cite>-format can work
+component-wise:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span><span class="p">])</span> <span class="c1"># dump spacing, origin components</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dst</span><span class="o">=</span><span class="s1">&#39;path/to/preprocessed/&#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">)</span> <span class="c1"># dumps scans itself</span>
+<span class="n">dumpset</span> <span class="o">=</span> <span class="n">FilesIndex</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;path/to/preprocessed/*&#39;</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">dumpset</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">src_blosc</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span><span class="p">,</span> <span class="s1">&#39;images&#39;</span><span class="p">])</span> <span class="c1"># equivalent to src_blosc=None</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="resize-spacing-unification">
+<h2>Resize &amp; spacing-unification<a class="headerlink" href="#resize-spacing-unification" title="Permalink to this headline">¶</a></h2>
+<p>Another important step of preprocessing is the resize of scans in
+batch to a specific shape. <cite>preprocessing</cite>-module implements
+this step via <cite>resize</cite>-action:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Currently the module supports two different resize-engines:
+<cite>scipy.interpolate</cite> and <cite>PIL-simd</cite>. While the second engine
+is more robust and works faster on systems with small number
+of cores, the first allows greater degree of parallelization
+and can be more precise is some cases. One can choose the engine
+in a following way:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;scipy&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Sometimes, though, we want to do more than just equalize pixel
+shapes of different items. Rather, it may be useful to convert
+scans to the same real-world scale, so that parts of scans
+with similar real-world shapes have the same pixel-sizes.
+This can be achieved through <cite>unify_spacing</cite>-action:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="n">spacing</span><span class="o">=</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>In order to control the real-world world scale of scans,
+one can use the parameter <cite>spacing</cite>, that represents the
+distances in millimeters between adjacent pixels along three axes.
+The action works in two steps. The first step stands for spacing
+unification by means of resize, while the second one crops/pads
+resized scan so that it fits in the supplied shape. One can specify
+resize parameters and the mode of padding:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">batch</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="n">spacing</span><span class="o">=</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+                            <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;reflect&#39;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;pil-simd&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Still, out goal is to simplify building deep learning systems as
+much as possible. Naturally, <cite>images</cite>-components can be viewed as
+an <strong>X</strong>-input of a net. As we see, there is little preprocessing
+we cannot do with <cite>images</cite>. What about <strong>Y</strong>-input?</p>
+</div>
+<div class="section" id="masked-batch">
+<h2>Masked batch<a class="headerlink" href="#masked-batch" title="Permalink to this headline">¶</a></h2>
+<p>Preparing <strong>Y</strong>-part revolves around <cite>masks</cite>-component. The
+component has the same shape as <cite>images</cite> and stores cancer-masks
+of different items in a batch in a binary format, where value
+of each pixel is either <strong>0</strong> (non-cancerous pixel) or
+<strong>1</strong> (cancerous pixel). <cite>masks</cite> can be filled in two steps.
+We first load info about cancerous nodules in a batch:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipe</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pipeline</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules_df</span><span class="o">=</span><span class="n">nodules_df</span><span class="p">)</span> <span class="c1"># nodules_df is a Pandas.DataFrame</span>
+                                                   <span class="c1"># containing info about nodules</span>
+        <span class="p">)</span>
+</pre></div>
+</div>
+<p>Then we can fill the <cite>masks</cite>-components using the loaded info:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipe</span> <span class="o">=</span> <span class="p">(</span><span class="n">pipe</span>
+        <span class="o">.</span><span class="n">create_mask</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Preprocessing</a><ul>
+<li><a class="reference internal" href="#data-storage-in-radio">Data storage in <cite>RadIO</cite></a></li>
+<li><a class="reference internal" href="#load-dump">Load/dump</a></li>
+<li><a class="reference internal" href="#resize-spacing-unification">Resize &amp; spacing-unification</a></li>
+<li><a class="reference internal" href="#masked-batch">Masked batch</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/modules/preprocessing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>
