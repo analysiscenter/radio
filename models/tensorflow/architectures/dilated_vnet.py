@@ -45,7 +45,7 @@ class TFDilatedVnet(TFModelCT):
         tf.Tensor
             output tensor.
 
-        NOTE
+        Note
         ----
         This layer does not perform repeat operation
         along channels and batch axes.
@@ -63,31 +63,6 @@ class TFDilatedVnet(TFModelCT):
 
     def bottleneck_block(self, input_tensor, filters, scope, dilation=(1, 1, 1), padding='same'):
         """ Apply bottleneck block transform to input tensor.
-
-        Schematically this block can be represented like this:
-        =======================================================================
-                        Conv3D{1x1x1}[1:1:1](filters)
-                                    ||
-                                    \/
-                             BatchNormalization
-                                    ||
-                                    \/
-                                   ReLu
-                            --------||----------
-                           /                    \\
-                          /                      \\
-                         /                        \\
-                        /                          \\
-    Conv3D{3x3x3}[1:1:1](filters / 2)    Conv3D{3x3x3}[1:1:1](filters / 2)
-         dilation_rate=(1, 1, 1)             dilation_rate=(dilation)
-                         \\                      /
-                          \\                    /
-                           \\                  /
-                            \\                /
-                             (----Concat-----)
-                                    ||
-                                    \/
-        =======================================================================
 
         Parameters
         ----------
@@ -199,7 +174,7 @@ class TFDilatedVnet(TFModelCT):
             name of scope for this block.
         dilation : tuple(int, int, int)
             dilation rate along spatial axes.
-        padding: str
+        padding : str
             padding mode for convolutions, can be 'same' or 'valid'.
 
         Returns
