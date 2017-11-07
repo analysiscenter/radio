@@ -397,7 +397,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Returns
         -------
-        (int,int)
+        (int, int)
             `y, x` dims shape of a scan.
         """
         shapes = np.zeros((len(self), 3), dtype=np.int)
