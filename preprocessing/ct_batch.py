@@ -1112,7 +1112,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         components : list, tuple or str
                      name(s) of components to rotate each item in it.
         axes :       tuple
-                     (int, int), plane of rotation specified by two axes.
+                     (int, int), plane of rotation specified by two axes (zyx-ordering).
         random :     bool
                      if True, then degree specifies maximum angle of rotation.
         index :      int
@@ -1127,6 +1127,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Note
         ----
         zero padding automatically added after rotation.
+
+        Example
+        -------
+        Rotate images on 90 degrees:
+
+        >>> batch = batch.rotate(angle=90, axes=(1, 2), random=False)
+
+        Random rotation with maximum angle:
+
+        >>> batch = batch.rotate(angle=30, axes=(1, 2))
+
         """
         if not isinstance(components, (tuple, list)):
             _components = (components, )
