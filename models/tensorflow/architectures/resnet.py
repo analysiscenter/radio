@@ -51,7 +51,7 @@ class TFResNet(TFModelCT):
         relu activation. Finally, the result of previous convolution goes
         into 3D-convolution with (1, 1, 1) kernel size, batch normalization
         without activation and its output is summed with the input tensor
-        and `relu` activation is applied.
+        and 'relu' activation is applied.
         Argument `filters` should be tuple(int, int, int) and specifies
         number of filters in first, second and third convolution correspondingly.
         Number of filters in third convolution must be the same as in the input
@@ -99,15 +99,15 @@ class TFResNet(TFModelCT):
         """ Convolutional block that has a conv layer as shortcut.
 
         First of all, 3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
-        batch normalization and `relu` activation is applied. Then the result
+        batch normalization and 'relu' activation is applied. Then the result
         flows into 3D-convolution with (3, 3, 3) kernel size, batch normalization
         and `relu` activation. Finally, the result of previous convolution goes
         into 3D-convolution with (1, 1, 1) kernel size, batch normalization
         without activation and its output is summed with the result
         of 3D-convolution with kernel_size=(1, 1, 1), strides=(2, 2, 2) and
         batch normalization of input_tensor. After that `relu` activation
-        is applied to the result of `add` operation.
-        Argument `filters` should be tuple(int, int, int) and specifies
+        is applied to the result of 'add' operation.
+        Argument 'filters' should be tuple(int, int, int) and specifies
         number of filters in first, second and third convolution correspondingly.
 
         Parameters
