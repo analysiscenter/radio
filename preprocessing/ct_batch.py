@@ -947,40 +947,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             self._init_data(**params)
             return self
 
-    @property
-    def crop_centers(self):
-        """ Get centers of crop for all scans
-
-        Returns
-        -------
-        ndarray
-        """
-        if not self._crop_centers:
-            self._crop_params_patients()
-        return self._crop_centers
-
-    @property
-    def crop_sizes(self):
-        """ Get sizes of crop for all scans
-
-        Returns
-        -------
-        ndarray
-        """
-        if not self._crop_sizes:
-            self._crop_params_patients()
-        return self._crop_sizes
-
-    @inbatch_parallel(init='_init_images', post='_post_crop', target='nogil')
-    def _crop_params_patients(self, *args, **kwargs):
-        """ Calculate params for crop
-
-        Returns
-        -------
-        function
-        """
-        return rbba
-
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
     def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
