@@ -1057,11 +1057,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
     def binarize_mask(self, threshold=0.35):
         """ Binarize masks by threshold.
 
-        Args:
-        - threshold: float, threshold for masks binarization;
+        Parameters
+        ----------
+        threshold : float
+            threshold for masks binarization.
 
-        Returns:
-        - self, source CTImagesMaskedBatch with binarized masks.
         """
         self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
         return self
