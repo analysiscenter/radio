@@ -1389,9 +1389,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Example
         -------
-         patch = batch.get_axial_slice(5, 0.6)
-                 patch = batch.get_axial_slice(self.index[5], 0.6)
-                 # here self.index[5] usually smth like 'a1de03fz29kf6h2'
+        Here self.index[5] usually smth like 'a1de03fz29kf6h2'
+
+        >>> patch = batch.get_axial_slice(5, 0.6)
+        >>> patch = batch.get_axial_slice(self.index[5], 0.6)
 
         """
         margin = int(slice_height * self.get(person_number, 'images').shape[0])
