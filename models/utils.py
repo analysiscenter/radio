@@ -202,7 +202,7 @@ def unpack_reg(batch, model, threshold=10, dim_ordering='channels_last'):
     dict
         {'x': images_array, 'y': y_regression_array}
 
-    NOTE
+    Note
     ----
     'dim_ordering' argument reflects where to put '1' for channels dimension.
 
