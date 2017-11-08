@@ -3,7 +3,7 @@ Tensorflow Models
 =================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    tf_densenet
    tf_resnet
