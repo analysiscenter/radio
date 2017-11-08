@@ -9,4 +9,4 @@ API
    pipelines
    models
    unpackers
-   losses
+   loss_functions
