@@ -1,0 +1,197 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Resize &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="resize">
+<h1>Resize<a class="headerlink" href="#resize" title="Permalink to this headline">¶</a></h1>
+<dl class="method">
+<dt id="lung_cancer.preprocessing.resize.resize_scipy">
+<code class="descclassname">resize.</code><code class="descname">resize_scipy</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.preprocessing.resize.resize_scipy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resize 3d scan and put it into out_patient.</p>
+<p>Resize engine is scipy.ndimage.interpolation.zoom.
+If res_factor is not supplied, infer resize factor from out_patient.shape.
+otherwise, use res_factor for resize and then crop/pad resized array to out_patient.shape.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>patient</strong> (<em>ndarray</em>) – 3D array</li>
+<li><strong>out_patient</strong> (<em>ndarray</em>) – resulting array</li>
+<li><strong>res</strong> (<em>ndarray</em>) – resulting <cite>skyscraper</cite> for the whole batch.
+used later by <cite>_post</cite>-func in _inbatch_parallel</li>
+<li><strong>order</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><em>int</em></a>) – order of interpolation</li>
+<li><strong>res_factor</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) – resize factor along (z,y,x) in int ir float for interpolation.
+If not None, can yield array of shape != out_patient.shape,
+then crop/pad is used</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – mode of padding, any mode of np.pad()</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(res, out_patient.shape), resulting <cite>skyscraper</cite> and shape of
+resized scan inside this <cite>scyscraper</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Shape of resulting array has to be inferred
+from out_patient</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.resize.resize_pil">
+<code class="descclassname">resize.</code><code class="descname">resize_pil</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.preprocessing.resize.resize_pil" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resize 3D scan.</p>
+<p>Uses _seq_resize over a pair of axes for applying many 2d-resizes,
+then averages over different pairs for obtaining more precise results.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>input_array</strong> (<em>ndarray</em>) – array to be resized.</li>
+<li><strong>ouput_array</strong> (<em>ndarray</em>) – array, where the result should be put.</li>
+<li><strong>res</strong> (<em>ndarray</em>) – resulting <cite>skyscraper</cite> for the whole batch.
+used later by <cite>_post</cite>-func in _inbatch_parallel</li>
+<li><strong>axes_pairs</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list of tuples</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) – pairs of axes for 2d resizes, then averaging is performed,
+e.g., ((0,1),(1,2),(0,2))
+if None, defaults to ((0, 1), (1, 2))</li>
+<li><strong>shape_resize</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em>, </em><em>ndarray</em><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) – shape of array after resize.
+If None, infer shape from <cite>ouput_array.shape</cite>.</li>
+<li><strong>resample</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a><em> or </em><a class="reference external" href="https://docs.python.org/2/library/constants.html#None" title="(in Python v2.7)"><em>None</em></a>) – type of PIL resize’s resampling method, e.g.
+<cite>BILINEAR</cite>, <cite>BICUBIC</cite>,`LANCZOS` or <cite>NEAREST</cite>.
+If None, <cite>BILINEAR</cite> is used.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – mode of padding, any mode of np.pad()</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">(res, out_patient.shape), resulting <cite>skyscraper</cite> and shape of
+resized scan inside this <cite>scyscraper</cite>.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)">tuple</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.preprocessing.resize.to_shape">
+<code class="descclassname">resize.</code><code class="descname">to_shape</code><span class="sig-paren">(</span><em>data</em>, <em>shape</em>, <em>padding</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.preprocessing.resize.to_shape" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crop or pad 3D array to resize it to <cite>shape</cite></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>ndarray</em>) – 3D array for reshaping</li>
+<li><strong>shape</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#tuple" title="(in Python v2.7)"><em>tuple</em></a><em>, </em><em>list</em><em> or </em><em>ndarray</em>) – data shape after crop or pad</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><em>str</em></a>) – mode of padding, any of the modes of np.pad()</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">cropped and padded data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../../_sources/api/preprocessing/resize.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

@@ -1,0 +1,195 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lung_cancer.models.tensorflow.utils &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.tensorflow.utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Contains different useful tensorflow functions. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+
+<div class="viewcode-block" id="get_shape"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.utils.get_shape">[docs]</a><span class="k">def</span> <span class="nf">get_shape</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return full shape of the input tensor represented by tuple of ints.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Variable or tf.Tensor</span>
+<span class="sd">        input_tensor.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple(int)</span>
+<span class="sd">        input tensor&#39;s shape.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="num_channels"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.utils.num_channels">[docs]</a><span class="k">def</span> <span class="nf">num_channels</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Get number of channels in input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Variable or tf.Tensor</span>
+<span class="sd">        input_tensor.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">        number of channels.</span>
+
+<span class="sd">    NOTE: channels last ordering is used.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">get_shape</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="repeat_tensor"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.utils.repeat_tensor">[docs]</a><span class="k">def</span> <span class="nf">repeat_tensor</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">times</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Repeat tensor given times along axes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Tensor</span>
+<span class="sd">        input tensor for repeat operation.</span>
+<span class="sd">    times : tuple(int, int,..., int)</span>
+<span class="sd">        number of times to repeat input tensor tensor along each axis.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    ------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        repeated tensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">source_shape</span> <span class="o">=</span> <span class="n">get_shape</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">source_shape</span><span class="p">))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">tile</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">times</span><span class="p">])</span>
+
+    <span class="n">new_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">source_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">:]))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">new_shape</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">x</span></div>
+
+
+<div class="viewcode-block" id="split_channels"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.utils.split_channels">[docs]</a><span class="k">def</span> <span class="nf">split_channels</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Split channels of input tensor into groups of given size.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Tensor</span>
+<span class="sd">        input tensor for split_channels operation.</span>
+<span class="sd">    size : int</span>
+<span class="sd">        size of each group.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    list of tensors</span>
+<span class="sd">        each corresponds to channels group.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">in_filters</span> <span class="o">=</span> <span class="n">num_channels</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">in_filters</span> <span class="o">&lt;=</span> <span class="n">size</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">input_tensor</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">in_filters</span> <span class="o">/</span> <span class="n">size</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">in_filters</span> <span class="o">%</span> <span class="n">size</span><span class="p">)</span>
+    <span class="n">main</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span> <span class="n">a</span> <span class="o">*</span> <span class="n">size</span><span class="p">],</span> <span class="n">a</span><span class="p">,</span>
+                         <span class="n">axis</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">input_tensor</span><span class="o">.</span><span class="n">get_shape</span><span class="p">())</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">b</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">main</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">a</span> <span class="o">*</span> <span class="n">size</span><span class="p">:</span> <span class="p">])</span>
+    <span class="k">return</span> <span class="n">main</span></div>
+
+
+<div class="viewcode-block" id="channels_rnd_shuffle"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.utils.channels_rnd_shuffle">[docs]</a><span class="k">def</span> <span class="nf">channels_rnd_shuffle</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Perform random shuffle of channels in input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Tensor</span>
+<span class="sd">        input tensor.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        tensor with random shuffle of channels.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_filters</span> <span class="o">=</span> <span class="n">num_channels</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">)</span>
+    <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">num_filters</span><span class="p">)</span>
+    <span class="n">tensors_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+        <span class="n">tensors_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">tensors_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

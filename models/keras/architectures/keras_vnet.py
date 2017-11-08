@@ -50,7 +50,11 @@ class KerasVnet(KerasModel):
         Returns
         -------
         keras tensor
-            output tensor
+            output tensor.
+
+        Note
+        ----
+        `channels_first` dim-ordering is used.
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters, (3, 3, 3),
@@ -74,13 +78,6 @@ class KerasVnet(KerasModel):
         This layer consists of two 3D-convolutional layers with batch normalization
         before 'relu' activation and max_pooling3d layer in the end.
 
-        Schematically this block can be represented like this:
-        =======================================================================
-        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
-        => Conv3D{3x3x3}[1:1:1](filters) => BatchNorm(filters_axis) => Relu =>
-        => MaxPooling3D{pool_size}[2:2:2]
-        =======================================================================
-
         Parameters
         ----------
         input_tensor : keras tensor
@@ -98,6 +95,10 @@ class KerasVnet(KerasModel):
         -------
         keras tensor
             output tensor.
+
+        Note
+        ----
+        `channels_first` dim-ordering is used.
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters, (3, 3, 3),
@@ -143,6 +144,10 @@ class KerasVnet(KerasModel):
         -------
         keras tensor
             ouput tensor.
+
+        Note
+        ----
+        `channels_first` dim-ordering is used.
         """
         with tf.variable_scope(scope):
             upsample_tensor = UpSampling3D(data_format="channels_first",

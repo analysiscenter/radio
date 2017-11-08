@@ -1,0 +1,370 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.dataset.dataset.image package &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lung-cancer-dataset-dataset-image-package">
+<h1>lung_cancer.dataset.dataset.image package<a class="headerlink" href="#lung-cancer-dataset-dataset-image-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-lung_cancer.dataset.dataset.image.batch_image">
+<span id="lung-cancer-dataset-dataset-image-batch-image-module"></span><h2>lung_cancer.dataset.dataset.image.batch_image module<a class="headerlink" href="#module-lung_cancer.dataset.dataset.image.batch_image" title="Permalink to this headline">¶</a></h2>
+<p>Contains Batch classes for images</p>
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.image.batch_image.</code><code class="descname">BasicImagesBatch</code><span class="sig-paren">(</span><em>index</em>, <em>preloaded=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.batch.Batch" title="lung_cancer.dataset.dataset.batch.Batch"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.batch.Batch</span></code></a></p>
+<p>Batch class for 2D images</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.assemble">
+<code class="descname">assemble</code><span class="sig-paren">(</span><em>all_res</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.assemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.assemble" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assemble the batch after a parallel action</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.components">
+<code class="descname">components</code><em class="property"> = ('images', 'labels')</em><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.components" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.crop">
+<code class="descname">crop</code><span class="sig-paren">(</span><em>component='images'</em>, <em>origin=None</em>, <em>shape=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.crop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.crop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crop all images in the batch
+:param component: string - a component name which data should be cropped
+:param origin: can be one of:</p>
+<blockquote>
+<div><ul class="simple">
+<li>tuple - a starting point in the form of (x, y)</li>
+<li>CROP_00 - to crop from left top edge (0,0)</li>
+<li>CROP_CENTER - to crop from center of each image</li>
+</ul>
+</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>shape</strong> &#8211; tuple - a crop size in the form of (width, height)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.dump">
+<code class="descname">dump</code><span class="sig-paren">(</span><em>dst</em>, <em>fmt=None</em>, <em>components=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.dump"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save data to a file or a memory object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.flip">
+<code class="descname">flip</code><span class="sig-paren">(</span><em>axis=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.flip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.flip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip images
+:param axis: &#8216;h&#8217; for horizontal (left/right) flip</p>
+<blockquote>
+<div>&#8216;v&#8217; for vertical (up/down) flip</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>direction</strong> &#8211; &#8216;l&#8217;, &#8216;r&#8217;, &#8216;u&#8217;, &#8216;d&#8217;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.get_image_size">
+<code class="descname">get_image_size</code><span class="sig-paren">(</span><em>image</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.get_image_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.get_image_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an image size (width, height)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>src</em>, <em>fmt=None</em>, <em>components=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.load"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.noop">
+<code class="descname">noop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.noop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.noop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do nothing</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.random_crop">
+<code class="descname">random_crop</code><span class="sig-paren">(</span><em>component='images'</em>, <em>shape=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.random_crop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.random_crop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Crop all images to a given shape and a random origin
+:param component: string - a component name which data should be cropped
+:param shape: tuple - a crop size in the form of (width, height)</p>
+<p>Origin will be chosen at random to fit the required shape</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.random_rotate">
+<code class="descname">random_rotate</code><span class="sig-paren">(</span><em>ix</em>, <em>component='images'</em>, <em>p=1.0</em>, <em>angle=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.random_rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.random_rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate each image in the batch at a random angle
+:param component: string - a component name which data should be rotated
+:param p: float - a probability to apply rotate</p>
+<blockquote>
+<div>(0. - don&#8217;t rotate, .5 - rotate half of images, 1 - rotate all images)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>angle</strong> &#8211; tuple - an angle range in the form of (min_angle, max_angle), in radians</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.random_scale">
+<code class="descname">random_scale</code><span class="sig-paren">(</span><em>ix</em>, <em>component='images'</em>, <em>p=1.0</em>, <em>factor=None</em>, <em>preserve_shape=True</em>, <em>crop=-1</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.random_scale"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.random_scale" title="Permalink to this definition">¶</a></dt>
+<dd><p>Scale the content of each image in the batch with a random scale factor
+:param component: string - a component name
+:param p: float - a probability to apply scale</p>
+<blockquote>
+<div>(0. - don&#8217;t scale, .5 - scale half of images, 1 - scale all images)</div></blockquote>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>factor</strong> &#8211; tuple - min and max scale; the scale factor for each image
+will be sampled from the uniform distribution</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.resize">
+<code class="descname">resize</code><span class="sig-paren">(</span><em>ix</em>, <em>component='images'</em>, <em>shape=(64</em>, <em>64)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.resize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.resize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resize all images in the batch to the given shape
+:param component: string - a component name which data should be cropped
+:param shape: tuple - a crop size in the form of (width, height)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>ix</em>, <em>component='images'</em>, <em>angle=0</em>, <em>preserve_shape=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#BasicImagesBatch.rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate all images in the batch at the given angle
+:param component: string - a component name which data should be rotated
+:param angle: float - the rotation angle in degrees.
+:param preserve_shape: bool - whether to keep shape after rotating</p>
+<blockquote>
+<div>(always True for images as arrays, can be False for PIL.Images)</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesBatch">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.image.batch_image.</code><code class="descname">ImagesBatch</code><span class="sig-paren">(</span><em>index</em>, <em>preloaded=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesBatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesBatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch" title="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch</span></code></a></p>
+<p>Batch class for 2D images</p>
+<p>images are stored as numpy arrays (N, H, W) or (N, H, W, C)</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.assemble">
+<code class="descname">assemble</code><span class="sig-paren">(</span><em>all_res</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesBatch.assemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.assemble" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assemble the batch after a parallel action</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.convert_to_pil">
+<code class="descname">convert_to_pil</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesBatch.convert_to_pil"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.convert_to_pil" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert batch data to PIL.Image format</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.fliplr">
+<code class="descname">fliplr</code><span class="sig-paren">(</span><em>component='images'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesBatch.fliplr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.fliplr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip image horizontaly (left / right)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.flipud">
+<code class="descname">flipud</code><span class="sig-paren">(</span><em>component='images'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesBatch.flipud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.flipud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip image verticaly (up / down)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.get_image_size">
+<code class="descname">get_image_size</code><span class="sig-paren">(</span><em>image</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesBatch.get_image_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesBatch.get_image_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return image size (width, height)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch">
+<em class="property">class </em><code class="descclassname">lung_cancer.dataset.dataset.image.batch_image.</code><code class="descname">ImagesPILBatch</code><span class="sig-paren">(</span><em>index</em>, <em>preloaded=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesPILBatch"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch" title="lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.image.batch_image.BasicImagesBatch</span></code></a></p>
+<p>Batch class for 2D images in PIL format</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.assemble">
+<code class="descname">assemble</code><span class="sig-paren">(</span><em>all_res</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesPILBatch.assemble"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.assemble" title="Permalink to this definition">¶</a></dt>
+<dd><p>Assemble the batch after a parallel action</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.convert_to_array">
+<code class="descname">convert_to_array</code><span class="sig-paren">(</span><em>dtype=&lt;class 'numpy.uint8'&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesPILBatch.convert_to_array"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.convert_to_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert images from PIL.Image format to an array</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.fliplr">
+<code class="descname">fliplr</code><span class="sig-paren">(</span><em>ix</em>, <em>component='images'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesPILBatch.fliplr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.fliplr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip image horizontaly (left / right)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.flipud">
+<code class="descname">flipud</code><span class="sig-paren">(</span><em>ix</em>, <em>component='images'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesPILBatch.flipud"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.flipud" title="Permalink to this definition">¶</a></dt>
+<dd><p>Flip image verticaly (up / down)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.get_image_size">
+<code class="descname">get_image_size</code><span class="sig-paren">(</span><em>image</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#ImagesPILBatch.get_image_size"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.ImagesPILBatch.get_image_size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return image size (width, height)</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.calc_coords">
+<code class="descclassname">lung_cancer.dataset.dataset.image.batch_image.</code><code class="descname">calc_coords</code><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#calc_coords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.calc_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return coords for preserve_shape</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.calc_origin">
+<code class="descclassname">lung_cancer.dataset.dataset.image.batch_image.</code><code class="descname">calc_origin</code><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#calc_origin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.calc_origin" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return origin for preserve_shape</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.preserve_shape_numba">
+<code class="descclassname">lung_cancer.dataset.dataset.image.batch_image.</code><code class="descname">preserve_shape_numba</code><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#preserve_shape_numba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.preserve_shape_numba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the image shape by cropping and adding empty pixels to fit the given shape</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="lung_cancer.dataset.dataset.image.batch_image.random_crop_numba">
+<code class="descclassname">lung_cancer.dataset.dataset.image.batch_image.</code><code class="descname">random_crop_numba</code><a class="reference internal" href="_modules/lung_cancer/dataset/dataset/image/batch_image.html#random_crop_numba"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.dataset.dataset.image.batch_image.random_crop_numba" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill-in new_images with random crops from images</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.dataset.dataset.image">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lung_cancer.dataset.dataset.image" title="Permalink to this headline">¶</a></h2>
+<p>Contains image types and constants</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">lung_cancer.dataset.dataset.image package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.dataset.dataset.image.batch_image">lung_cancer.dataset.dataset.image.batch_image module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.dataset.dataset.image">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/lung_cancer.dataset.dataset.image.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

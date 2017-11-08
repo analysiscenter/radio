@@ -1,7 +1,8 @@
 # pylint: disable=too-many-arguments
 # pylint: disable=undefined-variable
 # pylint: disable=no-member
-""" contains Batch class for storing Ct-scans """
+
+""" Batch class for storing CT-scans. """
 
 import os
 import random as rnd
@@ -13,13 +14,12 @@ import blosc
 import dicom
 import SimpleITK as sitk
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
 from .mip import xip_fn_numba
 from .flip import flip_patient_numba
-from .crop import return_black_border_array as rbba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
 from .rotate import rotate_3D
@@ -30,138 +30,91 @@ DARK_HU = -2000
 
 
 class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
+    """ Batch class for storing batch of CT-scans in 3D.
 
-    """ Class for storing batch of CT(computed tomography) 3d-scans.
+    Contains a component `images` = 3d-array of stacked scans
+    along number_of_slices (z) axis (aka "skyscraper"), associated information
+    for subsetting individual patient's 3D scan (_bounds, origin, spacing) and
+    various methods to preprocess the data.
 
-    This class is derived from base class Batch defined in dataset submodule.
+    Parameters
+    ----------
+    index : dataset.index
+            ids of scans to be put in a batch
 
-
-    Attrs:
-
-        1. index: instance of dataset.Index class. Index is required as
-           a first argument by __init__ method of base Batch class.
-           Later it is used almost by every method that requires indexing.
-
-        2. images: 3d-array of stacked scans along number_of_slices axis ("skyscraper")
-
-        3. _bounds: 1d-array of bound-floors for each scan,
-            has length = number of items in batch + 1
-
-        4. spacing: 2d-array [number of items X 3] that contains spacing
-           of each item (scan) along each axis.
-           NOTE [z, y, x] order is used.
-
-        5. origin: 2d-array [number of items X 3] that contains spacing
-           of each item along each axis.
-           NOTE [z, y, x] order is used.
-
-    Properties:
-        1. components: return tuple of string; each of strings reffers to
-           an attribute of instance which would be considered as data component.
-           NOTE: Implementation of this property is required by base class.
-
-
-    Important methods:
-
-        1. __init__(self, index):
-           Basic initialization of images batch in accordance
-           with Batch.__init__ given base class Batch.
-
-        2. load(self, source, fmt, upper_bounds, src_blosc):
-           Builds skyscraper of scans from either
-           'dicom'|'raw'|'blosc'|'ndarray' and returns self.
-
-           NOTE: this method uses async-await notation.
-
-        2. resize(self, shape, order):
-           Transforms the shape of all scans to a given shape('shape' argument).
-           The kernel of this method is scipy.ndimage.interpolation.zoom function.
-
-           NOTE: this function is can be executed in parallel via multithreading.
-
-        3. unify_spacing(self, spacing, shape):
-           Resizes each scan so that its spacing changed to supplied spacing,
-           then crop/pad each scan to supplied shape.
-
-        4. dump(self, format, dst)
-           Creates a dump of the batch in the path-folder and returns self.
-
-           NOTE: as of 06.07.2017, only format='blosc' is supported.
-           NOTE: this method uses async-await notation.
-
-        5. calc_lungs_mask(self, erosion_radius=7)
-           Returns binary-mask for lungs segmentation;
-           the larger erosion_radius the lesser the resulting lungs will be.
-           NOTE: returns mask, not self.
-
-        6. segment(self, erosion_radius=2)
-           This method uses mask from calc_lungs_mask()
-           that is, sets to hu = -2000 of pixels outside mask
-           and returns self.
-
-           NOTE: segment can be applied only before normalize_hu
-           and to batch that contains scans for whole patients.
-
-        7. flip(self)
-           Inverts slices corresponding to each scan,
-           but does not change the order of scans.
-           NOTE: changes self inplace, returns self
-
-        7. normalize_hu(self, min_hu=-1000, max_hu=400):
-           Normalizes hu-densities to interval [0, 255]
-           trims hu's outside range [min_hu, max_hu] and
-           then scales to [0, 255]. After that assigns result to self.images.
-           NOTE: changes self inplace, returns self.
-
+    Attributes
+    ----------
+    components : tuple of strings.
+                 List names of data components of a batch, which are `images`,
+                 `origin` and `spacing`.
+                 NOTE: Implementation of this property is required by Base class.
+    index :      dataset.index
+                 represents indices of scans from a batch
+    images :     ndarray
+                 contains ct-scans for all patients in batch.
+    spacing :    ndarray of floats
+                 represents distances between pixels in world coordinates
+    origin :     ndarray of floats
+                 contains world coordinates of (0, 0, 0)-pixel of scans
     """
 
     def __init__(self, index, *args, **kwargs):
-        """
-        common part of initialization from all formats:
-            -execution of Batch construction
-            -initialization of all attrs
-            -creation of empty lists and arrays
+        """ Execute Batch construction and init of basic attributes
 
-        Args:
-            index: index of type DatasetIndex
+        Parameters
+        ----------
+        index : Dataset.Index class.
+                Required indexing of objects (files).
         """
 
         super().__init__(index, *args, **kwargs)
 
-        # init all attrs
+        # init basic attrs
         self.images = None
         self._bounds = None
         self.origin = None
         self.spacing = None
         self._init_data()
 
-        self._crop_centers = np.array([], dtype=np.int32)
-        self._crop_sizes = np.array([], dtype=np.int32)
-
     @property
     def components(self):
-        """ Components-property. See doc of base batch from dataset for information.
-                In short, these are names for components of tuple returned from __getitem__.
+        """ Components' property.
+
+        See doc of Base batch in dataset for information.
+
+        Returns
+        -------
+        (str, str, str)
+                       names of components returned from __getitem__.
         """
         return 'images', 'spacing', 'origin'
 
     def _init_data(self, source=None, bounds=None, origin=None, spacing=None):
-        """ Initialize images, _bounds, _crop_centers, _crop_sizes atteributes.
+        """ Initialize images, _bounds, origin and spacing attributes.
 
-        This method is called inside __init__ and some other methods
-        and used as initializer of batch inner structures.
+        `_init_data` is used as initializer of batch inner structures,
+        called inside __init__ and other methods
 
-        Args:
-        - source: ndarray(n_patients * k, l, m) or None(default) that will be used
-        as self.images
-        - bounds: ndarray(n_patients, dtype=np.int) or None(default) that will be
-        uses as self._bounds;
-        - origin: ndarray(n_patients, 3) or None(default) that will be used as
-        self.origin attribute representing patients origins in world coordinate
-        system. None value will be converted to zero-array.
-        - spacing: ndarray(n_patients, 3) or None(default) that will be used as
-        self.spacing attribute representing patients spacings in world coordinate
-        system. None value will be converted to ones-array.
+        Parameters
+        ----------
+        source :  ndarray(n_patients * z, y, x) or None
+                  data to be put as a component `images` in self.images, where
+                  n_patients is total number of patients in array and `z, y, x`
+                  is a shape of each patient 3D array.
+                  Note, that each patient should have same and constant
+                  `z, y, x` shape.
+        bounds :  ndarray(n_patients, dtype=np.int) or None
+                  1d-array of bound-floors for each scan 3D array,
+                  has length = number of items in batch + 1, to be put in self._bounds.
+        origin :  ndarray(n_patients, 3) or None
+                  2d-array contains origin coordinates of patients scans
+                  in `z,y,x`-format in world coordinates to be put in self.origin.
+                  None value will be converted to zero-array.
+        spacing : ndarray(n_patients, 3) or None
+                  2d-array [number of items X 3] of spacings between slices
+                  along each of `z,y,x` axes for each patient's 3D array
+                  in world coordinates to be put in self.spacing.
+                  None value will be converted to ones-array.
         """
         self.images = source
         self._bounds = bounds if bounds is not None else np.array([], dtype='int')
@@ -170,18 +123,27 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def split(cls, batch, batch_size):
-        """ Split batch in two batches of lens=(batch_size, len(batch) - batch_size)
+        """ Split one batch in two batches.
 
-        Args:
-            batch: batch to be splitted
-            batch_size: len of first half. If batch_size >= len(batch), return None instead
-                of a second batch
+        The lens of 2 batches would be `batch_size` and `len(batch) - batch_size`
 
-        Return:
-            (first_half, second_half)
+        Parameters
+        ----------
+        batch :      Batch class instance
+                     batch to be splitted in two
+        batch_size : int
+                     length of first returned batch.
+                     If batch_size >= len(batch), return None instead of a 2nd batch
 
-        NOTE: the method does not change the structure of batch.index. Indices of created
-            batches are simply subsets of batch.index.
+        Returns
+        -------
+        (1st_Batch, 2nd_Batch)
+
+
+        Note
+        ----
+        Method does not change the structure of input Batch.index. Indices of output
+        batches are simply subsets of input Batch.index.
         """
         if batch_size == 0:
             return (None, batch)
@@ -194,7 +156,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ix_first = batch.index.create_subset(batch.indices[:size_first])
         ix_second = batch.index.create_subset(batch.indices[size_first:])
 
-    # init batches
+        # init batches
         batches = cls(ix_first), cls(ix_second)
 
         # put non-None components in batch-parts
@@ -230,19 +192,26 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @classmethod
     def concat(cls, batches):
-        """ Concatenate several batches in one large batch. Assume that
-                the same components are filled in all supplied batches.
+        """ Concatenate several batches in one large batch.
 
-        Args:
-            batches: sequence of batches to be concatenated
+        Assume that same components are filled in all supplied batches.
 
-        Return:
-            large batch with len = sum of lens of batches
+        Parameters
+        ----------
+        batches : list or tuple of batches
+                  sequence of batches to be concatenated
 
-        NOTE: batches' index is dropped. New large batch has new np-arange
-            index
-        NOTE: None-entries or batches of len=0 can be included in the list of batches.
-            They are simply dropped
+        Returns
+        -------
+        batch
+             large batch with length = sum of lengths of concated batches
+
+        Note
+        ----
+        Old batches' indexes are dropped. New large batch has new
+        np-arange index.
+        if None-entries or batches of len=0 are included in the list of batches,
+        they will be dropped after concat.
         """
         # leave only non-empty batches
         batches = [batch for batch in batches if batch is not None]
@@ -277,17 +246,20 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """ Concatenate list of batches and then split the result in two batches of sizes
                 (batch_size, sum(lens of batches) - batch_size)
 
-        Args:
-            batches: list of batches
-            batch_size: size of first resulting batch
+        Parameters
+        ----------
+        batches :    list of batches
+        batch_size : int
+                     length of first resulting batch
 
-        Return:
-            (new_batch, rest_batch)
+        Returns
+        -------
+        (new_batch, rest_batch)
 
-        NOTE: we perform split(of middle-batch) and then two concats
-        because of speed considerations;
-        even though the code is slightly lengthier
-        than it'd be if the order was concat->split.
+        Note
+        ----
+        Merge performs split (of middle-batch) and then two concats
+        because of speed considerations.
         """
         if batch_size is None:
             return (cls.concat(batches), None)
@@ -317,38 +289,50 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @action
     def load(self, fmt='dicom', source=None, bounds=None,  # pylint: disable=arguments-differ
              origin=None, spacing=None, src_blosc=None):
-        """ Load 3d scans-data in batch.
+        """ Load 3d scans data in batch.
 
-        Args:
-            fmt: type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
-            source: source array with skyscraper, needed iff fmt = 'ndarray'
-            bounds: bound floors for patients. Needed iff fmt='ndarray'
-            origin: ndarray [len(bounds) X 3] with world coords of each patient's
-                starting pixels. Needed only if fmt='ndarray'
-            spacing: ndarray [len(bounds) X 3] with spacings of patients.
-                Needed only if fmt='ndarray'
-            src_blosc: list/tuple/string with component(s) of batch
-                that should be loaded from blosc.
-                Needed only if fmt='blosc'. If None, all components are loaded.
+        Parameters
+        ----------
+        fmt :       str
+                    type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
+        source :    ndarray(n_patients * z, y, x) or None
+                    input array with `skyscraper` (stacked scans),
+                    needed iff fmt = 'ndarray'.
+        bounds :    ndarray(n_patients, dtype=np.int) or None
+                    bound-floors index for patients.
+                    Needed iff fmt='ndarray'
+        origin :    ndarray(n_patients, 3) or None
+                    origins of scans in world coordinates.
+                    Needed only if fmt='ndarray'
+        spacing :   ndarray(n_patients, 3) or None
+                    ndarray with spacings of patients along `z,y,x` axes.
+                    Needed only if fmt='ndarray'
+        src_blosc : list/tuple/string
+                    Contains names of batch component(s) that should be loaded from blosc file.
+                    Needed only if fmt='blosc'. If None, all components are loaded.
 
-        Return:
-            self
+        Returns
+        -------
+        self
 
-        Dicom example:
+        Example
+        -------
+        DICOM example
+        initialize batch for storing batch of 3 patients with following IDs:
 
-            # initialize batch for storing batch of 3 patients
-            # with following IDs
-            index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
-            batch = CTImagesBatch(index)
-            batch.load(fmt='dicom')
+        >>> index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
+        >>> batch = CTImagesBatch(index)
+        >>> batch.load(fmt='dicom')
 
-        Ndarray example:
-            # source_array stores a batch (concatted 3d-scans, skyscraper)
-            # say, ndarray with shape (400, 256, 256)
+        Ndarray example
 
-            # bounds stores ndarray of last floors for each patient
-            # say, source_ubounds = np.asarray([0, 100, 400])
-            batch.load(source=source_array, fmt='ndarray', bounds=bounds)
+        Source_array stores a batch (concatted 3d-scans, skyscraper)
+        say, ndarray with shape (400, 256, 256)
+
+        bounds stores ndarray of last floors for each patient
+        say, source_ubounds = np.asarray([0, 100, 400])
+
+        >>> batch.load(source=source_array, fmt='ndarray', bounds=bounds)
 
         """
         # if ndarray
@@ -369,16 +353,21 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
     def _load_dicom(self, patient_id, *args, **kwargs):
-        """
-        Read, prepare and put stacked 3d-scans in an array
-            return the array
+        """ Read dicom file, load 3d-array and convert to Hounsfield Units (HU).
 
-        args:
-            patient_id - index of patient from batch, whose scans we need to
-            stack
+        Parameters
+        ----------
+        patient_id : str
+                     patient dicom file index from batch, to be loaded and
 
-        Important operations performed here:
-         - conversion to hu using meta from dicom-scans
+        Returns
+        -------
+        ndarray
+                3d-scan as np.ndarray
+
+        Note
+        ----
+        Conversion to hounsfield unit scale using meta from dicom-scans is performed.
         """
         # put 2d-scans for each patient in a list
         patient_folder = self.index.get_fullpath(patient_id)
@@ -402,13 +391,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return patient_data
 
     def _preload_shapes(self):
-        """ Read shapes of scans dumped with blosc, update
-                self._bounds. The method is used in _init_load_blosc.
+        """ Read shapes of scans dumped with blosc, update self._bounds.
 
-            Args:
-                __
-            Return:
-                y, x - components of scan-shape
+        `_preload_shapes` is used in _init_load_blosc.
+
+        Returns
+        -------
+        (int, int)
+            `y, x` dims shape of a scan.
         """
         shapes = np.zeros((len(self), 3), dtype=np.int)
         for ix in self.indices:
@@ -426,11 +416,16 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return shapes[0, 1], shapes[0, 2]
 
     def _init_load_blosc(self, **kwargs):
-        """ Init-func for load from blosc.
+        """ Init-function for load from blosc.
 
-        Args:
-            src: iterable of components that need to be loaded
-        Return
+        Parameters
+        ----------
+        **kwargs
+                `src` : iterable of components that need to be loaded
+
+        Returns
+        -------
+        list
             list of ids of batch-items
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
@@ -443,17 +438,26 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async', update=False)
     async def _load_blosc(self, patient_id, *args, **kwargs):
-        """
-        Read, prepare scans from blosc and put them into the right place in the
-            skyscraper
+        """ Read scans from blosc and put them into batch components
 
-        Args:
-            patient_id: index of patient from batch, whose scans we need to
-                stack
-            src: components of data that should be loaded into self,
-                1d-array
+        Parameters
+        ----------
+        patient_id : str
+                     patient index from batch to load 3D array
+                     and stack with others in images component.
+        **kwargs
+                 src : tuple
+                       tuple of strings with names ofcomponents of data
+                       that should be loaded into self
+        Returns
+        -------
+        None
+             `_load_blosc` changes components in self
 
-            *no conversion to hu here
+        Note
+        ----
+        NO conversion to HU is done for blosc
+        (because usually it's done before).
         """
 
         for source in kwargs['src']:
@@ -482,11 +486,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return None
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
-        """ Load scans from .raw (.mhd)
+        """ Load scans from .raw images (with meta in .mhd)
 
-            *NOTE1: no conversion to hu here (assume densities are already in hu)
-            *NOTE2: no multithreading here, as SimpleITK (sitk)-library does not seem
-                to work correcly with multithreading
+            Note
+            ----
+            NO conversion to HU is done
+            NO multithreading is used, as SimpleITK (sitk) lib crashes
+            in multithreading mode in our experiments.
         """
         list_of_arrs = []
         for patient_id in self.indices:
@@ -508,18 +514,23 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @staticmethod
     async def dump_data(data_items, folder):
-        """ Dump data that is contained in data_items on disk in
-                specified folder
+        """ Dump data from data_items on disk in specified folder
 
-        Args:
-            data_items: dict of data items for dump in form item_name.ext: item
-                (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing})
-            folder: folder to dump data-items in
+        Parameters
+        ----------
+        data_items : dict
+                     dict of data items for dump in form {item_name.ext: item}
+                     (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing})
+        folder :     str
+                     folder to dump data-items in
 
-        Return:
-            ____
+        Returns
+        -------
+        None
 
-        *NOTE: depending on supplied format, each data-item will be either
+        Note
+        ----
+        Depending on supplied format in data_items, each data-item will be either
             cloudpickle-serialized (if .cpkl) or blosc-packed (if .blk)
         """
 
@@ -545,32 +556,39 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     async def dump(self, patient, dst, src=None, fmt='blosc'):
         """ Dump scans data (3d-array) on specified path in specified format
 
-        Args:
-            dst: general folder in which all patients' data should be put
-            src: component(s) that we need to dump (smth iterable or string). If not
-                supplied, dump all components + shapes of scans
-            fmt: format of dump. Currently only blosc-format is supported;
-                in this case folder for each patient is created, patient's data
-                is put into images.blk, attributes are put into files attr_name.cpkl
-                (e.g., spacing.cpkl)
+        Parameters
+        ----------
+        dst : str
+              destinatio-folder where all patients' data should be put
+        src : str or list/tuple
+              component(s) that we need to dump (smth iterable or string). If not
+              supplied, dump all components + shapes of scans
+        fmt : 'blosc'
+              format of dump. Currently only blosc-format is supported;
+              in this case folder for each patient is created, patient's data
+              is put into images.blk, attributes are put into files attr_name.cpkl
+              (e.g., spacing.cpkl)
 
-        example:
-            # initialize batch and load data
-            ind = ['1ae34g90', '3hf82s76']
-            batch = CTImagesBatch(ind)
-            batch.load(...)
-            batch.dump(dst='./data/blosc_preprocessed')
-            # the command above creates files
+        Example
+        -------
+        Initialize batch and load data
 
-            # ./data/blosc_preprocessed/1ae34g90/images.blk
-            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
-            # ./data/blosc_preprocessed/1ae34g90/origin.cpkl
-            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+        >>> ind = ['1ae34g90', '3hf82s76']
+        >>> batch = CTImagesBatch(ind)
+        >>> batch.load(...)
+        >>> batch.dump(dst='./data/blosc_preprocessed')
 
-            # ./data/blosc_preprocessed/3hf82s76/images.blk
-            # ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
-            # ./data/blosc_preprocessed/3hf82s76/origin.cpkl
-            # ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+        The command above creates following files:
+
+        - ./data/blosc_preprocessed/1ae34g90/images.blk
+        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/origin.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+
+        - ./data/blosc_preprocessed/3hf82s76/images.blk
+        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
+        - ./data/blosc_preprocessed/3hf82s76/origin.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl
         """
         # if src is not supplied, dump all components and shapes
         if src is None:
@@ -603,10 +621,35 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return await self.dump_data(data_items, folder)
 
     def get_pos(self, data, component, index):
-        """ Return a posiiton of a component in data for a given index
+        """ Return a positon of an item for a given index in data
+        or in self.`component`.
 
-        *NOTE: this is an overload of get_pos from base Batch-class,
-            see corresponding docstring for detailed explanation.
+        Fetch correct position inside batch for an item, looks for it
+        in `data`, if provided, or in `component` in self.
+
+        Parameters
+        ----------
+        data :      None or ndarray
+                    data from which subsetting is done.
+                    If None, retrieve position from `component` of batch,
+                    if ndarray, returns index.
+        component : str
+                    name of a component, f.ex. 'images'.
+                    if component provided, data should be None.
+        index :     str or int
+                    index of an item to be looked for.
+                    may be key from dataset (str)
+                    or index inside batch (int).
+
+        Returns
+        -------
+        int
+            Position of item
+
+        Note
+        ----
+        This is an overload of get_pos from base Batch-class,
+        see corresponding docstring for detailed explanation.
         """
         if data is None:
             ind_pos = self._get_verified_pos(index)
@@ -618,20 +661,24 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return index
 
     def _get_verified_pos(self, index):
-        """Get verified position of patient in batch by index.
+        """ Get position of patient in batch.
 
-        Firstly, check if index is instance of str or int. If int
-        then it is supposed that index represents patient's position in Batch.
-        If fetched position is out of bounds then Exception is generated.
-        If str then position of patient is fetched.
+        Whatever index is passed in this method, it returns
+        corresponding index inside batch.
 
-        Args:
-            index: can be either position of patient in self.images
-                or index from self.index
+        Parameters
+        ----------
+        index : str or int
+                Can be either position of patient in self.images
+                or index from self.index. If int, it means that
+                index is already patient's position in Batch.
+                If str, it's handled as a key, and returns a position in batch.
+                If fetched position is out of bounds then Exception is generated.
 
-        Return:
-            if supplied index is int, return supplied number,
-            o/w return the position of patient with supplied index
+        Returns
+        -------
+        int
+            patient's position inside batch
         """
         if isinstance(index, int):
             if index < len(self) and index >= 0:
@@ -644,10 +691,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @property
     def images_shape(self):
-        """Get CTImages shapes for all patients in CTImagesBatch.
+        """ Get shapes for all 3d scans in CTImagesBatch.
 
-        This property returns ndarray(n_patients, 3) containing
-        shapes of data for each patient(first dimension).
+        Returns
+        -------
+        ndarray
+               shapes of data for each patient, ndarray(patient_pos, 3)
         """
         shapes = np.zeros((len(self), 3), dtype=np.int)
         shapes[:, 0] = self.upper_bounds - self.lower_bounds
@@ -656,51 +705,76 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @property
     def lower_bounds(self):
-        """Get lower bounds of patients data in CTImagesBatch.
+        """ Get lower bounds of patients data in CTImagesBatch.
 
-        This property returns ndarray(n_patients,) containing
-        lower bounds of patients data along z-axis.
+        Returns
+        -------
+        ndarray
+               ndarray(n_patients,) containing
+               lower bounds of patients data along z-axis.
         """
         return self._bounds[:-1]
 
     @property
     def upper_bounds(self):
-        """Get upper bounds of patients data in CTImagesBatch.
+        """ Get upper bounds of patients data in CTImagesBatch.
 
-        This property returns ndarray(n_patients,) containing
-        upper bounds of patients data along z-axis.
+        Returns
+        -------
+        ndarray
+                ndarray(n_patients,) containing
+                upper bounds of patients data along z-axis.
         """
         return self._bounds[1:]
 
     @property
     def slice_shape(self):
-        """Get shape of slice in yx-plane.
+        """ Get shape of slice in yx-plane.
 
-        This property returns ndarray(2,) containing shape of scan slice
-        in yx-plane.
+        Returns
+        -------
+        ndarray
+                ndarray([y_dim, x_dim],dtype=np.int) with shape of scan slice.
         """
         return np.asarray(self.images.shape[1:])
 
     def rescale(self, new_shape):
-        """Rescale patients' spacing parameter after resise.
+        """ Recomputes spacing values for patients' data after resize.
 
-        This method recomputes spacing values
-        for patients' data stored in CTImagesBatch after resize operation.
+        Parameters
+        ----------
+        new_shape : ndarray(dtype=np.int)
+                    shape of patient 3d array after resize,
+                    in format np.array([z_dim, y_dim, x_dim], dtype=np.int).
 
-        Args:
-        - new_shape: new shape of single patient data array, supposed to be
-        np.array([j, k, l], dtype=np.int) where j, k, l -- sizes of
-        single patient data array along z, y, x correspondingly;
-        Return:
-        - new_spacing: ndarray(n_patients, 3) with spacing values for each
-        patient along z, y, x axes.
+        Returns
+        -------
+        ndarray
+               ndarray(n_patients, 3) with spacing values for each
+               patient along z, y, x axes.
         """
         return (self.spacing * self.images_shape) / new_shape
 
     def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
-        """
-        gatherer of outputs of different workers
-            assumes that output of each worker corresponds to patient data
+        """ Gatherer outputs of different workers, update `images` component
+
+        Parameters
+        ----------
+        list_of_arrs : list
+                       list of ndarrays to be concated and put in a batch.images.
+        update :       bool
+                       if False, nothing is performed.
+        new_batch :    bool
+                       if False, empty batch is created,
+                       if True, data is gathered, loaded and put into batch.images.
+        Returns
+        -------
+        batch
+             new batch, empty batch or self-batch.
+
+        Note
+        ----
+        Output of each worker should correspond to individual patient.
         """
         if any_action_failed(list_of_arrs):
             raise ValueError("Failed while parallelizing")
@@ -720,12 +794,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return res
 
     def _post_components(self, list_of_dicts, **kwargs):
-        """ Gather outputs of different workers, update self. Assume each
-                output corresponds to a scan (one batch item) and is a dict of format
-                {component: what_should_be_put_into_component}.
+        """ Gather outputs of different workers, update many components.
 
-            Return:
-                self
+        Parameters
+        ----------
+        list_of_dicts : list
+                        list of dicts {`component_name`: what_to_place_in_component}
+
+        Returns
+        -------
+        self
+            changes self's components
         """
         if any_action_failed(list_of_dicts):
             raise ValueError("Failed while parallelizing")
@@ -752,23 +831,34 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     def _init_images(self, **kwargs):
+        """ Fetch args for loading `images` using inbatch_parallel.
+
+        Args-fetcher for parallelization using inbatch_parallel.
+
+        Returns
+        -------
+        list
+            list of patient's 3d arrays.
+        """
         return [self.get(patient_id, 'images') for patient_id in self.indices]
 
-    def _post_crop(self, list_of_arrs, **kwargs):
-        # TODO: check for errors
-        crop_array = np.array(list_of_arrs)
-        self._crop_centers = crop_array[:, :, 2]
-        self._crop_sizes = crop_array[:, :, : 2]
-
     def _init_rebuild(self, **kwargs):
-        """ Args-fetcher for parallelization using inbatch-parallel, used when 'images'-attr
-                is rebuild from scratch.
-        Args:
-            shape: if supplied, assume that images-component will be of this shape
-                in the result of action execution
-            spacing: if supplied, assume that unify_spacing is performed
+        """ Fetch args for `images` rebuilding using inbatch_parallel.
 
-        Return:
+
+        Args-fetcher for parallelization using inbatch_parallel
+
+        Parameters
+        ----------
+        **kwargs
+                shape :   list, tuple or ndarray
+                          (z,y,x); shape of every image in image component after action is performed.
+                spacing : list, tuple or ndarray
+                          if supplied, assume that unify_spacing is performed
+
+        Returns
+        -------
+        list
             list of arg-dicts for different workers
         """
         if 'shape' in kwargs:
@@ -799,14 +889,20 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return all_args
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
-        """ Gather outputs of different workers for actions, which
-                require complete rebuild of images-comp.
+        """ Gather outputs of different workers for actions, rebuild `images` component.
 
-        Args:
-            all_outputs: list of workers' outputs. Each item is given by tuple
-                (ref on new images-comp for whole batch, specific scan's shape)
-            new_batch: if True, returns new batch with data agregated
-                from all_ouputs. O/w changes self.
+        Parameters
+        ----------
+        all_outputs : list
+                      list of outputs. Each item is given by tuple
+        new_batch :   bool
+                      if True, returns new batch with data agregated
+                      from all_ouputs. if False, changes self.
+        **kwargs
+                shape :   list, tuple or ndarray
+                          (z,y,x); shape of every image in image component after action is performed.
+                spacing : list, tuple or ndarray
+                          if supplied, assume that unify_spacing is performed
         """
         if any_action_failed(all_outputs):
             raise ValueError("Failed while parallelizing")
@@ -848,60 +944,40 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             self._init_data(**params)
             return self
 
-    @property
-    def crop_centers(self):
-        """
-        returns centers of crop for all scans
-        """
-        if not self._crop_centers:
-            self._crop_params_patients()
-        return self._crop_centers
-
-    @property
-    def crop_sizes(self):
-        """
-        returns window sizes for crops
-        """
-        if not self._crop_sizes:
-            self._crop_params_patients()
-        return self._crop_sizes
-
-    @inbatch_parallel(init='_init_images', post='_post_crop', target='nogil')
-    def _crop_params_patients(self, *args, **kwargs):
-        """
-        calculate params for crop, calling return_black_border_array
-        """
-        return rbba
-
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
     def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
                axes_pairs=None, resample=None, order=3, *args, **kwargs):
         """ Resize (change shape of) each CT-scan in the batch.
-                When called from a batch, changes this batch.
-        Args:
-            shape: needed shape after resize in order z, y, x.
-                NOTE: the order of axes in images is z, y, x. That is,
-                shape of each scan after resize is (shape[0], shape[1], shape[2])
-            method: interpolation package to be used. Can be either 'pil-simd'
-                or 'scipy'. Pil-simd ensures better quality and speed on configurations
-                with average number of cores. On the contrary, scipy is better scaled and
-                can show better performance on systems with large number of cores
-            axes_pairs: pairs of axes that will be used for performing pil-simd resize.
-                If None, set to ((0, 1), (1, 2)). In general, this arg has to be
-                a list/tuple of tuples of len=2 (pairs). The more pairs one uses,
-                the more precise will be the result (while computation will take more time).
-                Min number of pairs to use is 1, while at max there can be 3 * 2 = 6 pairs.
-            resample: filter of pil-simd resize. By default set to bilinear. Can be any of filters
-                supported by PIL.Image.
-            order: the order of scipy-interpolation (<= 5)
-                large value improves precision, but slows down the computaion.
-        Return:
-            self
-        example:
-            shape = (128, 256, 256)
-            Batch = Batch.resize(shape=shape, order=2, method='scipy')
-            Bacch = Batch.resize(shape=shape, resample=PIL.Image.BILINEAR)
+
+        When called from a batch, changes this batch.
+
+        Parameters
+        ----------
+        shape :      tuple
+                     (z, y, x) shape that should be AFTER resize.
+                     Note, that ct-scan dim_ordering also should be `z,y,x`
+        method :     str
+                     interpolation package to be used. Either 'pil-simd' or 'scipy'.
+                     Pil-simd ensures better quality and speed on configurations
+                     with average number of cores. On the contrary, scipy is better scaled and
+                     can show better performance on systems with large number of cores
+        axes_pairs : None or list/tuple of tuples with pairs
+                     pairs of axes that will be used for performing pil-simd resize,
+                     as this resize is made in 2d. Min number of pairs to use is 1,
+                     at max there can be 6 pairs. If None, set to ((0, 1), (1, 2)).
+                     The more pairs one uses, the more precise is the result.
+                     (and computation takes more time).
+        resample :   filter of pil-simd resize. By default set to bilinear. Can be any of filters
+                     supported by PIL.Image.
+        order :      the order of scipy-interpolation (<= 5)
+                     large value improves precision, but slows down the computaion.
+
+        Example
+        -------
+        >>> shape = (128, 256, 256)
+        >>> batch = batch.resize(shape=shape, order=2, method='scipy')
+        >>> batch = batch.resize(shape=shape, resample=PIL.Image.BILINEAR)
         """
         if method == 'scipy':
             args_resize = dict(patient=patient, out_patient=out_patient, res=res, order=order)
@@ -917,21 +993,65 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                       shape_resize, spacing=(1, 1, 1), shape=(128, 256, 256),
                       method='pil-simd', order=3, padding='edge', axes_pairs=None,
                       resample=None, *args, **kwargs):
-        """ Unify spacing of all patients using resize, then crop/pad resized array
-                to supplied shape.
-        Args:
-            spacing: needed spacing in mm
-            shape: needed shape after crop/pad
-            method: interpolation package to be used for resize ('pil-simd' | resize). See doc of
-                CTImagesBatch.resize for more information
-            order: order of scipy-interpolation (<=5)
-            padding: mode of padding, any of those supported by np.pad
-            axes_pairs: pairs of axes that will be used for performing pil-simd resize
-            resample: filter of pil-simd resize
+        """ Unify spacing of all patients.
 
-            NOTE: see doc of CTImagesBatch.resize for more info about methods' params.
-        Return:
-            self
+        Resize all patients to meet `spacing`, then crop/pad resized array to meet `shape`.
+
+        Parameters
+        ----------
+        spacing :      tuple
+                       (z,y,x) spacing after resize.
+                       Should be passed as key-argument.
+        shape :        tuple
+                       (z,y,x,) shape after crop/pad.
+                       Should be passed as key-argument.
+        method :       str
+                       interpolation method ('pil-simd' or 'resize').
+                       Should be passed as key-argument.
+                       See CTImagesBatch.resize for more information.
+        order :        None or int
+                       order of scipy-interpolation (<=5), if used.
+                       Should be passed as key-argument.
+        padding :      str
+                       mode of padding, any supported by np.pad.
+                       Should be passed as key-argument.
+        axes_pairs :   tuple, list of tuples with pairs
+                       pairs of axes that will be used consequentially
+                       for performing pil-simd resize.
+                       Should be passed as key-argument.
+        resample :     None or str
+                       filter of pil-simd resize.
+                       Should be passed as key-argument
+        patient :      str
+                       index of patient, that worker is handling.
+                       Note: this argument is passed by inbatch_parallel
+        out_patient :  ndarray
+                       result of individual worker after action.
+                       Note: this argument is passed by inbatch_parallel
+        res         :  ndarray
+                       New `images` to replace data inside `images` component.
+                       Note: this argument is passed by inbatch_parallel
+        res_factor  :  tuple
+                       (float), factor to make resize by.
+                       Note: this argument is passed by inbatch_parallel
+        shape_resize : tuple
+                       It is possible provide `shape_resize` (shape after resize)
+                       instead of spacing. Then array with `shape_resize`
+                       will be cropped/padded for shape to = `shape` arg.
+                       Note: this argument is passed by inbatch_parallel
+
+
+        Note
+        ----
+        see CTImagesBatch.resize for more info about methods' params.
+
+        Example
+        -------
+        >>> shape = (128, 256, 256)
+        >>> batch = batch.unify_spacing(shape=shape, spacing=(1.0, 1.0, 1.0),
+                                        order=2, method='scipy', padding='reflect')
+        >>> batch = batch.unify_spacing(shape=shape, spacing=(1.0, 1.0, 1.0),
+                                        resample=PIL.Image.BILINEAR)
         """
         if method == 'scipy':
             args_resize = dict(patient=patient, out_patient=out_patient,
@@ -948,15 +1068,39 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def rotate(self, index, angle, components='images', axes=(1, 2), random=True, **kwargs):
         """ Rotate 3D images in batch on specific angle in plane.
 
-        Args:
-        - angle: float, degree of rotation;
-        - axes: tuple(int, int), plane of rotation specified by two axes;
-        - random: bool, if True then degree specifies maximum angle of rotation;
+        Parameters
+        ----------
+        angle :      float
+                     degree of rotation.
+        components : list, tuple or str
+                     name(s) of components to rotate each item in it.
+        axes :       tuple
+                     (int, int), plane of rotation specified by two axes (zyx-ordering).
+        random :     bool
+                     if True, then degree specifies maximum angle of rotation.
+        index :      int
+                     index of patient in batch.
+                     This argument is passed by inbatch_parallel
 
-        Returns:
-        - ndarray(l, k, m), 3D rotated image;
+        Returns
+        -------
+        ndarray
+                ndarray of 3D rotated image.
 
-        *NOTE: zero padding automatically added after rotation;
+        Note
+        ----
+        zero padding automatically added after rotation.
+
+        Example
+        -------
+        Rotate images on 90 degrees:
+
+        >>> batch = batch.rotate(angle=90, axes=(1, 2), random=False)
+
+        Random rotation with maximum angle:
+
+        >>> batch = batch.rotate(angle=30, axes=(1, 2))
+
         """
         if not isinstance(components, (tuple, list)):
             _components = (components, )
@@ -969,23 +1113,29 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
     def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):
-        """
-        This function takes 3d picture represented by np.ndarray image,
-        start position for 0-axis index, stop position for 0-axis index,
-        step parameter which represents the step across 0-axis and, finally,
-        depth parameter which is associated with the depth of slices across
-        0-axis made on each step for computing MEAN, MAX, MIN
-        depending on func argument.
-        Possible values for func are 'max', 'min' and 'avg'.
-        Notice that 0-axis in this annotation is defined in accordance with
-        projection argument which may take the following values: 'axial',
-        'coroanal', 'sagital'.
-        Suppose that input 3d-picture has axis associations [z, x, y], then
-        axial projection doesn't change the order of axis and 0-axis will
-        be correspond to 0-axis of the input array.
-        However in case of 'coronal' and 'sagital' projections the source tensor
-        axises will be transposed as [x, z, y] and [y, z, x]
-        for 'coronal' and 'sagital' projections correspondingly.
+        """ Make intensity projection (maximum, minimum, average)
+
+        Popular radiologic transformation: max, min, avg applyied along an axe.
+        Notice that axe is chosen in accordance with projection argument.
+
+        Parameters
+        ----------
+        step :       int
+                     stride-step along axe, to apply the func.
+        depth :      int
+                     depth of slices (aka `kernel`) along axe made on each step for computing.
+        func :       str
+                     Possible values are 'max', 'min' and 'avg'.
+        projection : str
+                     Possible values: 'axial', 'coroanal', 'sagital'.
+                     In case of 'coronal' and 'sagital' projections tensor
+                     will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
+
+        Returns
+        -------
+        ndarray
+               resulting ndarray after func is applied.
+
         """
         return xip_fn_numba(func, projection, step, depth)
 
@@ -996,15 +1146,21 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def segment(self, erosion_radius=2):
-        """
-        lungs segmenting function
-            changes self
+        """ Segment lungs' content from 3D array.
 
-        sets hu of every pixes outside lungs
-            to DARK_HU
+        Paramters
+        ---------
+        erosion_radius : int
+                         radius of erosion to be performed.
 
-        example:
-            batch = batch.segment(erosion_radius=4, num_threads=20)
+        Note
+        ----
+        Sets HU of every pixel outside lungs to DARK_HU = -2000.
+
+        Example
+        -------
+
+        >>> batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get mask with specified params, apply it to scans
         mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius)
@@ -1021,10 +1177,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def central_crop(self, crop_size, **kwargs):
-        """ Make crop with given size from center of images.
+        """ Make crop of crop_size from center of images.
 
-        Args:
-        - crop_size: tuple(int, int, int), size of crop;
+        Parameters
+        ----------
+        crop_size : tuple
+                    (int, int, int), size of crop, in `z,y,x`.
         """
         crop_size = np.asarray(crop_size)
         crop_halfsize = np.rint(crop_size / 2)
@@ -1043,25 +1201,28 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     def get_patches(self, patch_shape, stride, padding='edge', data_attr='images'):
-        """ Extract patches of size patch_shape with specified
-                stride
+        """ Extract patches of patch_shape with specified stride.
 
-        Args:
-            patch_shape: tuple/list/ndarray of len=3 with needed
-                patch shape
-            stride: tuple/list/ndarray of len=3 with stride that we
-                use to slide over each patient's data
-            padding: type of padding (see doc of np.pad for available types)
-                say, 3.6 windows of size=patch_shape with stride
-                can be exracted from each patient's data.
-                Then data will be padded s.t. 4 windows can be extracted
-            data_attr: name of attribute where the data is stored
-                images by default
+        Parameters
+        ----------
+        patch_shape : tuple, list or ndarray
+                      (z_dim,y_dim,x_dim), shape of a single patch.
+        stride :      tuple, list or ndarray
+                      (int, int, int), stride to slide over each patient's data.
+        padding :      str
+                      padding-type (see doc of np.pad for available types).
+        data_attr :    str
+                      component to get data from.
 
-        Return:
-            4d-ndaray of patches; first dimension enumerates patches
+        Returns
+        -------
+        ndarray
+                4d-ndaray of patches; first dimension enumerates patches
 
-        *NOTE: the shape of all patients is assumed to be the same.
+        Note
+        ----
+        Shape of all patients data is needed to be the same at this step,
+        resize/unify_spacing is required before.
         """
 
         patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
@@ -1086,26 +1247,27 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return patches
 
     def load_from_patches(self, patches, stride, scan_shape, data_attr='images'):
-        """ Assemble skyscraper from 4d-array of patches and
-                put it into data_attr-attribute of batch
+        """ Get skyscraper from 4d-array of patches, put it to `data_attr` component in batch.
 
-        Args:
-            patches: 4d-array of patches, first dim enumerates patches
-                others are spatial in order (z, y, x)
-            scan_shape: tuple/ndarray/list of len=3 with shape of scan-array
-                patches are assembled into; order of axis is (z, y, x)
-            stride: tuple/ndarray/list of len=3 with stride with which
-                patches are put into data_attr;
-                if stride != patch shape, averaging over overlapping regions
-                    is used
-            data_attr: the name of attribute, the assembled skyscraper should
-                be put into
-            *NOTE: scan_shape, patches.shape, sride are used to infer the number
-                of sections;
-                in case of overshoot we crop the padding out
+        Let reconstruct original skyscraper from patches (if same arguments are passed)
 
-        Return:
-            ___
+        Parameters
+        ----------
+        patches :    ndarray
+                     4d-array of patches, with dims: `(patch_nb, z, y, x)`.
+        scan_shape : tuple, list or ndarray
+                     (z,y,x), shape of individual scan (should be same for all scans).
+        stride :     tuple, list or ndarray
+                     stride-step used for gathering data from patches.
+        data_attr :  str
+                     batch component name to store new data.
+
+        Note
+        ----
+        If stride != patch.shape(), averaging of overlapped regions is used.
+        `scan_shape`, patches.shape(), `stride` are used to infer the number of items
+        in new skyscraper. If patches were padded, padding is removed for skyscraper.
+
         """
         scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
         patch_shape = np.asarray(patches.shape[1:])
@@ -1141,18 +1303,19 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def normalize_hu(self, min_hu=-1000, max_hu=400):
-        """ Normalize hu-densities to interval [0, 255].
+        """ Normalize HU-densities to interval [0, 255].
 
-            Trim hus outside range [min_hu, max_hu], then scale to [0, 255].
+        Trim HU that are outside range [min_hu, max_hu], then scale to [0, 255].
 
-        Args:
-        - min_hu: int, minimum value for hu that will be used as trimming threshold.
-        - max_hu: int, maximum value for hu that will be used as trimming threshold.
+        Parameters
+        ----------
+        min_hu : int
+                 minimum value for hu that will be used as trimming threshold.
+        max_hu : int
+                 maximum value for hu that will be used as trimming threshold.
 
-        Returns:
-        - self
-
-        Example:
+        Example
+        -------
         >>> batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
         """
         # trimming and scaling to [0, 1]
@@ -1167,13 +1330,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
     def flip(self):    # pylint: disable=no-self-use
-        """
-        flip each patient
-            i.e. invert the order of slices for each patient
-            does not change the order of patients
-            changes self
+        """ Invert the order of slices for each patient
 
-        Example:
+        Example
+        -------
         >>> batch = batch.flip()
         """
         return flip_patient_numba
@@ -1181,15 +1341,22 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def get_axial_slice(self, person_number, slice_height):
         """ Get axial slice (e.g., for plots)
 
-        Args:
-            person_number - can be either number of person in the batch
-                or index of the person whose axial slice we need
-            slice_height: e.g. 0.7 means that we take slice with number
-                int(0.7 * number of slices for person)
+        Parameters
+        ----------
+        person_number : str or int
+                        Can be either index (int) of person in the batch
+                        or patient_id (str)
+        slice_height :  float
+                        scaled from 0 to 1 number of slice.
+                        e.g. 0.7 means that we take slice with number
+                        int(0.7 * number of slices for person)
 
-        example: patch = batch.get_axial_slice(5, 0.6)
-                 patch = batch.get_axial_slice(self.index[5], 0.6)
-                 # here self.index[5] usually smth like 'a1de03fz29kf6h2'
+        Example
+        -------
+        Here self.index[5] usually smth like 'a1de03fz29kf6h2'
+
+        >>> patch = batch.get_axial_slice(5, 0.6)
+        >>> patch = batch.get_axial_slice(self.index[5], 0.6)
 
         """
         margin = int(slice_height * self.get(person_number, 'images').shape[0])

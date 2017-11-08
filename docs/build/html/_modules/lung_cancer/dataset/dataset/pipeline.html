@@ -1,0 +1,1157 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.dataset.dataset.pipeline &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.dataset.dataset.pipeline</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Contains pipeline class &quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">traceback</span>
+<span class="kn">import</span> <span class="nn">concurrent.futures</span> <span class="k">as</span> <span class="nn">cf</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+<span class="kn">import</span> <span class="nn">asyncio</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">queue</span> <span class="k">as</span> <span class="nn">q</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<span class="kn">from</span> <span class="nn">.batch_base</span> <span class="k">import</span> <span class="n">BaseBatch</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Baseset</span>
+<span class="kn">from</span> <span class="nn">.exceptions</span> <span class="k">import</span> <span class="n">SkipBatchException</span>
+<span class="kn">from</span> <span class="nn">.decorators</span> <span class="k">import</span> <span class="n">ModelDirectory</span>
+
+
+<span class="n">PIPELINE_ID</span> <span class="o">=</span> <span class="s1">&#39;#_pipeline&#39;</span>
+<span class="n">JOIN_ID</span> <span class="o">=</span> <span class="s1">&#39;#_join&#39;</span>
+<span class="n">MERGE_ID</span> <span class="o">=</span> <span class="s1">&#39;#_merge&#39;</span>
+<span class="n">REBATCH_ID</span> <span class="o">=</span> <span class="s1">&#39;#_rebatch&#39;</span>
+<span class="n">IMPORT_MODEL_ID</span> <span class="o">=</span> <span class="s1">&#39;#_import_model&#39;</span>
+<span class="n">INIT_MODEL_ID</span> <span class="o">=</span> <span class="s1">&#39;#_init_model&#39;</span>
+<span class="n">TRAIN_MODEL_ID</span> <span class="o">=</span> <span class="s1">&#39;#_train_model&#39;</span>
+<span class="n">PREDICT_MODEL_ID</span> <span class="o">=</span> <span class="s1">&#39;#_predict_model&#39;</span>
+<span class="n">PRINT_VARIABLE_ID</span> <span class="o">=</span> <span class="s1">&#39;#_print_variable&#39;</span>
+<span class="n">INC_VARIABLE_ID</span> <span class="o">=</span> <span class="s1">&#39;#_inc_variable&#39;</span>
+<span class="n">SAVE_TO_VARIABLE_ID</span> <span class="o">=</span> <span class="s1">&#39;#_save_to_variable&#39;</span>
+
+
+<div class="viewcode-block" id="mult_option"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.mult_option">[docs]</a><span class="k">def</span> <span class="nf">mult_option</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Multiply even if any arg is None &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">*</span> <span class="n">b</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">a</span> <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">b</span></div>
+
+
+<div class="viewcode-block" id="Pipeline"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline">[docs]</a><span class="k">class</span> <span class="nc">Pipeline</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot; Pipeline &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">pipeline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">proba</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">pipeline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">delete_all_variables</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">dataset</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">config</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[:]</span>  <span class="c1"># pylint: disable=protected-access</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">_variables</span>         <span class="c1"># pylint: disable=protected-access</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_actions</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">proba</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_last_action_repeat</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;proba&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mult_option</span><span class="p">(</span><span class="n">proba</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_last_action_proba</span><span class="p">())</span>
+                <span class="k">elif</span> <span class="n">repeat</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_last_action_proba</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;repeat&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mult_option</span><span class="p">(</span><span class="n">repeat</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_last_action_repeat</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">_lazy_run</span>          <span class="c1"># pylint: disable=protected-access</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_models_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tf_session</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_flag</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_service_executor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_count</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_generator</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_iter</span><span class="p">()</span>
+
+
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a context and return an empty pipeline non-bound to any dataset &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)()</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exc_type</span><span class="p">,</span> <span class="n">exc_value</span><span class="p">,</span> <span class="n">trback</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Pipeline.from_pipeline"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.from_pipeline">[docs]</a>    <span class="k">def</span> <span class="nf">from_pipeline</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">pipeline</span><span class="p">,</span> <span class="n">proba</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a pipeline from another pipeline &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">proba</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">repeat</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_p</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">num_actions</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">get_last_action_proba</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">new_p</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">repeat</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">new_p</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+                    <span class="n">new_p</span><span class="o">.</span><span class="n">append_pipeline</span><span class="p">(</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">repeat</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">num_actions</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">get_last_action_repeat</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">new_p</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">pipeline</span><span class="o">=</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">proba</span><span class="o">=</span><span class="n">proba</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_p</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">()</span>
+                <span class="n">new_p</span><span class="o">.</span><span class="n">append_pipeline</span><span class="p">(</span><span class="n">pipeline</span><span class="p">,</span> <span class="n">proba</span><span class="o">=</span><span class="n">proba</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_p</span></div>
+
+    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="Pipeline.concat"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.concat">[docs]</a>    <span class="k">def</span> <span class="nf">concat</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">pipe1</span><span class="p">,</span> <span class="n">pipe2</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a new pipeline concatenating two given pipelines &quot;&quot;&quot;</span>
+        <span class="c1"># pylint: disable=protected-access</span>
+        <span class="k">if</span> <span class="n">pipe1</span><span class="o">.</span><span class="n">dataset</span> <span class="o">!=</span> <span class="n">pipe2</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">and</span> <span class="n">pipe1</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">pipe2</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot add pipelines with different datasets&quot;</span><span class="p">)</span>
+
+        <span class="n">new_p1</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_pipeline</span><span class="p">(</span><span class="n">pipe1</span><span class="p">)</span>
+        <span class="n">new_p2</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_pipeline</span><span class="p">(</span><span class="n">pipe2</span><span class="p">)</span>
+        <span class="n">new_p1</span><span class="o">.</span><span class="n">_action_list</span> <span class="o">+=</span> <span class="n">new_p2</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[:]</span>
+        <span class="n">new_p1</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="n">pipe1</span><span class="o">.</span><span class="n">_variables</span><span class="p">,</span> <span class="o">**</span><span class="n">pipe2</span><span class="o">.</span><span class="n">_variables</span><span class="p">}</span>
+        <span class="n">new_p1</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">pipe1</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">or</span> <span class="n">pipe2</span><span class="o">.</span><span class="n">dataset</span>
+        <span class="k">return</span> <span class="n">new_p1</span></div>
+
+<div class="viewcode-block" id="Pipeline.get_last_action_proba"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.get_last_action_proba">[docs]</a>    <span class="k">def</span> <span class="nf">get_last_action_proba</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a probability of the last action &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;proba&#39;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Pipeline.get_last_action_repeat"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.get_last_action_repeat">[docs]</a>    <span class="k">def</span> <span class="nf">get_last_action_repeat</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a repeat count of the last action &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;repeat&#39;</span><span class="p">]</span></div>
+
+    <span class="k">def</span> <span class="nf">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Pipeline</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Both operands should be Pipelines&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">other</span><span class="o">.</span><span class="n">num_actions</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__matmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_actions</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot add probability to an empty pipeline&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="n">other</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Probability should be float or 0 or 1&quot;</span><span class="p">)</span>
+        <span class="n">other</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">other</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proba</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">other</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Repeat count cannot be negative. Use as pipeline * positive_number&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Repeat count cannot be float. Use as pipeline * integer&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">new_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="n">other</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_p</span>
+
+    <span class="k">def</span> <span class="nf">__lshift__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Baseset</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Pipelines might take only Datasets. Use as pipeline &lt;&lt; dataset&quot;</span><span class="p">)</span>
+        <span class="n">new_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">new_p</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">other</span>
+        <span class="k">return</span> <span class="n">new_p</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_is_batch_method</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">cls</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">BaseBatch</span> <span class="k">if</span> <span class="bp">cls</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">cls</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">Pipeline</span><span class="o">.</span><span class="n">_is_batch_method</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">subcls</span><span class="p">)</span> <span class="k">for</span> <span class="n">subcls</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">__subclasses__</span><span class="p">())</span>
+
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check if an unknown attr is an action from some batch class &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_batch_method</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> not found in class </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return index length &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Pipeline.append_action"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.append_action">[docs]</a>    <span class="k">def</span> <span class="nf">append_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add new action to the log of future actions &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;args&#39;</span><span class="p">:</span> <span class="n">args</span><span class="p">,</span> <span class="s1">&#39;kwargs&#39;</span><span class="p">:</span> <span class="n">kwargs</span><span class="p">,</span> <span class="s1">&#39;proba&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;repeat&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">})</span>
+        <span class="n">new_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">from_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">new_p</span></div>
+
+<div class="viewcode-block" id="Pipeline.append_pipeline"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.append_pipeline">[docs]</a>    <span class="k">def</span> <span class="nf">append_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pipeline</span><span class="p">,</span> <span class="n">proba</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">repeat</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a nested pipeline to the log of future actions &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">PIPELINE_ID</span><span class="p">,</span> <span class="s1">&#39;pipeline&#39;</span><span class="p">:</span> <span class="n">pipeline</span><span class="p">,</span>
+                                  <span class="s1">&#39;proba&#39;</span><span class="p">:</span> <span class="n">proba</span><span class="p">,</span> <span class="s1">&#39;repeat&#39;</span><span class="p">:</span> <span class="n">repeat</span><span class="p">})</span></div>
+
+    <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;dataset&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">,</span> <span class="s1">&#39;action_list&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">,</span> <span class="s1">&#39;variables&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;dataset&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;action_list&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="n">state</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return index of the source dataset &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">index</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">indices</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return the sequence of indices of the source dataset &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">indices</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return index length &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Pipeline.has_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.has_variable">[docs]</a>    <span class="k">def</span> <span class="nf">has_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Check if a variable exists</span>
+<span class="sd">        Args:</span>
+<span class="sd">            name: string - a name of the variable</span>
+<span class="sd">        Return:</span>
+<span class="sd">            True if the variable exists</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span></div>
+
+<div class="viewcode-block" id="Pipeline.get_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.get_variable">[docs]</a>    <span class="k">def</span> <span class="nf">get_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_on_each_run</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a variable value</span>
+<span class="sd">        If the variable does not exists, it will be created and initialized (see `init_variable` below)</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : string - a name of the variable</span>
+<span class="sd">        default - a value for the variable if it does not exists</span>
+<span class="sd">        init : callable - a function which returns the default value</span>
+<span class="sd">        init_on_each_run : callable - same as `init` but initializes the variable before each run</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        a value of the variable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">init_on_each_run</span><span class="p">)</span>
+        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">var</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pipeline.init_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.init_variable">[docs]</a>    <span class="k">def</span> <span class="nf">init_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">init_on_each_run</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">lock</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a variable if not exists.</span>
+<span class="sd">        If the variable exists, does nothing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : string - a name of the variable</span>
+<span class="sd">        default - an initial value for the variable</span>
+<span class="sd">        init : callable - a function which returns the default value</span>
+<span class="sd">        init_on_each_run : callable - same as `init` but initializes the variable before each run</span>
+<span class="sd">        lock : bool - whether to lock a variable before each update (default: True)</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self - in order to use it in the pipeline chains</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; pp = dataset.p.</span>
+<span class="sd">                    .init_variable(&quot;iterations&quot;, default=0)</span>
+<span class="sd">                    .init_variable(&quot;accuracy&quot;, init_on_each_run=0)</span>
+<span class="sd">                    .init_variable(&quot;loss_history&quot;, init_on_each_run=list)</span>
+<span class="sd">                    .load(&#39;/some/path&#39;, fmt=&#39;blosc&#39;)</span>
+<span class="sd">                    .train_resnet()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables_lock</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">init_on_each_run</span><span class="p">,</span> <span class="nb">bool</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">init_on_each_run</span><span class="p">):</span>
+                            <span class="n">init</span> <span class="o">=</span> <span class="n">init_on_each_run</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">default</span> <span class="o">=</span> <span class="n">init_on_each_run</span>
+                        <span class="n">init_on_each_run</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span> <span class="k">if</span> <span class="n">lock</span> <span class="k">else</span> <span class="kc">None</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">default</span><span class="p">,</span> <span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">init_on_each_run</span><span class="o">=</span><span class="n">init_on_each_run</span><span class="p">,</span>
+                                                 <span class="n">lock</span><span class="o">=</span><span class="n">lock</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span> <span class="k">if</span> <span class="n">init</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">init</span><span class="p">())</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Pipeline.init_variables"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.init_variables">[docs]</a>    <span class="k">def</span> <span class="nf">init_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">variables</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create several variables</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        variables : dict</span>
+<span class="sd">                    key : str - a variable name,</span>
+<span class="sd">                    value : dict -  a variable value and params (see `init_variable`)</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self - in order to use it in the pipeline chains</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; pp = dataset.p</span>
+<span class="sd">                    .init_variables({&quot;loss_history&quot;: dict(init_on_each_run=list),</span>
+<span class="sd">                                     &quot;accuracy&quot;, dict(default=0)})</span>
+<span class="sd">                    .load(&#39;/some/path&#39;, fmt=&#39;blosc&#39;)</span>
+<span class="sd">                    .train_resnet()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">init_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">var</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    <span class="k">def</span> <span class="nf">_init_variables_before_run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">var</span><span class="p">[</span><span class="s1">&#39;init_on_each_run&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">var</span><span class="p">[</span><span class="s1">&#39;default&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">var</span><span class="p">[</span><span class="s1">&#39;init&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">var</span><span class="p">[</span><span class="s1">&#39;init&#39;</span><span class="p">]())</span>
+
+<div class="viewcode-block" id="Pipeline.set_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.set_variable">[docs]</a>    <span class="k">def</span> <span class="nf">set_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set a variable value</span>
+<span class="sd">        If the variable does not exists, it will be created, however, the warning will be displayed that</span>
+<span class="sd">        the variable was not initialized.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str - a name of the variable</span>
+<span class="sd">        value - a value for the variable</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self - in order to use it in the pipeline chains</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Pipeline variable &#39;</span><span class="si">%s</span><span class="s2">&#39; was not initialized&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">[</span><span class="n">name</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">})</span></div>
+
+<div class="viewcode-block" id="Pipeline.assign_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.assign_variable">[docs]</a>    <span class="k">def</span> <span class="nf">assign_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Assign a value to a variable</span>
+<span class="sd">        Same as `set_variable(name, value)`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pipeline.delete_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.delete_variable">[docs]</a>    <span class="k">def</span> <span class="nf">delete_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Delete a variable</span>
+<span class="sd">        If the variable does not exists, the warning will be issued.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str - a name of the variable</span>
+<span class="sd">             : iterable - several variable names</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self - in order to use it in the pipeline chains</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Pipeline variable &#39;</span><span class="si">%s</span><span class="s2">&#39; does not exist&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">var</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Pipeline.del_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.del_variable">[docs]</a>    <span class="k">def</span> <span class="nf">del_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Delete a variable</span>
+<span class="sd">        Same as `delete_variable(name)`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">delete_variable</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pipeline.delete_all_variables"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.delete_all_variables">[docs]</a>    <span class="k">def</span> <span class="nf">delete_all_variables</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Delete all variables &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Pipeline.append_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.append_variable">[docs]</a>    <span class="k">def</span> <span class="nf">append_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">from_name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Append a value to a pipeline variable &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Variable </span><span class="si">%s</span><span class="s2"> does not exist&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+        <span class="n">var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">from_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">from_name</span><span class="p">):</span>
+                <span class="n">from_var</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">from_name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown name </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">from_name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">from_var</span> <span class="o">=</span> <span class="n">value</span>
+
+        <span class="n">var</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">from_var</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.inc_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.inc_variable">[docs]</a>    <span class="k">def</span> <span class="nf">inc_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Increment a value of a given variable during pipeline execution &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">INC_VARIABLE_ID</span><span class="p">,</span> <span class="s1">&#39;var_name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_exec_inc_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">[</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">]][</span><span class="s1">&#39;lock&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">[</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">]][</span><span class="s1">&#39;lock&#39;</span><span class="p">]:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No such variable </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">])</span>
+
+<div class="viewcode-block" id="Pipeline.print_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.print_variable">[docs]</a>    <span class="k">def</span> <span class="nf">print_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Print a value of a given variable during pipeline execution &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">PRINT_VARIABLE_ID</span><span class="p">,</span> <span class="s1">&#39;var_name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_exec_print_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">]))</span>
+
+<div class="viewcode-block" id="Pipeline.save_to_variable"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.save_to_variable">[docs]</a>    <span class="k">def</span> <span class="nf">save_to_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Save a value to a given variable during pipeline execution &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">SAVE_TO_VARIABLE_ID</span><span class="p">,</span> <span class="s1">&#39;var_name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;value&#39;</span><span class="p">:</span> <span class="n">value</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="n">mode</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_exec_save_to_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_save</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">mode</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;append&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;var_name&#39;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="s1">&#39;lock&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">[</span><span class="n">value</span><span class="p">][</span><span class="s1">&#39;lock&#39;</span><span class="p">]:</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+                    <span class="n">_save</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">_save</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">])</span>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_action_method</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+            <span class="n">attr</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">attr</span><span class="o">.</span><span class="vm">__self__</span> <span class="o">==</span> <span class="n">batch</span><span class="p">:</span>
+                <span class="c1"># action decorator with arguments</span>
+                <span class="c1"># attr is bounded to the batch</span>
+                <span class="n">action_method</span> <span class="o">=</span> <span class="n">attr</span>
+                <span class="n">action_attr</span> <span class="o">=</span> <span class="n">attr</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># action decorator wihout arguments</span>
+                <span class="n">action_method</span> <span class="o">=</span> <span class="n">attr</span>
+                <span class="n">action_attr</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="vm">__self__</span>
+
+            <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">action_attr</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">action_attr</span><span class="p">,</span> <span class="s1">&#39;action&#39;</span><span class="p">):</span>
+                    <span class="n">action_spec</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">action_attr</span><span class="p">,</span> <span class="s1">&#39;action&#39;</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Method </span><span class="si">%s</span><span class="s2"> is not marked with @action decorator&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">%s</span><span class="s2"> is not a method&quot;</span> <span class="o">%</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;Method &#39;</span><span class="si">%s</span><span class="s2">&#39; has not been found in the </span><span class="si">%s</span><span class="s2"> class&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">action_method</span><span class="p">,</span> <span class="n">action_spec</span>
+
+    <span class="k">def</span> <span class="nf">_exec_one_action</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_exec</span><span class="p">(</span><span class="n">action</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;repeat&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span>
+                <span class="n">action_method</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_action_method</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="n">action_method</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">batch</span>
+
+    <span class="k">def</span> <span class="nf">_exec_nested_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_needs_exec</span><span class="p">(</span><span class="n">action</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;repeat&#39;</span><span class="p">]</span> <span class="ow">or</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_all_actions</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;pipeline&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">_action_list</span><span class="p">)</span>  <span class="c1"># pylint: disable=protected-access</span>
+        <span class="k">return</span> <span class="n">batch</span>
+
+    <span class="k">def</span> <span class="nf">_exec_init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_models_lock</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">ModelDirectory</span><span class="o">.</span><span class="n">find_model_by_name</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;model_name&#39;</span><span class="p">],</span> <span class="n">pipeline</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">model</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">ModelDirectory</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">],</span> <span class="n">model_class</span><span class="o">=</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;model_class&#39;</span><span class="p">],</span>
+                                          <span class="n">name</span><span class="o">=</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;model_name&#39;</span><span class="p">],</span> <span class="n">config</span><span class="o">=</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;config&#39;</span><span class="p">],</span>
+                                          <span class="n">pipeline</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_make_model_args</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">model</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_map_data</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                <span class="n">data_item</span> <span class="o">=</span> <span class="n">item</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+                <span class="n">data_item</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                <span class="n">data_item</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data_item</span> <span class="o">=</span> <span class="n">item</span>
+            <span class="k">return</span> <span class="n">data_item</span>
+
+        <span class="n">make_data</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;make_data&#39;</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">()</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">callable</span><span class="p">(</span><span class="n">make_data</span><span class="p">):</span>
+            <span class="n">_data</span> <span class="o">=</span> <span class="n">make_data</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">kwargs</span> <span class="o">=</span> <span class="n">_data</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="n">_data</span>
+
+        <span class="k">for</span> <span class="n">arg</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">data_dict</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">data_item</span> <span class="o">=</span> <span class="n">_map_data</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                    <span class="n">data_dict</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">key</span><span class="p">:</span> <span class="n">data_item</span><span class="p">})</span>
+                <span class="n">data_item</span> <span class="o">=</span> <span class="n">data_dict</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                <span class="n">data_list</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                    <span class="n">data_item</span> <span class="o">=</span> <span class="n">_map_data</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                    <span class="n">data_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data_item</span><span class="p">)</span>
+                <span class="n">data_item</span> <span class="o">=</span> <span class="n">data_list</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data_item</span> <span class="o">=</span> <span class="n">_map_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">arg</span><span class="p">:</span> <span class="n">data_item</span><span class="p">})</span>
+
+        <span class="k">return</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+
+    <span class="k">def</span> <span class="nf">_save_model_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">save_to</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">)):</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">)</span>
+            <span class="n">save_to</span> <span class="o">=</span> <span class="p">(</span><span class="n">save_to</span><span class="p">,</span> <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">output</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">save_to</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">save_to</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+                        <span class="n">loc</span><span class="p">,</span> <span class="n">name</span> <span class="o">=</span> <span class="n">save_to</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">save_to</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                            <span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;b&#39;</span>
+                        <span class="k">elif</span> <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">save_to</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                            <span class="n">loc</span> <span class="o">=</span> <span class="s1">&#39;p&#39;</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">loc</span> <span class="o">=</span> <span class="kc">None</span>
+                        <span class="n">name</span> <span class="o">=</span> <span class="n">save_to</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+                    <span class="k">if</span> <span class="n">loc</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;p&#39;</span><span class="p">,</span> <span class="s1">&#39;pipeline&#39;</span><span class="p">]:</span>
+                        <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">loc</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;batch&#39;</span><span class="p">]:</span>
+                        <span class="nb">setattr</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">pred</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_append_model_output</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">append_to</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">)):</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">)</span>
+            <span class="n">append_to</span> <span class="o">=</span> <span class="p">(</span><span class="n">append_to</span><span class="p">,</span> <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">output</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">)):</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">output</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">append_to</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">append_to</span><span class="p">[</span><span class="n">i</span><span class="p">]):</span>
+                        <span class="c1"># batch.pipeline.get_variable(append_to[i]).append(pred)</span>
+                        <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">append_variable</span><span class="p">(</span><span class="n">append_to</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">value</span><span class="o">=</span><span class="n">pred</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_exec_train_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_by_name</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;model_name&#39;</span><span class="p">],</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_model_args</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;append_to&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_model_output</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;save_to&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_append_model_output</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">output</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;append_to&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_exec_predict_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_model_by_name</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;model_name&#39;</span><span class="p">],</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_model_args</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;append_to&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_model_output</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;save_to&#39;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_append_model_output</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">predictions</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;append_to&#39;</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">_exec_all_actions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action_list</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">join_batches</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">action_list</span> <span class="o">=</span> <span class="n">action_list</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span>
+        <span class="k">for</span> <span class="n">_action</span> <span class="ow">in</span> <span class="n">action_list</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_action</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;#dont_run&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">[</span><span class="n">JOIN_ID</span><span class="p">,</span> <span class="n">MERGE_ID</span><span class="p">]:</span>
+                <span class="n">join_batches</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">pipe</span> <span class="ow">in</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;pipelines&#39;</span><span class="p">]:</span>   <span class="c1"># pylint: disable=not-an-iterable</span>
+                    <span class="k">if</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;i&#39;</span><span class="p">:</span>
+                        <span class="n">jbatch</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;mode&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;n&#39;</span><span class="p">:</span>
+                        <span class="n">jbatch</span> <span class="o">=</span> <span class="n">pipe</span><span class="o">.</span><span class="n">next_batch</span><span class="p">()</span>
+                    <span class="n">join_batches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">jbatch</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">MERGE_ID</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;merge_fn&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">batch</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">merge</span><span class="p">([</span><span class="n">batch</span><span class="p">]</span> <span class="o">+</span> <span class="n">join_batches</span><span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">batch</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;merge_fn&#39;</span><span class="p">]([</span><span class="n">batch</span><span class="p">]</span> <span class="o">+</span> <span class="n">join_batches</span><span class="p">)</span>
+                    <span class="n">join_batches</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">REBATCH_ID</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">PIPELINE_ID</span><span class="p">:</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_nested_pipeline</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">IMPORT_MODEL_ID</span><span class="p">:</span>
+                <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_models_lock</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">ModelDirectory</span><span class="o">.</span><span class="n">find_model_by_name</span><span class="p">(</span><span class="n">_action</span><span class="p">[</span><span class="s1">&#39;model_name&#39;</span><span class="p">],</span> <span class="n">pipeline</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="n">ModelDirectory</span><span class="o">.</span><span class="n">import_model</span><span class="p">(</span><span class="n">_action</span><span class="p">[</span><span class="s1">&#39;model_name&#39;</span><span class="p">],</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;pipeline&#39;</span><span class="p">],</span> <span class="bp">self</span><span class="p">)</span>
+                    <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;#dont_run&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">INIT_MODEL_ID</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exec_init_model</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">)</span>
+                <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;#dont_run&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">TRAIN_MODEL_ID</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exec_train_model</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">PREDICT_MODEL_ID</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exec_predict_model</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">PRINT_VARIABLE_ID</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exec_print_variable</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">SAVE_TO_VARIABLE_ID</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_exec_save_to_variable</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">join_batches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">_action_args</span> <span class="o">=</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">_action_args</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">([</span><span class="nb">tuple</span><span class="p">(</span><span class="n">join_batches</span><span class="p">),</span> <span class="o">*</span><span class="n">_action</span><span class="p">[</span><span class="s1">&#39;args&#39;</span><span class="p">]])</span>
+                    <span class="n">join_batches</span> <span class="o">=</span> <span class="kc">None</span>
+
+                <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_one_action</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">,</span> <span class="n">_action_args</span><span class="p">,</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;kwargs&#39;</span><span class="p">])</span>
+
+                <span class="k">if</span> <span class="s1">&#39;tf_queue&#39;</span> <span class="ow">in</span> <span class="n">_action</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_put_batch_into_tf_queue</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">_action</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">batch</span>
+
+    <span class="k">def</span> <span class="nf">_needs_exec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;proba&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">binomial</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;proba&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">_exec</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">new_loop</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">new_loop</span><span class="p">:</span>
+            <span class="n">asyncio</span><span class="o">.</span><span class="n">set_event_loop</span><span class="p">(</span><span class="n">asyncio</span><span class="o">.</span><span class="n">new_event_loop</span><span class="p">())</span>
+        <span class="n">batch</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="n">batch_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec_all_actions</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">batch_res</span><span class="o">.</span><span class="n">pipeline</span> <span class="o">=</span> <span class="bp">self</span>
+        <span class="k">return</span> <span class="n">batch_res</span>
+
+<div class="viewcode-block" id="Pipeline.get_model_by_name"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.get_model_by_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_model_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get a model specification by its name &quot;&quot;&quot;</span>
+        <span class="n">models</span> <span class="o">=</span> <span class="n">ModelDirectory</span><span class="o">.</span><span class="n">get_model_by_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pipeline</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="o">=</span><span class="n">batch</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">models</span></div>
+
+<div class="viewcode-block" id="Pipeline.init_model"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.init_model">[docs]</a>    <span class="k">def</span> <span class="nf">init_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">model_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize a static or dynamic model</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">            mode : str - &#39;static&#39; or &#39;dynamic&#39;</span>
+<span class="sd">            model_class : class - a model class</span>
+<span class="sd">            name : str - a name for the model</span>
+<span class="sd">            config : dict or callable - a mapping for additional configurations parameters</span>
+<span class="sd">                a callable takes a batch(for a dynamic model) or a pipeline (for a static model) as a parameter</span>
+<span class="sd">                a dict consists of pairs (key, value) where key is a config option name</span>
+<span class="sd">                    and value could be:</span>
+<span class="sd">                    - a callable which takes a batch (for dynamic) or a pipeline (for static models)</span>
+<span class="sd">                    - a batch component name (for dynamic mode only)</span>
+<span class="sd">                    - a pipeline variable name</span>
+<span class="sd">                    any other value will be passed unchanged.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; pipeline.init_model(&#39;static&#39;, MyModel)</span>
+
+<span class="sd">        &gt;&gt;&gt; pipeline</span>
+<span class="sd">              .init_variable(&#39;images_shape&#39;, [256, 256])</span>
+<span class="sd">              .init_model(&#39;static&#39;, MyModel, config={&#39;input_shape&#39;: &#39;images_shape&#39;})</span>
+
+<span class="sd">        &gt;&gt;&gt; pipeline.init_model(&#39;dynamic&#39;, MyModel, config={&#39;input_shape&#39;: lambda batch: batch.images.shape[1:]})</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;static&#39;</span><span class="p">:</span>
+            <span class="n">ModelDirectory</span><span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="n">mode</span><span class="p">,</span> <span class="n">model_class</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">pipeline</span><span class="o">=</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span>
+        <span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;dynamic&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">INIT_MODEL_ID</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="n">mode</span><span class="p">,</span> <span class="s1">&#39;model_class&#39;</span><span class="p">:</span> <span class="n">model_class</span><span class="p">,</span>
+                                      <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;pipeline&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;config&#39;</span><span class="p">:</span> <span class="n">config</span><span class="p">})</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="Pipeline.import_model"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.import_model">[docs]</a>    <span class="k">def</span> <span class="nf">import_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">pipeline</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Import a model from another pipeline</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str - a name of the model to import</span>
+<span class="sd">        pipeline : Pipeline - a pipeline that holds a model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">IMPORT_MODEL_ID</span><span class="p">,</span> <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;pipeline&#39;</span><span class="p">:</span> <span class="n">pipeline</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Pipeline.train_model"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.train_model">[docs]</a>    <span class="k">def</span> <span class="nf">train_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">make_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">append_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Train a model</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str - a model name</span>
+
+<span class="sd">        make_data : callable - a function or method to make train data from a batch. Should return tuple or dict.</span>
+
+<span class="sd">        all other named parameters are treated as data mappings which values could be:</span>
+<span class="sd">        - a callable taking a batch and a model as parameters</span>
+<span class="sd">        - a batch component name or a batch class attribute name</span>
+<span class="sd">        - a pipeline variable name</span>
+<span class="sd">        - a dict of data mappings</span>
+<span class="sd">        while all other values are passed directly to ``model.train``</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; pipeline.train_model(&#39;resnet&#39;, x=&#39;images&#39;, y_true=&#39;masks&#39;)</span>
+<span class="sd">        Would call a `resnet` model `train` method with `x` and `y_true` arguments:</span>
+<span class="sd">        ``resnet.train(x=batch.images, y_true=batch.masks)``</span>
+
+<span class="sd">        &gt;&gt;&gt; pipeline.train_model(&#39;resnet&#39;, feed_dict={&#39;x&#39;: &#39;images&#39;})</span>
+<span class="sd">        Would call a `resnet` model `train` method with a `feed_dict` argument:</span>
+<span class="sd">        ``resnet.train(feed_dict={&#39;x&#39;: batch.images})``</span>
+
+<span class="sd">        &gt;&gt;&gt; pipeline.train_model(&#39;resnet&#39;, MyBatch.make_resnet_data)</span>
+<span class="sd">        Equivalent to::</span>
+
+<span class="sd">            train_data = batch.make_resnet_data(resnet_model)</span>
+<span class="sd">            resnet_model.train(**train_data)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">TRAIN_MODEL_ID</span><span class="p">,</span> <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;make_data&#39;</span><span class="p">:</span> <span class="n">make_data</span><span class="p">,</span>
+                                  <span class="s1">&#39;save_to&#39;</span><span class="p">:</span> <span class="n">save_to</span><span class="p">,</span> <span class="s1">&#39;append_to&#39;</span><span class="p">:</span> <span class="n">append_to</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pipeline.predict_model"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.predict_model">[docs]</a>    <span class="k">def</span> <span class="nf">predict_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">make_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">save_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">append_to</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Predict using a model</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        name : str - a model name</span>
+
+<span class="sd">        make_data : callable - a function or method to make train data from a batch. Should return tuple or dict.</span>
+
+<span class="sd">        save_to : str or tuple of str or tuple of (str, str) - where to save predictions to.</span>
+<span class="sd">                - str - a name of a batch attribute or a pipeline variable to store predicted data</span>
+<span class="sd">                - tuple of str - names of batch attributes or pipeline variables for each predicted item</span>
+<span class="sd">                - tuple of tuples(str, str) - locations and names for each predicted item</span>
+<span class="sd">                        * location: str - could be &#39;pipeline&#39; or &#39;batch&#39; for a pipeline variable or a batch component</span>
+<span class="sd">                        * name: str - a pipeline variable or a batch component name</span>
+<span class="sd">                Name is treated as a batch attribute if this attribute is already exists in the batch.</span>
+<span class="sd">                Otherwise, predictions are stored in a pipeline variable with that name.</span>
+<span class="sd">                If it does not exist either, predictions are not stored anywhere.</span>
+
+<span class="sd">        append_to : str or tuple of str - a pipeline variable where to append predictions to.</span>
+<span class="sd">            If both `save_to` and `append_to` are present, only `append_to` is used.</span>
+
+<span class="sd">        all other named parameters are treated as data mappings which values could be:</span>
+<span class="sd">            - a callable taking a batch and a model as parameters</span>
+<span class="sd">            - a batch component name or a batch class attribute name</span>
+<span class="sd">            - a pipeline variable name</span>
+<span class="sd">            - a dict of data mappings</span>
+<span class="sd">        while all other values are passed directly to `model.predict`</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        &gt;&gt;&gt; pipeline</span>
+<span class="sd">                .predict_model(&#39;resnet&#39;, x=&#39;images&#39;, y_true=&#39;labels&#39;, save_to=&#39;predicted_labels&#39;)</span>
+<span class="sd">        Would call a `resnet` model `predict` method with `x` and `y_true` arguments:</span>
+<span class="sd">        ``predictions = resnet.predict(x=batch.images, y_true=batch.labels)``</span>
+<span class="sd">        Predictions will be stored `batch.predicted_labels`.</span>
+
+<span class="sd">        &gt;&gt;&gt; pipeline</span>
+<span class="sd">            .init_variable(&#39;inferred_masks&#39;, init_on_each_run=list)</span>
+<span class="sd">            .predict_model(&#39;tf_unet&#39;, fetches=&#39;predicted_masks&#39;, feed_dict={&#39;x&#39;: &#39;images&#39;}, save_to=&#39;inferred_masks&#39;)</span>
+<span class="sd">        Would call a `tf_unet` model `train` method with `fetches` and `feed_dict` arguments:</span>
+<span class="sd">        ``predictions = tf_unet.train(fetches=&#39;predicted_masks&#39;, feed_dict={&#39;x&#39;: batch.images})``</span>
+<span class="sd">        Predictions for each batch will be stored in a pipeline variable `inferred_masks`.</span>
+
+<span class="sd">        &gt;&gt;&gt; pipeline.train_model(&#39;deepnet&#39;, MyBatch.make_deepnet_data)</span>
+<span class="sd">        Equivalent to::</span>
+
+<span class="sd">            predict_data = batch.make_deepnet_data(deepnet_model)</span>
+<span class="sd">            deepnet_model.train(**predict_data)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">PREDICT_MODEL_ID</span><span class="p">,</span> <span class="s1">&#39;model_name&#39;</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s1">&#39;make_data&#39;</span><span class="p">:</span> <span class="n">make_data</span><span class="p">,</span>
+                                  <span class="s1">&#39;save_to&#39;</span><span class="p">:</span> <span class="n">save_to</span><span class="p">,</span> <span class="s1">&#39;append_to&#39;</span><span class="p">:</span> <span class="n">append_to</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Pipeline.save_model"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.save_model">[docs]</a>    <span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Save a model &quot;&quot;&quot;</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">ModelDirectory</span><span class="o">.</span><span class="n">get_model_by_name</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pipeline</span><span class="o">=</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.join"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.join">[docs]</a>    <span class="k">def</span> <span class="nf">join</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">pipelines</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Join one or several pipelines &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">JOIN_ID</span><span class="p">,</span> <span class="s1">&#39;pipelines&#39;</span><span class="p">:</span> <span class="n">pipelines</span><span class="p">,</span> <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;i&#39;</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Pipeline.merge"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.merge">[docs]</a>    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">pipelines</span><span class="p">,</span> <span class="n">merge_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Merge pipelines &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">MERGE_ID</span><span class="p">,</span> <span class="s1">&#39;pipelines&#39;</span><span class="p">:</span> <span class="n">pipelines</span><span class="p">,</span>    <span class="c1"># pylint: disable=protected-access</span>
+                                  <span class="s1">&#39;mode&#39;</span><span class="p">:</span> <span class="s1">&#39;n&#39;</span><span class="p">,</span> <span class="s1">&#39;merge_fn&#39;</span><span class="p">:</span> <span class="n">merge_fn</span><span class="p">})</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Pipeline.rebatch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.rebatch">[docs]</a>    <span class="k">def</span> <span class="nf">rebatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">merge_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Set the output batch size &quot;&quot;&quot;</span>
+        <span class="n">new_p</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+        <span class="n">new_p</span><span class="o">.</span><span class="n">_action_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">REBATCH_ID</span><span class="p">,</span> <span class="s1">&#39;batch_size&#39;</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">,</span>  <span class="c1"># pylint: disable=protected-access</span>
+                                   <span class="s1">&#39;pipeline&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;merge_fn&#39;</span><span class="p">:</span> <span class="n">merge_fn</span><span class="p">})</span>
+        <span class="k">return</span> <span class="n">new_p</span><span class="o">.</span><span class="n">append_action</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Pipeline.put_into_tf_queue"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.put_into_tf_queue">[docs]</a>    <span class="k">def</span> <span class="nf">put_into_tf_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">queue</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">get_tensor</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Insert a tensorflow queue after the action&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">session</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_queue&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">queue</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;get_tensor&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_tensor</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_enqueue_op&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_placeholders&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_action_lock&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;tf_queue should be precedeed by at least one action&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_dtypes</span><span class="p">(</span><span class="n">tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">tensors</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">tensor</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">placeholder</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">placeholder</span> <span class="ow">in</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_placeholders&#39;</span><span class="p">]]</span>
+
+    <span class="k">def</span> <span class="nf">_create_tf_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_session&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_session&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tf_session</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_session&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Tensorflow session cannot be None&quot;</span><span class="p">)</span>
+        <span class="n">maxsize</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span><span class="o">.</span><span class="n">maxsize</span>
+        <span class="k">with</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_session&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">as_default</span><span class="p">():</span>
+            <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_queue&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">FIFOQueue</span><span class="p">(</span><span class="n">capacity</span><span class="o">=</span><span class="n">maxsize</span><span class="p">,</span> <span class="n">dtypes</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_dtypes</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">action</span><span class="p">))</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_tf_placeholders</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="n">tensors</span> <span class="o">=</span> <span class="n">tensors</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">tensors</span><span class="p">])</span>
+        <span class="k">with</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_session&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">as_default</span><span class="p">():</span>
+            <span class="n">placeholders</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">tensor</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">placeholders</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_tensor</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;get_tensor&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">batch</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;get_tensor&#39;</span><span class="p">](</span><span class="n">batch</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_put_batch_into_tf_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="n">tensors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tensor</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+        <span class="n">tensors</span> <span class="o">=</span> <span class="n">tensors</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="nb">tuple</span><span class="p">([</span><span class="n">tensors</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_queue&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_action_lock&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_queue&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_create_tf_queue</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_enqueue_op&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_action_lock&#39;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_enqueue_op&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_placeholders&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_tf_placeholders</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">action</span><span class="p">)</span>
+                    <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_enqueue_op&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_queue&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">enqueue</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_placeholders&#39;</span><span class="p">])</span>
+        <span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_session&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_enqueue_op&#39;</span><span class="p">],</span> <span class="n">feed_dict</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">action</span><span class="p">[</span><span class="s1">&#39;tf_placeholders&#39;</span><span class="p">],</span> <span class="n">tensors</span><span class="p">)))</span>
+
+
+    <span class="k">def</span> <span class="nf">_put_batches_into_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gen_batch</span><span class="p">):</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_flag</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_count</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">gen_batch</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_exec</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">new_loop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">future</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_batches_from_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">skip_batch</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_flag</span><span class="p">:</span>
+            <span class="n">future</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">future</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">batch</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">result</span><span class="p">()</span>
+                <span class="k">except</span> <span class="n">SkipBatchException</span><span class="p">:</span>
+                    <span class="n">skip_batch</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>   <span class="c1"># pylint: disable=broad-except</span>
+                    <span class="n">exc</span> <span class="o">=</span> <span class="n">future</span><span class="o">.</span><span class="n">exception</span><span class="p">()</span>
+                    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Exception in a thread:&quot;</span><span class="p">,</span> <span class="n">exc</span><span class="p">)</span>
+                    <span class="n">traceback</span><span class="o">.</span><span class="n">print_tb</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">__traceback__</span><span class="p">)</span>
+                <span class="k">finally</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">skip_batch</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                        <span class="n">skip_batch</span> <span class="o">=</span> <span class="kc">False</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="Pipeline.reset_iter"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.reset_iter">[docs]</a>    <span class="k">def</span> <span class="nf">reset_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Clear all iteration metadata in order to start iterating from scratch &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">_clear_queue</span><span class="p">(</span><span class="n">queue</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">queue</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">while</span> <span class="ow">not</span> <span class="n">queue</span><span class="o">.</span><span class="n">empty</span><span class="p">():</span>
+                    <span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="n">queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">_stop_executor</span><span class="p">(</span><span class="n">executor</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">executor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">executor</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stop_flag</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="n">_clear_queue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span><span class="p">)</span>
+        <span class="n">_clear_queue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span><span class="p">)</span>
+        <span class="n">_clear_queue</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_count</span><span class="p">)</span>
+
+        <span class="n">_stop_executor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_executor</span><span class="p">)</span>
+        <span class="n">_stop_executor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_service_executor</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_service_executor</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_count</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_generator</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">reset_iter</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_variables_before_run</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.gen_rebatch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.gen_rebatch">[docs]</a>    <span class="k">def</span> <span class="nf">gen_rebatch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generate batches for rebatch operation &quot;&quot;&quot;</span>
+        <span class="n">_action</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">cur_len</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">batches</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">cur_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span><span class="p">)</span>
+                <span class="n">batches</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">while</span> <span class="n">cur_len</span> <span class="o">&lt;</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;batch_size&#39;</span><span class="p">]:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">new_batch</span> <span class="o">=</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;pipeline&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                    <span class="k">break</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">batches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_batch</span><span class="p">)</span>
+                    <span class="n">cur_len</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_batch</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batches</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;merge_fn&#39;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span> <span class="o">=</span> <span class="n">batches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">batches</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">_action</span><span class="p">[</span><span class="s1">&#39;batch_size&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rest_batch</span> <span class="o">=</span> <span class="n">_action</span><span class="p">[</span><span class="s1">&#39;merge_fn&#39;</span><span class="p">](</span><span class="n">batches</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">_action</span><span class="p">[</span><span class="s1">&#39;batch_size&#39;</span><span class="p">])</span>
+                <span class="k">yield</span> <span class="n">batch</span></div>
+
+
+<div class="viewcode-block" id="Pipeline.gen_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.gen_batch">[docs]</a>    <span class="k">def</span> <span class="nf">gen_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">n_epochs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">prefetch</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Generate batches &quot;&quot;&quot;</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;target&#39;</span><span class="p">,</span> <span class="s1">&#39;threads&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tf_session</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;tf_session&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_action_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">REBATCH_ID</span><span class="p">:</span>
+            <span class="n">batch_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_rebatch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">drop_last</span><span class="p">,</span> <span class="n">prefetch</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">batch_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">gen_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">shuffle</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">drop_last</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">prefetch</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># pool cannot have more than 63 workers</span>
+            <span class="n">prefetch</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">prefetch</span><span class="p">,</span> <span class="mi">62</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">target</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;threads&#39;</span><span class="p">,</span> <span class="s1">&#39;t&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">prefetch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">target</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;mpc&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_executor</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">ProcessPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">prefetch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>   <span class="c1"># pylint: disable=redefined-variable-type</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;target should be one of [&#39;threads&#39;, &#39;mpc&#39;]&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_stop_flag</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_count</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">prefetch</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_queue</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="n">prefetch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">Queue</span><span class="p">(</span><span class="n">maxsize</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_service_executor</span> <span class="o">=</span> <span class="n">cf</span><span class="o">.</span><span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_service_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_put_batches_into_queue</span><span class="p">,</span> <span class="n">batch_generator</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_service_executor</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_batches_from_queue</span><span class="p">)</span>
+
+            <span class="k">while</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stop_flag</span><span class="p">:</span>
+                <span class="n">batch_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_batch_queue</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">batch_res</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">batch_res</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_count</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_prefetch_count</span><span class="o">.</span><span class="n">task_done</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_stop_flag</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">batch_generator</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">batch_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">SkipBatchException</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">yield</span> <span class="n">batch_res</span></div>
+
+<div class="viewcode-block" id="Pipeline.create_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.create_batch">[docs]</a>    <span class="k">def</span> <span class="nf">create_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_index</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a new batch by given indices and execute all previous lazy actions &quot;&quot;&quot;</span>
+        <span class="n">batch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">batch_index</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">batch_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exec</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">batch_res</span></div>
+
+<div class="viewcode-block" id="Pipeline.next_batch"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.next_batch">[docs]</a>    <span class="k">def</span> <span class="nf">next_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get the next batch and execute all previous lazy actions</span>
+<span class="sd">        next_batch(self, batch_size, shuffle=True, n_epochs=1, drop_last=False, prefetch=0, *args, **kwargs):</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;next_batch without arguments requires a lazy run at the end of the pipeline&quot;</span><span class="p">)</span>
+            <span class="n">batch_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="kc">True</span> <span class="ow">or</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prefetch&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_generator</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span> <span class="o">=</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_batch_generator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_batch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">batch_res</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_batch_generator</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span> <span class="o">=</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+            <span class="n">_kwargs</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="c1"># target is not used here, but people tend to forget removing it when set prefetch to 0</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;target&#39;</span><span class="p">,</span> <span class="s1">&#39;threads&#39;</span><span class="p">)</span>
+            <span class="c1"># prefetch could be 0</span>
+            <span class="n">_</span> <span class="o">=</span> <span class="n">_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;prefetch&#39;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">batch_res</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">while</span> <span class="n">batch_res</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">batch_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">next_batch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">batch_res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_batch</span><span class="p">(</span><span class="n">batch_index</span><span class="p">,</span> <span class="o">**</span><span class="n">_kwargs</span><span class="p">)</span>
+                <span class="k">except</span> <span class="n">SkipBatchException</span><span class="p">:</span>
+                    <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">batch_res</span></div>
+
+<div class="viewcode-block" id="Pipeline.run"><a class="viewcode-back" href="../../../../lung_cancer.dataset.dataset.html#lung_cancer.dataset.dataset.pipeline.Pipeline.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Execute all lazy actions for each batch in the dataset</span>
+<span class="sd">        run(self, batch_size, shuffle=True, n_epochs=1, drop_last=False, prefetch=0, *args, **kwargs):</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;lazy&#39;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span> <span class="o">=</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lazy_run</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_batch</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+                <span class="k">pass</span>
+        <span class="k">return</span> <span class="bp">self</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

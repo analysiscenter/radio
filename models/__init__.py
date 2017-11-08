@@ -7,3 +7,6 @@ from .keras.architectures import KerasResNet50
 from .keras.architectures import KerasVGG16
 from .tensorflow import TFModelCT
 from .keras import KerasModel as KerasModelCT
+from .utils import unpack_seg
+from .utils import unpack_clf
+from .utils import unpack_reg

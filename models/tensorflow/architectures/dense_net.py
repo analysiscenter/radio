@@ -15,15 +15,16 @@ class TFDenseNet(TFModelCT):
     config : dict
         config dictionary from dataset pipeline
         see configuring model section of dataset module
-        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+        https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
-        name of the model.
+        name of the model, can be specified in config dict.
     units : tuple(int, int)
-        number of units in two final dense layers before tensor with predicitons.
+        number of units in two final dense layers before tensor with predicitons,
+        can be specified in config dict.
     num_targets : int
-        size of tensor with predicitons.
+        size of tensor with predicitons, can be specified in config dict.
     dropout_rate : float
-        probability of dropout.
+        probability of dropout, can be specified in config dict.
 
     Full description of similar 2D model architecture can be downloaded from here:
     https://arxiv.org/pdf/1608.06993v2.pdf
@@ -42,20 +43,9 @@ class TFDenseNet(TFModelCT):
     def dense_block(self, input_tensor, filters, block_size, name):
         """ Dense block which is used as a build block of densenet model.
 
-        Schematically this layer can be represented like this:
-        ==================================================================================
-        input => conv3D{1x1x1}[1:1:1](filters) => conv3D{3x3x3}[1:1:1](filters) => output_1
-        ----------------------------------------------------------------------------------
-        concat([input, output_1]) => conv3D{1x1x1}[1:1:1](filters) =>
-        => conv3D{3x3x3}[1:1:1](filters) => ouput_2
-        ----------------------------------------------------------------------------------
-        ...
-        ----------------------------------------------------------------------------------
-        ...
-        ----------------------------------------------------------------------------------
-        concat([input, output_1, ..., output_(n - 1)]) => conv3D{1x1x1}[1:1:1](filters) =>
-        => conv3D{3x3x3}[1:1:1](filters) => output_n
-        =================================================================================
+        Repeat block of two convolutions: conv3d{1x1x1} => conv3d{3x3x3}.
+        On each iteration outputs of all previous iterations are stacked and
+        used as inputs of the current iteration's block.
 
         Parameters
         ----------
@@ -97,6 +87,10 @@ class TFDenseNet(TFModelCT):
 
     def transition_layer(self, input_tensor, filters, name):
         """ Transition layer which is used as a dimension reduction block in densenset model.
+
+        Apply 3D-convolution with batch normalization and `relu` activation
+        followed by 3D-maxpooling operation with kernel_size=(2, 2, 2)
+        and strides=(2, 2, 2).
 
         Parameters
         ----------

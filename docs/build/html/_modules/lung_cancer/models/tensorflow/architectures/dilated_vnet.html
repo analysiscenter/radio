@@ -1,0 +1,355 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lung_cancer.models.tensorflow.architectures.dilated_vnet &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.tensorflow.architectures.dilated_vnet</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=anomalous-backslash-in-string</span>
+<span class="c1"># pylint: disable=not-context-manager</span>
+<span class="sd">&quot;&quot;&quot; Contains implementation of VNet architecture with dilated convolutions in tensorflow. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">..tf_model</span> <span class="k">import</span> <span class="n">TFModelCT</span>
+<span class="kn">from</span> <span class="nn">..layers</span> <span class="k">import</span> <span class="n">bn_conv3d</span><span class="p">,</span> <span class="n">bn_dilated_conv3d</span>
+<span class="kn">from</span> <span class="nn">..utils</span> <span class="k">import</span> <span class="n">repeat_tensor</span>
+
+
+<div class="viewcode-block" id="TFDilatedVnet"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDilatedVnet">[docs]</a><span class="k">class</span> <span class="nc">TFDilatedVnet</span><span class="p">(</span><span class="n">TFModelCT</span><span class="p">):</span>
+
+    <span class="sd">&quot;&quot;&quot; This class implements VNet architecture with dilated convolutions using tensorflow.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    config : dict</span>
+<span class="sd">        config dictionary from dataset pipeline</span>
+<span class="sd">        see configuring model section of dataset module</span>
+<span class="sd">        https://analysiscenter.github.io/dataset/intro/models.html.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        name of the model, can be specified in config dict.</span>
+
+<span class="sd">    NOTE</span>
+<span class="sd">    ----</span>
+<span class="sd">    This class is descendant of TFModel class from dataset.models.*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TFDilatedVnet.upsampling3d"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDilatedVnet.upsampling3d">[docs]</a>    <span class="k">def</span> <span class="nf">upsampling3d</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply 3D upsampling operation to input tensor.</span>
+
+<span class="sd">        This operation is a kind of reverse operation for maxpooling3D.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_tensor : tf.Tensor</span>
+<span class="sd">            input tensor.</span>
+<span class="sd">        times : tuple(int, int, int)</span>
+<span class="sd">            number of times to repeat values along each spatial axis.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tf.Tensor</span>
+<span class="sd">            output tensor.</span>
+
+<span class="sd">        Note</span>
+<span class="sd">        ----</span>
+<span class="sd">        This layer does not perform repeat operation</span>
+<span class="sd">        along channels and batch axes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)):</span>
+            <span class="n">_times</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">_times</span> <span class="o">=</span> <span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_times</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Times must be tuple, list or ndarray of size 3&quot;</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">repeat_tensor</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">_times</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TFDilatedVnet.bottleneck_block"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDilatedVnet.bottleneck_block">[docs]</a>    <span class="k">def</span> <span class="nf">bottleneck_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">dilation</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply bottleneck block transform to input tensor.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_tensor : tf.Tensor</span>
+<span class="sd">            input tensor.</span>
+<span class="sd">        filters : int</span>
+<span class="sd">            number of filters.</span>
+<span class="sd">        scope : str</span>
+<span class="sd">            name scope of the layer.</span>
+<span class="sd">        dilation : tuple(int, int, int)</span>
+<span class="sd">            dilation rate along spatial axes.</span>
+<span class="sd">        padding : str</span>
+<span class="sd">            padding mode, can be &#39;valid&#39; or &#39;same&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tf.Tensor</span>
+<span class="sd">            output tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">filters</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">filters</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">conv1</span> <span class="o">=</span> <span class="n">bn_conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_1x1x1&#39;</span><span class="p">,</span>
+                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv2</span> <span class="o">=</span> <span class="n">bn_conv3d</span><span class="p">(</span><span class="n">conv1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_3x3x3&#39;</span><span class="p">,</span>
+                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv2_dilated</span> <span class="o">=</span> <span class="n">bn_dilated_conv3d</span><span class="p">(</span><span class="n">conv1</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                                              <span class="n">dilation</span><span class="o">=</span><span class="n">dilation</span><span class="p">,</span>
+                                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                                              <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_dilated&#39;</span><span class="p">,</span>
+                                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv_concated</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">conv2</span><span class="p">,</span> <span class="n">conv2_dilated</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">conv_concated</span></div>
+
+<div class="viewcode-block" id="TFDilatedVnet.reduction_block"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDilatedVnet.reduction_block">[docs]</a>    <span class="k">def</span> <span class="nf">reduction_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">scope</span><span class="p">,</span> <span class="n">dilation</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply reduction block transform to input tensor.</span>
+
+<span class="sd">        This layer consists of two 3D-convolutional layers with batch normalization</span>
+<span class="sd">        before &#39;relu&#39; activation and max_pooling3d layer in the end.</span>
+<span class="sd">        Middle layer contains two separate convolutions:</span>
+<span class="sd">        one with dilation_rate=(2, 2, 2) and another with dilation_rate=(1, 1, 1).</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_tensor : tf.Tensor</span>
+<span class="sd">            input tensor.</span>
+<span class="sd">        filters : int</span>
+<span class="sd">            number of filters in first and second covnolutions.</span>
+<span class="sd">        scope : str</span>
+<span class="sd">            name of scope for this reduction block.</span>
+<span class="sd">        dilation : tuple(int, int, int)</span>
+<span class="sd">            dilation rate along spatial axes.</span>
+<span class="sd">        pool_size : tuple(int, int, int)</span>
+<span class="sd">            size of pooling kernel along three axis.</span>
+<span class="sd">        padding : str</span>
+<span class="sd">            padding mode for convolutions, can be &#39;same&#39; or &#39;valid&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tuple(tf.Tensor, tf.Tensor)</span>
+<span class="sd">            first tensor corresponds to the output of concatenation</span>
+<span class="sd">            operation before max_pooling, second -- after max_pooling.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">filters</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">filters</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">conv1</span> <span class="o">=</span> <span class="n">bn_conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_1x1x1&#39;</span><span class="p">,</span>
+                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv2</span> <span class="o">=</span> <span class="n">bn_conv3d</span><span class="p">(</span><span class="n">conv1</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_3x3x3&#39;</span><span class="p">,</span>
+                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv2_dilated</span> <span class="o">=</span> <span class="n">bn_dilated_conv3d</span><span class="p">(</span><span class="n">conv1</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                                              <span class="n">dilation</span><span class="o">=</span><span class="n">dilation</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                                              <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_dilated&#39;</span><span class="p">,</span>
+                                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv_concated</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">conv2</span><span class="p">,</span> <span class="n">conv2_dilated</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+            <span class="n">max_pool</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling3d</span><span class="p">(</span><span class="n">conv_concated</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                               <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                                               <span class="n">name</span><span class="o">=</span><span class="s1">&#39;max_pool3d&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">conv_concated</span><span class="p">,</span> <span class="n">max_pool</span></div>
+
+<div class="viewcode-block" id="TFDilatedVnet.upsampling_block"><a class="viewcode-back" href="../../../../../temp_rst/lung_cancer.models.tensorflow.architectures.html#lung_cancer.models.TFDilatedVnet.upsampling_block">[docs]</a>    <span class="k">def</span> <span class="nf">upsampling_block</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">,</span> <span class="n">skip_connect_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span>
+                         <span class="n">scope</span><span class="p">,</span> <span class="n">dilation</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Apply upsampling transform to two input tensors.</span>
+
+<span class="sd">        First of all, UpSampling3D transform is applied to input_tensor. Then output</span>
+<span class="sd">        tensor of this operation is concatenated with skip_connect_tensor. After this</span>
+<span class="sd">        two 3D-convolutions with batch normalization before &#39;relu&#39; activation</span>
+<span class="sd">        are applied.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        input_tensor : tf.Tensor</span>
+<span class="sd">            input tensor from previous layer.</span>
+<span class="sd">        skip_connect_tensor : tf.Tensor</span>
+<span class="sd">            input tensor from simmiliar layer from reduction branch of VNet.</span>
+<span class="sd">        filters : int</span>
+<span class="sd">            number of filters in convolutional layers.</span>
+<span class="sd">        scope : str</span>
+<span class="sd">            name of scope for this block.</span>
+<span class="sd">        dilation : tuple(int, int, int)</span>
+<span class="sd">            dilation rate along spatial axes.</span>
+<span class="sd">        padding : str</span>
+<span class="sd">            padding mode for convolutions, can be &#39;same&#39; or &#39;valid&#39;.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        tf.Tensor</span>
+<span class="sd">            output tensor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">scope</span><span class="p">):</span>
+            <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">filters</span> <span class="o">/</span> <span class="mi">2</span><span class="p">),</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">filters</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">upsample_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsampling3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span>
+                                                <span class="n">times</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                                                <span class="n">name</span><span class="o">=</span><span class="s1">&#39;upsample3d&#39;</span><span class="p">)</span>
+
+            <span class="n">upsample_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">upsample_tensor</span><span class="p">,</span> <span class="n">skip_connect_tensor</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+            <span class="n">conv1</span> <span class="o">=</span> <span class="n">bn_conv3d</span><span class="p">(</span><span class="n">upsample_tensor</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_1x1x1&#39;</span><span class="p">,</span>
+                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv1_dilated</span> <span class="o">=</span> <span class="n">bn_dilated_conv3d</span><span class="p">(</span><span class="n">conv1</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                                              <span class="n">dilation</span><span class="o">=</span><span class="n">dilation</span><span class="p">,</span>
+                                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                                              <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_dilated_I&#39;</span><span class="p">,</span>
+                                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv1_stacked</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">conv1</span><span class="p">,</span> <span class="n">conv1_dilated</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+            <span class="n">conv2</span> <span class="o">=</span> <span class="n">bn_conv3d</span><span class="p">(</span><span class="n">conv1_stacked</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                              <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_3x3x3&#39;</span><span class="p">,</span>
+                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv2_dilated</span> <span class="o">=</span> <span class="n">bn_dilated_conv3d</span><span class="p">(</span><span class="n">conv1_stacked</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+                                              <span class="n">dilation</span><span class="o">=</span><span class="n">dilation</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+                                              <span class="n">name</span><span class="o">=</span><span class="s1">&#39;Conv3D_dilated_II&#39;</span><span class="p">,</span>
+                                              <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+            <span class="n">conv2_stacked</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">conv2</span><span class="p">,</span> <span class="n">conv2_dilated</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">conv2_stacked</span></div>
+
+    <span class="k">def</span> <span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build vnet with dilated convolutions model implemented in tensorflow. &quot;&quot;&quot;</span>
+        <span class="n">input_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">y_true</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;targets&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D</span>
+        <span class="c1"># block_A has shape (None, 32, 64, 64, 32), reduct_block_A has shape (None, 16, 32, 32, 32)</span>
+        <span class="n">block_A</span><span class="p">,</span> <span class="n">reduct_block_A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span>
+                                                       <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;DownBlock_A&#39;</span><span class="p">)</span>
+
+        <span class="c1"># block_B has shape (None, 16, 32, 32, 64), reduct_block_B has shape (None, 8, 16, 16, 64)</span>
+        <span class="n">block_B</span><span class="p">,</span> <span class="n">reduct_block_B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block</span><span class="p">(</span><span class="n">reduct_block_A</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span>
+                                                       <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;DownBlock_B&#39;</span><span class="p">)</span>
+
+        <span class="c1"># block_C has shape (None, 8, 16, 16, 128), reduct_block_C has shape (None, 4, 8, 8, 128)</span>
+        <span class="n">block_C</span><span class="p">,</span> <span class="n">reduct_block_C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block</span><span class="p">(</span><span class="n">reduct_block_B</span><span class="p">,</span> <span class="mi">128</span><span class="p">,</span>
+                                                       <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;DownBlock_C&#39;</span><span class="p">)</span>
+
+        <span class="c1"># block_D has shape (None, 4, 8, 8, 256), reduct_block_D has shape (None, 2, 4, 4, 256)</span>
+        <span class="n">block_D</span><span class="p">,</span> <span class="n">reduct_block_D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reduction_block</span><span class="p">(</span><span class="n">reduct_block_C</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span>
+                                                       <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;DownBlock_D&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Bottleneck layer</span>
+        <span class="c1"># bottleneck_block has shape (None, 2, 4, 4, 512)</span>
+        <span class="n">bottleneck_block</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bottleneck_block</span><span class="p">(</span><span class="n">reduct_block_D</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="s1">&#39;BottleNeckBlock&#39;</span><span class="p">)</span>
+
+        <span class="c1"># Upsampling Layers: UpsamplingBlock_D, UpsamplingBlock_C, UpsamplingBlock_B, UpsamplingBlock_A</span>
+        <span class="c1"># upsample_block_C has shape (None, 4, 8, 8, 256)</span>
+        <span class="n">upsample_block_D</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsampling_block</span><span class="p">(</span><span class="n">bottleneck_block</span><span class="p">,</span> <span class="n">block_D</span><span class="p">,</span>
+                                                 <span class="mi">256</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;UpBlock_D&#39;</span><span class="p">)</span>
+
+        <span class="c1"># upsample_block_C has shape (None, 8, 16, 16, 128)</span>
+        <span class="n">upsample_block_C</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsampling_block</span><span class="p">(</span><span class="n">upsample_block_D</span><span class="p">,</span> <span class="n">block_C</span><span class="p">,</span>
+                                                 <span class="mi">128</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;UpBlock_C&#39;</span><span class="p">)</span>
+
+        <span class="c1"># upsample_block_B has shape (None, 16, 32, 32, 64)</span>
+        <span class="n">upsample_block_B</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsampling_block</span><span class="p">(</span><span class="n">upsample_block_C</span><span class="p">,</span> <span class="n">block_B</span><span class="p">,</span>
+                                                 <span class="mi">64</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;UpBlock_B&#39;</span><span class="p">)</span>
+
+        <span class="c1"># upsample_block_A has shape (None, 32, 64, 64, 32)</span>
+        <span class="n">upsample_block_A</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upsampling_block</span><span class="p">(</span><span class="n">upsample_block_B</span><span class="p">,</span> <span class="n">block_A</span><span class="p">,</span>
+                                                 <span class="mi">32</span><span class="p">,</span> <span class="n">scope</span><span class="o">=</span><span class="s1">&#39;UpBlock_A&#39;</span><span class="p">)</span>
+
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">bn_conv3d</span><span class="p">(</span><span class="n">upsample_block_A</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;final_conv&#39;</span><span class="p">,</span>
+                           <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                           <span class="n">is_training</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_training</span><span class="p">)</span>
+
+        <span class="n">y_pred</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">&#39;predictions&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_to_attr</span><span class="p">(</span><span class="s1">&#39;y&#39;</span><span class="p">,</span> <span class="n">y_true</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_to_attr</span><span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="n">input_tensor</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">store_to_attr</span><span class="p">(</span><span class="s1">&#39;y_pred&#39;</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

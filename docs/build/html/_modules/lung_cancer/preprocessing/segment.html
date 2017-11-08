@@ -1,0 +1,230 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lung_cancer.preprocessing.segment &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.preprocessing.segment</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module with auxillary</span>
+<span class="sd">    jit-compiled functions</span>
+<span class="sd">    for lungs&#39; segmentation</span>
+<span class="sd">    from DICOM-scans</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numba</span> <span class="k">import</span> <span class="n">jit</span>
+<span class="kn">from</span> <span class="nn">skimage</span> <span class="k">import</span> <span class="n">measure</span><span class="p">,</span> <span class="n">morphology</span>
+
+
+<div class="viewcode-block" id="largest_label_volume"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.segment.largest_label_volume">[docs]</a><span class="nd">@jit</span><span class="p">(</span><span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">largest_label_volume</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">background</span><span class="o">=-</span><span class="mi">1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Determine most frequent color that occupies the largest volume</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    image :      ndarray</span>
+<span class="sd">    background : int or float</span>
+<span class="sd">                 image background color</span>
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    int</span>
+<span class="sd">        most frequent color value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">vals</span><span class="p">,</span> <span class="n">counts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">return_counts</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">counts</span><span class="p">[</span><span class="n">vals</span> <span class="o">!=</span> <span class="n">background</span><span class="p">]</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">vals</span><span class="p">[</span><span class="n">vals</span> <span class="o">!=</span> <span class="n">background</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">counts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">vals</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">counts</span><span class="p">)]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">999999</span></div>
+
+
+<span class="c1"># segmentation of a patient sliced from skyscraper</span>
+<div class="viewcode-block" id="calc_lung_mask_numba"><a class="viewcode-back" href="../../../temp_rst/lung_cancer.preprocessing.html#lung_cancer.preprocessing.segment.calc_lung_mask_numba">[docs]</a><span class="nd">@jit</span><span class="p">(</span><span class="s1">&#39;void(double[:,:,:], double[:,:,:], double[:,:,:], int64)&#39;</span><span class="p">,</span> <span class="n">nogil</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">calc_lung_mask_numba</span><span class="p">(</span><span class="n">patient</span><span class="p">,</span> <span class="n">out_patient</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">erosion_radius</span><span class="o">=</span><span class="mi">7</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compute lungs-segmenting mask for a patient</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    patient :        ndarray</span>
+<span class="sd">                     input 3D scan.</span>
+<span class="sd">    out_patient :    ndarray</span>
+<span class="sd">                     resulting array with segmented lungs</span>
+<span class="sd">    erosion_radius : int</span>
+<span class="sd">                     radius to use to erod the lungs&#39; border</span>
+<span class="sd">    res :            ndarray</span>
+<span class="sd">                     `skyscraper` where to put the resized patient</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tuple</span>
+<span class="sd">          (res, out_patient.shape), resulting `skyscraper` and shape of</span>
+<span class="sd">          segmented scan inside this `scyscraper`.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># slice the patient out from the skyscraper</span>
+    <span class="c1"># we use view for simplification</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">patient</span>
+
+    <span class="n">binary_image</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">320</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># 3d connected components</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">binary_image</span><span class="p">)</span>
+
+    <span class="n">bin_shape</span> <span class="o">=</span> <span class="n">binary_image</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># create np.array of unique labels of corner pixels</span>
+    <span class="n">corner_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">z_ind</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">bin_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">corner_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corner_labs</span><span class="p">,</span> <span class="n">labels</span><span class="p">[</span><span class="n">z_ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">corner_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">corner_labs</span><span class="p">,</span> <span class="n">labels</span><span class="p">[</span><span class="n">z_ind</span><span class="p">,</span> <span class="n">bin_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+        <span class="n">corner_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">corner_labs</span><span class="p">,</span> <span class="n">labels</span><span class="p">[</span><span class="n">z_ind</span><span class="p">,</span> <span class="n">bin_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">bin_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+        <span class="n">corner_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">corner_labs</span><span class="p">,</span> <span class="n">labels</span><span class="p">[</span><span class="n">z_ind</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">bin_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">bk_labs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">corner_labs</span><span class="p">)</span>
+
+    <span class="c1"># Fill the air around the person</span>
+    <span class="k">for</span> <span class="n">background_label</span> <span class="ow">in</span> <span class="n">bk_labs</span><span class="p">:</span>
+        <span class="n">binary_image</span><span class="p">[</span><span class="n">background_label</span> <span class="o">==</span> <span class="n">labels</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+
+    <span class="c1"># Method of filling the lung structures (that is superior to something like</span>
+    <span class="c1"># morphological closing)</span>
+    <span class="c1"># For every slice we determine the largest solid structure</span>
+
+    <span class="c1"># seems like to this point binary image is what it should be</span>
+    <span class="c1"># return binary_image</span>
+
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">axial_slice</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">binary_image</span><span class="p">):</span>
+
+        <span class="n">axial_slice</span> <span class="o">=</span> <span class="n">axial_slice</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="c1"># in each axial slice lungs and air are labelled as 0</span>
+        <span class="c1"># everything else has label = 1</span>
+
+        <span class="c1"># look for and enumerate connected components in axial_slice</span>
+
+        <span class="c1"># 2d connected components</span>
+        <span class="n">labeling</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">axial_slice</span><span class="p">)</span>
+
+        <span class="n">l_max</span> <span class="o">=</span> <span class="n">largest_label_volume</span><span class="p">(</span><span class="n">labeling</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">l_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># This slice contains some lung</span>
+            <span class="n">binary_image</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">labeling</span> <span class="o">!=</span> <span class="n">l_max</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># return binary_image</span>
+    <span class="c1"># it&#39;s all fine here</span>
+
+    <span class="n">binary_image</span> <span class="o">-=</span> <span class="mi">1</span>  <span class="c1"># Make the image actual binary</span>
+    <span class="n">binary_image</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">binary_image</span>  <span class="c1"># Invert it, lungs are now 1</span>
+
+    <span class="c1"># Remove other air pockets insided body</span>
+
+    <span class="c1"># stil fine</span>
+    <span class="c1"># return binary_image</span>
+
+    <span class="c1"># again, 3d connected components</span>
+    <span class="n">labels</span> <span class="o">=</span> <span class="n">measure</span><span class="o">.</span><span class="n">label</span><span class="p">(</span><span class="n">binary_image</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">l_max</span> <span class="o">=</span> <span class="n">largest_label_volume</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">background</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">l_max</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># There are air pockets</span>
+        <span class="n">binary_image</span><span class="p">[</span><span class="n">labels</span> <span class="o">!=</span> <span class="n">l_max</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1"># slightly erode the mask</span>
+    <span class="c1"># to get rid of lungs&#39; boundaries</span>
+
+    <span class="c1"># return binary_image</span>
+
+    <span class="n">selem</span> <span class="o">=</span> <span class="n">morphology</span><span class="o">.</span><span class="n">disk</span><span class="p">(</span><span class="n">erosion_radius</span><span class="p">)</span>
+
+    <span class="c1"># put the mask into the result</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">patient</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+        <span class="n">out_patient</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">morphology</span><span class="o">.</span><span class="n">binary_erosion</span><span class="p">(</span><span class="n">binary_image</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:],</span> <span class="n">selem</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">res</span><span class="p">,</span> <span class="n">out_patient</span><span class="o">.</span><span class="n">shape</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

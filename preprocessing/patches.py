@@ -8,19 +8,24 @@ from numba import guvectorize, int64, float64
              '(n, m, k),(r),(r),(p, l, s, t)->()',
              nopython=True, target='parallel')
 def get_patches_numba(img, shape, stride, out_arr, fake):
-    """ Get all patches from padded 3d-img, put them into array out_arr
+    """ Get all patches from padded 3d scan, put them into out_arr
 
-    Args:
-        img: input 3d-image (ct-scan for one patient); assume img is already padded
-        shape: ndarray of len=3 with needed shape of patch
-        stride: ndarray of len=3 with stride of patch-window
-            (*if not equal to patch_shape, patches will overlap)
-        out_arr: resulting 4d-array, where all patches are put. New dimension (first)
-            enumerates patches
-        fake: fake-result array
+    Parameters
+    ----------
+    img :     ndarray
+              input 3d scan (ct-scan for one patient),
+              assumes scan is already padded.
+    shape :   ndarray
+              3D array with shape of patch (z,y,x)
+    stride :  ndarray
+              3D array with strides of a patch along (z,y,x)
+              (if not equal to patch_shape, patches will overlap)
+    out_arr : ndarray
+              resulting 4d-array, where all patches are put. New dimension (first)
+              enumerates patches (number_of_patches,z,y,x)
+    fake :    ndarray
+              instrumental array for syntax binding of guvectorize
 
-    Return:
-        ___
     """
 
     # for convenience put img.shape in ndarray
@@ -47,27 +52,32 @@ def get_patches_numba(img, shape, stride, out_arr, fake):
              nopython=True, target='parallel')
 def assemble_patches(patches, stride, out_arr, fake):
     """ Assemble patches into one 3d ct-scan with shape scan_shape,
-            put the scan into out_arr
+    put new scan into out_arr
 
-    Args:
-        patches: 4d-array of patches, first dim enumerates
-            patches; other dims are spatial with order (z, y, x)
-        stride: ndarray of len=3 with stride with which the patches
-            were extracted
-        out_arr: 3d-array, where assembled scan is put
-            should be filled with zeroes
-            *NOTE 1: out_arr.shape, stride, patch shape are used to infer
-                the number of sections for each dimension.
-            We assume that the number of patches = len(patches)
-                corresponds to num_sections
-            *NOTE 2: overlapping patches are allowed (stride != patch.shape).
-                In this case pixel values are averaged across overlapping patches
-            *NOTE 3: we assume that integer number of patches can be put into
-                out_arr using stride
-        fake: fake-result array
+    Parameters
+    ----------
+    patches : ndarray
+              4d array of patches, first dim enumerates
+              patches; other dims are spatial with order (z,y,x)
+    stride :  ndarray
+              stride to extract patches in (z,y,x) dims
+    out_arr : ndarray
+              3d-array, where assembled scan is put.
+              Should be filled with zeroes before calling function.
+    fake :    ndarray
+              instrumental array for syntax binding of guvectorize
 
-    Return:
-        ___
+    Note
+    ----
+    `out_arr.shape`, `stride`, `patches.shape` are used to infer
+    the number of sections for each dimension.
+    We assume that the number of patches = len(patches)
+    corresponds to num_sections.
+    Overlapping patches are allowed (stride != patch.shape).
+    In this case pixel values are averaged across overlapping patches
+    We assume that integer number of patches can be put into
+    out_arr using stride.
+
     """
     out_arr_shape = np.zeros(3)
     out_arr_shape[:] = out_arr.shape[:]
@@ -98,19 +108,25 @@ def assemble_patches(patches, stride, out_arr, fake):
 
 
 def calc_padding_size(img_shape, patch_shape, stride):
-    """ Calculate width of padding, that needs to be added to 3d-scan
-            in order to fit integer number of patches; in format needed for
-            np.pad function.
+    """ Calculate padding width to add to 3d-scan
+        for fitting integer number of patches.
 
-    Args:
-        img_shape: ndarray of len=3 with shape of 3d-scan
-        patch_shape: ndarray of len=3 with shape of a patch
-        stride: stride with which patch-window slides over scan
+    Parameters
+    ----------
+    img_shape :   ndarray
+                  shape of 3d-scan along (z,y,x)
+    patch_shape : ndarray
+                  shape of patch along (z,y,x)
+    stride :      ndarray
+                  stride to slides over scan, in (z,y,x) dims.
 
-    Return: paddding size as list (len=4) of tuples of len=2
-        with pad widths in four dims; the first dim enumerates patients,
-            others are spatial axes
-        if no padding is needed, return None
+    Returns
+    -------
+    list or None
+                list of tuples with padding sizes
+                Pad widths in four dims; the first dim enumerates patients,
+                others are spatial axes (z,y,x)
+                if no padding is needed, return None
     """
     overshoot = (img_shape - patch_shape + stride) % stride
 

@@ -20,15 +20,16 @@ class TFResNet(TFModelCT):
     config : dict
         config dictionary from dataset pipeline
         see configuring model section of dataset module
-        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+        https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
-        name of the model.
+        name of the model, can be specified in config dict.
     units : tuple(int, int)
-        number of units in two final dense layers before tensor with predicitons.
+        number of units in two final dense layers before tensor with predicitons,
+        can be specified in config dict.
     num_targets : int
         size of tensor with predicitons.
     dropout_rate : float
-        probability of dropout.
+        probability of dropout, can be specified in config dict.
 
     NOTE
     ----
@@ -44,38 +45,18 @@ class TFResNet(TFModelCT):
     def identity_block(self, input_tensor, kernel_size, filters, name):
         """ The identity block is the block that has no conv layer at shortcut.
 
-        Schematically this block can be represented like this:
-        =======================================================================
-                                   input_tensor ------------|
-                                        ||                  |
-                                        \/                  |
-                            Conv3D{1x1x1}[1:1:1](filters1)  |
-                                        ||                  |
-                                        \/                  |
-                                 BatchNormalization         |
-                                        ||                  |
-                                       ReLu                 |
-                                        ||                  |
-                                        \/                  |
-                      Conv3D{kernel_size}[1:1:1](filters2)  |
-                                        ||                  |
-                                        \/                  |
-                                 BatchNormalization         |
-                                        ||                  |
-                                       ReLu                 |
-                                        ||                  |
-                                        \/                  |
-                            Conv3D{1x1x1}[1:1:1](filter3)   |
-                                        ||                  |
-                                        \/                  |
-                                 BatchNormalization         |
-                                        ||                  |
-                                        \/                  |
-                                       ( + )<---------------|
-                                        ||
-                                        \/
-                                        ReLu
-        =======================================================================
+        First of all, 3D-convolution with (1, 1, 1) kernel size, batch normalization
+        and relu activation is applied. Then the result flows into
+        3D-convolution with (3, 3, 3) kernel size, batch normalization and
+        relu activation. Finally, the result of previous convolution goes
+        into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+        without activation and its output is summed with the input tensor
+        and 'relu' activation is applied.
+        Argument `filters` should be tuple(int, int, int) and specifies
+        number of filters in first, second and third convolution correspondingly.
+        Number of filters in third convolution must be the same as in the input
+        tensor.
+
         Parameters
         ----------
         input_tensor : tf.Tensor
@@ -117,38 +98,18 @@ class TFResNet(TFModelCT):
     def conv_block(self, input_tensor, kernel_size, filters, name, strides=(2, 2, 2)):
         """ Convolutional block that has a conv layer as shortcut.
 
-        Schematically this block can be represented like this:
-        =======================================================================
-                                   input_tensor -----------------|
-                                        ||                       |
-                                        \/                       |
-                          Conv3D{1x1x1}[strides](filters1)       |
-                                        ||                       |
-                                        \/                       |
-                                 BatchNormalization              |
-                                        ||                       |
-                                       ReLu                      |
-                                        ||                       |
-                                        \/                       |
-                      Conv3D{kernel_size}[1:1:1](filters2)       |
-                                        ||                       |
-                                        \/                       |
-                                 BatchNormalization              |
-                                        ||                       |
-                                       ReLu      Conv3D{1x1x1}[strides](filters3)
-                                        ||                       |
-                                        \/                       |
-                            Conv3D{1x1x1}[1:1:1](filter3)        |
-                                        ||                       |
-                                        \/                       |
-                                 BatchNormalization              |
-                                        ||                       |
-                                        \/                       |
-                                       ( + )<--------------------|
-                                        ||
-                                        \/
-                                        ReLu
-        =======================================================================
+        First of all, 3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
+        batch normalization and 'relu' activation is applied. Then the result
+        flows into 3D-convolution with (3, 3, 3) kernel size, batch normalization
+        and 'relu' activation. Finally, the result of previous convolution goes
+        into 3D-convolution with (1, 1, 1) kernel size, batch normalization
+        without activation and its output is summed with the result
+        of 3D-convolution with kernel_size=(1, 1, 1), strides=(2, 2, 2) and
+        batch normalization of input_tensor. After that 'relu' activation
+        is applied to the result of 'add' operation.
+        Argument `filters` should be tuple(int, int, int) and specifies
+        number of filters in first, second and third convolution correspondingly.
+
         Parameters
         ----------
         input_tensor : tf.Tensor

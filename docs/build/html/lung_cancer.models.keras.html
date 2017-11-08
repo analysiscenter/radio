@@ -1,0 +1,352 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>lung_cancer.models.keras package &#8212; RadIO 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="lung-cancer-models-keras-package">
+<h1>lung_cancer.models.keras package<a class="headerlink" href="#lung-cancer-models-keras-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="subpackages">
+<h2>Subpackages<a class="headerlink" href="#subpackages" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lung_cancer.models.keras.architectures.html">lung_cancer.models.keras.architectures package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures.keras_resnet">lung_cancer.models.keras.architectures.keras_resnet module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures.keras_vgg16">lung_cancer.models.keras.architectures.keras_vgg16 module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures.keras_vnet">lung_cancer.models.keras.architectures.keras_vnet module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lung_cancer.models.keras.architectures.html#module-lung_cancer.models.keras.architectures">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-lung_cancer.models.keras.keras_model">
+<span id="lung-cancer-models-keras-keras-model-module"></span><h2>lung_cancer.models.keras.keras_model module<a class="headerlink" href="#module-lung_cancer.models.keras.keras_model" title="Permalink to this headline">¶</a></h2>
+<p>Contains base class for all keras models.</p>
+<dl class="class">
+<dt id="lung_cancer.models.keras.keras_model.KerasModel">
+<em class="property">class </em><code class="descclassname">lung_cancer.models.keras.keras_model.</code><code class="descname">KerasModel</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/models/keras/keras_model.html#KerasModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.keras_model.KerasModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">keras.engine.training.Model</span></code>, <a class="reference internal" href="lung_cancer.dataset.dataset.models.html#lung_cancer.dataset.dataset.models.base.BaseModel" title="lung_cancer.dataset.dataset.models.base.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">lung_cancer.dataset.dataset.models.base.BaseModel</span></code></a></p>
+<p>Base class for all keras models.</p>
+<p>Contains load, dump and compile methods which are shared between all
+keras models.
+Also implements train and predict methods.</p>
+<p class="rubric">Attributes</p>
+<p class="rubric">Methods</p>
+<dl class="method">
+<dt id="lung_cancer.models.keras.keras_model.KerasModel.build">
+<code class="descname">build</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/models/keras/keras_model.html#KerasModel.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.keras_model.KerasModel.build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Must return inputs and outputs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.models.keras.keras_model.KerasModel.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>filepath</em>, <em>by_name=False</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.models.keras.keras_model.KerasModel.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loads all layer weights from a HDF5 save file.</p>
+<p>If <cite>by_name</cite> is False (default) weights are loaded
+based on the network&#8217;s topology, meaning the architecture
+should be the same as when the weights were saved.
+Note that layers that don&#8217;t have weights are not taken
+into account in the topological ordering, so adding or
+removing layers is fine as long as they don&#8217;t have weights.</p>
+<p>If <cite>by_name</cite> is True, weights are loaded into layers
+only if they share the same name. This is useful
+for fine-tuning or transfer-learning models where
+some of the layers have changed.</p>
+<dl class="docutils">
+<dt># Arguments</dt>
+<dd><p class="first">filepath: String, path to the weights file to load.
+by_name: Boolean, whether to load weights by name</p>
+<blockquote class="last">
+<div>or by topological order.</div></blockquote>
+</dd>
+<dt># Raises</dt>
+<dd>ImportError: If h5py is not available.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.models.keras.keras_model.KerasModel.predict">
+<code class="descname">predict</code><span class="sig-paren">(</span><em>x=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/models/keras/keras_model.html#KerasModel.predict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.keras_model.KerasModel.predict" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for keras.models.Model.predict_on_batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>x</strong> (<em>ndarray</em><em>(</em><a class="reference internal" href="lung_cancer.dataset.dataset.models.tf.html#lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size" title="lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size"><em>batch_size</em></a><em>, </em><em>..</em><em>)</em>) &#8211; x argument of keras.models.Model.predict_on_batch method, input of
+neural network.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">predictions of keras model.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray(<a class="reference internal" href="lung_cancer.dataset.dataset.models.tf.html#lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size" title="lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size">batch_size</a>, ..)</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body">ValueError if &#8216;x&#8217; argument is None.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.models.keras.keras_model.KerasModel.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>filepath</em>, <em>overwrite=True</em><span class="sig-paren">)</span><a class="headerlink" href="#lung_cancer.models.keras.keras_model.KerasModel.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dumps all layer weights to a HDF5 file.</p>
+<dl class="docutils">
+<dt>The weight file has:</dt>
+<dd><ul class="first last simple">
+<li><dl class="first docutils">
+<dt><cite>layer_names</cite> (attribute), a list of strings</dt>
+<dd>(ordered names of model layers).</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>For every layer, a <cite>group</cite> named <cite>layer.name</cite></dt>
+<dd><ul class="first last">
+<li><dl class="first docutils">
+<dt>For every such layer group, a group attribute <cite>weight_names</cite>,</dt>
+<dd>a list of strings
+(ordered names of weights tensor of the layer).</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>For every weight in the layer, a dataset</dt>
+<dd>storing the weight value, named after the weight tensor.</dd>
+</dl>
+</li>
+</ul>
+</dd>
+</dl>
+</li>
+</ul>
+</dd>
+<dt># Arguments</dt>
+<dd><p class="first">filepath: String, path to the file to save the weights to.
+overwrite: Whether to silently overwrite any existing file at the</p>
+<blockquote class="last">
+<div>target location, or provide the user with a manual prompt.</div></blockquote>
+</dd>
+<dt># Raises</dt>
+<dd>ImportError: If h5py is not available.</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="lung_cancer.models.keras.keras_model.KerasModel.train">
+<code class="descname">train</code><span class="sig-paren">(</span><em>x=None</em>, <em>y=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/models/keras/keras_model.html#KerasModel.train"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.keras_model.KerasModel.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper for keras.models.Model.train_on_batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>ndarray</em><em>(</em><a class="reference internal" href="lung_cancer.dataset.dataset.models.tf.html#lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size" title="lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size"><em>batch_size</em></a><em>, </em><em>..</em><em>)</em>) &#8211; x argument of keras.models.Model.train_on_batch method, input of
+neural network.</li>
+<li><strong>y</strong> (<em>ndarray</em><em>(</em><a class="reference internal" href="lung_cancer.dataset.dataset.models.tf.html#lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size" title="lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size"><em>batch_size</em></a><em>, </em><em>..</em><em>)</em>) &#8211; y argument of keras.models.Model.predict_on_batch method.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">predictions of keras model.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first">ndarray(<a class="reference internal" href="lung_cancer.dataset.dataset.models.tf.html#lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size" title="lung_cancer.dataset.dataset.models.tf.tf_model.TFModel.batch_size">batch_size</a>, ..)</p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first last">ValueError if &#8216;x&#8217; or &#8216;y&#8217;  is None.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.models.keras.losses">
+<span id="lung-cancer-models-keras-losses-module"></span><h2>lung_cancer.models.keras.losses module<a class="headerlink" href="#module-lung_cancer.models.keras.losses" title="Permalink to this headline">¶</a></h2>
+<p>Contains losses used in keras models.</p>
+<dl class="function">
+<dt id="lung_cancer.models.keras.losses.dice_loss">
+<code class="descclassname">lung_cancer.models.keras.losses.</code><code class="descname">dice_loss</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>smooth=1e-06</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/models/keras/losses.html#dice_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.losses.dice_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loss function base on dice coefficient.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>keras tensor</em>) &#8211; tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>keras tensor</em>) &#8211; tensor containing predicted mask.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">tensor containing tiversky loss.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.keras.losses.jaccard_coef_logloss">
+<code class="descclassname">lung_cancer.models.keras.losses.</code><code class="descname">jaccard_coef_logloss</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>smooth=1e-10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/models/keras/losses.html#jaccard_coef_logloss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.losses.jaccard_coef_logloss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Loss function based on jaccard coefficient.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>keras tensor</em>) &#8211; tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>keras tensor</em>) &#8211; tensor containing predicted mask.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">tensor containing negative logarithm of jaccard coefficient.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lung_cancer.models.keras.losses.tiversky_loss">
+<code class="descclassname">lung_cancer.models.keras.losses.</code><code class="descname">tiversky_loss</code><span class="sig-paren">(</span><em>y_true</em>, <em>y_pred</em>, <em>alpha=0.3</em>, <em>beta=0.7</em>, <em>smooth=1e-10</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lung_cancer/models/keras/losses.html#tiversky_loss"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#lung_cancer.models.keras.losses.tiversky_loss" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tiversky loss function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>y_true</strong> (<em>keras tensor</em>) &#8211; tensor containing target mask.</li>
+<li><strong>y_pred</strong> (<em>keras tensor</em>) &#8211; tensor containing predicted mask.</li>
+<li><strong>alpha</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; real value, weight of &#8216;0&#8217; class.</li>
+<li><strong>beta</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; real value, weight of &#8216;1&#8217; class.</li>
+<li><strong>smooth</strong> (<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><em>float</em></a>) &#8211; small real value used for avoiding division by zero error.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">tensor containing tiversky loss.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="module-lung_cancer.models.keras">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lung_cancer.models.keras" title="Permalink to this headline">¶</a></h2>
+<p>Contains losses, usefull utils and ANN architectures implemented via keras.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">lung_cancer.models.keras package</a><ul>
+<li><a class="reference internal" href="#subpackages">Subpackages</a></li>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.models.keras.keras_model">lung_cancer.models.keras.keras_model module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.models.keras.losses">lung_cancer.models.keras.losses module</a></li>
+<li><a class="reference internal" href="#module-lung_cancer.models.keras">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/lung_cancer.models.keras.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.6.
+    </div>
+  </body>
+</html>

@@ -10,11 +10,11 @@ def log_loss(y_true, y_pred, epsilon=10e-7):
     Parameters
     ----------
     y_true : tf.Tensor
-        tensor with true labels;
+        tensor with true labels.
     y_pred : tf.Tensor
         tensor with predicted logits;
     epsilon : float or tf.constant(dtype=tf.float32)
-        small real value to avoid computing log(0);
+        small real value to avoid computing log(0).
 
     Returns
     -------

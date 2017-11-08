@@ -1,0 +1,274 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lung_cancer.models.tensorflow.layers &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.tensorflow.layers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># pylint: disable=not-context-manager</span>
+<span class="c1"># pylint: disable=too-many-arguments</span>
+<span class="sd">&quot;&quot;&quot; Helper functions for creating layers written on tensorflow. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+
+
+<div class="viewcode-block" id="selu"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.layers.selu">[docs]</a><span class="k">def</span> <span class="nf">selu</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Selu activation function.</span>
+
+<span class="sd">    Apply selu activation function to input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x : tf.Tensor</span>
+<span class="sd">        input tensor.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">alpha</span> <span class="o">=</span> <span class="mf">1.6732632423543772848170429916717</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="mf">1.0507009873554804934193349852946</span>
+    <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">elu</span><span class="p">(</span><span class="n">x</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="conv3d"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.layers.conv3d">[docs]</a><span class="k">def</span> <span class="nf">conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+           <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+           <span class="n">use_bias</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">is_training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Apply 3D convolution operation to input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Tensor</span>
+<span class="sd">        input tensor for 3D-convolution.</span>
+<span class="sd">    filters : int</span>
+<span class="sd">        number of filters in the ouput tensor.</span>
+<span class="sd">    kernel_size : tuple(int, int, int)</span>
+<span class="sd">        size of kernel for 3D-convolution operation along 3 dimensions.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        name of the layer that will be used as an argument of tf.variable_scope.</span>
+<span class="sd">    strides : tuple(int, int, int)</span>
+<span class="sd">        size of strides along 3 dimensions required by tf.layers.conv3d.</span>
+<span class="sd">    padding : str</span>
+<span class="sd">        padding mode, can be &#39;same&#39; or &#39;valid&#39;.</span>
+<span class="sd">    activation : tensorflow activation function</span>
+<span class="sd">        this function will be applied to output tensor.</span>
+<span class="sd">    use_bias : bool</span>
+<span class="sd">        whether use bias or not.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        output tensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span>
+                                         <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+                                         <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span>
+                                         <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                                         <span class="n">use_bias</span><span class="o">=</span><span class="n">use_bias</span><span class="p">,</span>
+                                         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv3d&#39;</span><span class="p">,</span>
+                                         <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
+
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">output_tensor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_tensor</span></div>
+
+
+<div class="viewcode-block" id="bn_conv3d"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.layers.bn_conv3d">[docs]</a><span class="k">def</span> <span class="nf">bn_conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span>
+              <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+              <span class="n">use_bias</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">is_training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Apply 3D convolution operation with batch normalization to input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Tensor</span>
+<span class="sd">        input tensor for 3D-convolution.</span>
+<span class="sd">    filters : int</span>
+<span class="sd">        number of filters in the ouput tensor.</span>
+<span class="sd">    kernel_size : tuple(int, int, int)</span>
+<span class="sd">        size of kernel for 3D-convolution operation along 3 dimensions.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        name of the layer that will be used as an argument of tf.variable_scope.</span>
+<span class="sd">    strides : tuple(int, int, int)</span>
+<span class="sd">        size of strides along 3 dimensions required by tf.layers.conv3d.</span>
+<span class="sd">    padding : str</span>
+<span class="sd">        padding mode, can be &#39;same&#39; or &#39;valid&#39;.</span>
+<span class="sd">    activation : tensorflow activation function</span>
+<span class="sd">        this function will be applied to output tensor.</span>
+<span class="sd">    use_bias : bool</span>
+<span class="sd">        whether use bias or not.</span>
+<span class="sd">    is_training : tf.Tensor or bool</span>
+<span class="sd">        whether model is in training state of prediction state.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        output tensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span>
+                                         <span class="n">filters</span><span class="o">=</span><span class="n">filters</span><span class="p">,</span>
+                                         <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span>
+                                         <span class="n">strides</span><span class="o">=</span><span class="n">strides</span><span class="p">,</span>
+                                         <span class="n">use_bias</span><span class="o">=</span><span class="n">use_bias</span><span class="p">,</span>
+                                         <span class="n">name</span><span class="o">=</span><span class="s1">&#39;conv3d&#39;</span><span class="p">,</span>
+                                         <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">)</span>
+
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span><span class="n">output_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                                                      <span class="n">training</span><span class="o">=</span><span class="n">is_training</span><span class="p">)</span>
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">output_tensor</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_tensor</span></div>
+
+
+<div class="viewcode-block" id="bn_dilated_conv3d"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.layers.bn_dilated_conv3d">[docs]</a><span class="k">def</span> <span class="nf">bn_dilated_conv3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span>
+                      <span class="n">kernel_size</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">,</span>
+                      <span class="n">dilation</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">,</span>
+                      <span class="n">is_training</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Apply 3D-dilated-convolution operation with batch normalization to input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Tensor</span>
+<span class="sd">        input tensor for 3D-convolution.</span>
+<span class="sd">    filters : int</span>
+<span class="sd">        number of filters in the ouput tensor.</span>
+<span class="sd">    kernel_size : tuple(int, int, int)</span>
+<span class="sd">        size of kernel for 3D-convolution operation along 3 dimensions.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        name of the layer that will be used as an argument of tf.variable_scope.</span>
+<span class="sd">    dilation : tuple(int, int, int)</span>
+<span class="sd">        dilation rate along 3 dimensions.</span>
+<span class="sd">    strides : tuple(int, int, int)</span>
+<span class="sd">        size of strides along 3 dimensions required by tf.layers.conv3d.</span>
+<span class="sd">    padding : str</span>
+<span class="sd">        padding mode, can be &#39;same&#39; or &#39;valid&#39;.</span>
+<span class="sd">    activation : tensorflow activation function</span>
+<span class="sd">        this function will be applied to output tensor.</span>
+<span class="sd">    use_bias : bool</span>
+<span class="sd">        whether use bias or not.</span>
+<span class="sd">    is_training : tf.Tensor or bool</span>
+<span class="sd">        whether model is in training state of prediction state.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        output tensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">in_filters</span> <span class="o">=</span> <span class="n">input_tensor</span><span class="o">.</span><span class="n">get_shape</span><span class="p">()</span><span class="o">.</span><span class="n">as_list</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">init_fn</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">contrib</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">xavier_initializer</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">w</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="o">*</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">in_filters</span><span class="p">,</span> <span class="n">filters</span><span class="p">),</span>
+                            <span class="n">initializer</span><span class="o">=</span><span class="n">init_fn</span><span class="p">)</span>
+
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">convolution</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span>
+                                          <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span>
+                                          <span class="n">strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+                                          <span class="n">dilation_rate</span><span class="o">=</span><span class="n">dilation</span><span class="p">)</span>
+
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span><span class="n">output_tensor</span><span class="p">,</span>
+                                                      <span class="n">axis</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+                                                      <span class="n">training</span><span class="o">=</span><span class="n">is_training</span><span class="p">)</span>
+
+        <span class="n">output_tensor</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">output_tensor</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output_tensor</span></div>
+
+
+<div class="viewcode-block" id="global_average_pool3d"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.tensorflow.html#lung_cancer.models.tensorflow.layers.global_average_pool3d">[docs]</a><span class="k">def</span> <span class="nf">global_average_pool3d</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Apply global average pooling 3D operation to input tensor.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_tensor : tf.Tensor</span>
+<span class="sd">        input tensor.</span>
+<span class="sd">    name : str</span>
+<span class="sd">        name of layer that will be used as an argument of tf.variable_scope.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tf.Tensor</span>
+<span class="sd">        output tensor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">output_layer</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">output_layer</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>

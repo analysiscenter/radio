@@ -19,9 +19,9 @@ class TFDilatedVnet(TFModelCT):
     config : dict
         config dictionary from dataset pipeline
         see configuring model section of dataset module
-        https://github.com/analysiscenter/dataset/blob/models/doc/models.md#configuring-a-model.
+        https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
-        name of the model.
+        name of the model, can be specified in config dict.
 
     NOTE
     ----
@@ -45,7 +45,7 @@ class TFDilatedVnet(TFModelCT):
         tf.Tensor
             output tensor.
 
-        NOTE
+        Note
         ----
         This layer does not perform repeat operation
         along channels and batch axes.
@@ -64,40 +64,15 @@ class TFDilatedVnet(TFModelCT):
     def bottleneck_block(self, input_tensor, filters, scope, dilation=(1, 1, 1), padding='same'):
         """ Apply bottleneck block transform to input tensor.
 
-        Schematically this block can be represented like this:
-        =======================================================================
-                        Conv3D{1x1x1}[1:1:1](filters)
-                                    ||
-                                    \/
-                             BatchNormalization
-                                    ||
-                                    \/
-                                   ReLu
-                            --------||----------
-                           /                    \\
-                          /                      \\
-                         /                        \\
-                        /                          \\
-    Conv3D{3x3x3}[1:1:1](filters / 2)    Conv3D{3x3x3}[1:1:1](filters / 2)
-         dilation_rate=(1, 1, 1)             dilation_rate=(dilation)
-                         \\                      /
-                          \\                    /
-                           \\                  /
-                            \\                /
-                             (----Concat-----)
-                                    ||
-                                    \/
-        =======================================================================
-
         Parameters
         ----------
-        input_tensor: tf.Tensor
+        input_tensor : tf.Tensor
             input tensor.
-        filters: int
+        filters : int
             number of filters.
-        scope: str
+        scope : str
             name scope of the layer.
-        dilation: tuple(int, int, int)
+        dilation : tuple(int, int, int)
             dilation rate along spatial axes.
         padding : str
             padding mode, can be 'valid' or 'same'.
@@ -135,38 +110,6 @@ class TFDilatedVnet(TFModelCT):
         before 'relu' activation and max_pooling3d layer in the end.
         Middle layer contains two separate convolutions:
         one with dilation_rate=(2, 2, 2) and another with dilation_rate=(1, 1, 1).
-
-        Schematically this block can be represented like this:
-        =======================================================================
-                        Conv3D{1x1x1}[1:1:1](filters)
-                                    ||
-                                    \/
-                             BatchNormalization
-                                    ||
-                                    \/
-                                   ReLu
-                            --------||----------
-                           /                    \\
-                          /                      \\
-                         /                        \\
-                        /                          \\
-      Conv3D{3x3x3}[1:1:1](filters / 2)   Conv3D{3x3x3}[1:1:1](filters / 2)
-        dilation_rate=(1, 1, 1)             dilation_rate=(dilation_rate)
-                         \\                      /
-                          \\                    /
-                           \\                  /
-                            \\                /
-                             (----Concat-----)
-                                    ||
-                                    \/
-                            BatchNormalization
-                                    ||
-                                    \/
-                                   ReLu
-                                    ||
-                                    \/
-                        MaxPooling3D{pool_size}[2:2:2]
-        =======================================================================
 
         Parameters
         ----------
@@ -231,7 +174,7 @@ class TFDilatedVnet(TFModelCT):
             name of scope for this block.
         dilation : tuple(int, int, int)
             dilation rate along spatial axes.
-        padding: str
+        padding : str
             padding mode for convolutions, can be 'same' or 'valid'.
 
         Returns

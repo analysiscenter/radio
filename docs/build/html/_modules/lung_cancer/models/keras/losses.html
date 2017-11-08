@@ -1,0 +1,168 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>lung_cancer.models.keras.losses &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../../../../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" accesskey="U">Module code</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for lung_cancer.models.keras.losses</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Contains losses used in keras models. &quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">keras</span> <span class="k">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
+
+
+<div class="viewcode-block" id="dice_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.dice_loss">[docs]</a><span class="k">def</span> <span class="nf">dice_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Loss function base on dice coefficient.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : keras tensor</span>
+<span class="sd">        tensor containing target mask.</span>
+<span class="sd">    y_pred : keras tensor</span>
+<span class="sd">        tensor containing predicted mask.</span>
+<span class="sd">    smooth : float</span>
+<span class="sd">        small real value used for avoiding division by zero error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    keras tensor</span>
+<span class="sd">        tensor containing tiversky loss.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true_f</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="n">y_pred_f</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_true_f</span> <span class="o">*</span> <span class="n">y_pred_f</span><span class="p">)</span>
+    <span class="n">answer</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="n">intersection</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_true_f</span><span class="p">)</span> <span class="o">+</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_pred_f</span><span class="p">)</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">answer</span></div>
+
+
+<div class="viewcode-block" id="tiversky_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.tiversky_loss">[docs]</a><span class="k">def</span> <span class="nf">tiversky_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Tiversky loss function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : keras tensor</span>
+<span class="sd">        tensor containing target mask.</span>
+<span class="sd">    y_pred : keras tensor</span>
+<span class="sd">        tensor containing predicted mask.</span>
+<span class="sd">    alpha : float</span>
+<span class="sd">        real value, weight of &#39;0&#39; class.</span>
+<span class="sd">    beta : float</span>
+<span class="sd">        real value, weight of &#39;1&#39; class.</span>
+<span class="sd">    smooth : float</span>
+<span class="sd">        small real value used for avoiding division by zero error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    keras tensor</span>
+<span class="sd">        tensor containing tiversky loss.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">truepos</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_true</span> <span class="o">*</span> <span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">fp_and_fn</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_pred</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y_true</span><span class="p">))</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">y_pred</span><span class="p">)</span> <span class="o">*</span> <span class="n">y_true</span><span class="p">)</span>
+    <span class="n">answer</span> <span class="o">=</span> <span class="p">(</span><span class="n">truepos</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">((</span><span class="n">truepos</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">+</span> <span class="n">fp_and_fn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">answer</span></div>
+
+
+<div class="viewcode-block" id="jaccard_coef_logloss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.jaccard_coef_logloss">[docs]</a><span class="k">def</span> <span class="nf">jaccard_coef_logloss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Loss function based on jaccard coefficient.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    y_true : keras tensor</span>
+<span class="sd">        tensor containing target mask.</span>
+<span class="sd">    y_pred : keras tensor</span>
+<span class="sd">        tensor containing predicted mask.</span>
+<span class="sd">    smooth : float</span>
+<span class="sd">        small real value used for avoiding division by zero error.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    keras tensor</span>
+<span class="sd">        tensor containing negative logarithm of jaccard coefficient.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">y_true</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span>
+    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">flatten</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">truepos</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_true</span> <span class="o">*</span> <span class="n">y_pred</span><span class="p">)</span>
+    <span class="n">falsepos</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_pred</span><span class="p">)</span> <span class="o">-</span> <span class="n">truepos</span>
+    <span class="n">falseneg</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_true</span><span class="p">)</span> <span class="o">-</span> <span class="n">truepos</span>
+    <span class="n">jaccard</span> <span class="o">=</span> <span class="p">(</span><span class="n">truepos</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">smooth</span> <span class="o">+</span> <span class="n">truepos</span> <span class="o">+</span> <span class="n">falseneg</span> <span class="o">+</span> <span class="n">falsepos</span><span class="p">)</span>
+    <span class="k">return</span> <span class="o">-</span><span class="n">K</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">jaccard</span> <span class="o">+</span> <span class="n">smooth</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../../../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../../../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="../../../index.html" >Module code</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>
