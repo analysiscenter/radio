@@ -36,7 +36,7 @@ class TFModelCT(TFModel):
         """
         super().train(fetches=fetches, feed_dict={'x': x, 'y': y})
 
-    def predict(self, x=None, fetches=None):
+    def predict(self, x=None, fetches=None):  # pylint: disable=arguments-differ
         """ Predict model on data provided.
 
         Parameters
