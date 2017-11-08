@@ -25,7 +25,7 @@ and target values:
 
 Description of implemented loss functions:
 
-- :doc:`tensorflow losses <../api/tensorflow_loss>`
+- :doc:`tensorflow losses <../api/tf_loss>`
 - :doc:`keras losses <../api/keras_loss>`
 
 ------------------------------------------------------------------------------------
