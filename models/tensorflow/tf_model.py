@@ -33,16 +33,10 @@ class TFModelCT(TFModel):
             by 'y' attribute of 'self'.
         fetches : list or tuple
             `tf.Operation`s and `tf.Tensor`s to calculate.
-
-        Returns
-        -------
-        ndarray(batch_size, ...)
-            predicted output.
         """
-        train_output = super().train(fetches, {'x': x, 'y': y})
-        return train_output
+        super().train(fetches=fetches, feed_dict={'x': x, 'y': y})
 
-    def predict(self, x=None, fetches=None):  # pylint: disable=arguments-differ
+    def predict(self, x=None, fetches=None):
         """ Predict model on data provided.
 
         Parameters
