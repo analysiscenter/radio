@@ -18,7 +18,7 @@ class TFModelCT(TFModel):
     and makes TFModel3D compatible with KerasModel interface.
     """
     def __init__(self, *args, **kwargs):
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def train(self, x=None, y=None, **kargs):
         """ Train model with data provided.
