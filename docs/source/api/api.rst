@@ -9,3 +9,4 @@ API
    pipelines
    models
    unpackers
+   losses
