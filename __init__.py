@@ -4,4 +4,4 @@
 import importlib
 from .preprocessing import *
 from .pipelines import *
-dataset = importlib.import_module('.dataset', __package__)
+from . import dataset
