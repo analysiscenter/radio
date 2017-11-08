@@ -54,7 +54,7 @@
 <span class="kn">from</span> <span class="nn">...dataset.dataset.models</span> <span class="k">import</span> <span class="n">BaseModel</span>
 
 
-<div class="viewcode-block" id="KerasModel"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.KerasModel">[docs]</a><span class="k">class</span> <span class="nc">KerasModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
+<div class="viewcode-block" id="KerasModel"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.keras_model.KerasModel">[docs]</a><span class="k">class</span> <span class="nc">KerasModel</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Base class for all keras models.</span>
 
 <span class="sd">    Contains load, dump and compile methods which are shared between all</span>
@@ -66,7 +66,7 @@
         <span class="sd">&quot;&quot;&quot; Call __init__ of BaseModel not keras.models.Model. &quot;&quot;&quot;</span>
         <span class="n">BaseModel</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<div class="viewcode-block" id="KerasModel.build"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.KerasModel.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="KerasModel.build"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.keras_model.KerasModel.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Must return inputs and outputs. &quot;&quot;&quot;</span>
         <span class="n">input_nodes</span><span class="p">,</span> <span class="n">output_nodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="p">)</span>
         <span class="n">Model</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_nodes</span><span class="p">,</span> <span class="n">output_nodes</span><span class="p">)</span>
@@ -77,7 +77,7 @@
         <span class="sd">&quot;&quot;&quot; Must return inputs and outputs. &quot;&quot;&quot;</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;This method must be implemented in ancestor model class&quot;</span><span class="p">)</span>
 
-<div class="viewcode-block" id="KerasModel.train"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.KerasModel.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="KerasModel.train"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.keras_model.KerasModel.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Wrapper for keras.models.Model.train_on_batch.</span>
 
 <span class="sd">        Parameters</span>
@@ -103,7 +103,7 @@
         <span class="n">prediction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">train_on_batch</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">prediction</span></div>
 
-<div class="viewcode-block" id="KerasModel.predict"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.KerasModel.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="KerasModel.predict"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.keras_model.KerasModel.predict">[docs]</a>    <span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Wrapper for keras.models.Model.predict_on_batch.</span>
 
 <span class="sd">        Parameters</span>

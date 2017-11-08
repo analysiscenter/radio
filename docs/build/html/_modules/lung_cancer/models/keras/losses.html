@@ -49,7 +49,7 @@
 <span class="kn">from</span> <span class="nn">keras</span> <span class="k">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
 
 
-<div class="viewcode-block" id="dice_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.losses.dice_loss">[docs]</a><span class="k">def</span> <span class="nf">dice_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
+<div class="viewcode-block" id="dice_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.dice_loss">[docs]</a><span class="k">def</span> <span class="nf">dice_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-6</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Loss function base on dice coefficient.</span>
 
 <span class="sd">    Parameters</span>
@@ -73,7 +73,7 @@
     <span class="k">return</span> <span class="o">-</span><span class="n">answer</span></div>
 
 
-<div class="viewcode-block" id="tiversky_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.losses.tiversky_loss">[docs]</a><span class="k">def</span> <span class="nf">tiversky_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+<div class="viewcode-block" id="tiversky_loss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.tiversky_loss">[docs]</a><span class="k">def</span> <span class="nf">tiversky_loss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">beta</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Tiversky loss function.</span>
 
 <span class="sd">    Parameters</span>
@@ -102,7 +102,7 @@
     <span class="k">return</span> <span class="o">-</span><span class="n">answer</span></div>
 
 
-<div class="viewcode-block" id="jaccard_coef_logloss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.losses.jaccard_coef_logloss">[docs]</a><span class="k">def</span> <span class="nf">jaccard_coef_logloss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+<div class="viewcode-block" id="jaccard_coef_logloss"><a class="viewcode-back" href="../../../../temp_rst/lung_cancer.models.keras.html#lung_cancer.models.keras.jaccard_coef_logloss">[docs]</a><span class="k">def</span> <span class="nf">jaccard_coef_logloss</span><span class="p">(</span><span class="n">y_true</span><span class="p">,</span> <span class="n">y_pred</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Loss function based on jaccard coefficient.</span>
 
 <span class="sd">    Parameters</span>

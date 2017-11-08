@@ -3,7 +3,7 @@ Unpack functions
 ================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
 
    unpack_clf
    unpack_reg
