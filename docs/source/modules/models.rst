@@ -23,6 +23,11 @@ and target values:
 |  Segmentation  | dice,tiversky | (batch_size, *scan_shape)  |
 +----------------+---------------+----------------------------+
 
+Description of implemented loss functions:
+
+- :doc:`tensorflow losses <../api/tensorflow_loss>`
+- :doc:`keras losses <../api/keras_loss>`
+
 ------------------------------------------------------------------------------------
 
 * In case of segmentation CNN is trained to predict binary mask.
