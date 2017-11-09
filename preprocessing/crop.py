@@ -1,7 +1,6 @@
 """ Contains auxiliary functions for calculating crop parameters. """
 
 import numpy as np
-from numba import njit
 
 
 def make_central_crop(image, crop_size):
