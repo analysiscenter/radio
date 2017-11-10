@@ -12,10 +12,17 @@ from skimage import measure, morphology
 
 @jit(nogil=True)
 def largest_label_volume(image, background=-1):
-    """
-    given image,
-        determines largest color that occupies
-        the largest volume, excluding background color
+    """ Determine most frequent color that occupies the largest volume
+
+    Parameters
+    ----------
+    image :      ndarray
+    background : int or float
+                 image background color
+    Returns
+    -------
+    int
+        most frequent color value
     """
     vals, counts = np.unique(image, return_counts=True)
 
@@ -31,15 +38,25 @@ def largest_label_volume(image, background=-1):
 # segmentation of a patient sliced from skyscraper
 @jit('void(double[:,:,:], double[:,:,:], double[:,:,:], int64)', nogil=True)
 def calc_lung_mask_numba(patient, out_patient, res, erosion_radius=7):
-    """
-    computes lungs-segmenting mask for one patient
-        args
-        -chunk: skyscraper from which the patient data is taken
-        - start_from: first floor for patient from chunk
-        - end-from: last floor for patient from chunk
-        - erosion_radius: radius to use to erod the lungs' border
-        - res: skyscraper where to put the resized patient
-        - start_to: first floor for resized patient in
+    """ Compute lungs-segmenting mask for a patient
+
+    Parameters
+    ----------
+    patient :        ndarray
+                     input 3D scan.
+    out_patient :    ndarray
+                     resulting array with segmented lungs
+    erosion_radius : int
+                     radius to use to erod the lungs' border
+    res :            ndarray
+                     `skyscraper` where to put the resized patient
+
+    Returns
+    -------
+    tuple
+          (res, out_patient.shape), resulting `skyscraper` and shape of
+          segmented scan inside this `scyscraper`.
+
     """
 
     # slice the patient out from the skyscraper
