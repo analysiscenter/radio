@@ -44,7 +44,7 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
     share : float
         share of cancer crops in the batch.
     histo : tuple
-        np.histogram()'s output.
+        :func:`numpy.histogramdd` output.
         Used for sampling non-cancerous crops
     variance : tuple, list or ndarray of float
         variances of normally distributed random shifts of
@@ -55,14 +55,14 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
             spacing : tuple
                 (z,y,x) spacing after resize.
             shape : tuple
-                (z,y,x,) shape after crop/pad.
+                (z,y,x) shape after crop/pad.
             method : str
                 interpolation method ('pil-simd' or 'resize').
-                See CTImagesBatch.resize for more information.
+                See :meth:`~.preprocessing.ct_batch.CTImagesBatch.resize`.
             order : None or int
                 order of scipy-interpolation (<=5), if used.
             padding : str
-                mode of padding, any supported by np.pad.
+                mode of padding, any supported by :func:`numpy.pad`.
 
     Returns
     -------
@@ -106,7 +106,7 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', 
          - 'z','y','x': coordinates of nodules center.
          - 'diameter': diameter, in mm.
     histo : tuple
-        np.histogram()'s output.
+        :func:`numpy.histogramdd` output.
         Used for sampling non-cancerous crops
     fmt : str
         can be either 'raw', 'blosc' or 'dicom'.
@@ -119,14 +119,14 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', 
             spacing : tuple
                 (z,y,x) spacing after resize.
             shape : tuple
-                (z,y,x,) shape after crop/pad.
+                (z,y,x) shape after crop/pad.
             method : str
                 interpolation method ('pil-simd' or 'resize').
-                See CTImagesBatch.resize for more information.
+                See :meth:`~.preprocessing.ct_batch.CTImagesBatch.resize` for more information.
             order : None or int
                 order of scipy-interpolation (<=5), if used.
             padding : str
-                mode of padding, any supported by np.pad.
+                mode of padding, any supported by :func:`numpy.pad`.
 
     Returns
     -------
@@ -168,23 +168,23 @@ def update_histo(nodules_df, histo, fmt='raw', **kwargs):
          - 'z','y','x': coordinates of nodules center.
          - 'diameter': diameter, in mm.
     histo : tuple
-        np.histogram()'s output.
+        :func:`numpy.histogramdd` output.
         Used for sampling non-cancerous crops
-        (compare the latter with tuple (bins, edges) returned by np.histogram).
+        (compare the latter with tuple (bins, edges) returned by :func:`numpy.histogramdd`).
     fmt : str
         can be either 'raw', 'blosc' or 'dicom'.
     **kwargs
             spacing : tuple
                 (z,y,x) spacing after resize.
             shape : tuple
-                (z,y,x,) shape after crop/pad.
+                (z,y,x) shape after crop/pad.
             method : str
                 interpolation method ('pil-simd' or 'resize').
-                See CTImagesBatch.resize for more information.
+                See :meth:`~.preprocessing.ct_batch.CTImagesBatch.resize` for more information.
             order : None or int
                 order of scipy-interpolation (<=5), if used.
             padding : str
-                mode of padding, any supported by np.pad.
+                mode of padding, any supported by :func:`numpy.pad`.
 
     Returns
     -------
@@ -206,15 +206,15 @@ def update_histo(nodules_df, histo, fmt='raw', **kwargs):
 
     return pipeline
 
-def combine_crops(cancerset, ncancerset, batch_sizes=(10, 10), hu_lims=(-1000, 400)):
+def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-1000, 400)):
     """ Pipeline for generating batches of cancerous and non-cancerous crops from
     ct-scans in chosen proportion.
 
     Parameters
     ---------
-    cancerset : dataset
+    cancer_set : dataset
         dataset of cancerous crops in blosc format.
-    ncancerset : dataset
+    non_cancer_set : dataset
         dataset of non-cancerous crops in blosc format.
     batch_sizes : tuple, list of int
         seq of len=2, (num_cancer_batches, num_noncancer_batches).
@@ -226,14 +226,14 @@ def combine_crops(cancerset, ncancerset, batch_sizes=(10, 10), hu_lims=(-1000, 4
     pipeline
     """
     # pipeline generating cancerous crops
-    ppl_cancer = (cancerset.p
+    ppl_cancer = (cancer_set.p
                   .load(fmt='blosc')
                   .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
                   .run(lazy=True, batch_size=batch_sizes[0], shuffle=True)
                  )
 
     # pipeline generating non-cancerous crops merged with first pipeline
-    pipeline = (ncancerset.p
+    pipeline = (non_cancer_set.p
                 .load(fmt='blosc')
                 .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
                 .merge(ppl_cancer)
