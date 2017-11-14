@@ -5,7 +5,6 @@
 """ Batch class for storing CT-scans. """
 
 import os
-import random as rnd
 import cloudpickle
 
 import numpy as np
@@ -1104,8 +1103,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         if not isinstance(components, (tuple, list)):
             _components = (components, )
-        if random:
-            _angle = rnd.rand() * angle
+
+        _angle = angle * np.random.rand() if random else angle
         for comp in _components:
             data = self.get(index, comp)
             rotate_3D(data, _angle, axes)
