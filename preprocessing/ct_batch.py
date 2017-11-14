@@ -5,7 +5,6 @@
 """ Batch class for storing CT-scans. """
 
 import os
-import random as rnd
 import cloudpickle
 
 import numpy as np
