@@ -28,6 +28,10 @@ class KerasVnet(KerasModel):
     inside _build method using these blocks.
 
     This architecture is inspired by https://arxiv.org/pdf/1606.04797.pdf.
+
+    Note
+    ----
+    This implementation requires the input tensor having shape=(batch_size, 1, 32, 64, 64).
     """
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
