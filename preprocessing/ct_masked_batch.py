@@ -435,7 +435,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 center = center * self.spacing[pos] + self.origin[pos]
 
                 diameter = np.asarray(
-                    [props.equivalent_diameter / 2] * 3, dtype=np.float)
+                    [props.equivalent_diameter] * 3, dtype=np.float)
                 diameter = diameter * self.spacing[pos]
                 nodules_list.append({'patient_pos': pos,
                                      'nodule_center': center,
