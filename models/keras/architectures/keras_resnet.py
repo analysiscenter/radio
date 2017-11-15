@@ -227,7 +227,7 @@ class KerasResNet50(KerasModel):
         z = Flatten()(x)
 
         for i, units in enumerate(self.units):
-            z = Dense(units)(z, name='Dense_' + str(i))
+            z = Dense(units, name='Dense_' + str(i))(z)
             z = BatchNormalization(axis=4)(z)
             z = Activation('relu')(z)
 
