@@ -228,7 +228,7 @@ class KerasResNet50(KerasModel):
 
         for i, units in enumerate(self.units):
             z = Dense(units, name='Dense_' + str(i))(z)
-            z = BatchNormalization(axis=4)(z)
+            z = BatchNormalization(axis=-1)(z)
             z = Activation('relu')(z)
 
         output_layer = Dense(self.num_targets, activation='sigmoid', name='output')(z)
