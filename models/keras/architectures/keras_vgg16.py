@@ -34,6 +34,10 @@ class KerasVGG16(KerasModel):
         size of tensor with predicitons, can be specified in config dict.
     dropout_rate : float
         probability of dropout, can be specified in config dict.
+
+    Note
+    ----
+    This implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
 
     def __init__(self, *args, **kwargs):
