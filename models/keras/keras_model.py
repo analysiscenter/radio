@@ -83,7 +83,7 @@ class KerasModel(Model, BaseModel):
     @functools.wraps(Model.load_weights)
     def load(self, *args, **kwargs):
         """ Wrapper for keras.models.Model.load_weights. """
-        return Model.load_weights(self, **args, **kwargs)
+        return Model.load_weights(self, *args, **kwargs)
 
     @functools.wraps(Model.save_weights)
     def save(self, *args, **kwargs):
