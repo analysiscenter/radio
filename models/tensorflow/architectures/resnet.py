@@ -157,45 +157,38 @@ class TFResNet(TFModelCT):
         y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='targets')
 
         x = bn_conv3d(input_tensor, filters=32, kernel_size=(5, 3, 3),
-                      name='initial_conv', padding='same',
+                      strides=(1, 2, 2), name='initial_conv', padding='same',
                       is_training=self.is_training)
 
-        x = tf.layers.max_pooling3d(x, pool_size=(3, 3, 3), strides=(2, 2, 2),
-                                    name='initial_maxpool')
-
-        x = self.conv_block(x, (3, 3, 3), [16, 16, 32], name='conv_1A', strides=(1, 1, 1))
-        x = self.identity_block(x, (3, 3, 3), [16, 16, 32], name='identity_1B')
-        x = self.identity_block(x, (3, 3, 3), [16, 16, 32], name='identity_1C')
+        x = self.conv_block(x, (3, 3, 3), [16, 16, 64], name='conv_1A', strides=(1, 1, 1))
+        x = self.identity_block(x, (3, 3, 3), [16, 16, 64], name='identity_1B')
+        x = self.identity_block(x, (3, 3, 3), [16, 16, 64], name='identity_1C')
         x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
 
-        x = self.conv_block(x, (3, 3, 3), [24, 24, 64], name='conv_2A')
-        x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2B')
-        x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2C')
-        x = self.identity_block(x, (3, 3, 3), [24, 24, 64], name='identity_2D')
+        x = self.conv_block(x, (3, 3, 3), [32, 32, 128], name='conv_2A')
+        x = self.identity_block(x, (3, 3, 3), [32, 32, 128], name='identity_2B')
+        x = self.identity_block(x, (3, 3, 3), [32, 32, 128], name='identity_2C')
+        x = self.identity_block(x, (3, 3, 3), [32, 32, 128], name='identity_2D')
         x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
 
-        x = self.conv_block(x, (3, 3, 3), [48, 48, 128], name='conv_3A')
-        x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3B')
-        x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3C')
-
-        x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3D')
-        x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3E')
-        x = self.identity_block(x, (3, 3, 3), [48, 48, 128], name='identity_3F')
+        x = self.conv_block(x, (3, 3, 3), [64, 64, 256], name='conv_3A')
+        x = self.identity_block(x, (3, 3, 3), [64, 64, 256], name='identity_3B')
+        x = self.identity_block(x, (3, 3, 3), [64, 64, 256], name='identity_3C')
+        x = self.identity_block(x, (3, 3, 3), [64, 64, 256], name='identity_3D')
+        x = self.identity_block(x, (3, 3, 3), [64, 64, 256], name='identity_3E')
+        x = self.identity_block(x, (3, 3, 3), [64, 64, 256], name='identity_3F')
         x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
 
-        x = self.conv_block(x, (3, 3, 3), [64, 64, 196], name='conv_4A')
-        x = self.identity_block(x, (3, 3, 3), [64, 64, 196], name='identity_4B')
-        x = self.identity_block(x, (3, 3, 3), [64, 64, 196], name='identity_4C')
+        x = self.conv_block(x, (3, 3, 3), [128, 128, 512], name='conv_4A')
+        x = self.identity_block(x, (3, 3, 3), [128, 128, 512], name='identity_4B')
+        x = self.identity_block(x, (3, 3, 3), [128, 128, 512], name='identity_4C')
 
         z = tf.contrib.layers.flatten(x)
 
-        z = tf.layers.dense(z, units=64, name='dense_64')
-        z = tf.layers.batch_normalization(z, axis=-1, training=self.is_training)
-        z = tf.nn.relu(z)
-
-        z = tf.layers.dense(z, units=16, name='dense_16')
-        z = tf.layers.batch_normalization(z, axis=-1, training=self.is_training)
-        z = tf.nn.relu(z)
+        for i, units in enumerate(self.units):
+            z = tf.layers.dense(z, units=units_1, name='dense_' + str(i))
+            z = tf.layers.batch_normalization(z, axis=-1, training=self.is_training)
+            z = tf.nn.relu(z)
 
         z = tf.layers.dense(z, units=self.num_targets, name='dense_' + str(self.num_targets))
         z = tf.nn.sigmoid(z)

@@ -147,35 +147,35 @@ class KerasResNet50(KerasModel):
         conv_name_base = 'res' + str(stage) + block + '_branch'
         bn_name_base = 'bn' + str(stage) + block + '_branch'
 
-        x = BatchNormalization(axis=4, name=bn_name_base + '2a')(input_tensor)
         x = Conv3D(filters1, (1, 1, 1),
                    strides=strides,
                    name=conv_name_base + '2a',
                    use_bias=False,
                    kernel_initializer='glorot_normal')(x)
+        x = BatchNormalization(axis=4, name=bn_name_base + '2a')(input_tensor)
         x = Activation('relu')(x)
 
-        x = BatchNormalization(axis=4, name=bn_name_base + '2b')(x)
         x = Conv3D(filters2,
                    kernel_size,
                    padding='same',
                    name=conv_name_base + '2b',
                    use_bias=False,
                    kernel_initializer='glorot_normal')(x)
+        x = BatchNormalization(axis=4, name=bn_name_base + '2b')(x)
         x = Activation('relu')(x)
 
-        x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
         x = Conv3D(filters3, (1, 1, 1),
                    name=conv_name_base + '2c',
                    use_bias=False,
                    kernel_initializer='glorot_normal')(x)
+        x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
 
-        shortcut = BatchNormalization(axis=4, name=bn_name_base + '1')(input_tensor)
         shortcut = Conv3D(filters3, (1, 1, 1),
                           strides=strides,
                           name=conv_name_base + '1',
                           use_bias=False,
-                          kernel_initializer='glorot_normal')(shortcut)
+                          kernel_initializer='glorot_normal')(input_tensor)
+        shortcut = BatchNormalization(axis=4, name=bn_name_base + '1')(shortcut)
 
         x = layers.add([x, shortcut])
         x = Activation('relu')(x)
