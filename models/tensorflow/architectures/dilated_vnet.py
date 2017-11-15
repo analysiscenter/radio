@@ -23,9 +23,10 @@ class TFDilatedVnet(TFModelCT):
     name : str
         name of the model, can be specified in config dict.
 
-    NOTE
+    Note
     ----
     This class is descendant of TFModel class from dataset.models.*.
+    This implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
 
     def upsampling3d(self, input_tensor, times, name):
