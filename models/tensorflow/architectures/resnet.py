@@ -23,9 +23,9 @@ class TFResNet(TFModelCT):
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model, can be specified in config dict.
-    units : tuple(int, int)
+    units : tuple(int, int) or tuple(int) or tuple()
         number of units in two final dense layers before tensor with predicitons,
-        can be specified in config dict.
+        can be specified in config dict. Can be tuple of lenght 1 or empty tuple.
     num_targets : int
         size of tensor with predicitons.
     dropout_rate : float
@@ -41,6 +41,7 @@ class TFResNet(TFModelCT):
         self.config = kwargs.get('config', {})
         self.num_targets = self.get_from_config('num_targets', 1)
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
+        self.units = self.get_from_config('units', (256, 128))
         super().__init__(*args, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, name):
@@ -186,7 +187,7 @@ class TFResNet(TFModelCT):
         z = tf.contrib.layers.flatten(x)
 
         for i, units in enumerate(self.units):
-            z = tf.layers.dense(z, units=units_1, name='dense_' + str(i))
+            z = tf.layers.dense(z, units=units, name='dense_' + str(i))
             z = tf.layers.batch_normalization(z, axis=-1, training=self.is_training)
             z = tf.nn.relu(z)
 
