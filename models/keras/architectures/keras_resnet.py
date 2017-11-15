@@ -31,9 +31,9 @@ class KerasResNet50(KerasModel):
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model, can be specified in config dict.
-    units : tuple(int, int)
+    units : tuple(int, int) or tuple(int) or tuple()
         number of units in two final dense layers before tensor with predicitons,
-        can be specified in config dict.
+        can be specified in config dict. Can be tuple of lenght 1 or empty tuple.
     num_targets : int
         size of tensor with predicitons, can be specified in config dict.
     dropout_rate : float
@@ -189,8 +189,6 @@ class KerasResNet50(KerasModel):
         tuple([*input_nodes], [*output_nodes]);
             list of input nodes and list of output nodes.
         """
-        units_1, units_2 = self.units
-
         input_tensor = Input(shape=(32, 64, 64, 1))
         x = Conv3D(filters=32, kernel_size=(5, 3, 3),
                    strides=(1, 2, 2), name='initial_conv', padding='same',
@@ -222,14 +220,13 @@ class KerasResNet50(KerasModel):
         x = self.identity_block(x, 3, [128, 128, 512], stage=5, block='b')
         x = self.identity_block(x, 3, [128, 128, 512], stage=5, block='c')
 
-        y = Flatten()(x)
+        z = Flatten()(x)
 
-        y = Dense(units_1, activation='relu')(y)
-        y = Dropout(rate=self.dropout_rate)(y)
+        for i, units in enumerate(self.units):
+            z = Dense(units)
+            z = BatchNormalization(axis=4)(z)
+            z = Activation('relu')
 
-        y = BatchNormalization(axis=-1)(y)
-        y = Dense(units_2, activation='relu')(y)
-
-        output_layer = Dense(self.num_targets, activation='sigmoid', name='output')(y)
+        output_layer = Dense(self.num_targets, activation='sigmoid', name='output')(z)
 
         return [input_tensor], [output_layer]
