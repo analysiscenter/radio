@@ -155,8 +155,8 @@ class KerasResNet50(KerasModel):
                    strides=strides,
                    name=conv_name_base + '2a',
                    use_bias=False,
-                   kernel_initializer='glorot_normal')(x)
-        x = BatchNormalization(axis=4, name=bn_name_base + '2a')(input_tensor)
+                   kernel_initializer='glorot_normal')(input_tensor)
+        x = BatchNormalization(axis=4, name=bn_name_base + '2a')(x)
         x = Activation('relu')(x)
 
         x = Conv3D(filters2,
@@ -226,10 +226,10 @@ class KerasResNet50(KerasModel):
 
         z = Flatten()(x)
 
-        for i, units in enumerate(self.units):
-            z = Dense(units)
+        for units in self.units:
+            z = Dense(units)(z)
             z = BatchNormalization(axis=4)(z)
-            z = Activation('relu')
+            z = Activation('relu')(z)
 
         output_layer = Dense(self.num_targets, activation='sigmoid', name='output')(z)
 
