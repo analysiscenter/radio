@@ -18,13 +18,16 @@ class TFDenseNet(TFModelCT):
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model, can be specified in config dict.
-    units : tuple(int, int)
-        number of units in two final dense layers before tensor with predicitons,
-        can be specified in config dict.
     num_targets : int
         size of tensor with predicitons, can be specified in config dict.
     dropout_rate : float
-        probability of dropout, can be specified in config dict.
+        probability of dropout, can be specified in config dict, default is 0.35.
+    k_value : int
+        number of filters in the output tensor of each convolution, default is 32.
+    block_sizes : list or tuple
+        list or tuple of int, number sizes of dense blocks moving from input to
+        the output of neural network, default is [6, 12, 24, 16].
+
 
     Full description of similar 2D model architecture can be downloaded from here:
     https://arxiv.org/pdf/1608.06993v2.pdf
@@ -32,12 +35,16 @@ class TFDenseNet(TFModelCT):
     NOTE
     ----
     This class is descendant of TFModel class from dataset.models.*.
+    This implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1)
     """
 
     def __init__(self, *args, **kwargs):
         self.config = kwargs.get('config', {})
+
         self.num_targets = self.get_from_config('num_targets', 1)
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
+        self.k_value = self.get_from_config('k_value', 32)
+        self.block_sizes = self.get_from_config('block_sizes', [6, 12, 24, 16])
         super().__init__(*args, **kwargs)
 
     def dense_block(self, input_tensor, filters, block_size, name):
@@ -125,33 +132,28 @@ class TFDenseNet(TFModelCT):
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
                                       dtype=tf.float32, name='input')
 
-        y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='targets')
+        y_true = tf.placeholder(shape=(None, self.num_targets),
+                                dtype=tf.float32, name='targets')
 
-        x = bn_conv3d(input_tensor, filters=16, strides=(1, 1, 1), kernel_size=(3, 3, 3),
-                      padding='same', name='initial_convolution', is_training=self.is_training)
+        x = bn_conv3d(input_tensor, filters=16,
+                      kernel_size=(5, 7, 7),
+                      strides=(1, 1, 1),
+                      name='init_conv', is_training=self.is_training)
 
-        x = tf.layers.max_pooling3d(x, pool_size=(3, 3, 3), strides=(1, 2, 2),
-                                    padding='same', name='maxpool3d')
+        x = tf.layers.max_pooling3d(x, pool_size=(2, 2, 2), strides=(1, 2, 2),
+                                    padding='same', name='init_max_pool')
 
-        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
-        x = self.dense_block(x, filters=32, block_size=6, name='dense_block_1')
-        x = self.transition_layer(x, filters=32, name='transition_layer_1')
+        for i, bsize in enumerate(self.block_sizes):
 
-        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
-        x = self.dense_block(x, filters=32, block_size=12, name='dense_block_2')
-        x = self.transition_layer(x, filters=32, name='transition_layer_2')
+            x = self.dense_block(x, filters=self.k_value, block_size=bsize,
+                                 name='dense_block_%s' % i)
 
-        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
-        x = self.dense_block(x, filters=32, block_size=32, name='dense_block_3')
-        x = self.transition_layer(x, filters=32, name='transition_layer_3')
-
-        x = tf.layers.dropout(x, rate=self.dropout_rate, training=self.is_training)
-        x = self.dense_block(x, filters=32, block_size=32, name='dense_block_4')
-        x = self.transition_layer(x, filters=32, name='transition_layer_4')
+            x = self.transition_layer(x, filters=self.k_value,
+                                      name='trans_block_%s' % i)
 
         z = global_average_pool3d(x, name='global_average_pool3d')
 
-        z = tf.layers.dense(z, units=self.num_targets, name='dense32')
+        z = tf.layers.dense(z, units=self.num_targets, name='dense_pred')
         z = tf.nn.sigmoid(z)
 
         y_pred = tf.identity(z, name='predictions')
