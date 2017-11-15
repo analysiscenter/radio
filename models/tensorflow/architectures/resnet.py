@@ -34,6 +34,7 @@ class TFResNet(TFModelCT):
     NOTE
     ----
     This class is descendant of TFModel class from dataset.models.*.
+    This implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
 
     def __init__(self, *args, **kwargs):
@@ -138,7 +139,8 @@ class TFResNet(TFModelCT):
 
             x = bn_conv3d(x, filters3, (1, 1, 1),
                           name='bn_conv_c', padding='same',
-                          activation=tf.nn.relu)
+                          activation=tf.identity,
+                          is_training=self.is_training)
 
             shortcut = bn_conv3d(input_tensor, filters3, (1, 1, 1),
                                  strides=strides, name='bn_conv3d_shortcut',
