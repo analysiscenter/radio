@@ -18,8 +18,8 @@ from ..keras_model import KerasModel
 from ..losses import dice_loss
 
 
-class KerasVnet(KerasModel):
-    """ Model incapsulating VNet architecture for 3D scans implemented in keras.
+class KerasNoduleVnet(KerasModel):
+    """ Model incapsulating NoduleVNet architecture for 3D scans implemented in keras.
 
     This class extends KerasModel class.
 
@@ -174,7 +174,7 @@ class KerasVnet(KerasModel):
         return conv2
 
     def _build(self, *args, **kwargs):
-        """ Build 3D vnet model implemented in keras. """
+        """ Build 3D NoduleVnet model implemented in keras. """
         input_tensor = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D

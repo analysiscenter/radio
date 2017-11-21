@@ -10,14 +10,14 @@ from keras.layers import Dense, BatchNormalization
 from ..keras_model import KerasModel
 
 
-class KerasVGG16(KerasModel):
-    """ KerasVGG16 model for 3D scans implemented in keras.
+class KerasNoduleVGG(KerasModel):
+    """ KerasNoduleVGG model for 3D scans implemented in keras.
 
     This class extends KerasModel class.
 
     Contains description of three types of blocks:
     'reduction_block_I', 'reduction_block_II' and 'classification_block'.
-    VGG16 architecture is implemented inside _build method using these blocks.
+    NoduleVGG architecture is implemented inside _build method using these blocks.
 
     Attributes
     ----------
@@ -41,7 +41,7 @@ class KerasVGG16(KerasModel):
     """
 
     def __init__(self, *args, **kwargs):
-        """ Call __init__ of KerasModel and add specific for KerasVGG16 attributes. """
+        """ Call __init__ of KerasModel and add specific for KerasNoduleVGG attributes. """
         self.config = kwargs.get('config', {})
         self.units = self.get_from_config('units', (512, 256))
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
@@ -49,7 +49,7 @@ class KerasVGG16(KerasModel):
         super().__init__(*args, **kwargs)
 
     def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
-        """ Reduction block of type I for VGG16 architecture.
+        """ Reduction block of type I for NoduleVGG architecture.
 
         Applyes 3D-convolution with kernel size (3, 3, 3), (1, 1, 1) strides
         and 'relu' activation, after performs batch noramlization, then
@@ -88,7 +88,7 @@ class KerasVGG16(KerasModel):
         return max_pool
 
     def reduction_block_II(self, input_tensor, filters, scope, padding='same'):
-        """ Reduction block of type II for VGG16 architecture.
+        """ Reduction block of type II for NoduleVGG architecture.
 
         Applyes 3D-convolution with kernel size (3, 3, 3), strides (1, 1, 1)
         and 'relu' activation, after that preform batch noramlization,
@@ -129,7 +129,7 @@ class KerasVGG16(KerasModel):
         return max_pool
 
     def classification_block(self, input_tensor, scope='ClassificationBlock'):
-        """ Classification block of VGG16 architecture.
+        """ Classification block of NoduleVGG architecture.
 
         This block consists of flatten operation applied to input_tensor.
         Then there is two fully connected layers with 'relu' activation,
@@ -164,7 +164,7 @@ class KerasVGG16(KerasModel):
         return layer
 
     def _build(self, *args, **kwargs):
-        """ Build VGG16 model implemented in keras.
+        """ Build NoduleVGG model implemented in keras.
 
         Returns
         -------

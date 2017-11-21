@@ -7,7 +7,7 @@ from ..tf_model import TFModelCT
 from ..layers import bn_conv3d, global_average_pool3d
 
 
-class TFDenseNet(TFModelCT):
+class TFDenseNoduleNet(TFModelCT):
     """ This class implements 3D DenseNet architecture via tensorflow.
 
     Attributes
@@ -128,7 +128,7 @@ class TFDenseNet(TFModelCT):
         return output_tensor
 
     def _build(self, *args, **kwargs):
-        """ Build densenet model implemented via tensorflow. """
+        """ Build NoduleDensenet model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1),
                                       dtype=tf.float32, name='input')
 

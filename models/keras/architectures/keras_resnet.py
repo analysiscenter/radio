@@ -13,8 +13,8 @@ from keras.layers import BatchNormalization
 from ..keras_model import KerasModel
 
 
-class KerasResNet50(KerasModel):
-    """ ResNet50 model for 3D scans implemented in keras.
+class KerasResNoduleNet(KerasModel):
+    """ ResNoduleNet model for 3D scans implemented in keras.
 
     This class extends KerasModel class.
 
@@ -33,7 +33,7 @@ class KerasResNet50(KerasModel):
         name of the model, can be specified in config dict.
     units : tuple(int, int) or tuple(int) or tuple()
         number of units in two final dense layers before tensor with predicitons,
-        can be specified in config dict. Can be tuple of lenght 1 or empty tuple.
+        can be specified in config dict. Can be int or None.
     num_targets : int
         size of tensor with predicitons, can be specified in config dict.
     dropout_rate : float
@@ -49,7 +49,13 @@ class KerasResNet50(KerasModel):
         self.config = kwargs.get('config', {})
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
         self.num_targets = self.get_from_config('num_targets', 1)
-        self.units = self.get_from_config('units', (256, 128))
+
+        _units = self.get_from_config('units', (256, 128))
+        if _units is None:
+            self.units = ()
+        elif isinstance(_units, int):
+            self.units = (_units, )
+
         super().__init__(*args, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, stage, block):
@@ -186,7 +192,7 @@ class KerasResNet50(KerasModel):
         return x
 
     def _build(self, *args, **kwargs):
-        """ Build resnet50 model implemented in keras.
+        """ Build ResNoduleNet model implemented in keras.
 
         Returns
         -------

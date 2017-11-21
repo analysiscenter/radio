@@ -10,7 +10,7 @@ from ..layers import bn_conv3d, bn_dilated_conv3d
 from ..utils import repeat_tensor
 
 
-class TFDilatedVnet(TFModelCT):
+class TFDilatedNoduleVnet(TFModelCT):
 
     """ This class implements VNet architecture with dilated convolutions using tensorflow.
 
@@ -216,7 +216,7 @@ class TFDilatedVnet(TFModelCT):
         return conv2_stacked
 
     def _build(self, *args, **kwargs):
-        """ Build vnet with dilated convolutions model implemented in tensorflow. """
+        """ Build NoduleVnet with dilated convolutions model implemented in tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32)
         y_true = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='targets')
 

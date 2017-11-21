@@ -9,8 +9,8 @@ from ..tf_model import TFModelCT
 from ..layers import bn_conv3d
 
 
-class TFResNet(TFModelCT):
-    """ This class implements 3D ResNet architecture via tensorflow.
+class TFResNoduleNet(TFModelCT):
+    """ This class implements 3D ResNoduleNet architecture via tensorflow.
 
     Full description of similar 2D model architecture can be downloaded from here:
     https://arxiv.org/pdf/1512.03385v1.pdf
@@ -25,7 +25,7 @@ class TFResNet(TFModelCT):
         name of the model, can be specified in config dict.
     units : tuple(int, int) or tuple(int) or tuple()
         number of units in two final dense layers before tensor with predicitons,
-        can be specified in config dict. Can be tuple of lenght 1 or empty tuple.
+        can be specified in config dict. Can be int or None.
     num_targets : int
         size of tensor with predicitons.
     dropout_rate : float
@@ -41,7 +41,13 @@ class TFResNet(TFModelCT):
         self.config = kwargs.get('config', {})
         self.num_targets = self.get_from_config('num_targets', 1)
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
-        self.units = self.get_from_config('units', (256, 128))
+
+        _units = self.get_from_config('units', (256, 128))
+        if _units is None:
+            self.units = ()
+        elif isinstance(_units, int):
+            self.units = (_units, )
+
         super().__init__(*args, **kwargs)
 
     def identity_block(self, input_tensor, kernel_size, filters, name):
@@ -153,7 +159,7 @@ class TFResNet(TFModelCT):
         return output_tensor
 
     def _build(self, *args, **kwargs):
-        """ Build renset model implemented via tensorflow. """
+        """ Build NoduleResNet model implemented via tensorflow. """
         input_tensor = tf.placeholder(shape=(None, 32, 64, 64, 1), dtype=tf.float32, name='x')
         y_true = tf.placeholder(shape=(None, self.num_targets), dtype=tf.float32, name='targets')
 
