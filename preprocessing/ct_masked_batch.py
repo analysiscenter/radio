@@ -212,16 +212,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Parameters
         ----------
         dst : str
-              destinatio-folder where all patients' data should be put
+            destinatio-folder where all patients' data should be put
         src : str or list/tuple
-              component(s) that we need to dump. If not
-              supplied, dump all components + shapes of scans
+            component(s) that we need to dump. If not
+            supplied, dump all components + shapes of scans
         fmt : 'blosc'
-              format of dump. Currently only blosc-format is supported;
-              in this case folder for each patient is created, patient's data
-              is put into images.blk, masks.blk,
-              attributes are put into files attr_name.cpkl
-              (e.g., spacing.cpkl)
+            format of dump. Currently only blosc-format is supported;
+            in this case folder for each patient is created, patient's data
+            is put into images.blk, masks.blk,
+            attributes are put into files attr_name.cpkl
+            (e.g., spacing.cpkl)
         i8_encode : bool
             whether components with .blk-format should be cast to int8-type.
 
