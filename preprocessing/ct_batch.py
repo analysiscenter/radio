@@ -12,6 +12,7 @@ import aiofiles
 import blosc
 import dicom
 import SimpleITK as sitk
+from sklearn.cluster import MiniBatchKMeans
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
 
@@ -557,7 +558,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return linear
 
     @classmethod
-    async def encode_dump_array(cls, data, folder, filename):
+    async def encode_dump_array(cls, data, folder, filename, mode):
         """ Encode an ndarray to int8, blosc-pack it and dump data along with
         the decoder into supplied folder
 
@@ -567,10 +568,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             class from which the method is executed
         data : ndarray
             contains numeric (e.g., float32) data to be dumped
-        folder : string
+        folder : str
             folder for dump
-        filename : string
+        filename : str
             name of file where the data is dumped; has format name.ext
+        mode : str or None
+            Mode of encoding to int8. Can be either 'quantization' or 'linear'
+            or None
 
         Note
         ----
@@ -578,21 +582,47 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             int8-range and drop the fractional part. Decoder is then given by
             inverse linear transformation
         """
+        # parse mode of encoding
+        if isinstance(mode, int):
+            if mode <= 2:
+                list_of_modes = [None, 'linear', 'quantization']
+                mode = list_of_modes[mode]
+        elif isinstance(mode, str):
+            mode = mode.lower()
+
         # encode the data and get the decoder
-        data_range = (data.min(), data.max())
-        i8_range = (-128, 127)
+        if mode == 'linear':
+            data_range = (data.min(), data.max())
+            i8_range = (-128, 127)
 
-        if data_range[0] == data_range[1]:
-            value = data_range[0]
-            encoded = np.zeros_like(data, dtype=np.int8)
-            decoder = lambda x: x + value
+            if data_range[0] == data_range[1]:
+                value = data_range[0]
+                encoded = np.zeros_like(data, dtype=np.int8)
+                decoder = lambda x: x + value
+            else:
+                encoded = np.rint(cls.get_linear(data_range, i8_range)(data)).astype(np.int8)
+                decoder = cls.get_linear(i8_range, data_range)
+
+            # serialize encoded data and decoder
+            byted = (blosc.pack_array(data, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
+            fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
+        elif mode == 'quantization':
+            # set up and fit quantization model, get encoded data
+            model = MiniBatchKMeans(n_clusters=256)
+            encoded = (model.fit_predict(data.reshape((-1, 1))) - 128).astype(np.int8)
+
+            # prepare decoder
+            decoder = lambda x: (model.cluster_centers_[x + 128]).reshape(data.shape)
+
+            # serialize encoded data and decoder
+            byted = (blosc.pack_array(data, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
+            fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
+        elif mode is None:
+            byted = (blosc.pack_array(data, cname='zstd', clevel=1), )
+            fnames = (filename, )
+
         else:
-            encoded = np.rint(cls.get_linear(data_range, i8_range)(data)).astype(np.int8)
-            decoder = cls.get_linear(i8_range, data_range)
-
-        # dump encoded data and decoder
-        byted = (blosc.pack_array(encoded), cloudpickle.dumps(decoder))
-        fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
+            raise ValueError('Unknown mode of int8-encoding')
 
         for btd, fname in zip(byted, fnames):
             async with aiofiles.open(os.path.join(folder, fname), mode='wb') as file:
@@ -600,7 +630,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
 
     @classmethod
-    async def dump_data(cls, data_items, folder, i8_encode):
+    async def dump_data(cls, data_items, folder, i8_encoding_mode):
         """ Dump data from data_items on disk in specified folder
 
         Parameters
@@ -612,6 +642,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing})
         folder : str
             folder to dump data-items in
+        i8_encoding_mode: str or int
+            mode of encoding to int8
 
         Note
         ----
@@ -627,12 +659,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         for filename, data in data_items.items():
             ext = filename.split('.')[-1]
             if ext == 'blk':
-                if i8_encode:
-                    _ = await cls.encode_dump_array(data, folder, filename)
-                else:
-                    byted = blosc.pack_array(data, cname='zstd', clevel=1)
-                    async with aiofiles.open(os.path.join(folder, filename), mode='wb') as file:
-                        _ = await file.write(byted)
+                _ = await cls.encode_dump_array(data, folder, filename, i8_encoding_mode)
 
             elif ext == 'cpkl':
                 byted = cloudpickle.dumps(data)
@@ -643,7 +670,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, src=None, fmt='blosc', i8_encode=False):
+    async def dump(self, patient, dst, src=None, fmt='blosc', i8_encoding_mode=None):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Parameters
@@ -658,11 +685,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             in this case folder for each patient is created, patient's data
             is put into images.blk, attributes are put into files attr_name.cpkl
             (e.g., spacing.cpkl)
-        i8_encode : bool
+        i8_encoding_mode : int or str
             whether components with .blk-format should be cast to int8-type.
             The cast allows to save space on disk and to speed up batch-loading. However,
             the cast comes with loss of precision, as originally .blk-components are stored
-            in float32-format.
+            in float32-format. Can be either 0, 1, 2 or 'linear', 'quantization' or None.
+            0 or None stand for no encoding.
 
         Example
         -------
@@ -713,7 +741,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # set patient-specific folder
         folder = os.path.join(dst, patient)
 
-        return await self.dump_data(data_items, folder, i8_encode)
+        return await self.dump_data(data_items, folder, i8_encoding_mode)
 
     def get_pos(self, data, component, index):
         """ Return a positon of an item for a given index in data
