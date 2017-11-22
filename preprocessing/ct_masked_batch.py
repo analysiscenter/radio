@@ -206,7 +206,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def dump(self, dst, src=None, fmt='blosc', i8_encoding_mode=False):                # pylint: disable=arguments-differ
+    def dump(self, dst, src=None, fmt='blosc', i8_encoding_mode=None):                # pylint: disable=arguments-differ
         """ Dump scans to dst-folder in specified format.
 
         Parameters
