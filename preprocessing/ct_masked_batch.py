@@ -238,11 +238,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             src = tuple(src) + ('images_shape', )
 
         # execute parent-method
-<<<<<<< HEAD
         super().dump(dst=dst, src=src, fmt=fmt, i8_encode=i8_encode)  # pylint: disable=no-value-for-parameter
-=======
-        super().dump(dst=dst, src=src, fmt=fmt)  # pylint: disable=no-value-for-parameter
->>>>>>> b96f37b21f9b7cf0dd13c18f5dfd7fb374e0cad4
 
         return self
 
