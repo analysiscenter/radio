@@ -585,8 +585,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # parse mode of encoding
         if isinstance(mode, int):
             if mode <= 2:
-                list_of_modes = [None, 'linear', 'quantization']
-                mode = list_of_modes[mode]
+                _modes = [None, 'linear', 'quantization']
+                mode = _modes[mode]
         elif isinstance(mode, str):
             mode = mode.lower()
 
@@ -604,7 +604,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 decoder = cls.get_linear(i8_range, data_range)
 
             # serialize encoded data and decoder
-            byted = (blosc.pack_array(data, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
+            byted = (blosc.pack_array(encoded, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
             fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
         elif mode == 'quantization':
             # set up and fit quantization model, get encoded data
@@ -615,7 +615,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             decoder = lambda x: (model.cluster_centers_[x + 128]).reshape(data.shape)
 
             # serialize encoded data and decoder
-            byted = (blosc.pack_array(data, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
+            byted = (blosc.pack_array(encoded, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
             fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
         elif mode is None:
             byted = (blosc.pack_array(data, cname='zstd', clevel=1), )
