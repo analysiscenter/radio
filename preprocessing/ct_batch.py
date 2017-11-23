@@ -609,7 +609,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         elif mode == 'quantization':
             # set up and fit quantization model, get encoded data
             data_range = (data.min(), data.max())
-            model = KMeans(n_clusters=256, init=np.linspace(*data_range, 255).reshape(-1, 1))
+            model = KMeans(n_clusters=256, init=np.linspace(*data_range, 256).reshape(-1, 1))
             encoded = (model.fit_predict(data.reshape(-1, 1)) - 128).astype(np.int8)
 
             # prepare decoder
