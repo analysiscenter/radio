@@ -670,7 +670,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, src=None, fmt='blosc', i8_encoding_mode=None):
+    async def dump(self, patient, dst, src=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Parameters
@@ -685,6 +685,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             in this case folder for each patient is created, patient's data
             is put into images.blk, attributes are put into files attr_name.cpkl
             (e.g., spacing.cpkl)
+        index_to_name : callable or None
+            returns str;
+            function that relates each item's index to a name of item's folder.
+            That is, each item is dumped into os.path.join(dst, index_to_name(items_index)).
+            If None, no transformation is applied.
         i8_encoding_mode : int or str
             whether components with .blk-format should be cast to int8-type.
             The cast allows to save space on disk and to speed up batch-loading. However,
@@ -739,7 +744,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             data_items.update({source + ext: getattr(self, source)[comp_pos]})
 
         # set patient-specific folder
-        folder = os.path.join(dst, patient)
+        patient_folder = patient if index_to_name is None else index_to_name(patient)
+        folder = os.path.join(dst, patient_folder)
 
         return await self.dump_data(data_items, folder, i8_encoding_mode)
 

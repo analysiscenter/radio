@@ -206,7 +206,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def dump(self, dst, src=None, fmt='blosc', i8_encoding_mode=None):                # pylint: disable=arguments-differ
+    def dump(self, dst, src=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):                # pylint: disable=arguments-differ
         """ Dump scans to dst-folder in specified format.
 
         Parameters
@@ -222,6 +222,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
             is put into images.blk, masks.blk,
             attributes are put into files attr_name.cpkl
             (e.g., spacing.cpkl)
+        index_to_name : callable or None
+            returns str;
+            function that relates each item's index to a name of item's folder.
+            That is, each item is dumped into os.path.join(dst, index_to_name(items_index)).
+            If None, no transformation is applied.
         i8_encoding_mode : str or int
             whether components with .blk-format should be cast to int8-type.
             The cast allows to save space on disk and to speed up batch-loading. However,
@@ -242,7 +247,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             src = tuple(src) + ('images_shape', )
 
         # execute parent-method
-        super().dump(dst=dst, src=src, fmt=fmt, i8_encoding_mode=i8_encoding_mode)  # pylint: disable=no-value-for-parameter
+        super().dump(dst=dst, src=src, fmt=fmt, index_to_name=index_to_name, i8_encoding_mode=i8_encoding_mode)  # pylint: disable=no-value-for-parameter
 
         return self
 
