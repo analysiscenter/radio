@@ -12,7 +12,7 @@ import aiofiles
 import blosc
 import dicom
 import SimpleITK as sitk
-from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import KMeans
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
 
@@ -608,7 +608,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
         elif mode == 'quantization':
             # set up and fit quantization model, get encoded data
-            model = MiniBatchKMeans(n_clusters=256)
+            data_range = (data.min(), data.max())
+            model = KMeans(n_clusters=256, init=np.arange(*data_range))
             encoded = (model.fit_predict(data.reshape((-1, 1))) - 128).astype(np.int8)
 
             # prepare decoder
