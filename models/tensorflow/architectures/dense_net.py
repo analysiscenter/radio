@@ -74,7 +74,7 @@ class TFDenseNoduleNet(TFModelCT):
             previous_input = tf.identity(input_tensor)
             for i in range(block_size):
                 subblock_name = 'sub_block_' + str(i)
-                x = bn_conv3d(previous_input, filters=filters,
+                x = bn_conv3d(previous_input, filters=filters * 4,
                               kernel_size=(1, 1, 1),
                               strides=(1, 1, 1),
                               name=subblock_name + '_conv3d_1_1',
