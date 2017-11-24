@@ -227,12 +227,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
             function that relates each item's index to a name of item's folder.
             That is, each item is dumped into os.path.join(dst, index_to_name(items_index)).
             If None, no transformation is applied.
-        i8_encoding_mode : str or int
+        i8_encoding_mode : str, int or dict
             whether components with .blk-format should be cast to int8-type.
             The cast allows to save space on disk and to speed up batch-loading. However,
             the cast comes with loss of precision, as originally .blk-components are stored
-            in float32-format. Can be either 0, 1, 2 or 'linear', 'quantization' or None.
-            0 or None stand for no encoding.
+            in float32-format. Can be int: 0, 1, 2 or str/None: 'linear', 'quantization' or None.
+            0 or None stand for no encoding. 1 stands for 'linear', 2 - for 'quantization'.
+            Can also be dict of modes, e.g.: {'images': 'linear', 'masks': 0}
 
         See docstring of parent-batch for examples.
         """

@@ -12,7 +12,7 @@ import aiofiles
 import blosc
 import dicom
 import SimpleITK as sitk
-from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
 
@@ -27,6 +27,7 @@ from .rotate import rotate_3D
 
 AIR_HU = -2000
 DARK_HU = -2000
+KMEANS_MINIBATCH = 10000
 
 
 class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
@@ -607,10 +608,18 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             byted = (blosc.pack_array(encoded, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
             fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
         elif mode == 'quantization':
-            # set up and fit quantization model, get encoded data
+
+            # set up quantization model
             data_range = (data.min(), data.max())
-            model = KMeans(n_clusters=256, init=np.linspace(*data_range, 256).reshape(-1, 1))
-            encoded = (model.fit_predict(data.reshape(-1, 1)) - 128).astype(np.int8)
+            batch_size = min(KMEANS_MINIBATCH, data.size)
+            model = MiniBatchKMeans(n_clusters=256, init=np.linspace(*data_range, 256).reshape(-1, 1))
+
+            # fit the model on several minibatches, get encoded data
+            for _ in range(KMEANS_ITERS):
+                batch = np.random.choice(data.reshape(-1), batch_size, replace=False).reshape(-1, 1)
+                model.partial_fit(batch)
+
+            encoded = (model.predict(data.reshape(-1, 1)) - 128).astype(np.int8)
 
             # prepare decoder
             decoder = lambda x: (model.cluster_centers_[x + 128]).reshape(data.shape)
@@ -640,11 +649,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             class from which the method is executed
         data_items : dict
             dict of data items for dump in form {item_name.ext: item}
-            (e.g.: {'images.blk': scans, 'mask.blk': mask, 'spacing.cpkl': spacing})
+            (e.g.: {'images.blk': scans, 'masks.blk': masks, 'spacing.cpkl': spacing})
         folder : str
             folder to dump data-items in
-        i8_encoding_mode: str or int
-            mode of encoding to int8
+        i8_encoding_mode: str, int, or dict
+            contains mode of encoding to int8
 
         Note
         ----
@@ -660,7 +669,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         for filename, data in data_items.items():
             ext = filename.split('.')[-1]
             if ext == 'blk':
-                _ = await cls.encode_dump_array(data, folder, filename, i8_encoding_mode)
+                item_name = '.'.join(filename.split('.')[:-1])
+                if isinstance(i8_encoding_mode, dict):
+                    mode = i8_encoding_mode.get(item_name, None)
+                else:
+                    mode = i8_encoding_mode
+
+                _ = await cls.encode_dump_array(data, folder, filename, mode)
 
             elif ext == 'cpkl':
                 byted = cloudpickle.dumps(data)
@@ -677,7 +692,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         dst : str
-            destinatio-folder where all patients' data should be put
+            destination-folder where all patients' data should be put
         src : str or list/tuple
             component(s) that we need to dump (smth iterable or string). If not
             supplied, dump all components + shapes of scans
@@ -691,12 +706,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             function that relates each item's index to a name of item's folder.
             That is, each item is dumped into os.path.join(dst, index_to_name(items_index)).
             If None, no transformation is applied.
-        i8_encoding_mode : int or str
+        i8_encoding_mode : int, str or dict
             whether components with .blk-format should be cast to int8-type.
             The cast allows to save space on disk and to speed up batch-loading. However,
             the cast comes with loss of precision, as originally .blk-components are stored
-            in float32-format. Can be either 0, 1, 2 or 'linear', 'quantization' or None.
-            0 or None stand for no encoding.
+            in float32-format. Can be int: 0, 1, 2 or str/None: 'linear', 'quantization' or None.
+            0 or None stand for no encoding. 1 stands for 'linear', 2 - for 'quantization'.
+            Can also be dict of modes, e.g.: {'images': 'linear', 'masks': 0}
 
         Example
         -------
