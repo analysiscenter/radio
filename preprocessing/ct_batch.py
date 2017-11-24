@@ -28,6 +28,7 @@ from .rotate import rotate_3D
 AIR_HU = -2000
 DARK_HU = -2000
 KMEANS_MINIBATCH = 10000
+KMEANS_ITERS = 20
 
 
 class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
