@@ -116,7 +116,12 @@ def unpack_component(batch, model=None, component='images', dim_ordering='channe
     """
     if component not in ('masks', 'images'):
         raise AttributeError("Component must be 'images' or 'masks'")
-    x = np.stack([batch.get(i, component) for i in range(len(batch))])
+
+    if np.all(batch.images_shape == batch.images_shape[0, :]):
+        x = batch.get(None, component).reshape(-1, batch.images_shape[0, :])
+    else:
+        x = np.stack([batch.get(i, component) for i in range(len(batch))])
+
     if dim_ordering == 'channels_last':
         x = x[..., np.newaxis]
     elif dim_ordering == 'channels_first':
