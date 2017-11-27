@@ -88,6 +88,7 @@ class DilatedNoduleVNet(TFModel):
     """
     @classmethod
     def default_config(cls):
+        """ Default config. """
         config = TFModel.default_config()
 
         filters = 32
@@ -102,6 +103,7 @@ class DilatedNoduleVNet(TFModel):
         return config
 
     def build_config(self, names=None):
+        """ Build config. """
         config = super().build_config(names)
         config['head']['num_classes'] = self.num_classes('targets')
         return config
