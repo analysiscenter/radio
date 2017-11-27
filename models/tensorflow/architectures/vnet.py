@@ -163,8 +163,6 @@ class DilatedNoduleVNet(TFModel):
 
             x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
                                  name='conv_II', is_training=is_training)
-
-        logger.debug("Output of {0} block: {1}".format(name, cls.get_shape(x)))
         return x
 
     @classmethod
@@ -206,8 +204,6 @@ class DilatedNoduleVNet(TFModel):
                 downsampled_x = tf.layers.max_pooling3d(x, pool_size=(2, 2, 2),
                                                         strides=(2, 2, 2), padding='same',
                                                         name='max_pool3d')
-
-        logger.debug("Output of {0} block: {1}".format(name, cls.get_shape(downsampled_x)))
         return x, downsampled_x
 
     @classmethod
@@ -245,7 +241,6 @@ class DilatedNoduleVNet(TFModel):
 
             x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
                                  name='conv3D_dilated', is_training=is_training)
-        logger.debug("Output of {0} block: {1}".format(name, cls.get_shape(x)))
         return x
 
     @classmethod
@@ -302,8 +297,6 @@ class DilatedNoduleVNet(TFModel):
         kwargs = cls.fill_params('head', **kwargs)
         with tf.variable_scope(name):
             x = conv_block(inputs, name='conv', **kwargs)
-            x = conv_block(inputs, name='last', **{**kwargs, **dict(filters=num_classes,
-                                                                    kernel_size=1,
-                                                                    activation=tf.nn.sigmoid,
-                                                                    layout='c')})
+            x = bn_conv3d(x, num_classes, (1, 1, 1), activation=tf.nn.sigmoid,
+                          name='final_conv', is_training=kwargs.get('is_training', None))
         return x
