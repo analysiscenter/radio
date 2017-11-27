@@ -205,53 +205,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             super().load(fmt=fmt, **params, src_blosc=src_blosc)
         return self
 
-    @action
-    def dump(self, dst, src=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):                # pylint: disable=arguments-differ
-        """ Dump scans to dst-folder in specified format.
-
-        Parameters
-        ----------
-        dst : str
-            destinatio-folder where all patients' data should be put
-        src : str or list/tuple
-            component(s) that we need to dump. If not
-            supplied, dump all components + shapes of scans
-        fmt : 'blosc'
-            format of dump. Currently only blosc-format is supported;
-            in this case folder for each patient is created, patient's data
-            is put into images.blk, masks.blk,
-            attributes are put into files attr_name.cpkl
-            (e.g., spacing.cpkl)
-        index_to_name : callable or None
-            returns str;
-            function that relates each item's index to a name of item's folder.
-            That is, each item is dumped into os.path.join(dst, index_to_name(items_index)).
-            If None, no transformation is applied.
-        i8_encoding_mode : str, int or dict
-            whether components with .blk-format should be cast to int8-type.
-            The cast allows to save space on disk and to speed up batch-loading. However,
-            the cast comes with loss of precision, as originally .blk-components are stored
-            in float32-format. Can be int: 0, 1, 2 or str/None: 'linear', 'quantization' or None.
-            0 or None stand for no encoding. 1 stands for 'linear', 2 - for 'quantization'.
-            Can also be dict of modes, e.g.: {'images': 'linear', 'masks': 0}
-
-        See docstring of parent-batch for examples.
-        """
-        # if src is not supplied, dump all components and shapes
-        if src is None:
-            src = self.components + ('images_shape', )
-
-        # convert src to iterable 1d-array
-        src = np.asarray(src).reshape(-1)
-
-        if 'masks' in src and 'images_shape' not in src:
-            src = tuple(src) + ('images_shape', )
-
-        # execute parent-method
-        super().dump(dst=dst, src=src, fmt=fmt, index_to_name=index_to_name, i8_encoding_mode=i8_encoding_mode)  # pylint: disable=no-value-for-parameter
-
-        return self
-
     def nodules_to_df(self, nodules):
         """ Convert nodules_info ndarray into pandas dataframe.
 
