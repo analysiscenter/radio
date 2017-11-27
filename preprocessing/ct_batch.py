@@ -592,7 +592,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         elif isinstance(mode, str):
             mode = mode.lower()
 
-        fname_noext = filename.split('.')[:-1]
+        fname_noext = '.'.join(filename.split('.')[:-1])
 
         # init list of serialized objects and filenames for dump
         byted, fnames = list(), list()
