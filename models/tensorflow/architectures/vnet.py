@@ -1,3 +1,5 @@
+# pylint: disable=too-many-arguments
+# pylint: disable=not-context-manager
 """ Implementation of custom unet for lung cancer detection. """
 
 import numpy as np
