@@ -202,7 +202,8 @@ class DilatedNoduleVNet(TFModel):
                                      name='conv_II', is_training=is_training)
 
                 downsampled_x = tf.layers.max_pooling3d(x, pool_size=(2, 2, 2),
-                                                        strides=(2, 2, 2), padding='same',
+                                                        strides=(2, 2, 2),
+                                                        padding='same',
                                                         name='max_pool3d')
         return x, downsampled_x
 
