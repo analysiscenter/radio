@@ -5,7 +5,7 @@
 """ Contains TFResNet model class. """
 
 
-from ...dataset.models.tf import ResNet
+from ....dataset.models.tf import ResNet
 
 
 class NoduleResNet(ResNet):
