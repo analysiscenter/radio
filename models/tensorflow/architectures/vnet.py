@@ -196,17 +196,16 @@ class DilatedNoduleVNet(TFModel):
         dilation_share /= dilation_share.sum()
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
         with tf.variable_scope(name):
+            x = dilated_branches(inputs, _filters, (3, 3, 3), dilation_rate,
+                                 name='conv_I', is_training=is_training)
 
-                x = dilated_branches(inputs, _filters, (3, 3, 3), dilation_rate,
-                                     name='conv_I', is_training=is_training)
+            x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
+                                 name='conv_II', is_training=is_training)
 
-                x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                     name='conv_II', is_training=is_training)
-
-                downsampled_x = tf.layers.max_pooling3d(x, pool_size=(2, 2, 2),
-                                                        strides=(2, 2, 2),
-                                                        padding='same',
-                                                        name='max_pool3d')
+            downsampled_x = tf.layers.max_pooling3d(x, pool_size=(2, 2, 2),
+                                                    strides=(2, 2, 2),
+                                                    padding='same',
+                                                    name='max_pool3d')
         return x, downsampled_x
 
     @classmethod
