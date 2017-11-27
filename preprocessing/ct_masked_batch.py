@@ -1157,7 +1157,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             raise AttributeError("Component must be 'images' or 'masks'")
 
         if np.all(self.images_shape == self.images_shape[0, :]):
-            x = self.get(None, component).reshape(-1, self.images_shape[0, :])
+            x = self.get(None, component).reshape(-1, *self.images_shape[0, :])
         else:
             x = np.stack([self.get(i, component) for i in range(len(self))])
 
