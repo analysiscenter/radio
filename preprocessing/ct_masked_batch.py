@@ -143,7 +143,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         super().__init__(index, *args, **kwargs)
         self.masks = None
         self.nodules = None
-        self.labels = None
+        self.inputs = None
+        self.targets = None
 
     @property
     def components(self):
@@ -1129,4 +1130,148 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.load_from_patches(patches_mask, stride=strides,
                                scan_shape=tuple(self.images_shape[0, :]),
                                data_attr='masks')
+        return self
+
+    def unpack_component(self, component='images', dim_ordering='channels_last'):
+        """ Basic way for unpacking 'images' or 'masks' from batch.
+
+        Parameters
+        ----------
+        component : str
+            component to unpack, can be 'images' or 'masks'.
+        dim_ordering : str
+            can be 'channels_last' or 'channels_first'. Reflects where to put
+            channels dimension: right after batch dimension or after all spatial axes.
+
+        Returns
+        -------
+        ndarray(batch_size, zdim, ydim, xdim, 1)
+            unpacked 'images' or 'masks' component of batch as numpy array.
+
+        Raises
+        ------
+        AttributeError
+            if argument component is not 'images' or 'masks'.
+        """
+        if component not in ('masks', 'images'):
+            raise AttributeError("Component must be 'images' or 'masks'")
+
+        if np.all(self.images_shape == self.images_shape[0, :]):
+            x = self.get(None, component).reshape(-1, self.images_shape[0, :])
+        else:
+            x = np.stack([self.get(i, component) for i in range(len(self))])
+
+        if dim_ordering == 'channels_last':
+            x = x[..., np.newaxis]
+        elif dim_ordering == 'channels_first':
+            x = x[:, np.newaxis, ...]
+        return x
+
+    def _unpack_seg(self, dim_ordering='channels_last'):
+        """ Unpack data from batch in format suitable for segmentation task.
+
+        Parameters
+        ----------
+        dim_ordering : str
+            can be 'channels_last' or 'channels_first'. Reflects where to put
+            channels dimension: right after batch dimension or after all spatial axes.
+
+        Returns:
+        dict
+            {'inputs': images_array, 'targets': labels_array}
+
+        NOTE
+        ----
+        'dim_ordering' argument reflects where to put '1'
+        for channels dimension both for images and masks.
+        """
+        return {'inputs': self.unpack_component('images', dim_ordering),
+                'targets': self.unpack_component('masks', dim_ordering)}
+
+    def _unpack_clf(self, threshold=10, dim_ordering='channels_last'):
+        """ Unpack data from batch in format suitable for classification task.
+
+        Parameters
+        ----------
+        threshold : int
+            minimum number of '1' pixels in mask to consider it cancerous.
+        dim_ordering : str
+            can be 'channels_last' or 'channels_first'. Reflects where to put
+            channels dimension: right after batch dimension or after all spatial axes.
+
+        Returns:
+        - dict
+            {'inputs': images_array, 'targets': labels_array}
+
+        NOTE
+        ----
+        'dim_ordering' argument reflects where to put '1' for channels dimension.
+        """
+        masks_labels = np.asarray([self.get(i, 'masks').sum() > threshold
+                                   for i in range(len(self))], dtype=np.int)
+
+        return {'inputs': self.unpack_component('images', dim_ordering),
+                'targets': masks_labels[:, np.newaxis]}
+
+    def _unpack_reg(self, threshold=10, dim_ordering='channels_last'):
+        """ Unpack data from batch in format suitable for regression task.
+
+        Parameters
+        ----------
+        threshold : int
+            minimum number of '1' pixels in mask to consider it cancerous.
+
+        Returns:
+        dict
+            {'inputs': images_array, 'targets': y_regression_array}
+
+        Note
+        ----
+        'dim_ordering' argument reflects where to put '1' for channels dimension.
+
+        """
+
+        nodules = self.nodules
+
+        sizes = np.zeros(shape=(len(self), 3), dtype=np.float)
+        centers = np.zeros(shape=(len(self), 3), dtype=np.float)
+
+        for item_pos, _ in enumerate(self.indices):
+            item_nodules = nodules[nodules.item_pos == item_pos]
+
+            if len(item_nodules) == 0:
+                continue
+
+            mask_nod_indices = item_nodules.nodule_size.max(axis=1).argmax()
+
+            nodule_sizes = (item_nodules.nodule_size / self.spacing[item_pos, :]
+                            / self.images_shape[item_pos, :])
+
+            nodule_centers = (item_nodules.nodule_center / self.spacing[item_pos, :]
+                              / self.images_shape[item_pos, :])
+
+            sizes[item_pos, :] = nodule_sizes[mask_nod_indices, :]
+            centers[item_pos, :] = nodule_centers[mask_nod_indices, :]
+
+        clf_dict = self.unpack_clf(threshold, dim_ordering)
+        x, labels = clf_dict['inputs'], clf_dict['targets']
+        y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
+
+        return {'inputs': x, 'targets': y_regression_array}
+
+    @action
+    def set_targets(self, mode='segmentation', **kwargs):
+        """ Prepare data in batch for learning neural network. """
+        if mode == 'segmentation':
+            feed_dict = self._unpack_seg(**kwargs)
+        elif mode == 'regression':
+            feed_dict = self._unpack_reg(**kwargs)
+        elif mode == 'classification':
+            feed_dict = self._unpack_clf(**kwargs)
+        else:
+            raise ValueError("Argument 'mode' must be one of following strings: "
+                             + " ('segmentation', 'regression', 'classification')")
+
+        self.targets = feed_dict['targets']
+        self.inputs = feed_dict['inputs']
         return self
