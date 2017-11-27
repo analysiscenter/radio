@@ -28,7 +28,7 @@ from .rotate import rotate_3D
 AIR_HU = -2000
 DARK_HU = -2000
 KMEANS_MINIBATCH = 10000
-KMEANS_ITERS = 20
+KMEANS_ITERS = 5
 
 
 class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
@@ -392,30 +392,34 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
-    def _preload_shapes(self):
-        """ Read shapes of scans dumped with blosc, update self._bounds.
+    def _preload_skyscraper_components(self, components):
+        """ Read shapes of skyscraper-components dumped with blosc,
+        allocate memory for them, update self._bounds.
 
-        `_preload_shapes` is used in _init_load_blosc.
+        Used for more efficient load of blosc in terms of memory.
 
-        Returns
-        -------
-        (int, int)
-            `y, x` dims shape of a scan.
+        Parameters
+        ---------
+        components : iterable of components we need to preload.
+
         """
-        shapes = np.zeros((len(self), 3), dtype=np.int)
-        for ix in self.indices:
-            filename = os.path.join(self.index.get_fullpath(ix), 'images_shape.cpkl')
-            ix_pos = self._get_verified_pos(ix)
+        for component in components:
+            shapes = np.zeros((len(self), 3), dtype=np.int)
+            for ix in self.indices:
+                filename = os.path.join(self.index.get_fullpath(ix), component, 'data.shape')
+                ix_pos = self._get_verified_pos(ix)
 
-            # read shape and put it into shapes
-            with open(filename, 'rb') as file:
-                shapes[ix_pos, :] = cloudpickle.load(file)
+                # read shape and put it into shapes
+                with open(filename, 'rb') as file:
+                    shapes[ix_pos, :] = cloudpickle.load(file)
 
-        # update bounds of items
-        self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
+            # update bounds of items
+            # TODO: add bounds for other components
+            self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
 
-        # return shape of slices
-        return shapes[0, 1], shapes[0, 2]
+            # fill the component with zeroes (memory preallocation)
+            skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
+            setattr(self, component, np.zeros(skysc_shape))
 
     def _init_load_blosc(self, **kwargs):
         """ Init-function for load from blosc.
@@ -423,7 +427,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         **kwargs
-                `src` : iterable of components that need to be loaded
+                src : iterable of components that need to be loaded
 
         Returns
         -------
@@ -432,29 +436,23 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
         if 'images' in kwargs['src']:
-            slice_shape = self._preload_shapes()
-            skysc_shape = (self._bounds[-1], ) + slice_shape
-            self.images = np.zeros(skysc_shape)
+            self._preload_skyscraper_components(['images'])
 
         return self.indices
 
     @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async', update=False)
-    async def _load_blosc(self, patient_id, *args, **kwargs):
+    async def _load_blosc(self, item_ix, *args, **kwargs):
         """ Read scans from blosc and put them into batch components
 
         Parameters
         ----------
-        patient_id : str
-                     patient index from batch to load 3D array
-                     and stack with others in images component.
+        item_ix : str
+            item index from batch to load 3D array
+            and stack with others in images component.
         **kwargs
                  src : tuple
-                       tuple of strings with names ofcomponents of data
-                       that should be loaded into self
-        Returns
-        -------
-        None
-             `_load_blosc` changes components in self
+                     tuple of strings with names ofcomponents of data
+                     that should be loaded into self
 
         Note
         ----
@@ -466,17 +464,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             # set correct extension for each component and choose a tool
             # for debyting and (possibly) decoding it
             if source in ['spacing', 'origin']:
-                ext = '.cpkl'
+                ext = 'cpkl'
                 unpacker = cloudpickle.loads
             else:
-                ext = '.blk'
+                ext = 'blk'
                 def unpacker(byted):
                     """ Debyte and decode an ndarray
                     """
                     debyted = blosc.unpack_array(byted)
 
                     # read the decoder and apply it
-                    decod_path = os.path.join(self.index.get_fullpath(patient_id), source + '.decoder')
+                    decod_path = os.path.join(self.index.get_fullpath(item_ix), source, 'data.decoder')
 
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
@@ -487,7 +485,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
                     return decoder(debyted)
 
-            comp_path = os.path.join(self.index.get_fullpath(patient_id), source + ext)
+            comp_path = os.path.join(self.index.get_fullpath(item_ix), source, 'data' + '.' + ext)
 
             # read the component
             async with aiofiles.open(comp_path, mode='rb') as file:
@@ -497,7 +495,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             component = unpacker(byted)
 
             # update needed slice(s) of component
-            comp_pos = self.get_pos(None, source, patient_id)
+            comp_pos = self.get_pos(None, source, item_ix)
             getattr(self, source)[comp_pos] = component
 
         return None
@@ -562,7 +560,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @classmethod
     async def encode_dump_array(cls, data, folder, filename, mode):
         """ Encode an ndarray to int8, blosc-pack it and dump data along with
-        the decoder into supplied folder
+        the decoder and shape of data into supplied folder.
 
         Parameters
         ----------
@@ -580,9 +578,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Note
         ----
-        to encode ndarray to int8, we linearly transform the data to
-            int8-range and drop the fractional part. Decoder is then given by
-            inverse linear transformation
+        currently, two modes of encoding are supported:
+         - 'linear': uses linear Transformation to cast data-range to int8-range
+            and then rounds off fractional part.
+         - 'quantization': attempts to use histogram of pixel densities to come up with a
+            transformation to int8-range that yields lesser error than linear.
         """
         # parse mode of encoding
         if isinstance(mode, int):
@@ -591,6 +591,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 mode = _modes[mode]
         elif isinstance(mode, str):
             mode = mode.lower()
+
+        fname_noext = filename.split('.')[:-1]
+
+        # init list of serialized objects and filenames for dump
+        byted, fnames = list(), list()
 
         # encode the data and get the decoder
         if mode == 'linear':
@@ -605,9 +610,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 encoded = np.rint(cls.get_linear(data_range, i8_range)(data)).astype(np.int8)
                 decoder = cls.get_linear(i8_range, data_range)
 
-            # serialize encoded data and decoder
-            byted = (blosc.pack_array(encoded, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
-            fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
+            # serialize decoder
+            byted.append(cloudpickle.dumps(decoder))
+            fnames.append(fname_noext + '.decoder')
         elif mode == 'quantization':
 
             # set up quantization model
@@ -625,16 +630,20 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             # prepare decoder
             decoder = lambda x: (model.cluster_centers_[x + 128]).reshape(data.shape)
 
-            # serialize encoded data and decoder
-            byted = (blosc.pack_array(encoded, cname='zstd', clevel=1), cloudpickle.dumps(decoder))
-            fnames = (filename, '.'.join(filename.split('.')[:-1] + ['decoder']))
+            # serialize decoder
+            byted.append(cloudpickle.dumps(decoder))
+            fnames.append(fname_noext + '.decoder')
         elif mode is None:
-            byted = (blosc.pack_array(data, cname='zstd', clevel=1), )
-            fnames = (filename, )
+            encoded = data
 
         else:
             raise ValueError('Unknown mode of int8-encoding')
 
+        # serialize (possibly) encoded data and its shape
+        byted.extend([blosc.pack_array(encoded, cname='zstd', clevel=1), cloudpickle.dumps(np.array(data.shape))])
+        fnames.extend([filename, fname_noext + '.shape'])
+
+        # dump serialized items
         for btd, fname in zip(byted, fnames):
             async with aiofiles.open(os.path.join(folder, fname), mode='wb') as file:
                 _ = await file.write(btd)
@@ -649,10 +658,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         cls : type
             class from which the method is executed
         data_items : dict
-            dict of data items for dump in form {item_name.ext: item}
-            (e.g.: {'images.blk': scans, 'masks.blk': masks, 'spacing.cpkl': spacing})
+            dict of data items for dump in form {item_name: [item, 'ext']}
+            (e.g.: {'images': [scans, 'blk'], 'masks': [masks, 'blk'], 'spacing': [spacing, 'cpkl']})
         folder : str
-            folder to dump data-items in
+            folder to dump data-items in. Note that each data item is dumped in its separate folder
         i8_encoding_mode: str, int, or dict
             contains mode of encoding to int8
 
@@ -667,27 +676,28 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             os.makedirs(folder)
 
         # infer extension of each item, serialize/blosc-pack and dump the item
-        for filename, data in data_items.items():
-            ext = filename.split('.')[-1]
+        for item_name, (data, ext) in data_items.items():
+            item_folder = os.path.join(folder, item_name)
+            if not os.path.exists(item_folder):
+                os.makedirs(item_folder)
             if ext == 'blk':
-                item_name = '.'.join(filename.split('.')[:-1])
                 if isinstance(i8_encoding_mode, dict):
                     mode = i8_encoding_mode.get(item_name, None)
                 else:
                     mode = i8_encoding_mode
 
-                _ = await cls.encode_dump_array(data, folder, filename, mode)
+                _ = await cls.encode_dump_array(data, item_folder, 'data.blk', mode)
 
             elif ext == 'cpkl':
                 byted = cloudpickle.dumps(data)
-                async with aiofiles.open(os.path.join(folder, filename), mode='wb') as file:
+                async with aiofiles.open(os.path.join(item_folder, 'data.cpkl'), mode='wb') as file:
                     _ = await file.write(byted)
 
         return None
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, patient, dst, src=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
+    async def dump(self, item_ix, dst, src=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Parameters
@@ -726,19 +736,19 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         The command above creates following files:
 
-        - ./data/blosc_preprocessed/1ae34g90/images.blk
-        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
-        - ./data/blosc_preprocessed/1ae34g90/origin.cpkl
-        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/images/data.blk
+        - ./data/blosc_preprocessed/1ae34g90/images/data.shape
+        - ./data/blosc_preprocessed/1ae34g90/spacing/data.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/origin/data.cpkl
 
-        - ./data/blosc_preprocessed/3hf82s76/images.blk
-        - ./data/blosc_preprocessed/1ae34g90/spacing.cpkl
-        - ./data/blosc_preprocessed/3hf82s76/origin.cpkl
-        - ./data/blosc_preprocessed/1ae34g90/shape.cpkl
+        - ./data/blosc_preprocessed/3hf82s76/images/data.blk
+        - ./data/blosc_preprocessed/3hf82s76/images/data.shape
+        - ./data/blosc_preprocessed/3hf82s76/spacing/data.cpkl
+        - ./data/blosc_preprocessed/3hf82s76/origin/data.cpkl
         """
-        # if src is not supplied, dump all components and shapes
+        # if src is not supplied, dump all components
         if src is None:
-            src = self.components + ('images_shape', )
+            src = self.components
 
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
@@ -747,25 +757,21 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         src = np.asarray(src).reshape(-1)
         data_items = dict()
 
-        # whenever images are to be dumped, shape should also be dumped
-        if 'images' in src and 'images_shape' not in src:
-            src = tuple(src) + ('images_shape', )
-
-        # set correct extension to each component and add it to items-dict
+        # get correct extension for each component, add the component to items-dict
         for source in list(src):
-            if source in ['spacing', 'origin', 'images_shape']:
-                ext = '.cpkl'
+            if source in ['spacing', 'origin']:
+                ext = 'cpkl'
             else:
-                ext = '.blk'
+                ext = 'blk'
             # determine position in data of source-component for the patient
-            comp_pos = self.get_pos(None, source, patient)
-            data_items.update({source + ext: getattr(self, source)[comp_pos]})
+            comp_pos = self.get_pos(None, source, item_ix)
+            data_items.update({source: [getattr(self, source)[comp_pos], ext]})
 
-        # set patient-specific folder
-        patient_folder = patient if index_to_name is None else index_to_name(patient)
-        folder = os.path.join(dst, patient_folder)
+        # set item-specific folder
+        item_subdir = item_ix if index_to_name is None else index_to_name(item_ix)
+        item_dir = os.path.join(dst, item_subdir)
 
-        return await self.dump_data(data_items, folder, i8_encoding_mode)
+        return await self.dump_data(data_items, item_dir, i8_encoding_mode)
 
     def get_pos(self, data, component, index):
         """ Return a positon of an item for a given index in data

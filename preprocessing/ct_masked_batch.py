@@ -934,22 +934,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Parameters
         ----------
         **kwargs
-                src :     str, list or tuple
-                          iterable of components names that need to be loaded
+                src : str, list or tuple
+                    iterable of components names that need to be loaded
         Returns
         -------
         list
             list of ids of batch-items, i.e. series ids or patient ids.
         """
-        # read shapes, fill the components with zeroes if masks, images need to
-        # be updated
-        if 'masks' in kwargs['src'] or 'images' in kwargs['src']:
-            slice_shape = self._preload_shapes()
-            skysc_shape = (self._bounds[-1], ) + slice_shape
-
-            # fill needed comps with zeroes
-            for source in {'images', 'masks'} & set(kwargs['src']):
-                setattr(self, source, np.zeros(skysc_shape))
+        # fill 'images', 'masks'-comps with zeroes if needed
+        skysc_components = {'images', 'masks'} & set(kwargs['src'])
+        self._preload_skyscraper_components(skysc_components)
 
         return self.indices
 
