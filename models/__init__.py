@@ -5,6 +5,3 @@ from .tensorflow.architectures import DilatedNoduleVNet
 from .keras.architectures import KerasNoduleVnet
 from .keras.architectures import KerasResNoduleNet
 from .keras.architectures import KerasNoduleVGG
-from .utils import unpack_seg
-from .utils import unpack_clf
-from .utils import unpack_reg
