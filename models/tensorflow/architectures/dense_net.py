@@ -2,7 +2,7 @@
 # pylint: disable=not-context-manager
 """ Contains DenseNet model class. """
 
-
+import tensorflow as tf
 from ....dataset.models.tf import DenseNet
 
 

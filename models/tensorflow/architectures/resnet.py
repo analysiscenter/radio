@@ -4,7 +4,8 @@
 # pylint: disable=anomalous-backslash-in-string
 """ Contains TFResNet model class. """
 
-
+import numpy as np
+import tensorflow as tf
 from ....dataset.models.tf import ResNet
 
 
