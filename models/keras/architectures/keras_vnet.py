@@ -18,7 +18,7 @@ from ..keras_model import KerasModel
 from ..losses import dice_loss
 
 
-class KerasNoduleVnet(KerasModel):
+class KerasNoduleVNet(KerasModel):
     """ Model incapsulating NoduleVNet architecture for 3D scans implemented in keras.
 
     This class extends KerasModel class.
