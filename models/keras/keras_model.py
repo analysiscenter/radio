@@ -26,6 +26,10 @@ class KerasModel(Model, BaseModel):
         self.compile(loss=self.get_from_config('loss', None),
                      optimizer=self.get_from_config('optimizer', 'sgd'))
 
+    def get_from_config(self, key, default=None):
+        """ Get value corresponding to key in config dictionary. """
+        return self.config.get(key, default)
+
     def _build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
         raise NotImplementedError("This method must be implemented in ancestor model class")
