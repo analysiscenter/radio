@@ -6,7 +6,7 @@
 from ....dataset.models.tf import DenseNet
 
 
-class NoduleDenseNet(DenseNet):
+class DenseNoduleNet(DenseNet):
     """ Implementation of custom DenseNet architecture for lung cancer detection.
 
     Full description of similar 2D model architecture can be downloaded from here:

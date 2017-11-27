@@ -64,7 +64,7 @@ def dilated_branches(input_tensor, filters, kernel_size, dilation_rate, name,
     return output_tensor
 
 
-class NoduleVNet(TFModel):
+class DilatedNoduleVNet(TFModel):
     """ Implementation of custom VNet architecture with dilated convolutions.
 
     **Configuration**
