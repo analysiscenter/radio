@@ -31,8 +31,8 @@ class KerasResNoduleNet(KerasModel):
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model.
-    units : tuple(int, int) or tuple(int) or None
-        number of units in two final dense layers before tensor with
+    units : tuple(int, int) or int or None
+        number of units in final dense layers before tensor with
         predicitons. default: (512, 256).
     num_targets : int
         size of tensor with predicitons. default: 1.
