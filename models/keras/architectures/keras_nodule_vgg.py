@@ -26,14 +26,14 @@ class KerasNoduleVGG(KerasModel):
         see configuring model section of dataset module
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
-        name of the model, can be specified in config dict.
+        name of the model.
     units : tuple(int, int) or tuple(int) or None
-        number of units in two final dense layers before tensor with predicitons,
-        can be specified in config dict.
+        number of units in final dense layers before tensor with
+        predicitons. default: (512, 256).
     num_targets : int
-        size of tensor with predicitons, can be specified in config dict.
+        size of tensor with predicitons. default: 1.
     dropout_rate : float
-        probability of dropout, can be specified in config dict.
+        probability of dropout. default: 0.35.
 
     Note
     ----
