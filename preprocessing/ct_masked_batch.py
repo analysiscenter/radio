@@ -896,7 +896,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         # fill 'images', 'masks'-comps with zeroes if needed
         skysc_components = {'images', 'masks'} & set(kwargs['src'])
-        self._preload_skyscraper_components(skysc_components)
+        self._prealloc_skyscraper_components(skysc_components)
 
         return self.indices
 

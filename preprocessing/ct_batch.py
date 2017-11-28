@@ -392,7 +392,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
-    def _preload_skyscraper_components(self, components):
+    def _prealloc_skyscraper_components(self, components):
         """ Read shapes of skyscraper-components dumped with blosc,
         allocate memory for them, update self._bounds.
 
@@ -436,7 +436,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
         if 'images' in kwargs['src']:
-            self._preload_skyscraper_components(['images'])
+            self._prealloc_skyscraper_components(['images'])
 
         return self.indices
 
