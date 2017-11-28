@@ -237,7 +237,7 @@ class KerasResNoduleNet(KerasModel):
         z = Flatten()(x)
 
         for i, units in enumerate(self.units):
-            z = Dense(units, name='Dense_' + str(i))(z)
+            z = Dense(units, name='Dense-' + str(i))(z)
             z = BatchNormalization(axis=-1)(z)
             z = Activation('relu')(z)
 
