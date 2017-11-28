@@ -55,6 +55,8 @@ class KerasResNoduleNet(KerasModel):
             self.units = ()
         elif isinstance(_units, int):
             self.units = (_units, )
+        else:
+            self.units = _units
 
         super().__init__(*args, **kwargs)
 
