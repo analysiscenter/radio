@@ -392,7 +392,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
-    def _prealloc_skyscraper_components(self, components):
+    def _prealloc_skyscraper_components(self, components, fmt='blosc'):
         """ Read shapes of skyscraper-components dumped with blosc,
         allocate memory for them, update self._bounds.
 
@@ -401,8 +401,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ---------
         components : iterable of components we need to preload.
+        fmt : format in which components are stored on disk.
 
         """
+        if fmt != 'blosc':
+            raise NotImplementedError('Preload from {} is not implemented yet'.format(fmt))
+
         for component in components:
             shapes = np.zeros((len(self), 3), dtype=np.int)
             for ix in self.indices:
