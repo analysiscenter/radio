@@ -4,7 +4,7 @@
 import tensorflow as tf
 from keras.layers import Input, Flatten
 from keras.layers import Conv3D, MaxPooling3D
-from keras.layers import Dropout
+from keras.layers import Dropout, Activation
 from keras.layers import Dense, BatchNormalization
 
 from ..keras_model import KerasModel
