@@ -31,7 +31,7 @@ class KerasResNoduleNet(KerasModel):
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model, can be specified in config dict.
-    units : tuple(int, int) or tuple(int) or tuple()
+    units : tuple(int, int) or tuple(int) or None
         number of units in two final dense layers before tensor with predicitons,
         can be specified in config dict. Can be int or None.
     num_targets : int
@@ -50,13 +50,15 @@ class KerasResNoduleNet(KerasModel):
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
         self.num_targets = self.get_from_config('num_targets', 1)
 
-        _units = self.get_from_config('units', (256, 128))
-        if _units is None:
+        units = self.get_from_config('units', (512, 256))
+        if units is None:
             self.units = ()
-        elif isinstance(_units, int):
-            self.units = (_units, )
+        elif isinstance(units, int):
+            self.units = (units, )
+        elif isinstance(units, (tuple, list)):
+            self.units = tuple(units)
         else:
-            self.units = _units
+            raise ValueError("Configuration of 'units' must be None, int or tuple of ints")
 
         super().__init__(*args, **kwargs)
 
