@@ -27,7 +27,7 @@ class KerasResNoduleNet(KerasModel):
     ----------
     config : dict
         config dictionary from dataset pipeline
-        see configuring model section of dataset module
+        see configuring model section of dataset module:
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model, can be specified in config dict.
@@ -124,8 +124,8 @@ class KerasResNoduleNet(KerasModel):
     def conv_block(self, input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 2)):
         """ Convolutional block that has a conv layer at shortcut.
 
-        First of all, 3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
-        batch normalization and `relu` activation is applied. Then the result
+        3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
+        batch normalization and `relu` activation are applied. Then resulting tensor
         flows into 3D-convolution with (3, 3, 3) kernel size, batch normalization
         and `relu` activation. Finally, the result of previous convolution goes
         into 3D-convolution with (1, 1, 1) kernel size, batch normalization

@@ -1,4 +1,4 @@
 """ Contains neural network architectures for lung cancer detection implemented in tensorflow. """
-from .dense_net import DenseNoduleNet
-from .resnet import ResNoduleNet
-from .vnet import DilatedNoduleVNet
+from .dense_nodule_net import DenseNoduleNet
+from .res_nodule_net import ResNoduleNet
+from .nodule_vnet import DilatedNoduleVNet
