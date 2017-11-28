@@ -230,7 +230,7 @@ class KerasResNoduleNet(KerasModel):
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='f')
         x = Dropout(rate=self.dropout_rate)(x)
 
-        x = self.conv_block(x, 3, [128, 128, 512], stage=5, block='a', strides=(2, 2, 2))
+        x = self.conv_block(x, 3, [128, 128, 512], stage=5, block='a')
         x = self.identity_block(x, 3, [128, 128, 512], stage=5, block='b')
         x = self.identity_block(x, 3, [128, 128, 512], stage=5, block='c')
 
