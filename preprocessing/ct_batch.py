@@ -568,14 +568,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        cls : type
-            class from which the method is executed
         data : ndarray
             contains numeric (e.g., float32) data to be dumped
         folder : str
             folder for dump
         filename : str
-            name of file where the data is dumped; has format name.ext
+            name of file in which the data is dumped; has format name.ext
         mode : str or None
             Mode of encoding to int8. Can be either 'quantization' or 'linear'
             or None
@@ -583,10 +581,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Note
         ----
         currently, two modes of encoding are supported:
-         - 'linear': uses linear Transformation to cast data-range to int8-range
-            and then rounds off fractional part.
+         - 'linear': maps linearly data-range to int8-range and then rounds off fractional part.
          - 'quantization': attempts to use histogram of pixel densities to come up with a
-            transformation to int8-range that yields lesser error than linear.
+            transformation to int8-range that yields lesser error than linear mapping.
         """
         # parse mode of encoding
         if isinstance(mode, int):
@@ -659,20 +656,19 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        cls : type
-            class from which the method is executed
         data_items : dict
             dict of data items for dump in form {item_name: [item, 'ext']}
             (e.g.: {'images': [scans, 'blk'], 'masks': [masks, 'blk'], 'spacing': [spacing, 'cpkl']})
         folder : str
-            folder to dump data-items in. Note that each data item is dumped in its separate folder
+            folder to dump data-items in. Note that each data item is dumped in its separate subfolder
+            inside the supplied folder.
         i8_encoding_mode: str, int, or dict
             contains mode of encoding to int8
 
         Note
         ----
         Depending on supplied format in data_items, each data-item will be either
-            cloudpickle-serialized (if .cpkl) or blosc-packed (if .blk)
+            cloudpickle-serialized (if 'cpkl') or blosc-packed (if 'blk')
         """
 
         # create directory if does not exist
@@ -710,24 +706,24 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             destination-folder where all patients' data should be put
         src : str or list/tuple
             component(s) that we need to dump (smth iterable or string). If not
-            supplied, dump all components + shapes of scans
+            supplied, dump all components
         fmt : 'blosc'
             format of dump. Currently only blosc-format is supported;
-            in this case folder for each patient is created, patient's data
-            is put into images.blk, attributes are put into files attr_name.cpkl
-            (e.g., spacing.cpkl)
+            in this case folder for each patient is created. Tree-structure of created
+            files is demonstrated in the example below.
         index_to_name : callable or None
-            returns str;
-            function that relates each item's index to a name of item's folder.
+            When supplied, should return str;
+            A function that relates each item's index to a name of item's folder.
             That is, each item is dumped into os.path.join(dst, index_to_name(items_index)).
-            If None, no transformation is applied.
+            If None, no transformation is applied and the method attempts to use indices of batch-items
+            as names of items' folders.
         i8_encoding_mode : int, str or dict
-            whether components with .blk-format should be cast to int8-type.
-            The cast allows to save space on disk and to speed up batch-loading. However,
-            the cast comes with loss of precision, as originally .blk-components are stored
+            whether (and how) components of skyscraper-type should be cast to int8.
+            If None, no cast is performed. The cast allows to save space on disk and to speed up batch-loading.
+            However, it comes with loss of precision, as originally skyscraper-components are stored
             in float32-format. Can be int: 0, 1, 2 or str/None: 'linear', 'quantization' or None.
-            0 or None stand for no encoding. 1 stands for 'linear', 2 - for 'quantization'.
-            Can also be dict of modes, e.g.: {'images': 'linear', 'masks': 0}
+            0 or None disable the cast. 1 stands for 'linear', 2 - for 'quantization'.
+            Can also be component-wise dict of modes, e.g.: {'images': 'linear', 'masks': 0}.
 
         Example
         -------
