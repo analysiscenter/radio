@@ -27,7 +27,7 @@ class KerasNoduleVGG(KerasModel):
         https://analysiscenter.github.io/dataset/intro/models.html.
     name : str
         name of the model, can be specified in config dict.
-    units : tuple(int, int)
+    units : tuple(int, int) or tuple(int) or None
         number of units in two final dense layers before tensor with predicitons,
         can be specified in config dict.
     num_targets : int
