@@ -43,9 +43,19 @@ class KerasNoduleVGG(KerasModel):
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel and add specific for KerasNoduleVGG attributes. """
         self.config = kwargs.get('config', {})
-        self.units = self.get_from_config('units', (512, 256))
         self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
         self.num_targets = self.get_from_config('num_targets', 1)
+
+        units = self.get_from_config('units', (512, 256))
+        if units is None:
+            self.units = ()
+        elif isinstance(units, int):
+            self.units = (units, )
+        elif isinstance(units, (tuple, list)):
+            self.units = tuple(units)
+        else:
+            raise ValueError("Configuration of 'units' must be None, int or tuple of ints")
+
         super().__init__(*args, **kwargs)
 
     def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
@@ -128,11 +138,11 @@ class KerasNoduleVGG(KerasModel):
             max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2))(conv3)
         return max_pool
 
-    def classification_block(self, input_tensor, scope='ClassificationBlock'):
-        """ Classification block of NoduleVGG architecture.
+    def dense_block(self, input_tensor, scope='ClassificationBlock'):
+        """ Dense block of NoduleVGG architecture.
 
         This block consists of flatten operation applied to input_tensor.
-        Then there is two fully connected layers with 'relu' activation,
+        Then there is several fully connected layers with 'relu' activation,
         batch normalization and dropout layers. This block should be put
         in the end of the model.
 
@@ -140,8 +150,6 @@ class KerasNoduleVGG(KerasModel):
         ----------
         input_tensor : keras tensor
             input tensor.
-        units : tuple(int, int)
-            number of units in first and second dense layers.
         dropoout_rate : float
             probability of dropout.
         scope : str
@@ -152,16 +160,13 @@ class KerasNoduleVGG(KerasModel):
             output tensor.
         """
         with tf.variable_scope(scope):
-            units_1, units_2 = self.units
-
-            layer = Flatten(name='flatten')(input_tensor)
-            layer = Dense(units_1, activation='relu', name='fc1')(layer)
-            layer = BatchNormalization(axis=-1)(layer)
-            layer = Dropout(self.dropout_rate)(layer)
-            layer = Dense(units_2, activation='relu', name='fc2')(layer)
-            layer = BatchNormalization(axis=-1)(layer)
-            layer = Dropout(self.dropout_rate)(layer)
-        return layer
+            z = Flatten(name='flatten')(input_tensor)
+            for i, units in enumerate(self.units):
+                z = Dense(units, name='Dense-{}'.format(i))(z)
+                z = BatchNormalization(axis=-1)(z)
+                z = Activation('relu')(z)
+                z = Dropout(self.dropout_rate)(z)
+        return z
 
     def _build(self, *args, **kwargs):
         """ Build NoduleVGG model implemented in keras.
@@ -178,7 +183,7 @@ class KerasNoduleVGG(KerasModel):
         block_D = self.reduction_block_II(block_C, 256, scope='Block_D')
         block_E = self.reduction_block_II(block_D, 256, scope='Block_E')
 
-        block_F = self.classification_block(block_E, scope='ClassificationBlock')
+        block_F = self.dense_block(block_E, scope='ClassificationBlock')
 
         output_tensor = Dense(self.num_targets,
                               activation='sigmoid',
