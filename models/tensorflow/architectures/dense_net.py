@@ -4,7 +4,7 @@
 """ Contains DenseNet model class. """
 
 import tensorflow as tf
-from ....dataset.models.tf import DenseNet
+from ....dataset.dataset.models.tf import DenseNet
 
 
 class DenseNoduleNet(DenseNet):

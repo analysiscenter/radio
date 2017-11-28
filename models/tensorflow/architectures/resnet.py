@@ -7,7 +7,7 @@
 
 import numpy as np
 import tensorflow as tf
-from ....dataset.models.tf import ResNet
+from ....dataset.dataset.models.tf import ResNet
 
 
 class ResNoduleNet(ResNet):
