@@ -48,13 +48,10 @@ class KerasNoduleVGG(KerasModel):
 
         units = self.get_from_config('units', (512, 256))
         if units is None:
-            self.units = ()
+            units = ()
         elif isinstance(units, int):
-            self.units = (units, )
-        elif isinstance(units, (tuple, list)):
-            self.units = tuple(units)
-        else:
-            raise ValueError("Configuration of 'units' must be None, int or tuple of ints")
+            units = (units, )
+        self.units = tuple(units)
 
         super().__init__(*args, **kwargs)
 
