@@ -5,6 +5,11 @@ import functools
 import numpy as np
 import tensorflow as tf
 from keras.models import Model
+
+from keras.layers import Flatten
+from keras.layers import Dropout, Activation
+from keras.layers import Dense, BatchNormalization
+
 from ...dataset.dataset.models import BaseModel
 
 
