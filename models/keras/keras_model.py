@@ -3,6 +3,7 @@
 
 import functools
 import numpy as np
+import tensorflow as tf
 from keras.models import Model
 from ...dataset.dataset.models import BaseModel
 
