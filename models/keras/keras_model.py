@@ -16,7 +16,7 @@ class KerasModel(Model, BaseModel):
     """
     def __init__(self, name=None, config=None, *args, **kwargs):
         """ Create keras model. """
-        super(BaseModel, self).__init__(name, config, *args, **kwargs)
+        BaseModel.__init__(self, name, config, *args, **kwargs)
 
     def build_config(self):
         """ Build config. """
