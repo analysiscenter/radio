@@ -1221,7 +1221,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         threshold : int
             minimum number of '1' pixels in mask to consider it cancerous.
 
-        Returns:
+        Returns
+        -------
         dict
             {'inputs': images_array, 'targets': y_regression_array}
 
