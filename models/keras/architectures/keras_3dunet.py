@@ -174,8 +174,10 @@ class Keras3DUNet(KerasModel):
         return conv2
 
     def _build(self, *args, **kwargs):
-        """ Build 3D U-Net model implemented in keras. """
-        inputs = Input((1, 32, 64, 64))
+        """ Build 3D NoduleVnet model implemented in keras. """
+        num_targets = self.get('num_targets', self.config)
+
+        input_tensor = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
         # block_A has shape (None, 32, 64, 64, 32), reduct_block_A has shape (None, 16, 32, 32, 32)
@@ -216,7 +218,7 @@ class Keras3DUNet(KerasModel):
                                                  32, scope='UpsamplingBlock_A')
 
         # Final convolution
-        final_conv = Conv3D(1, (1, 1, 1),
+        final_conv = Conv3D(num_targets, (1, 1, 1),
                             activation='sigmoid',
                             data_format="channels_first",
                             padding='same')(upsample_block_A)
