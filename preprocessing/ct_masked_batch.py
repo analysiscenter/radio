@@ -1264,7 +1264,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def set_targets(self, mode='segmentation', **kwargs):
-        """ Prepare data in batch for learning neural network.
+        """ Prepare data in batch for training neural network.
 
         Parameters
         ----------
