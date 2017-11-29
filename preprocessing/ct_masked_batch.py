@@ -1181,8 +1181,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         dict
             {'inputs': images_array, 'targets': labels_array}
 
-        Note
-        ----
+        Notes
+        -----
         'dim_ordering' argument reflects where to put '1'
         for channels dimension both for images and masks.
         """
@@ -1205,8 +1205,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         dict
             {'inputs': images_array, 'targets': labels_array}
 
-        Note
-        ----
+        Notes
+        -----
         'dim_ordering' argument reflects where to put '1' for channels dimension.
         """
         masks_labels = np.asarray([self.get(i, 'masks').sum() > threshold
@@ -1228,8 +1228,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         dict
             {'inputs': images_array, 'targets': y_regression_array}
 
-        Note
-        ----
+        Notes
+        -----
         'dim_ordering' argument reflects where to put '1' for channels dimension.
 
         """
