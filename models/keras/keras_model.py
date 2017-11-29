@@ -76,7 +76,7 @@ class KerasModel(Model, BaseModel):
         with tf.variable_scope(scope):
             z = Flatten(name='flatten')(inputs)
             for i, u in enumerate(units):
-                z = Dense(u, name='Dense-'.format(u))(z)
+                z = Dense(u, name='Dense-{}'.format(u))(z)
                 z = BatchNormalization(axis=-1)(z)
                 z = Activation(activation)(z)
                 if dropout is not None:
