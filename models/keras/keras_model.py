@@ -14,20 +14,64 @@ class KerasModel(Model, BaseModel):
     keras models. Implements train and predict methods.
 
     """
-    def __init__(self, *args, **kwargs):
-        """ Call __init__ of BaseModel not keras.models.Model. """
-        BaseModel.__init__(self, *args, **kwargs)
+    def build_config(self):
+        """ Build config. """
+        num_targets = self.get('num_targets', self.config, 1)
+        dropout_rate = self.get('dropout_rate', self.config, 0.35)
+        units = self.get('units', self.config, (512, 256))
+        if isinstance(units, int):
+            units = (units, )
+        elif units is None:
+            units = ()
+        self.config.update({'units': units,
+                            'dropout_rate': dropout_rate,
+                            'num_targets': num_targets})
 
     def build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
-        input_nodes, output_nodes = self._build(**self.config)
+        self.build_config()
+        input_nodes, output_nodes = self._build()
         Model.__init__(self, input_nodes, output_nodes)
-        self.compile(loss=self.get_from_config('loss', None),
-                     optimizer=self.get_from_config('optimizer', 'sgd'))
+        self.compile(loss=self.get('loss', self.config, None),
+                     optimizer=self.get('optimizer', self.config, 'sgd'))
 
     def _build(self, *args, **kwargs):
         """ Must return inputs and outputs. """
         raise NotImplementedError("This method must be implemented in ancestor model class")
+
+    @classmethod
+    def dense_block(cls, inputs, units, activation='relu', dropout=None, scope='DenseBlock'):
+        """ Dense block for keras models.
+
+        This block consists of flatten operation applied to inputs tensor.
+        Then there is several fully connected layers with same activation,
+        batch normalization and dropout layers. Usually this block is put
+        in the end of the neural network.
+
+        Parameters
+        ----------
+        inputs : keras tensor
+            input tensor.
+        units : tuple(int, ...)
+            tuple with number of units in dense layers followed one by one.
+        dropout : float or None
+            probability of dropout.
+        scope : str
+            scope name for this block, will be used as an argument of tf.variable_scope.
+
+        Returns:
+        keras tensor
+            output tensor.
+        """
+        with tf.variable_scope(scope):
+            z = Flatten(name='flatten')(inputs)
+            for i, u in enumerate(units):
+                z = Dense(u, name='Dense-'.format(i))(z)
+                z = BatchNormalization(axis=-1)(z)
+                z = Activation(activation)(z)
+                if dropout is not None:
+                    z = Dropout(dropout)(z)
+        return z
 
     def train(self, x=None, y=None, **kwargs):
         """ Wrapper for keras.models.Model.train_on_batch.
