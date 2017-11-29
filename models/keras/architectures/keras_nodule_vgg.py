@@ -181,10 +181,9 @@ class KerasNoduleVGG(KerasModel):
         block_D = self.reduction_block_II(block_C, 256, scope='Block_D')
         block_E = self.reduction_block_II(block_D, 256, scope='Block_E')
 
-        block_F = self.dense_block(block_E, scope='ClassificationBlock')
+        z = self.dense_block(block_E, units=self.get('units', self.config),
+                             dropout=dropout_rate, scope='DenseBlock-I')
 
-        output_tensor = Dense(self.num_targets,
-                              activation='sigmoid',
-                              name='predictions')(block_F)
+        output_layer = Dense(num_targets, activation='sigmoid', name='output')(z)
 
         return [inputs], [output_tensor]
