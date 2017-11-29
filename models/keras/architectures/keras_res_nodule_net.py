@@ -201,7 +201,10 @@ class KerasResNoduleNet(KerasModel):
         tuple([*input_nodes], [*output_nodes]);
             list of input nodes and list of output nodes.
         """
-        inputs = Input(shape=(32, 64, 64, 1))
+        num_targets = self.get('num_targets', self.config)
+        dropout_rate = self.get('dropout_rate', self.config)
+
+        input_tensor = Input(shape=(32, 64, 64, 1))
         x = Conv3D(filters=32, kernel_size=(5, 3, 3),
                    strides=(1, 2, 2), name='initial_conv', padding='same',
                    use_bias=False, kernel_initializer='glorot_normal')(inputs)
@@ -213,13 +216,13 @@ class KerasResNoduleNet(KerasModel):
                             block='a', strides=(1, 1, 1))
         x = self.identity_block(x, 3, [16, 16, 64], stage=2, block='b')
         x = self.identity_block(x, 3, [16, 16, 64], stage=2, block='c')
-        x = Dropout(rate=self.dropout_rate)(x)
+        x = Dropout(rate=dropout_rate)(x)
 
         x = self.conv_block(x, 3, [32, 32, 128], stage=3, block='a')
         x = self.identity_block(x, 3, [32, 32, 128], stage=3, block='b')
         x = self.identity_block(x, 3, [32, 32, 128], stage=3, block='c')
         x = self.identity_block(x, 3, [32, 32, 128], stage=3, block='d')
-        x = Dropout(rate=self.dropout_rate)(x)
+        x = Dropout(rate=dropout_rate)(x)
 
         x = self.conv_block(x, 3, [64, 64, 256], stage=4, block='a')
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='b')
@@ -227,18 +230,14 @@ class KerasResNoduleNet(KerasModel):
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='d')
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='e')
         x = self.identity_block(x, 3, [64, 64, 256], stage=4, block='f')
-        x = Dropout(rate=self.dropout_rate)(x)
+        x = Dropout(rate=dropout_rate)(x)
 
         x = self.conv_block(x, 3, [128, 128, 512], stage=5, block='a')
         x = self.identity_block(x, 3, [128, 128, 512], stage=5, block='b')
         x = self.identity_block(x, 3, [128, 128, 512], stage=5, block='c')
 
-        z = Flatten()(x)
-
-        for i, units in enumerate(self.units):
-            z = Dense(units, name='Dense-' + str(i))(z)
-            z = BatchNormalization(axis=-1)(z)
-            z = Activation('relu')(z)
+        z = self.dense_block(x, units=self.get('units', self.config),
+                             dropout=False, scope='DenseBlock-I')
 
         output_layer = Dense(
             self.num_targets, activation='sigmoid', name='output')(z)
