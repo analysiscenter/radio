@@ -1176,11 +1176,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
             can be 'channels_last' or 'channels_first'. Reflects where to put
             channels dimension: right after batch dimension or after all spatial axes.
 
-        Returns:
+        Returns
+        -------
         dict
             {'inputs': images_array, 'targets': labels_array}
 
-        NOTE
+        Note
         ----
         'dim_ordering' argument reflects where to put '1'
         for channels dimension both for images and masks.
