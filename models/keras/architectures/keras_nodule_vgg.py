@@ -184,6 +184,6 @@ class KerasNoduleVGG(KerasModel):
         z = self.dense_block(block_E, units=self.get('units', self.config),
                              dropout=dropout_rate, scope='DenseBlock-I')
 
-        output_layer = Dense(num_targets, activation='sigmoid', name='output')(z)
+        output_tensor = Dense(num_targets, activation='sigmoid', name='output')(z)
 
         return [inputs], [output_tensor]
