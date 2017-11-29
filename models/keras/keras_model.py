@@ -1,4 +1,5 @@
  # pylint: disable=super-init-not-called
+ # pylint: disable=not-context-manager
 """ Contains base class for all keras models. """
 
 import functools
@@ -75,7 +76,7 @@ class KerasModel(Model, BaseModel):
         """
         with tf.variable_scope(scope):
             z = Flatten(name='flatten')(inputs)
-            for i, u in enumerate(units):
+            for u in units:
                 z = Dense(u, name='Dense-{}'.format(u))(z)
                 z = BatchNormalization(axis=-1)(z)
                 z = Activation(activation)(z)
