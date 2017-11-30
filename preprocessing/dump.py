@@ -1,6 +1,8 @@
 """ Auxiliarry async functions for encoding and dump of data """
 
+import os
 import cloudpickle
+
 import numpy as np
 import aiofiles
 import blosc
