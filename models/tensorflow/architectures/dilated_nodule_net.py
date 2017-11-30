@@ -9,64 +9,6 @@ from ..utils import repeat_tensor
 from ....dataset.dataset.models.tf.layers import conv_block
 from ....dataset.dataset.models.tf import TFModel
 
-
-def dilated_branches(inputs, filters, kernel_size, dilation_rate, name,
-                     activation=tf.nn.relu, padding='same', is_training=True):
-    """ Convolutional block with parallel branches having different dilation rate.
-
-    Parameters
-    ----------
-    inputs : tf.Tensor
-        input tensor
-    filters : tuple(int, ...)
-        number of filters corresponding to branches with different dilation rate.
-    kernel_size : tuple(int, ...)
-        size of convolutional kernel corresponding to branches
-        with different dilation rate. Kernel size is considered
-        to be the same along [zyx] dimensions.
-    dilation_rate : tuple(int, ...)
-        dilation rate for convolutional branches. Dilation rate is considered
-        to be the same along [zyx] dimensions.
-    activation : tensorflow activation function
-    padding : str
-        padding to use in convolution operation. Can be 'same' or 'valid'.
-    is_training : bool or bool tensor
-        indicator of training or prediction mode.
-    name : str
-        name of the block that will be used as argument of tf.variable_scope.
-
-    Returns
-    -------
-    tf.Tensor
-    """
-
-    if not all(isinstance(arg, (tuple, list)) for arg in (filters, kernel_size, dilation_rate)):
-        raise ValueError("Arguments 'filters', 'kernel_size', 'dilation_rate' "
-                         + "must be tuples or lists")
-
-    branches = []
-    with tf.variable_scope(name):
-        for f, k, d in zip(filters, kernel_size, dilation_rate):
-
-            if not isinstance(k, (tuple, list)):
-                _ksize = [k] * 3
-            else:
-                _ksize = k
-
-            if not isinstance(d, (tuple, list)):
-                _drate = [d] * 3
-            else:
-                _drate = d
-
-            b = bn_dilated_conv3d(inputs, f, _ksize, padding=padding,
-                                  is_training=is_training, activation=activation,
-                                  dilation=_drate, name='conv3d_rate_{}'.format(_drate[0]))
-            branches.append(b)
-        output_tensor = tf.concat(branches, axis=4)
-
-    return output_tensor
-
-
 class DilatedNoduleNet(TFModel):
     """ Implementation of custom encoder-decoder architecture with dilated convolutions.
 
@@ -111,6 +53,62 @@ class DilatedNoduleNet(TFModel):
         config['head']['num_classes'] = self.num_classes('targets')
         return config
 
+    def dilated_branches(cls, input_tensor, filters, kernel_size, dilation_rate, name,
+                         activation=tf.nn.relu, padding='same', is_training=True):
+        """ Convolutional block with parallel branches having different dilation rate.
+
+        Parameters
+        ----------
+        input_tensor : tf.Tensor
+            input tensor
+        filters : tuple(int, ...)
+            number of filters corresponding to branches with different dilation rate.
+        kernel_size : tuple(int, ...)
+            size of convolutional kernel corresponding to branches
+            with different dilation rate. Kernel size is considered
+            to be the same along [zyx] dimensions.
+        dilation_rate : tuple(int, ...)
+            dilation rate for convolutional branches. Dilation rate is considered
+            to be the same along [zyx] dimensions.
+        activation : tensorflow activation function
+        padding : str
+            padding to use in convolution operation. Can be 'same' or 'valid'.
+        is_training : bool or bool tensor
+            indicator of training or prediction mode.
+        name : str
+            name of the block that will be used as argument of tf.variable_scope.
+
+        Returns
+        -------
+        tf.Tensor
+        """
+
+        if not all(isinstance(arg, (tuple, list)) for arg in (filters, kernel_size, dilation_rate)):
+            raise ValueError("Arguments 'filters', 'kernel_size', 'dilation_rate' "
+                             +"must be tuples or lists")
+
+        branches = []
+        with tf.variable_scope(name):
+            for f, k, d in zip(filters, kernel_size, dilation_rate):
+
+                if not isinstance(k, (tuple, list)):
+                    _ksize = [k] * 3
+                else:
+                    _ksize = k
+
+                if not isinstance(d, (tuple, list)):
+                    _drate = [d] * 3
+                else:
+                    _drate = d
+
+                b = bn_dilated_conv3d(input_tensor, f, _ksize, padding=padding,
+                                      is_training=is_training, activation=activation,
+                                      dilation=_drate, name='conv3d_rate_{}'.format(_drate[0]))
+                branches.append(b)
+            output_tensor = tf.concat(branches, axis=4)
+
+        return output_tensor
+
     @classmethod
     def decoder_block(cls, inputs, filters, name, **kwargs):
         """ 3x3 convolution and 2x2 transposed convolution or upsampling
@@ -152,19 +150,21 @@ class DilatedNoduleNet(TFModel):
             x, skip = inputs
 
             if mode == 'deconv':
-                x = tf.layers.conv3d_transpose(x, filters, kernel, name='upsample',
-                                               strides=2, activation=tf.identity, use_bias=False)
+                x = tf.layers.conv3d_transpose(x, filters, kernel,
+                                               name='upsample', strides=2,
+                                               activation=tf.identity,
+                                               use_bias=False)
             elif mode == 'repeat':
                 x = repeat_tensor(x, repeat_times)
 
             x = cls.crop(x, skip, data_format=kwargs.get('data_format'))
             x = tf.concat((skip, x), axis=axis)
 
-            x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                 name='conv_I', is_training=is_training)
+            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
+                                     name='conv_I', is_training=is_training)
 
-            x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                 name='conv_II', is_training=is_training)
+            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
+                                     name='conv_II', is_training=is_training)
         return x
 
     @classmethod
@@ -196,11 +196,11 @@ class DilatedNoduleNet(TFModel):
         dilation_share /= dilation_share.sum()
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
         with tf.variable_scope(name):
-            x = dilated_branches(inputs, _filters, (3, 3, 3), dilation_rate,
-                                 name='conv_I', is_training=is_training)
+            x = cls.dilated_branches(inputs, _filters, (3, 3, 3), dilation_rate,
+                                     name='conv_I', is_training=is_training)
 
-            x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                 name='conv_II', is_training=is_training)
+            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
+                                     name='conv_II', is_training=is_training)
 
             downsampled_x = tf.layers.max_pooling3d(x, pool_size=(2, 2, 2),
                                                     strides=(2, 2, 2),
@@ -241,8 +241,8 @@ class DilatedNoduleNet(TFModel):
             x = bn_conv3d(inputs, filters, (1, 1, 1), padding='same',
                           name='conv3D1x1x1', is_training=is_training)
 
-            x = dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                 name='conv3D_dilated', is_training=is_training)
+            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
+                                     name='conv3D_dilated', is_training=is_training)
         return x
 
     @classmethod
