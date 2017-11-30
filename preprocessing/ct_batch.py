@@ -290,7 +290,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def load(self, fmt='dicom', source=None, bounds=None,  # pylint: disable=arguments-differ
-             origin=None, spacing=None, src_blosc=None):
+             origin=None, spacing=None, components_blosc=None):
         """ Load 3d scans data in batch.
 
         Parameters
@@ -309,7 +309,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         spacing :   ndarray(n_patients, 3) or None
                     ndarray with spacings of patients along `z,y,x` axes.
                     Needed only if fmt='ndarray'
-        src_blosc : list/tuple/string
+        components_blosc : list/tuple/string
                     Contains names of batch component(s) that should be loaded from blosc file.
                     Needed only if fmt='blosc'. If None, all components are loaded.
 
@@ -343,10 +343,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
-            src_blosc = self.components if src_blosc is None else src_blosc
-            # convert src_blosc to iterable 1d-array
-            src_blosc = np.asarray(src_blosc).reshape(-1)
-            self._load_blosc(src=src_blosc)              # pylint: disable=no-value-for-parameter
+            components_blosc = self.components if components_blosc is None else components_blosc
+            # convert components_blosc to iterable 1d-array
+            components_blosc = np.asarray(components_blosc).reshape(-1)
+            self._load_blosc(components=components_blosc)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
         else:
@@ -396,17 +396,23 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """ Read shapes of skyscraper-components dumped with blosc,
         allocate memory for them, update self._bounds.
 
-        Used for more efficient load of blosc in terms of memory.
+        Used for more efficient load in terms of memory.
 
         Parameters
         ---------
-        components : iterable of components we need to preload.
-        fmt : format in which components are stored on disk.
+        components : str or iterable
+            iterable of components we need to preload.
+        fmt : str
+            format in which components are stored on disk.
 
         """
         if fmt != 'blosc':
-            raise NotImplementedError('Preload from {} is not implemented yet'.format(fmt))
+            raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
+        # make iterable-1d out of components-arg
+        components = np.asarray(components).reshape(-1)
+
+        # load shapes, perform memory allocation
         for component in components:
             shapes = np.zeros((len(self), 3), dtype=np.int)
             for ix in self.indices:
@@ -431,7 +437,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         **kwargs
-                src : iterable of components that need to be loaded
+                components : iterable of components that need to be loaded
 
         Returns
         -------
@@ -439,23 +445,23 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             list of ids of batch-items
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
-        if 'images' in kwargs['src']:
-            self._prealloc_skyscraper_components(['images'])
+        if 'images' in kwargs['components']:
+            self._prealloc_skyscraper_components('images')
 
         return self.indices
 
     @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async', update=False)
-    async def _load_blosc(self, item_ix, *args, **kwargs):
+    async def _load_blosc(self, ix, *args, **kwargs):
         """ Read scans from blosc and put them into batch components
 
         Parameters
         ----------
-        item_ix : str
+        ix : str
             item index from batch to load 3D array
             and stack with others in images component.
         **kwargs
-                 src : tuple
-                     tuple of strings with names ofcomponents of data
+                 components : tuple
+                     tuple of strings with names of components of data
                      that should be loaded into self
 
         Note
@@ -464,7 +470,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         (because usually it's done before).
         """
 
-        for source in kwargs['src']:
+        for source in kwargs['components']:
             # set correct extension for each component and choose a tool
             # for debyting and (possibly) decoding it
             if source in ['spacing', 'origin']:
@@ -478,7 +484,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     debyted = blosc.unpack_array(byted)
 
                     # read the decoder and apply it
-                    decod_path = os.path.join(self.index.get_fullpath(item_ix), source, 'data.decoder')
+                    decod_path = os.path.join(self.index.get_fullpath(ix), source, 'data.decoder')
 
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
@@ -489,7 +495,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
                     return decoder(debyted)
 
-            comp_path = os.path.join(self.index.get_fullpath(item_ix), source, 'data' + '.' + ext)
+            comp_path = os.path.join(self.index.get_fullpath(ix), source, 'data' + '.' + ext)
 
             # read the component
             async with aiofiles.open(comp_path, mode='rb') as file:
@@ -499,7 +505,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             component = unpacker(byted)
 
             # update needed slice(s) of component
-            comp_pos = self.get_pos(None, source, item_ix)
+            comp_pos = self.get_pos(None, source, ix)
             getattr(self, source)[comp_pos] = component
 
         return None
@@ -697,14 +703,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
-    async def dump(self, item_ix, dst, src=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
+    async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
         """ Dump scans data (3d-array) on specified path in specified format
 
         Parameters
         ----------
         dst : str
             destination-folder where all patients' data should be put
-        src : str or list/tuple
+        components : str or list/tuple
             component(s) that we need to dump (smth iterable or string). If not
             supplied, dump all components
         fmt : 'blosc'
@@ -746,29 +752,30 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         - ./data/blosc_preprocessed/3hf82s76/spacing/data.cpkl
         - ./data/blosc_preprocessed/3hf82s76/origin/data.cpkl
         """
-        # if src is not supplied, dump all components
-        if src is None:
-            src = self.components
+        # if components-arg is not supplied, dump all components
+        if components is None:
+            components = self.components
 
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
-        # convert src to iterable 1d-array
-        src = np.asarray(src).reshape(-1)
+        # convert components to iterable 1d-array
+        components = np.asarray(components).reshape(-1)
         data_items = dict()
 
-        # get correct extension for each component, add the component to items-dict
-        for source in list(src):
-            if source in ['spacing', 'origin']:
+        for component in list(components):
+            # get correct extension for the component
+            if component in ['spacing', 'origin']:
                 ext = 'cpkl'
             else:
                 ext = 'blk'
-            # determine position in data of source-component for the patient
-            comp_pos = self.get_pos(None, source, item_ix)
-            data_items.update({source: [getattr(self, source)[comp_pos], ext]})
+
+            # get component belonging to the needed item, add it to items-dict
+            comp_pos = self.get_pos(None, component, ix)
+            data_items.update({component: [getattr(self, component)[comp_pos], ext]})
 
         # set item-specific folder
-        item_subdir = item_ix if index_to_name is None else index_to_name(item_ix)
+        item_subdir = ix if index_to_name is None else index_to_name(ix)
         item_dir = os.path.join(dst, item_subdir)
 
         return await self.dump_data(data_items, item_dir, i8_encoding_mode)

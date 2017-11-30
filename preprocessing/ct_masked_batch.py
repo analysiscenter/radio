@@ -161,28 +161,28 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=arguments-differ
              origin=None, spacing=None, nodules=None, masks=None,
-             src_blosc=None):
+             components_blosc=None):
         """ Load data in batch with scans and masks.
 
         Parameters
         ----------
-        fmt :       str
-                    type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
-        source :    ndarray(n_patients * z, y, x) or None
-                    input array with `skyscraper` (stacked scans),
-                    needed iff fmt = 'ndarray'.
-        bounds :    ndarray(n_patients, dtype=np.int) or None
-                    bound-floors index for patients.
-                    Needed iff fmt='ndarray'
-        origin :    ndarray(n_patients, 3) or None
-                    origins of scans in world coordinates.
-                    Needed only if fmt='ndarray'
-        spacing :   ndarray(n_patients, 3) or None
-                    ndarray with spacings of patients along `z,y,x` axes.
-                    Needed only if fmt='ndarray'
-        src_blosc : list/tuple/string
-                    Contains names of batch component(s) that should be loaded from blosc file.
-                    Needed only if fmt='blosc'. If None, all components are loaded.
+        fmt : str
+            type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
+        source : ndarray(n_patients * z, y, x) or None
+            input array with `skyscraper` (stacked scans),
+            needed iff fmt = 'ndarray'.
+        bounds : ndarray(n_patients, dtype=np.int) or None
+            bound-floors index for patients.
+            Needed iff fmt='ndarray'
+        origin : ndarray(n_patients, 3) or None
+            origins of scans in world coordinates.
+            Needed only if fmt='ndarray'
+        spacing : ndarray(n_patients, 3) or None
+            ndarray with spacings of patients along `z,y,x` axes.
+            Needed only if fmt='ndarray'
+        components_blosc : list/tuple/string
+            Contains names of batch component(s) that should be loaded from blosc file.
+            Needed only if fmt='blosc'. If None, all components are loaded.
 
         Examples
         --------
@@ -201,8 +201,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules = nodules
             self.masks = masks
         else:
-            # TODO check this
-            super().load(fmt=fmt, **params, src_blosc=src_blosc)
+            super().load(fmt=fmt, **params, components_blosc=components_blosc)
         return self
 
     def nodules_to_df(self, nodules):
@@ -887,7 +886,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Parameters
         ----------
         **kwargs
-                src : str, list or tuple
+                components : str, list or tuple
                     iterable of components names that need to be loaded
         Returns
         -------
@@ -895,7 +894,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             list of ids of batch-items, i.e. series ids or patient ids.
         """
         # fill 'images', 'masks'-comps with zeroes if needed
-        skysc_components = {'images', 'masks'} & set(kwargs['src'])
+        skysc_components = {'images', 'masks'} & set(kwargs['components'])
         self._prealloc_skyscraper_components(skysc_components)
 
         return self.indices
