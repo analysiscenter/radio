@@ -99,7 +99,7 @@ async def encode_dump_array(data, folder, filename, mode):
         # set up quantization model
         data_range = (data.min(), data.max())
         batch_size = min(KMEANS_MINIBATCH, data.size)
-        model = MiniBatchKMeans(n_clusters=256, init=np.linspace(*data_range, 256).reshape(-1, 1))
+        model = MiniBatchKMeans(n_clusters=256, init=np.linspace(*data_range, 256).reshape(-1, 1))      # pylint: disable=no-member
 
         # fit the model on several minibatches, get encoded data
         for _ in range(KMEANS_ITERS):
