@@ -53,6 +53,7 @@ class DilatedNoduleNet(TFModel):
         config['head']['num_classes'] = self.num_classes('targets')
         return config
 
+    @classmethod
     def dilated_branches(cls, input_tensor, filters, kernel_size, dilation_rate, name,
                          activation=tf.nn.relu, padding='same', is_training=True):
         """ Convolutional block with parallel branches having different dilation rate.
@@ -150,10 +151,10 @@ class DilatedNoduleNet(TFModel):
             x, skip = inputs
 
             if mode == 'deconv':
-                x = tf.layers.conv3d_transpose(x, filters, kernel,
-                                               name='upsample', strides=2,
-                                               activation=tf.identity,
-                                               use_bias=False)
+                conv_kwargs = dict(filters=filters, kernel_size=kernel,
+                                   strides=2, activation=tf.relu,
+                                   use_bias=False, is_training=is_training)
+                x = conv_block(x, 'tna', {**kwargs, **conv_kwargs})
             elif mode == 'repeat':
                 x = repeat_tensor(x, repeat_times)
 
@@ -238,8 +239,8 @@ class DilatedNoduleNet(TFModel):
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
 
         with tf.variable_scope(name):
-            x = bn_conv3d(inputs, filters, (1, 1, 1), padding='same',
-                          name='conv3D1x1x1', is_training=is_training)
+            x =  conv_block(inputs, 'cna', filters=filters, kernel_size=1,
+                            activation=tf.nn.relu, is_training=is_training)
 
             x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
                                      name='conv3D_dilated', is_training=is_training)
@@ -299,8 +300,9 @@ class DilatedNoduleNet(TFModel):
         tf.Tensor
         """
         kwargs = cls.fill_params('head', **kwargs)
+        last_conv_kwargs = dict(filters=num_classes, kernel_size=1,
+                                activation=tf.nn.sigmoid)
         with tf.variable_scope(name):
             x = conv_block(inputs, name='conv', **kwargs)
-            x = bn_conv3d(x, num_classes, (1, 1, 1), activation=tf.nn.sigmoid,
-                          name='final_conv', is_training=kwargs.get('is_training', None))
+            x = conv_block(x, {**kwargs, **last_conv_kwargs})
         return x
