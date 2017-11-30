@@ -112,11 +112,6 @@ class DilatedNoduleNet(TFModel):
         return config
 
     @classmethod
-    def input_block(cls, inputs, **kwargs):
-        """ Input block of neural network. """
-        return tf.identity(inputs)
-
-    @classmethod
     def decoder_block(cls, inputs, filters, name, **kwargs):
         """ 3x3 convolution and 2x2 transposed convolution or upsampling
 
