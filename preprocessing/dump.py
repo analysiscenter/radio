@@ -1,3 +1,5 @@
+# pylint: disable=undefined-variable
+
 """ Auxiliarry async functions for encoding and dump of data """
 
 import os
