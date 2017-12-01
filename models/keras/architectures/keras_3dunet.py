@@ -1,6 +1,6 @@
 # pylint: disable=not-context-manager
 # pylint: disable=too-many-statements
-""" Contains KerasLinkNet3D model class. """
+""" Contains Keras3DUNet model class. """
 
 from functools import wraps
 import tensorflow as tf
@@ -18,16 +18,16 @@ from ..keras_model import KerasModel
 from ..losses import dice_loss
 
 
-class KerasLinkNet3D(KerasModel):
-    """ Model incapsulating LinkNet3D architecture for 3D scans implemented in keras.
+class Keras3DUNet(KerasModel):
+    """ Model incapsulating 3D U-Net architecture for 3D scans implemented in keras.
 
     Class extends KerasModel class.
 
     Contains description of 'bottleneck_block', 'reduction_block' and
-    'upsampling_block'. Current LinkNet3D architecture is implemented
+    'upsampling_block'. Current 3D U-Net architecture is implemented
     inside _build method using these blocks.
 
-    Architecture is inspired by VNet (Milletari et al., https://arxiv.org/abs/1606.04797).
+    Architecture is inspired by 3D U-Net (Çiçek et Al., https://arxiv.org/abs/1606.06650).
 
     Note
     ----
@@ -136,7 +136,7 @@ class KerasLinkNet3D(KerasModel):
         inputs : keras tensor
             input tensor from previous layer.
         skip_connect_tensor : keras tensor
-            input tensor from simmiliar layer from reduction branch of LinkNet3D.
+            input tensor from simmiliar layer from reduction branch of 3D U-Net.
         filters : int
             number of filters in convolutional layers.
         scope : str
@@ -174,7 +174,7 @@ class KerasLinkNet3D(KerasModel):
         return conv2
 
     def _build(self, *args, **kwargs):
-        """ Build 3D LinkNet3D model implemented in keras. """
+        """ Build 3D U-Net model implemented in keras. """
         inputs = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
@@ -225,5 +225,5 @@ class KerasLinkNet3D(KerasModel):
 
     @wraps(keras.models.Model.compile)
     def compile(self, optimizer='adam', loss=dice_loss, **kwargs):
-        """ Compile LinkNet3D model. """
+        """ Compile 3D U-Net model. """
         super().compile(optimizer=optimizer, loss=loss)
