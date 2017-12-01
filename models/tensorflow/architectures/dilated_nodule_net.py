@@ -305,7 +305,5 @@ class DilatedNoduleNet(TFModel):
                            activation=tf.nn.sigmoid, layout='cna')
         with tf.variable_scope(name):
             x = conv_block(inputs, name='conv', **kwargs)
-            LOGGER.debug("Shape after first conv in head: {}".format(cls.get_shape(x)))
             x = conv_block(x, **pred_kwargs)
-            LOGGER.debug("Shape after second conv in head: {}".format(cls.get_shape(x)))
         return x
