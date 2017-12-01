@@ -56,7 +56,7 @@ class KerasNoduleVGG(KerasModel):
 
         super().__init__(*args, **kwargs)
 
-    def reduction_block_I(self, input_tensor, filters, scope, padding='same'):
+    def reduction_block_I(self, inputs, filters, scope, padding='same'):
         """ Reduction block of type I for NoduleVGG architecture.
 
         Applyes 3D-convolution with kernel size (3, 3, 3), (1, 1, 1) strides
@@ -68,7 +68,7 @@ class KerasNoduleVGG(KerasModel):
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor.
         filters : int
             number of filters in 3D-convolutional layers.
@@ -84,7 +84,7 @@ class KerasNoduleVGG(KerasModel):
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
-                           activation='relu', padding=padding)(input_tensor)
+                           activation='relu', padding=padding)(inputs)
 
             conv1 = BatchNormalization(axis=4)(conv1)
 
@@ -95,7 +95,7 @@ class KerasNoduleVGG(KerasModel):
             max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2))(conv2)
         return max_pool
 
-    def reduction_block_II(self, input_tensor, filters, scope, padding='same'):
+    def reduction_block_II(self, inputs, filters, scope, padding='same'):
         """ Reduction block of type II for NoduleVGG architecture.
 
         Applyes 3D-convolution with kernel size (3, 3, 3), strides (1, 1, 1)
@@ -106,7 +106,7 @@ class KerasNoduleVGG(KerasModel):
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor.
         filters : int
             number of filters in 3D-convolutional layers.
@@ -122,7 +122,7 @@ class KerasNoduleVGG(KerasModel):
         """
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
-                           activation='relu', padding=padding)(input_tensor)
+                           activation='relu', padding=padding)(inputs)
             conv1 = BatchNormalization(axis=4)(conv1)
 
             conv2 = Conv3D(filters=filters, kernel_size=(3, 3, 3),
@@ -136,17 +136,17 @@ class KerasNoduleVGG(KerasModel):
             max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2))(conv3)
         return max_pool
 
-    def dense_block(self, input_tensor, scope='ClassificationBlock'):
+    def dense_block(self, inputs, scope='ClassificationBlock'):
         """ Dense block of NoduleVGG architecture.
 
-        This block consists of flatten operation applied to input_tensor.
+        This block consists of flatten operation applied to inputs.
         Then there is several fully connected layers with 'relu' activation,
         batch normalization and dropout layers. This block should be put
         in the end of the model.
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor.
         dropoout_rate : float
             probability of dropout.
@@ -158,7 +158,7 @@ class KerasNoduleVGG(KerasModel):
             output tensor.
         """
         with tf.variable_scope(scope):
-            z = Flatten(name='flatten')(input_tensor)
+            z = Flatten(name='flatten')(inputs)
             for i, units in enumerate(self.units):
                 z = Dense(units, name='Dense-{}'.format(i))(z)
                 z = BatchNormalization(axis=-1)(z)
@@ -174,8 +174,8 @@ class KerasNoduleVGG(KerasModel):
         tuple([*input_nodes], [*output_nodes])
             list of input nodes and list of output nodes.
         """
-        input_tensor = Input(shape=(32, 64, 64, 1))
-        block_A = self.reduction_block_I(input_tensor, 32, scope='Block_A')
+        inputs = Input(shape=(32, 64, 64, 1))
+        block_A = self.reduction_block_I(inputs, 32, scope='Block_A')
         block_B = self.reduction_block_I(block_A, 64, scope='Block_B')
         block_C = self.reduction_block_II(block_B, 128, scope='Block_C')
         block_D = self.reduction_block_II(block_C, 256, scope='Block_D')
@@ -187,4 +187,4 @@ class KerasNoduleVGG(KerasModel):
                               activation='sigmoid',
                               name='predictions')(block_F)
 
-        return [input_tensor], [output_tensor]
+        return [inputs], [output_tensor]

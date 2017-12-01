@@ -37,12 +37,12 @@ class KerasNoduleVNet(KerasModel):
         """ Call __init__ of KerasModel. """
         super().__init__(*args, **kwargs)
 
-    def bottleneck_block(self, input_tensor, filters, scope, padding='same'):
+    def bottleneck_block(self, inputs, filters, scope, padding='same'):
         """ Apply bottleneck block transform to input tensor.
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor.
         filters : int
             number of output filters required by Conv3D operation.
@@ -63,7 +63,7 @@ class KerasNoduleVNet(KerasModel):
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters, (3, 3, 3),
                            data_format='channels_first',
-                           padding=padding)(input_tensor)
+                           padding=padding)(inputs)
             conv1 = BatchNormalization(axis=1, momentum=0.1,
                                        scale=True)(conv1)
             conv1 = Activation('relu')(conv1)
@@ -76,7 +76,7 @@ class KerasNoduleVNet(KerasModel):
             conv2 = Activation('relu')(conv2)
         return conv2
 
-    def reduction_block(self, input_tensor, filters, scope, pool_size=(2, 2, 2), padding='same'):
+    def reduction_block(self, inputs, filters, scope, pool_size=(2, 2, 2), padding='same'):
         """ Apply reduction block transform to input tensor.
 
         This layer consists of two 3D-convolutional layers with batch normalization
@@ -84,7 +84,7 @@ class KerasNoduleVNet(KerasModel):
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor.
         filters : int
             number of filters in first and second covnolutions.
@@ -107,7 +107,7 @@ class KerasNoduleVNet(KerasModel):
         with tf.variable_scope(scope):
             conv1 = Conv3D(filters, (3, 3, 3),
                            data_format='channels_first',
-                           padding=padding)(input_tensor)
+                           padding=padding)(inputs)
             conv1 = BatchNormalization(axis=1, momentum=0.1,
                                        scale=True)(conv1)
             conv1 = Activation('relu')(conv1)
@@ -123,17 +123,17 @@ class KerasNoduleVNet(KerasModel):
                                     pool_size=pool_size)(conv2)
         return conv2, max_pool
 
-    def upsampling_block(self, input_tensor, skip_connect_tensor, filters, scope, padding='same'):
+    def upsampling_block(self, inputs, skip_connect_tensor, filters, scope, padding='same'):
         """ Apply upsampling transform to two input tensors.
 
-        First of all, UpSampling3D transform is applied to input_tensor. Then output
+        First of all, UpSampling3D transform is applied to inputs. Then output
         tensor of this operation is concatenated with skip_connect_tensor. After this
         two 3D-convolutions with batch normalization before 'relu' activation
         are applied.
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor from previous layer.
         skip_connect_tensor : keras tensor
             input tensor from simmiliar layer from reduction branch of VNet.
@@ -155,7 +155,7 @@ class KerasNoduleVNet(KerasModel):
         """
         with tf.variable_scope(scope):
             upsample_tensor = UpSampling3D(data_format="channels_first",
-                                           size=(2, 2, 2))(input_tensor)
+                                           size=(2, 2, 2))(inputs)
             upsample_tensor = concatenate([upsample_tensor, skip_connect_tensor], axis=1)
 
             conv1 = Conv3D(filters, (3, 3, 3),
@@ -175,11 +175,11 @@ class KerasNoduleVNet(KerasModel):
 
     def _build(self, *args, **kwargs):
         """ Build 3D NoduleVnet model implemented in keras. """
-        input_tensor = Input((1, 32, 64, 64))
+        inputs = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
         # block_A has shape (None, 32, 64, 64, 32), reduct_block_A has shape (None, 16, 32, 32, 32)
-        block_A, reduct_block_A = self.reduction_block(input_tensor, 32,
+        block_A, reduct_block_A = self.reduction_block(inputs, 32,
                                                        scope='ReductionBlock_A')
 
         # block_B has shape (None, 16, 32, 32, 64), reduct_block_B has shape (None, 8, 16, 16, 64)
@@ -221,7 +221,7 @@ class KerasNoduleVNet(KerasModel):
                             data_format="channels_first",
                             padding='same')(upsample_block_A)
 
-        return [input_tensor], [final_conv]
+        return [inputs], [final_conv]
 
     @wraps(keras.models.Model.compile)
     def compile(self, optimizer='adam', loss=dice_loss, **kwargs):

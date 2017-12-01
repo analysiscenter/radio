@@ -10,13 +10,13 @@ from ....dataset.dataset.models.tf.layers import conv_block
 from ....dataset.dataset.models.tf import TFModel
 
 
-def dilated_branches(input_tensor, filters, kernel_size, dilation_rate, name,
+def dilated_branches(inputs, filters, kernel_size, dilation_rate, name,
                      activation=tf.nn.relu, padding='same', is_training=True):
     """ Convolutional block with parallel branches having different dilation rate.
 
     Parameters
     ----------
-    input_tensor : tf.Tensor
+    inputs : tf.Tensor
         input tensor
     filters : tuple(int, ...)
         number of filters corresponding to branches with different dilation rate.
@@ -58,7 +58,7 @@ def dilated_branches(input_tensor, filters, kernel_size, dilation_rate, name,
             else:
                 _drate = d
 
-            b = bn_dilated_conv3d(input_tensor, f, _ksize, padding=padding,
+            b = bn_dilated_conv3d(inputs, f, _ksize, padding=padding,
                                   is_training=is_training, activation=activation,
                                   dilation=_drate, name='conv3d_rate_{}'.format(_drate[0]))
             branches.append(b)

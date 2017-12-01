@@ -59,7 +59,7 @@ class KerasResNoduleNet(KerasModel):
 
         super().__init__(*args, **kwargs)
 
-    def identity_block(self, input_tensor, kernel_size, filters, stage, block):
+    def identity_block(self, inputs, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
 
         First of all, 3D-convolution with (1, 1, 1) kernel size, batch normalization
@@ -76,7 +76,7 @@ class KerasResNoduleNet(KerasModel):
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor.
         kernel_size : tuple(int, int, int)
             size of the kernel along three dimensions for middle convolution operation in block.
@@ -98,7 +98,7 @@ class KerasResNoduleNet(KerasModel):
         bn_name_base = 'bn' + str(stage) + block + '_branch'
 
         x = Conv3D(filters1, (1, 1, 1), name=conv_name_base + '2a',
-                   use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
+                   use_bias=False, kernel_initializer='glorot_normal')(inputs)
         x = BatchNormalization(axis=4, name=bn_name_base + '2a')(x)
         x = Activation('relu')(x)
 
@@ -116,11 +116,11 @@ class KerasResNoduleNet(KerasModel):
                    kernel_initializer='glorot_normal')(x)
         x = BatchNormalization(axis=4, name=bn_name_base + '2c')(x)
 
-        x = layers.add([x, input_tensor])
+        x = layers.add([x, inputs])
         x = Activation('relu')(x)
         return x
 
-    def conv_block(self, input_tensor, kernel_size, filters, stage, block, strides=(2, 2, 2)):
+    def conv_block(self, inputs, kernel_size, filters, stage, block, strides=(2, 2, 2)):
         """ Convolutional block that has a conv layer at shortcut.
 
         3D-convolution with (1, 1, 1) kernel size, (2, 2, 2)-strides,
@@ -130,14 +130,14 @@ class KerasResNoduleNet(KerasModel):
         into 3D-convolution with (1, 1, 1) kernel size, batch normalization
         without activation and its output is summed with the result
         of 3D-convolution with kernel_size=(1, 1, 1), strides=(2, 2, 2) and
-        batch normalization of input_tensor. After that `relu` activation
+        batch normalization of inputs. After that `relu` activation
         is applied to the result of `add` operation.
         Argument `filters` should be tuple(int, int, int) and specifies
         number of filters in first, second and third convolution correspondingly.
 
         Parameters
         ----------
-        input_tensor : keras tensor
+        inputs : keras tensor
             input tensor.
         kernel_size : tuple(int, int, int)
             size of the kernel along three dimensions for middle convolution operation in block.
@@ -162,7 +162,7 @@ class KerasResNoduleNet(KerasModel):
                    strides=strides,
                    name=conv_name_base + '2a',
                    use_bias=False,
-                   kernel_initializer='glorot_normal')(input_tensor)
+                   kernel_initializer='glorot_normal')(inputs)
         x = BatchNormalization(axis=4, name=bn_name_base + '2a')(x)
         x = Activation('relu')(x)
 
@@ -185,7 +185,7 @@ class KerasResNoduleNet(KerasModel):
                           strides=strides,
                           name=conv_name_base + '1',
                           use_bias=False,
-                          kernel_initializer='glorot_normal')(input_tensor)
+                          kernel_initializer='glorot_normal')(inputs)
         shortcut = BatchNormalization(axis=4, name=bn_name_base + '1')(shortcut)
 
         x = layers.add([x, shortcut])
@@ -200,10 +200,10 @@ class KerasResNoduleNet(KerasModel):
         tuple([*input_nodes], [*output_nodes]);
             list of input nodes and list of output nodes.
         """
-        input_tensor = Input(shape=(32, 64, 64, 1))
+        inputs = Input(shape=(32, 64, 64, 1))
         x = Conv3D(filters=32, kernel_size=(5, 3, 3),
                    strides=(1, 2, 2), name='initial_conv', padding='same',
-                   use_bias=False, kernel_initializer='glorot_normal')(input_tensor)
+                   use_bias=False, kernel_initializer='glorot_normal')(inputs)
 
         x = BatchNormalization(axis=4, name='initial_batch_norm')(x)
         x = Activation('relu')(x)
@@ -240,4 +240,4 @@ class KerasResNoduleNet(KerasModel):
 
         output_layer = Dense(self.num_targets, activation='sigmoid', name='output')(z)
 
-        return [input_tensor], [output_layer]
+        return [inputs], [output_layer]
