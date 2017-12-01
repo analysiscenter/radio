@@ -21,17 +21,17 @@ from ..losses import dice_loss
 class KerasLinkNet3D(KerasModel):
     """ Model incapsulating LinkNet3D architecture for 3D scans implemented in keras.
 
-    This class extends KerasModel class.
+    Class extends KerasModel class.
 
     Contains description of 'bottleneck_block', 'reduction_block' and
     'upsampling_block'. Current LinkNet3D architecture is implemented
     inside _build method using these blocks.
 
-    This architecture is inspired by VNet (Milletari et al., https://arxiv.org/abs/1606.04797).
+    Architecture is inspired by VNet (Milletari et al., https://arxiv.org/abs/1606.04797).
 
     Note
     ----
-    This implementation requires the input tensor having shape=(batch_size, 1, 32, 64, 64).
+    Implementation requires the input tensor having shape=(batch_size, 1, 32, 64, 64).
     """
     def __init__(self, *args, **kwargs):
         """ Call __init__ of KerasModel. """
@@ -47,7 +47,7 @@ class KerasLinkNet3D(KerasModel):
         filters : int
             number of output filters required by Conv3D operation.
         scope : str
-            scope name for this block, will be used as an argument of tf.variable_scope.
+            scope name for block, will be used as an argument of tf.variable_scope.
         padding : str
             padding mode, can be 'same' or 'valid'.
 
@@ -79,7 +79,7 @@ class KerasLinkNet3D(KerasModel):
     def reduction_block(self, inputs, filters, scope, pool_size=(2, 2, 2), padding='same'):
         """ Apply reduction block transform to input tensor.
 
-        This layer consists of two 3D-convolutional layers with batch normalization
+        Layer consists of two 3D-convolutional layers with batch normalization
         before 'relu' activation and max_pooling3d layer in the end.
 
         Parameters
@@ -89,7 +89,7 @@ class KerasLinkNet3D(KerasModel):
         filters : int
             number of filters in first and second covnolutions.
         scope : str
-            scope name for this block, will be used as an argument of tf.variable_scope.
+            scope name for block, will be used as an argument of tf.variable_scope.
         pool_size : tuple(int, int, int)
             size of pooling kernel along three axis, required by Conv3D operation.
         padding : str
@@ -127,7 +127,7 @@ class KerasLinkNet3D(KerasModel):
         """ Apply upsampling transform to two input tensors.
 
         First of all, UpSampling3D transform is applied to inputs. Then output
-        tensor of this operation is concatenated with skip_connect_tensor. After this
+        tensor of operation is concatenated with skip_connect_tensor. After this
         two 3D-convolutions with batch normalization before 'relu' activation
         are applied.
 
@@ -140,7 +140,7 @@ class KerasLinkNet3D(KerasModel):
         filters : int
             number of filters in convolutional layers.
         scope : str
-            name of scope for this block.
+            name of scope for block.
         padding : str
             padding mode for convolutions, can be 'same' or 'valid'.
 

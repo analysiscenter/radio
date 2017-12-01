@@ -16,7 +16,7 @@ from ..keras_model import KerasModel
 class KerasResNoduleNet(KerasModel):
     """ ResNoduleNet model for 3D scans implemented in keras.
 
-    This class extends KerasModel class.
+    Class extends KerasModel class.
 
     Contains description of three types of blocks:
     'identity_block' and 'conv_block'. ResNet architercture is implemented inside
@@ -41,7 +41,7 @@ class KerasResNoduleNet(KerasModel):
 
     Note
     ----
-    This implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
+    Implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
 
     def __init__(self, *args, **kwargs):

@@ -13,7 +13,7 @@ from ..keras_model import KerasModel
 class KerasNoduleVGG(KerasModel):
     """ KerasNoduleVGG model for 3D scans implemented in keras.
 
-    This class extends KerasModel class.
+    Class extends KerasModel class.
 
     Contains description of three types of blocks:
     'reduction_block_I', 'reduction_block_II' and 'classification_block'.
@@ -37,7 +37,7 @@ class KerasNoduleVGG(KerasModel):
 
     Note
     ----
-    This implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
+    Implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
 
     def __init__(self, *args, **kwargs):
@@ -73,7 +73,7 @@ class KerasNoduleVGG(KerasModel):
         filters : int
             number of filters in 3D-convolutional layers.
         scope : str
-            scope name for this block, will be used as an argument of tf.variable_scope.
+            scope name for block, will be used as an argument of tf.variable_scope.
         padding : str
             padding mode can be 'same' or 'valid'.
 
@@ -100,7 +100,7 @@ class KerasNoduleVGG(KerasModel):
 
         Applyes 3D-convolution with kernel size (3, 3, 3), strides (1, 1, 1)
         and 'relu' activation, after that preform batch noramlization,
-        repeates this combo three times;
+        repeates combo three times;
         Finally, adds 3D maxpooling layer with
         strides (2, 2, 2) and pooling size (2, 2, 2).
 
@@ -111,7 +111,7 @@ class KerasNoduleVGG(KerasModel):
         filters : int
             number of filters in 3D-convolutional layers.
         scope : str
-            scope name for this block, will be used as an argument of tf.variable_scope.
+            scope name for block, will be used as an argument of tf.variable_scope.
         padding : str
             padding mode can be 'same' or 'valid'.
 
@@ -139,9 +139,9 @@ class KerasNoduleVGG(KerasModel):
     def dense_block(self, inputs, scope='ClassificationBlock'):
         """ Dense block of NoduleVGG architecture.
 
-        This block consists of flatten operation applied to inputs.
+        Block consists of flatten operation applied to inputs.
         Then there is several fully connected layers with 'relu' activation,
-        batch normalization and dropout layers. This block should be put
+        batch normalization and dropout layers. block should be put
         in the end of the model.
 
         Parameters
@@ -151,7 +151,7 @@ class KerasNoduleVGG(KerasModel):
         dropoout_rate : float
             probability of dropout.
         scope : str
-            scope name for this block, will be used as an argument of tf.variable_scope.
+            scope name for block, will be used as an argument of tf.variable_scope.
 
         Returns:
         keras tensor
