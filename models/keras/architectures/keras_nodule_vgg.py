@@ -174,7 +174,11 @@ class KerasNoduleVGG(KerasModel):
         tuple([*input_nodes], [*output_nodes])
             list of input nodes and list of output nodes.
         """
-        inputs = Input(shape=(32, 64, 64, 1))
+        num_targets = self.get('num_targets', self.config)
+        dropout_rate = self.get('dropout_rate', self.config)
+        input_shape = self.get('input_shape', self.config)
+
+        inputs = Input(shape=input_shape)
         block_A = self.reduction_block_I(inputs, 32, scope='Block_A')
         block_B = self.reduction_block_I(block_A, 64, scope='Block_B')
         block_C = self.reduction_block_II(block_B, 128, scope='Block_C')
