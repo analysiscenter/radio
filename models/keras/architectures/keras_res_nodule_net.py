@@ -43,22 +43,6 @@ class KerasResNoduleNet(KerasModel):
     ----
     Implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
-
-    def __init__(self, *args, **kwargs):
-        """ Call __init__ of KerasModel and add specific for KerasResNet50 attributes. """
-        self.config = kwargs.get('config', {})
-        self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
-        self.num_targets = self.get_from_config('num_targets', 1)
-
-        units = self.get_from_config('units', (512, 256))
-        if units is None:
-            units = ()
-        elif isinstance(units, int):
-            units = (units, )
-        self.units = tuple(units)
-
-        super().__init__(*args, **kwargs)
-
     def identity_block(self, inputs, kernel_size, filters, stage, block):
         """ The identity block is the block that has no conv layer at shortcut.
 
