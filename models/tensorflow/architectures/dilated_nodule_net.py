@@ -4,7 +4,7 @@
 
 import numpy as np
 import tensorflow as tf
-from ..layers import bn_conv3d, bn_dilated_conv3d
+from ..layers import bn_dilated_conv3d
 from ..utils import repeat_tensor
 from ....dataset.dataset.models.tf.layers import conv_block
 from ....dataset.dataset.models.tf import TFModel
