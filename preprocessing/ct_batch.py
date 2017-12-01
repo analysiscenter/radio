@@ -63,7 +63,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         index : Dataset.Index class.
-                Required indexing of objects (files).
+            Required indexing of objects (files).
         """
 
         super().__init__(index, *args, **kwargs)
@@ -73,7 +73,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = None
         self.origin = None
         self.spacing = None
-        self._init_data()
+        self._init_data(spacing=np.ones(shape=(len(self), 3)), origin=np.zeros(shape=(len(self), 3)))
 
     @property
     def components(self):
@@ -84,41 +84,39 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Returns
         -------
         (str, str, str)
-                       names of components returned from __getitem__.
+            names of components returned from __getitem__.
         """
         return 'images', 'spacing', 'origin'
 
-    def _init_data(self, source=None, bounds=None, origin=None, spacing=None):
-        """ Initialize images, _bounds, origin and spacing attributes.
+    def _init_data(self, bounds=None, **kwargs):
+        """ Initialize _bounds and components (images, origin, spacing).
 
         `_init_data` is used as initializer of batch inner structures,
         called inside __init__ and other methods
 
         Parameters
         ----------
-        source :  ndarray(n_patients * z, y, x) or None
-                  data to be put as a component `images` in self.images, where
-                  n_patients is total number of patients in array and `z, y, x`
-                  is a shape of each patient 3D array.
-                  Note, that each patient should have same and constant
-                  `z, y, x` shape.
-        bounds :  ndarray(n_patients, dtype=np.int) or None
-                  1d-array of bound-floors for each scan 3D array,
-                  has length = number of items in batch + 1, to be put in self._bounds.
-        origin :  ndarray(n_patients, 3) or None
-                  2d-array contains origin coordinates of patients scans
-                  in `z,y,x`-format in world coordinates to be put in self.origin.
-                  None value will be converted to zero-array.
-        spacing : ndarray(n_patients, 3) or None
-                  2d-array [number of items X 3] of spacings between slices
-                  along each of `z,y,x` axes for each patient's 3D array
-                  in world coordinates to be put in self.spacing.
-                  None value will be converted to ones-array.
+        **kwargs
+            images : ndarray(n_patients * z, y, x) or None
+                data to be put as a component `images` in self.images, where
+                n_patients is total number of patients in array and `z, y, x`
+                is a shape of each patient 3D array.
+                Note, that each patient should have same and constant
+                `z, y, x` shape.
+            bounds : ndarray(n_patients, dtype=np.int) or None
+                1d-array of bound-floors for each scan 3D array,
+                has length = number of items in batch + 1, to be put in self._bounds.
+            origin : ndarray(n_patients, 3) or None
+                2d-array contains origin coordinates of patients scans
+                in `z,y,x`-format in world coordinates to be put in self.origin.
+            spacing : ndarray(n_patients, 3) or None
+                2d-array [number of items X 3] of spacings between slices
+                along each of `z,y,x` axes for each patient's 3D array
+                in world coordinates to be put in self.spacing.
         """
-        self.images = source
         self._bounds = bounds if bounds is not None else np.array([], dtype='int')
-        self.origin = origin if origin is not None else np.zeros((len(self), 3))
-        self.spacing = spacing if spacing is not None else np.ones((len(self), 3))
+        for comp_name, comp_data in kwargs.items():
+            setattr(self, comp_name, comp_data)
 
     @classmethod
     def split(cls, batch, batch_size):
@@ -286,29 +284,31 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return merged, rest
 
     @action
-    def load(self, fmt='dicom', source=None, bounds=None,  # pylint: disable=arguments-differ
-             origin=None, spacing=None, components_blosc=None):
+    def load(self, fmt='dicom', components=None, bounds=None, **kwargs):      # pylint: disable=arguments-differ
         """ Load 3d scans data in batch.
 
         Parameters
         ----------
-        fmt :       str
-                    type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
-        source :    ndarray(n_patients * z, y, x) or None
-                    input array with `skyscraper` (stacked scans),
-                    needed iff fmt = 'ndarray'.
-        bounds :    ndarray(n_patients, dtype=np.int) or None
-                    bound-floors index for patients.
-                    Needed iff fmt='ndarray'
-        origin :    ndarray(n_patients, 3) or None
-                    origins of scans in world coordinates.
-                    Needed only if fmt='ndarray'
-        spacing :   ndarray(n_patients, 3) or None
-                    ndarray with spacings of patients along `z,y,x` axes.
-                    Needed only if fmt='ndarray'
-        components_blosc : list/tuple/string
-                    Contains names of batch component(s) that should be loaded from blosc file.
-                    Needed only if fmt='blosc'. If None, all components are loaded.
+        fmt : str
+            type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
+        components : list/tuple/string
+            Contains names of batch component(s) that should be loaded.
+            As of now, works only if fmt='blosc'. If fmt != 'blosc', all
+            available components are loaded. If None and fmt = 'blosc', again,
+            all components are loaded.
+        bounds : ndarray(n_patients, dtype=np.int) or None
+            Needed iff fmt='ndarray'. Bound-floors for items from a `skyscraper`
+            (stacked scans).
+        **kwargs
+            images : ndarray(n_patients * z, y, x) or None
+                Needed only if fmt = 'ndarray'
+                input array containing `skyscraper` (stacked scans).
+            origin : ndarray(n_patients, 3) or None
+                Needed only if fmt='ndarray'.
+                origins of scans in world coordinates.
+            spacing : ndarray(n_patients, 3) or None
+                Needed only if fmt='ndarray'
+                ndarray with spacings of patients along `z,y,x` axes.
 
         Returns
         -------
@@ -325,27 +325,26 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Ndarray example
 
-        Source_array stores a batch (concatted 3d-scans, skyscraper)
-        say, ndarray with shape (400, 256, 256)
+        images_array stores a set of 3d-scans concatted along 0-zxis, "skyscraper".
+        Say, it is a ndarray with shape (400, 256, 256)
 
-        bounds stores ndarray of last floors for each patient
-        say, source_ubounds = np.asarray([0, 100, 400])
+        bounds stores ndarray of last floors for each scan.
+        say, bounds = np.asarray([0, 100, 400])
 
-        >>> batch.load(source=source_array, fmt='ndarray', bounds=bounds)
+        >>> batch.load(fmt='ndarray', images=images_array, bounds=bounds)
 
         """
         # if ndarray
         if fmt == 'ndarray':
-            self._init_data(source, bounds, origin, spacing)
+            self._init_data(bounds=bounds, **kwargs)
         elif fmt == 'dicom':
             self._load_dicom()              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
-            components_blosc = self.components if components_blosc is None else components_blosc
+            components = self.components if components is None else components
             # convert components_blosc to iterable
-            if not isinstance(components_blosc, (tuple, list, np.ndarray, set)):
-                components_blosc = [components_blosc]
+            components = [components] if isinstance(components, str) else components
 
-            self._load_blosc(components=components_blosc)              # pylint: disable=no-value-for-parameter
+            self._load_blosc(components=components)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
         else:
@@ -409,7 +408,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
         # make iterable out of components-arg
-        components = components if isinstance(components, (list, set, tuple, np.ndarray)) else [components]
+        components = [components] if isinstance(components, str) else components
 
         # load shapes, perform memory allocation
         for component in components:
@@ -436,7 +435,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         **kwargs
-                components : iterable of components that need to be loaded
+            components : iterable of components that need to be loaded
 
         Returns
         -------
@@ -459,9 +458,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             item index from batch to load 3D array
             and stack with others in images component.
         **kwargs
-                 components : tuple
-                     tuple of strings with names of components of data
-                     that should be loaded into self
+            components : tuple
+                tuple of strings with names of components of data
+                that should be loaded into self
 
         Note
         ----
@@ -594,11 +593,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if fmt != 'blosc':
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
-        # convert components to iterable 1d-array
-        components = np.asarray(components).reshape(-1)
+        # make sure that components is iterable
+        components = [components] if isinstance(components, str) else components
         data_items = dict()
 
-        for component in list(components):
+        for component in components:
             # get correct extension for the component
             if component in ['spacing', 'origin']:
                 ext = 'cpkl'
@@ -778,7 +777,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if update:
             new_data = np.concatenate(list_of_arrs, axis=0)
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
-            params = dict(source=new_data, bounds=new_bounds,
+            params = dict(images=new_data, bounds=new_bounds,
                           origin=self.origin, spacing=self.spacing)
             if new_batch:
                 batch = type(self)(self.index)
@@ -809,7 +808,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             list_of_images = [worker_res['images'] for worker_res in list_of_dicts]
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_images]))
             new_data = np.concatenate(list_of_images, axis=0)
-            params = dict(source=new_data, bounds=new_bounds,
+            params = dict(images=new_data, bounds=new_bounds,
                           origin=self.origin, spacing=self.spacing)
             self._init_data(**params)
 
@@ -929,7 +928,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             new_origin = self.origin
 
         # build/update batch with new data and attrs
-        params = dict(source=new_data, bounds=new_bounds,
+        params = dict(images=new_data, bounds=new_bounds,
                       origin=new_origin, spacing=new_spacing)
         if new_batch:
             batch_res = type(self)(self.index)

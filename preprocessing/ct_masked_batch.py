@@ -158,52 +158,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return 'images', 'masks', 'spacing', 'origin'
 
-    @action
-    def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=arguments-differ
-             origin=None, spacing=None, nodules=None, masks=None,
-             components_blosc=None):
-        """ Load data in batch with scans and masks.
-
-        Parameters
-        ----------
-        fmt : str
-            type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
-        source : ndarray(n_patients * z, y, x) or None
-            input array with `skyscraper` (stacked scans),
-            needed iff fmt = 'ndarray'.
-        bounds : ndarray(n_patients, dtype=np.int) or None
-            bound-floors index for patients.
-            Needed iff fmt='ndarray'
-        origin : ndarray(n_patients, 3) or None
-            origins of scans in world coordinates.
-            Needed only if fmt='ndarray'
-        spacing : ndarray(n_patients, 3) or None
-            ndarray with spacings of patients along `z,y,x` axes.
-            Needed only if fmt='ndarray'
-        components_blosc : list/tuple/string
-            Contains names of batch component(s) that should be loaded from blosc file.
-            Needed only if fmt='blosc'. If None, all components are loaded.
-
-        Examples
-        --------
-
-        >>> index = FilesIndex(path="/some/path/*.mhd, no_ext=True")
-        >>> batch = CTImagesMaskedBatch(index)
-        >>> batch.load(fmt='raw')
-
-        >>> batch.load(src=source_array, fmt='ndarray', bounds=bounds,
-        ...            origin=origin_dict, spacing=spacing_dict)
-        """
-        params = dict(source=source, bounds=bounds,
-                      origin=origin, spacing=spacing)
-        if fmt == 'ndarray':
-            self._init_data(**params)
-            self.nodules = nodules
-            self.masks = masks
-        else:
-            super().load(fmt=fmt, **params, components_blosc=components_blosc)
-        return self
-
     def nodules_to_df(self, nodules):
         """ Convert nodules_info ndarray into pandas dataframe.
 
