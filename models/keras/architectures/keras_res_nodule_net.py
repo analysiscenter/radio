@@ -224,7 +224,6 @@ class KerasResNoduleNet(KerasModel):
         z = self.dense_block(x, units=self.get('units', self.config),
                              dropout=False, scope='DenseBlock-I')
 
-        output_layer = Dense(
-            self.num_targets, activation='sigmoid', name='output')(z)
+        output_layer = Dense(num_targets, activation='sigmoid', name='output')(z)
 
         return [inputs], [output_layer]
