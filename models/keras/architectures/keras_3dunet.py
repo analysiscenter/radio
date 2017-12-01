@@ -33,9 +33,10 @@ class Keras3DUNet(KerasModel):
     ----
     Implementation requires the input tensor having shape=(batch_size, 1, 32, 64, 64).
     """
-    def __init__(self, *args, **kwargs):
-        """ Call __init__ of KerasModel. """
-        super().__init__(*args, **kwargs)
+    def build_config(self):
+        input_shape = self.get('input_shape', self.config, (1, 32, 64, 64))
+        self.config.update({'input_shape': input_shape})
+        super().build_config()
 
     def bottleneck_block(self, inputs, filters, scope, padding='same'):
         """ Apply bottleneck block transform to input tensor.
