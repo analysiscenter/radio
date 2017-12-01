@@ -303,8 +303,6 @@ class DilatedNoduleNet(TFModel):
         kwargs = cls.fill_params('head', **kwargs)
         pred_kwargs = dict(filters=num_classes, kernel_size=1,
                            activation=tf.nn.sigmoid, layout='cna')
-
-        LOGGER.debug("kwargs of last conv layer in head block: {}".format(last_conv_kwargs))
         with tf.variable_scope(name):
             x = conv_block(inputs, name='conv', **kwargs)
             LOGGER.debug("Shape after first conv in head: {}".format(cls.get_shape(x)))
