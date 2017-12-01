@@ -106,9 +106,9 @@ class DilatedNoduleNet(TFModel):
                                       is_training=is_training, activation=activation,
                                       dilation=_drate, name='conv3d_rate_{}'.format(_drate[0]))
                 branches.append(b)
-            output_tensor = tf.concat(branches, axis=4)
+            outputs = tf.concat(branches, axis=4)
 
-        return output_tensor
+        return outputs
 
     @classmethod
     def decoder_block(cls, inputs, filters, name, **kwargs):
