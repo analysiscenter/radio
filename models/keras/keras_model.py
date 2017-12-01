@@ -35,7 +35,7 @@ class KerasModel(Model, BaseModel):
             units = (units, )
         elif units is None:
             units = ()
-        self.config.update({'units': units,
+        self.config.update({'units': units, 'input_shape': input_shape,
                             'dropout_rate': dropout_rate,
                             'num_targets': num_targets})
 
