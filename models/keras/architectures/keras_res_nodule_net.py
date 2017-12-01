@@ -203,8 +203,9 @@ class KerasResNoduleNet(KerasModel):
         """
         num_targets = self.get('num_targets', self.config)
         dropout_rate = self.get('dropout_rate', self.config)
+        input_shape = self.get('input_shape', self.config)
 
-        input_tensor = Input(shape=(32, 64, 64, 1))
+        input_tensor = Input(shape=input_shape)
         x = Conv3D(filters=32, kernel_size=(5, 3, 3),
                    strides=(1, 2, 2), name='initial_conv', padding='same',
                    use_bias=False, kernel_initializer='glorot_normal')(inputs)
