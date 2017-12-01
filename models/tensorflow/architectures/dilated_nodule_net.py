@@ -79,7 +79,7 @@ class DilatedNoduleNet(TFModel):
 
     body : dict
         num_blocks : int
-            number of downsampling/upsampling blocks (default=4)
+            number of encoder/decoder blocks (default=4)
 
         filters : list of int
             number of filters in each block (default=[128, 256, 512, 1024])
@@ -116,7 +116,7 @@ class DilatedNoduleNet(TFModel):
         return tf.identity(inputs)
 
     @classmethod
-    def upsampling_block(cls, inputs, filters, name, **kwargs):
+    def decoder_block(cls, inputs, filters, name, **kwargs):
         """ 3x3 convolution and 2x2 transposed convolution or upsampling
 
         Each of two 3x3x3 convolutions contains several branches with
@@ -172,7 +172,7 @@ class DilatedNoduleNet(TFModel):
         return x
 
     @classmethod
-    def downsampling_block(cls, inputs, filters, name, **kwargs):
+    def encoder_block(cls, inputs, filters, name, **kwargs):
         """ Two 3x3x3 convolutions and 2x2x2 max pooling with stride 2.
 
         Each of two 3x3x3 convolutions contains several branches with
@@ -258,7 +258,7 @@ class DilatedNoduleNet(TFModel):
         inputs : tf.Tensor
             input tensor
         filters : tuple of int
-            number of filters in downsampling blocks
+            number of filters in encoder_block
         name : str
             scope name
 
@@ -273,14 +273,14 @@ class DilatedNoduleNet(TFModel):
             x = inputs
             encoder_outputs = []
             for i, ifilters in enumerate(filters[:-1]):
-                y, x = cls.downsampling_block(x, ifilters, name='downsampling-'+str(i), **kwargs)
+                y, x = cls.encoder_block(x, ifilters, name='encoder-'+str(i), **kwargs)
                 encoder_outputs.append(y)
 
             x = cls.central_block(x, filters[-1], name='central_block', **kwargs)
 
             for i, ifilters in enumerate(filters[:-1][::-1]):
-                x = cls.upsampling_block((x, encoder_outputs[-i-1]), ifilters//2,
-                                         name='upsampling-'+str(i), **kwargs)
+                x = cls.decoder_block((x, encoder_outputs[-i-1]), ifilters//2,
+                                         name='decoder-'+str(i), **kwargs)
         return x
 
     @classmethod
