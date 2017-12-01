@@ -27,6 +27,7 @@ class KerasModel(Model, BaseModel):
 
     def build_config(self):
         """ Build config. """
+        input_shape = self.get('input_shape', self.config, (32, 64, 64, 1))
         num_targets = self.get('num_targets', self.config, 1)
         dropout_rate = self.get('dropout_rate', self.config, 0.35)
         units = self.get('units', self.config, (512, 256))
