@@ -42,7 +42,7 @@ def dilated_branches(inputs, filters, kernel_size, dilation_rate, name,
 
     if not all(isinstance(arg, (tuple, list)) for arg in (filters, kernel_size, dilation_rate)):
         raise ValueError("Arguments 'filters', 'kernel_size', 'dilation_rate' "
-                         +"must be tuples or lists")
+                         + "must be tuples or lists")
 
     branches = []
     with tf.variable_scope(name):
@@ -98,7 +98,8 @@ class DilatedNoduleNet(TFModel):
         config['input_block'].update({})
         config['body']['upsampling_kernel'] = 3
         config['body']['num_blocks'] = 4
-        config['body']['filters'] = 2 ** np.arange(config['body']['num_blocks']) * filters * 2
+        config['body'][
+            'filters'] = 2 ** np.arange(config['body']['num_blocks']) * filters * 2
         config['body']['dilation_rate'] = [1, 2]
         config['body']['dilation_share'] = [0.5, 0.5]
         config['body']['upsampling_mode'] = 'deconv'
@@ -139,8 +140,8 @@ class DilatedNoduleNet(TFModel):
         kernel = cls.pop('upsampling_kernel', config)
         is_training = cls.pop('is_training', config)
 
-        mode = cls.pop('upsampling_mode', config) # Added
-        dilation_rate = cls.pop('dilation_rate', config) # Added
+        mode = cls.pop('upsampling_mode', config)  # Added
+        dilation_rate = cls.pop('dilation_rate', config)  # Added
         dilation_share = np.asarray(cls.pop('dilation_share', config))
         dilation_share /= dilation_share.sum()
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
@@ -273,14 +274,16 @@ class DilatedNoduleNet(TFModel):
             x = inputs
             encoder_outputs = []
             for i, ifilters in enumerate(filters[:-1]):
-                y, x = cls.encoder_block(x, ifilters, name='encoder-'+str(i), **kwargs)
+                y, x = cls.encoder_block(
+                    x, ifilters, name='encoder-'+str(i), **kwargs)
                 encoder_outputs.append(y)
 
-            x = cls.central_block(x, filters[-1], name='central_block', **kwargs)
+            x = cls.central_block(
+                x, filters[-1], name='central_block', **kwargs)
 
             for i, ifilters in enumerate(filters[:-1][::-1]):
                 x = cls.decoder_block((x, encoder_outputs[-i-1]), ifilters//2,
-                                         name='decoder-'+str(i), **kwargs)
+                                      name='decoder-'+str(i), **kwargs)
         return x
 
     @classmethod
