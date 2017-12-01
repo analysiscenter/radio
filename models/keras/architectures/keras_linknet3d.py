@@ -1,6 +1,6 @@
 # pylint: disable=not-context-manager
 # pylint: disable=too-many-statements
-""" Contains KerasVnet model class. """
+""" Contains KerasLinkNet3D model class. """
 
 from functools import wraps
 import tensorflow as tf
@@ -18,16 +18,16 @@ from ..keras_model import KerasModel
 from ..losses import dice_loss
 
 
-class KerasNoduleVNet(KerasModel):
-    """ Model incapsulating NoduleVNet architecture for 3D scans implemented in keras.
+class KerasLinkNet3D(KerasModel):
+    """ Model incapsulating LinkNet3D architecture for 3D scans implemented in keras.
 
     This class extends KerasModel class.
 
     Contains description of 'bottleneck_block', 'reduction_block' and
-    'upsampling_block'. Current Vnet architecture is implemented
+    'upsampling_block'. Current LinkNet3D architecture is implemented
     inside _build method using these blocks.
 
-    This architecture is inspired by https://arxiv.org/pdf/1606.04797.pdf.
+    This architecture is inspired by VNet https://arxiv.org/pdf/1606.04797.pdf.
 
     Note
     ----
@@ -136,7 +136,7 @@ class KerasNoduleVNet(KerasModel):
         inputs : keras tensor
             input tensor from previous layer.
         skip_connect_tensor : keras tensor
-            input tensor from simmiliar layer from reduction branch of VNet.
+            input tensor from simmiliar layer from reduction branch of LinkNet3D.
         filters : int
             number of filters in convolutional layers.
         scope : str
@@ -174,7 +174,7 @@ class KerasNoduleVNet(KerasModel):
         return conv2
 
     def _build(self, *args, **kwargs):
-        """ Build 3D NoduleVnet model implemented in keras. """
+        """ Build 3D LinkNet3D model implemented in keras. """
         inputs = Input((1, 32, 64, 64))
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
@@ -225,5 +225,5 @@ class KerasNoduleVNet(KerasModel):
 
     @wraps(keras.models.Model.compile)
     def compile(self, optimizer='adam', loss=dice_loss, **kwargs):
-        """ Compile vnet model. """
+        """ Compile LinkNet3D model. """
         super().compile(optimizer=optimizer, loss=loss)
