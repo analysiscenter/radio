@@ -10,8 +10,7 @@ from ....dataset.dataset.models.tf import DenseNet
 class DenseNoduleNet(DenseNet):
     """ Implementation of custom DenseNet architecture for lung cancer detection.
 
-    Full description of similar 2D model architecture can be downloaded from here:
-    https://arxiv.org/pdf/1608.06993v2.pdf
+    Model is inspired by DenseNet (Gao Huang et Al., https://arxiv.org/abs/1608.06993)
     """
     @classmethod
     def default_config(cls):

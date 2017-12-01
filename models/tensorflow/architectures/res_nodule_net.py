@@ -12,8 +12,7 @@ from ....dataset.dataset.models.tf import ResNet
 class ResNoduleNet(ResNet):
     """ Implementation of custom DenseNet architecture for lung cancer detection.
 
-    Full description of similar 2D model architecture can be downloaded from here:
-    https://arxiv.org/pdf/1512.03385v1.pdf
+    Model is inspired by ResNet (Kaiming He et Al., https://arxiv.org/abs/1512.03385/)
     """
 
     @classmethod

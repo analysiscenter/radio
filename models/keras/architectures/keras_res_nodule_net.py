@@ -20,8 +20,8 @@ class KerasResNoduleNet(KerasModel):
 
     Contains description of three types of blocks:
     'identity_block' and 'conv_block'. ResNet architercture is implemented inside
-    _build method using these blocks. Full description of similar 2D model
-    architecture can be downloaded from here: https://arxiv.org/pdf/1512.03385v1.pdf
+    _build method using these blocks.
+    Model is inspired by ResNet (Kaiming He et Al., https://arxiv.org/abs/1512.03385/).
 
     Attributes
     ----------
@@ -186,7 +186,8 @@ class KerasResNoduleNet(KerasModel):
                           name=conv_name_base + '1',
                           use_bias=False,
                           kernel_initializer='glorot_normal')(inputs)
-        shortcut = BatchNormalization(axis=4, name=bn_name_base + '1')(shortcut)
+        shortcut = BatchNormalization(
+            axis=4, name=bn_name_base + '1')(shortcut)
 
         x = layers.add([x, shortcut])
         x = Activation('relu')(x)
@@ -208,7 +209,8 @@ class KerasResNoduleNet(KerasModel):
         x = BatchNormalization(axis=4, name='initial_batch_norm')(x)
         x = Activation('relu')(x)
 
-        x = self.conv_block(x, 3, [16, 16, 64], stage=2, block='a', strides=(1, 1, 1))
+        x = self.conv_block(x, 3, [16, 16, 64], stage=2,
+                            block='a', strides=(1, 1, 1))
         x = self.identity_block(x, 3, [16, 16, 64], stage=2, block='b')
         x = self.identity_block(x, 3, [16, 16, 64], stage=2, block='c')
         x = Dropout(rate=self.dropout_rate)(x)
@@ -238,6 +240,7 @@ class KerasResNoduleNet(KerasModel):
             z = BatchNormalization(axis=-1)(z)
             z = Activation('relu')(z)
 
-        output_layer = Dense(self.num_targets, activation='sigmoid', name='output')(z)
+        output_layer = Dense(
+            self.num_targets, activation='sigmoid', name='output')(z)
 
         return [inputs], [output_layer]
