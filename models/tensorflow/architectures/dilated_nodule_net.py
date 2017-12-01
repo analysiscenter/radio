@@ -1,6 +1,6 @@
 # pylint: disable=too-many-arguments
 # pylint: disable=not-context-manager
-""" Implementation of custom unet for lung cancer detection. """
+""" Implementation of custom volumetric network for lung cancer detection. """
 
 import numpy as np
 import tensorflow as tf
@@ -67,7 +67,7 @@ def dilated_branches(inputs, filters, kernel_size, dilation_rate, name,
     return output_tensor
 
 
-class DilatedNoduleVNet(TFModel):
+class DilatedNoduleNet(TFModel):
     """ Implementation of custom encoder-decoder architecture with dilated convolutions.
 
     Architecture is inspired by VNet (Milletari et al., https://arxiv.org/abs/1606.04797).
