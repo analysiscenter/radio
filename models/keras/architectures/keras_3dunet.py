@@ -179,7 +179,7 @@ class Keras3DUNet(KerasModel):
         num_targets = self.get('num_targets', self.config)
         input_shape = self.get('input_shape', self.config)
 
-        input_tensor = Input(shape=input_shape)
+        inputs = Input(shape=input_shape)
 
         # Downsampling or reduction layers: ReductionBlock_A, ReductionBlock_B, ReductionBlock_C, ReductionBlock_D
         # block_A has shape (None, 32, 64, 64, 32), reduct_block_A has shape (None, 16, 32, 32, 32)
