@@ -73,7 +73,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = None
         self.origin = None
         self.spacing = None
-        self._init_data(spacing=np.ones(shape=(len(self), 3)), origin=np.zeros(shape=(len(self), 3)))
+        self._init_data(spacing=np.ones(shape=(len(self), 3)), origin=np.zeros(shape=(len(self), 3)),
+                        bounds=np.array([], dtype='int'))
 
     @property
     def components(self):
@@ -114,7 +115,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 along each of `z,y,x` axes for each patient's 3D array
                 in world coordinates to be put in self.spacing.
         """
-        self._bounds = bounds if bounds is not None else np.array([], dtype='int')
+        self._bounds = bounds if bounds is not None
         for comp_name, comp_data in kwargs.items():
             setattr(self, comp_name, comp_data)
 
