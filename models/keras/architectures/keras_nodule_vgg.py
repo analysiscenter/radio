@@ -136,36 +136,6 @@ class KerasNoduleVGG(KerasModel):
             max_pool = MaxPooling3D((2, 2, 2), strides=(2, 2, 2))(conv3)
         return max_pool
 
-    def dense_block(self, inputs, scope='ClassificationBlock'):
-        """ Dense block of NoduleVGG architecture.
-
-        Block consists of flatten operation applied to inputs.
-        Then there is several fully connected layers with 'relu' activation,
-        batch normalization and dropout layers. block should be put
-        in the end of the model.
-
-        Parameters
-        ----------
-        inputs : keras tensor
-            input tensor.
-        dropoout_rate : float
-            probability of dropout.
-        scope : str
-            scope name for block, will be used as an argument of tf.variable_scope.
-
-        Returns:
-        keras tensor
-            output tensor.
-        """
-        with tf.variable_scope(scope):
-            z = Flatten(name='flatten')(inputs)
-            for i, units in enumerate(self.units):
-                z = Dense(units, name='Dense-{}'.format(i))(z)
-                z = BatchNormalization(axis=-1)(z)
-                z = Activation('relu')(z)
-                z = Dropout(self.dropout_rate)(z)
-        return z
-
     def _build(self, *args, **kwargs):
         """ Build NoduleVGG model implemented in keras.
 
