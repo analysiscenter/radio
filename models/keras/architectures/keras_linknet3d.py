@@ -27,7 +27,7 @@ class KerasLinkNet3D(KerasModel):
     'upsampling_block'. Current LinkNet3D architecture is implemented
     inside _build method using these blocks.
 
-    This architecture is inspired by VNet https://arxiv.org/pdf/1606.04797.pdf.
+    This architecture is inspired by VNet (Milletari et al., https://arxiv.org/abs/1606.04797).
 
     Note
     ----

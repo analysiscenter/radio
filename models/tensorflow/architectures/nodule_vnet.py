@@ -70,6 +70,8 @@ def dilated_branches(inputs, filters, kernel_size, dilation_rate, name,
 class DilatedNoduleVNet(TFModel):
     """ Implementation of custom VNet architecture with dilated convolutions.
 
+    This architecture is inspired by VNet (Milletari et al., https://arxiv.org/abs/1606.04797).
+
     **Configuration**
 
     inputs : dict
