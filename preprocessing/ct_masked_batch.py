@@ -659,10 +659,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         names_gen = zip(self.indices[crops_indices], self.make_indices(batch_size))
         ix_batch = ['_'.join([prefix, random_str]) for prefix, random_str in names_gen]
         nodules_batch = type(self)(DatasetIndex(ix_batch))
-        nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
-
-        # set masks
-        nodules_batch.masks = masks
+        nodules_batch._init_data(images=images, bounds=bounds, spacing=crops_spacing, origin=crops_origin, masks=masks)
 
         # set nodules info in nodules' batch
         nodules_records = [self.nodules[self.nodules.patient_pos == crop_pos] for crop_pos in crops_indices]
