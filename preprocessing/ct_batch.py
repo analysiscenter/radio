@@ -115,7 +115,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 along each of `z,y,x` axes for each patient's 3D array
                 in world coordinates to be put in self.spacing.
         """
-        self._bounds = bounds if bounds is not None
+        self._bounds = bounds if bounds is not None else self._bounds
         for comp_name, comp_data in kwargs.items():
             setattr(self, comp_name, comp_data)
 
