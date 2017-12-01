@@ -152,7 +152,7 @@ class DilatedNoduleNet(TFModel):
 
             if mode == 'deconv':
                 conv_kwargs = dict(filters=filters, kernel_size=kernel,
-                                   strides=2, activation=tf.relu,
+                                   strides=2, activation=tf.nn.relu,
                                    use_bias=False, is_training=is_training)
                 x = conv_block(x, 'tna', {**kwargs, **conv_kwargs})
             elif mode == 'repeat':
