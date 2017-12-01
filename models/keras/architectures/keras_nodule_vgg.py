@@ -39,23 +39,6 @@ class KerasNoduleVGG(KerasModel):
     ----
     Implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
-
-    def __init__(self, *args, **kwargs):
-        """ Call __init__ of KerasModel and add specific for KerasNoduleVGG attributes. """
-        self.config = kwargs.get('config', {})
-
-        self.num_targets = self.get_from_config('num_targets', 1)
-        self.dropout_rate = self.get_from_config('dropout_rate', 0.35)
-
-        units = self.get_from_config('units', (512, 256))
-        if isinstance(units, int):
-            units = (units, )
-        elif units is None:
-            units = ()
-        self.units = tuple(units)
-
-        super().__init__(*args, **kwargs)
-
     def reduction_block_I(self, inputs, filters, scope, padding='same'):
         """ Reduction block of type I for NoduleVGG architecture.
 
