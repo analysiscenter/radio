@@ -9,6 +9,7 @@ from ..utils import repeat_tensor
 from ....dataset.dataset.models.tf.layers import conv_block
 from ....dataset.dataset.models.tf import TFModel
 
+
 class DilatedNoduleNet(TFModel):
     """ Implementation of custom encoder-decoder architecture with dilated convolutions.
 
