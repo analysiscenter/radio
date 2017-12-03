@@ -239,8 +239,8 @@ class DilatedNoduleNet(TFModel):
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
 
         with tf.variable_scope(name):
-            x =  conv_block(inputs, 'cna', filters=filters, kernel_size=1,
-                            activation=tf.nn.relu, is_training=is_training)
+            x = conv_block(inputs, 'cna', filters=filters, kernel_size=1,
+                           activation=tf.nn.relu, is_training=is_training)
 
             x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
                                      name='conv3D_dilated', is_training=is_training)
