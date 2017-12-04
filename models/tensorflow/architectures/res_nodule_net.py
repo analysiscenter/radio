@@ -23,6 +23,5 @@ class ResNodule3DNet50(ResNet):
         config['body']['filters'] = 2 ** np.arange(len(config['body']['num_blocks'])) * filters \
                                     * config['body']['block']['width_factor']
 
-        config['head'].update(dict(layout='Vdfna', activation=tf.nn.sigmoid))
         config['body']['block']['bottleneck'] = True
         return config
