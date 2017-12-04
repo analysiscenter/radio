@@ -1154,8 +1154,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
             if argument component is not 'images' or 'masks'.
         """
         if component not in ('masks', 'images'):
-            logger.warning("Component must be 'images' or 'masks'. "
-                           + "Got {}. Returning None.".format(component))
             return None
 
         if np.all(self.images_shape == self.images_shape[0, :]):
