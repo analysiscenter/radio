@@ -1,15 +1,12 @@
 # pylint: disable=too-few-public-methods
-""" Contains DenseNet model class. """
+""" Contains DenseNoduleNet model class. """
 
 import tensorflow as tf
 from ....dataset.dataset.models.tf import DenseNet
 
 
 class DenseNoduleNet(DenseNet):
-    """ Implementation of custom DenseNet architecture for lung cancer detection.
-
-    Model is inspired by DenseNet (Gao Huang et Al., https://arxiv.org/abs/1608.06993)
-    """
+    """ Implementation of custom DenseNet architecture for lung cancer detection. """
     @classmethod
     def default_config(cls):
         """ Sepcification of custom block parameters. """

@@ -1,4 +1,4 @@
-""" Contains implementation of ResNet via keras. """
+""" Contains implementation of ResNetNoduleNet via keras. """
 
 from keras import layers
 

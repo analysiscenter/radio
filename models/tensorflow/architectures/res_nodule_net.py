@@ -1,5 +1,5 @@
 # pylint: disable=too-few-public-methods
-""" Contains TFResNet model class. """
+""" Contains ResNodule3DNet50 model class. """
 
 import numpy as np
 import tensorflow as tf
@@ -7,10 +7,7 @@ from ....dataset.dataset.models.tf import ResNet
 
 
 class ResNodule3DNet50(ResNet):
-    """ Implementation of custom DenseNet architecture for lung cancer detection.
-
-    Model is inspired by ResNet (Kaiming He et Al., https://arxiv.org/abs/1512.03385/)
-    """
+    """ Implementation of custom DenseNet architecture for lung cancer detection. """
 
     @classmethod
     def default_config(cls):
