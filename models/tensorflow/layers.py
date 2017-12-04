@@ -1,4 +1,3 @@
-# pylint: disable=not-context-manager
 # pylint: disable=too-many-arguments
 """ Helper functions for creating layers written on tensorflow. """
 
