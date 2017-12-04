@@ -18,7 +18,6 @@ class ResNodule3DNet50(ResNet50):
                             pool_size=3, pool_strides=(1, 2, 2))
         config['input_block'].update(input_config)
 
-        config['body']['num_blocks'] = [3, 4, 6, 3]
         filters = 16   # number of filters in the first block
         config['body']['filters'] = 2 ** np.arange(len(config['body']['num_blocks'])) * filters \
                                     * config['body']['block']['width_factor']
