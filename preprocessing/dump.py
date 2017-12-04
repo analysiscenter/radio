@@ -3,7 +3,7 @@
 """ Auxiliarry async functions for encoding and dump of data """
 
 import os
-import cloudpickle
+import dill as pickle
 
 import numpy as np
 import aiofiles
@@ -92,7 +92,7 @@ async def encode_dump_array(data, folder, filename, mode):
             decoder = get_linear(i8_range, data_range)
 
         # serialize decoder
-        byted.append(cloudpickle.dumps(decoder))
+        byted.append(pickle.dumps(decoder))
         fnames.append(fname_noext + '.decoder')
     elif mode == 'quantization':
 
@@ -112,7 +112,7 @@ async def encode_dump_array(data, folder, filename, mode):
         decoder = lambda x: (model.cluster_centers_[x + 128]).reshape(data.shape)
 
         # serialize decoder
-        byted.append(cloudpickle.dumps(decoder))
+        byted.append(pickle.dumps(decoder))
         fnames.append(fname_noext + '.decoder')
     elif mode is None:
         encoded = data
@@ -121,7 +121,7 @@ async def encode_dump_array(data, folder, filename, mode):
         raise ValueError('Unknown mode of int8-encoding')
 
     # serialize (possibly) encoded data and its shape
-    byted.extend([blosc.pack_array(encoded, cname='zstd', clevel=1), cloudpickle.dumps(np.array(data.shape))])
+    byted.extend([blosc.pack_array(encoded, cname='zstd', clevel=1), pickle.dumps(np.array(data.shape))])
     fnames.extend([filename, fname_noext + '.shape'])
 
     # dump serialized items
@@ -136,7 +136,7 @@ async def dump_data(data_items, folder, i8_encoding_mode):
     ----------
     data_items : dict
         dict of data items for dump in form {item_name: [item, 'ext']}
-        (e.g.: {'images': [scans, 'blk'], 'masks': [masks, 'blk'], 'spacing': [spacing, 'cpkl']})
+        (e.g.: {'images': [scans, 'blk'], 'masks': [masks, 'blk'], 'spacing': [spacing, 'pkl']})
     folder : str
         folder to dump data-items in. Note that each data item is dumped in its separate subfolder
         inside the supplied folder.
@@ -146,7 +146,7 @@ async def dump_data(data_items, folder, i8_encoding_mode):
     Note
     ----
     Depending on supplied format in data_items, each data-item will be either
-        cloudpickle-serialized (if 'cpkl') or blosc-packed (if 'blk')
+        pickle-serialized (if 'pkl') or blosc-packed (if 'blk')
     """
 
     # create directory if does not exist
@@ -166,9 +166,9 @@ async def dump_data(data_items, folder, i8_encoding_mode):
 
             _ = await encode_dump_array(data, item_folder, 'data.blk', mode)
 
-        elif ext == 'cpkl':
-            byted = cloudpickle.dumps(data)
-            async with aiofiles.open(os.path.join(item_folder, 'data.cpkl'), mode='wb') as file:
+        elif ext == 'pkl':
+            byted = pickle.dumps(data)
+            async with aiofiles.open(os.path.join(item_folder, 'data.pkl'), mode='wb') as file:
                 _ = await file.write(byted)
 
     return None

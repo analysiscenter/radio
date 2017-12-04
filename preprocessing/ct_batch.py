@@ -5,7 +5,7 @@
 """ Batch class for storing CT-scans. """
 
 import os
-import cloudpickle
+import dill as pickle
 
 import numpy as np
 import aiofiles
@@ -420,7 +420,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
                 # read shape and put it into shapes
                 with open(filename, 'rb') as file:
-                    shapes[ix_pos, :] = cloudpickle.load(file)
+                    shapes[ix_pos, :] = pickle.load(file)
 
             # update bounds of items
             # TODO: once bounds for other components are added, make sure they are updated here in the right way
@@ -473,8 +473,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             # set correct extension for each component and choose a tool
             # for debyting and (possibly) decoding it
             if source in ['spacing', 'origin']:
-                ext = 'cpkl'
-                unpacker = cloudpickle.loads
+                ext = 'pkl'
+                unpacker = pickle.loads
             else:
                 ext = 'blk'
                 def unpacker(byted):
@@ -488,7 +488,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
                         with open(decod_path, mode='rb') as file:
-                            decoder = cloudpickle.loads(file.read())
+                            decoder = pickle.loads(file.read())
                     else:
                         decoder = lambda x: x
 
@@ -579,13 +579,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         - ./data/blosc_preprocessed/1ae34g90/images/data.blk
         - ./data/blosc_preprocessed/1ae34g90/images/data.shape
-        - ./data/blosc_preprocessed/1ae34g90/spacing/data.cpkl
-        - ./data/blosc_preprocessed/1ae34g90/origin/data.cpkl
+        - ./data/blosc_preprocessed/1ae34g90/spacing/data.pkl
+        - ./data/blosc_preprocessed/1ae34g90/origin/data.pkl
 
         - ./data/blosc_preprocessed/3hf82s76/images/data.blk
         - ./data/blosc_preprocessed/3hf82s76/images/data.shape
-        - ./data/blosc_preprocessed/3hf82s76/spacing/data.cpkl
-        - ./data/blosc_preprocessed/3hf82s76/origin/data.cpkl
+        - ./data/blosc_preprocessed/3hf82s76/spacing/data.pkl
+        - ./data/blosc_preprocessed/3hf82s76/origin/data.pkl
         """
         # if components-arg is not supplied, dump all components
         if components is None:
@@ -601,7 +601,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         for component in components:
             # get correct extension for the component
             if component in ['spacing', 'origin']:
-                ext = 'cpkl'
+                ext = 'pkl'
             else:
                 ext = 'blk'
 
