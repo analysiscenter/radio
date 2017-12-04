@@ -106,16 +106,11 @@ def unpack_component(batch, model=None, component='images', dim_ordering='channe
 
     Returns
     -------
-    ndarray(batch_size, zdim, ydim, xdim, 1)
+    ndarray(batch_size, zdim, ydim, xdim, 1) or None
         unpacked 'images' or 'masks' component of batch as numpy array.
-
-    Raises
-    ------
-    AttributeError
-        if argument component is not 'images' or 'masks'.
     """
     if component not in ('masks', 'images'):
-        raise AttributeError("Component must be 'images' or 'masks'")
+        return None
 
     if np.all(batch.images_shape == batch.images_shape[0, :]):
         x = batch.get(None, component).reshape(-1, batch.images_shape[0, :])
