@@ -3,16 +3,16 @@
 
 import numpy as np
 import tensorflow as tf
-from ....dataset.dataset.models.tf import ResNet
+from ....dataset.dataset.models.tf import ResNet50
 
 
-class ResNodule3DNet50(ResNet):
+class ResNodule3DNet50(ResNet50):
     """ Implementation of custom DenseNet architecture for lung cancer detection. """
 
     @classmethod
     def default_config(cls):
-        """ Sepcification of custom block parameters. """
-        config = ResNet.default_config()
+        """ Specification of custom block parameters. """
+        config = ResNet50.default_config()
 
         input_config = dict(layout='cnap', filters=16, kernel_size=7,
                             pool_size=3, pool_strides=(1, 2, 2))
