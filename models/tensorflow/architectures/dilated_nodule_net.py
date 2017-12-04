@@ -155,7 +155,7 @@ class DilatedNoduleNet(TFModel):
                 conv_kwargs = dict(filters=filters, kernel_size=kernel,
                                    strides=2, activation=tf.nn.relu,
                                    use_bias=False, is_training=is_training)
-                x = conv_block(x, 'tna', {**kwargs, **conv_kwargs})
+                x = conv_block(x, 'tna', **{**kwargs, **conv_kwargs})
             elif mode == 'repeat':
                 x = repeat_tensor(x, repeat_times)
 
