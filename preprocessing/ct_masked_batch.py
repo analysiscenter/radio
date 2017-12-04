@@ -1154,7 +1154,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
             if argument component is not 'images' or 'masks'.
         """
         if component not in ('masks', 'images'):
-            raise AttributeError("Component must be 'images' or 'masks'")
+            logger.warning("Component must be 'images' or 'masks'. "
+                           + "Got {}. Returning None.".format(component))
+            return None
 
         if np.all(self.images_shape == self.images_shape[0, :]):
             x = self.get(None, component).reshape(-1, *self.images_shape[0, :])
@@ -1279,8 +1281,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif mode == 'classification':
             feed_dict = self._unpack_clf(**kwargs)
         else:
-            raise ValueError("Argument 'mode' must be one of following strings: "
-                             + " ('segmentation', 'regression', 'classification')")
+            logger.warning("Argument 'mode' must be one of following strings: "
+                           + " ('segmentation', 'regression', 'classification') "
+                           + "Nothing happend.")
+            return self
 
         self.targets = feed_dict['targets']
         self.inputs = feed_dict['inputs']
