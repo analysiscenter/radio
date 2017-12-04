@@ -2,7 +2,6 @@
 """ Contains ResNodule3DNet50 model class. """
 
 import numpy as np
-import tensorflow as tf
 from ....dataset.dataset.models.tf import ResNet50
 
 
