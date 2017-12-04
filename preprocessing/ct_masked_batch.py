@@ -1145,13 +1145,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Returns
         -------
-        ndarray(batch_size, zdim, ydim, xdim, 1)
+        ndarray(batch_size, zdim, ydim, xdim, 1) or None
             unpacked 'images' or 'masks' component of batch as numpy array.
-
-        Raises
-        ------
-        AttributeError
-            if argument component is not 'images' or 'masks'.
         """
         if component not in ('masks', 'images'):
             return None
