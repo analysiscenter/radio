@@ -9,7 +9,7 @@ import tensorflow as tf
 from ....dataset.dataset.models.tf import ResNet
 
 
-class ResNoduleNet(ResNet):
+class ResNodule3DNet50(ResNet):
     """ Implementation of custom DenseNet architecture for lung cancer detection.
 
     Model is inspired by ResNet (Kaiming He et Al., https://arxiv.org/abs/1512.03385/)
