@@ -22,5 +22,4 @@ class ResNodule3DNet50(ResNet50):
         config['body']['filters'] = 2 ** np.arange(len(config['body']['num_blocks'])) * filters \
                                     * config['body']['block']['width_factor']
 
-        config['body']['block']['bottleneck'] = True
         return config
