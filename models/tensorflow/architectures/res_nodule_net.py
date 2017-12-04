@@ -1,6 +1,3 @@
-# pylint: disable=too-many-arguments
-# pylint: disable=not-context-manager
-# pylint: disable=duplicate-code
 # pylint: disable=too-few-public-methods
 """ Contains TFResNet model class. """
 

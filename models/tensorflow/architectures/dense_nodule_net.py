@@ -1,5 +1,3 @@
-# pylint: disable=too-many-arguments
-# pylint: disable=not-context-manager
 # pylint: disable=too-few-public-methods
 """ Contains DenseNet model class. """
 
