@@ -1281,9 +1281,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif mode == 'classification':
             feed_dict = self._unpack_clf(**kwargs)
         else:
-            logger.warning("Argument 'mode' must be one of following strings: "
-                           + " ('segmentation', 'regression', 'classification') "
-                           + "Nothing happend.")
             return self
 
         self.targets = feed_dict['targets']
