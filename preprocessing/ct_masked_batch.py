@@ -158,88 +158,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         return 'images', 'masks', 'spacing', 'origin'
 
-    @action
-    def load(self, source=None, fmt='dicom', bounds=None,      # pylint: disable=arguments-differ
-             origin=None, spacing=None, nodules=None, masks=None,
-             src_blosc=None):
-        """ Load data in batch with scans and masks.
-
-        Parameters
-        ----------
-        fmt :       str
-                    type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
-        source :    ndarray(n_patients * z, y, x) or None
-                    input array with `skyscraper` (stacked scans),
-                    needed iff fmt = 'ndarray'.
-        bounds :    ndarray(n_patients, dtype=np.int) or None
-                    bound-floors index for patients.
-                    Needed iff fmt='ndarray'
-        origin :    ndarray(n_patients, 3) or None
-                    origins of scans in world coordinates.
-                    Needed only if fmt='ndarray'
-        spacing :   ndarray(n_patients, 3) or None
-                    ndarray with spacings of patients along `z,y,x` axes.
-                    Needed only if fmt='ndarray'
-        src_blosc : list/tuple/string
-                    Contains names of batch component(s) that should be loaded from blosc file.
-                    Needed only if fmt='blosc'. If None, all components are loaded.
-
-        Examples
-        --------
-
-        >>> index = FilesIndex(path="/some/path/*.mhd, no_ext=True")
-        >>> batch = CTImagesMaskedBatch(index)
-        >>> batch.load(fmt='raw')
-
-        >>> batch.load(src=source_array, fmt='ndarray', bounds=bounds,
-        ...            origin=origin_dict, spacing=spacing_dict)
-        """
-        params = dict(source=source, bounds=bounds,
-                      origin=origin, spacing=spacing)
-        if fmt == 'ndarray':
-            self._init_data(**params)
-            self.nodules = nodules
-            self.masks = masks
-        else:
-            # TODO check this
-            super().load(fmt=fmt, **params, src_blosc=src_blosc)
-        return self
-
-    @action
-    def dump(self, dst, src=None, fmt='blosc'):                # pylint: disable=arguments-differ
-        """ Dump scans to dst-folder in specified format.
-
-        Parameters
-        ----------
-        dst : str
-              destinatio-folder where all patients' data should be put
-        src : str or list/tuple
-              component(s) that we need to dump. If not
-              supplied, dump all components + shapes of scans
-        fmt : 'blosc'
-              format of dump. Currently only blosc-format is supported;
-              in this case folder for each patient is created, patient's data
-              is put into images.blk, masks.blk,
-              attributes are put into files attr_name.cpkl
-              (e.g., spacing.cpkl)
-
-        See docstring of parent-batch for examples.
-        """
-        # if src is not supplied, dump all components and shapes
-        if src is None:
-            src = self.components + ('images_shape', )
-
-        # convert src to iterable 1d-array
-        src = np.asarray(src).reshape(-1)
-
-        if 'masks' in src and 'images_shape' not in src:
-            src = tuple(src) + ('images_shape', )
-
-        # execute parent-method
-        super().dump(dst=dst, src=src, fmt=fmt)  # pylint: disable=no-value-for-parameter
-
-        return self
-
     def nodules_to_df(self, nodules):
         """ Convert nodules_info ndarray into pandas dataframe.
 
@@ -741,10 +659,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         names_gen = zip(self.indices[crops_indices], self.make_indices(batch_size))
         ix_batch = ['_'.join([prefix, random_str]) for prefix, random_str in names_gen]
         nodules_batch = type(self)(DatasetIndex(ix_batch))
-        nodules_batch.load(source=images, fmt='ndarray', bounds=bounds, spacing=crops_spacing, origin=crops_origin)
-
-        # set masks
-        nodules_batch.masks = masks
+        nodules_batch._init_data(images=images, bounds=bounds, spacing=crops_spacing, origin=crops_origin, masks=masks)  # pylint: disable=protected-access
 
         # set nodules info in nodules' batch
         nodules_records = [self.nodules[self.nodules.patient_pos == crop_pos] for crop_pos in crops_indices]
@@ -922,22 +837,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Parameters
         ----------
         **kwargs
-                src :     str, list or tuple
-                          iterable of components names that need to be loaded
+                components : str, list or tuple
+                    iterable of components names that need to be loaded
         Returns
         -------
         list
             list of ids of batch-items, i.e. series ids or patient ids.
         """
-        # read shapes, fill the components with zeroes if masks, images need to
-        # be updated
-        if 'masks' in kwargs['src'] or 'images' in kwargs['src']:
-            slice_shape = self._preload_shapes()
-            skysc_shape = (self._bounds[-1], ) + slice_shape
-
-            # fill needed comps with zeroes
-            for source in {'images', 'masks'} & set(kwargs['src']):
-                setattr(self, source, np.zeros(skysc_shape))
+        # fill 'images', 'masks'-comps with zeroes if needed
+        skysc_components = {'images', 'masks'} & set(kwargs['components'])
+        self._prealloc_skyscraper_components(skysc_components)
 
         return self.indices
 
