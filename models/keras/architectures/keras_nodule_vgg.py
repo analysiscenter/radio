@@ -1,4 +1,3 @@
-# pylint: disable=not-context-manager
 """ Contains implementation of VGG16 architecture in keras. """
 
 import tensorflow as tf

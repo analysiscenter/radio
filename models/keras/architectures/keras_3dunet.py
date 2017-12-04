@@ -1,4 +1,3 @@
-# pylint: disable=not-context-manager
 # pylint: disable=too-many-statements
 """ Contains Keras3DUNet model class. """
 
