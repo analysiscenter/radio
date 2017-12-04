@@ -472,64 +472,6 @@ def unpack_reg(batch, model, threshold=10, dim_ordering='channels_last'):
     return {'x': x, 'y': y_regression_array}
 
 
-def test_on_dataset(batch, model_name, unpacker, batch_size, period, **kwargs):
-    """ Compute metrics of model on dataset.
-
-    Parameters
-    ----------
-    model_name : str
-        name of model.
-    unpacker : callable
-        function that will be used  for unpacking data from test_pipeline batches.
-    batch_size : int
-        size of batch when making predictions.
-    period : int
-        frequency of test_on_dataset runs.
-    kwargs : dict
-        these parameters will be fed into
-        unpacker function after batch and model arguments.
-
-    Returns
-    -------
-    CTImagesMaskedBatch
-        unchanged input batch.
-    """
-    if batch.pipeline is None:
-        return batch
-    train_iter = batch.pipeline.get_variable('iter', init_on_each_run=0)
-    if batch.pipeline.config is not None:
-
-        metrics = batch.pipeline.config.get('metrics', ())
-        test_pipeline = batch.pipeline.config.get('test_pipeline', None)
-        test_pipeline.reset_iter()
-
-        test_metrics = batch.pipeline.get_variable('test_metrics')
-
-    if len(metrics) and (train_iter % period == 0):
-        _model = batch.get_model_by_name(model_name)
-        ds_metrics_list = []
-        for test_batch in test_pipeline.gen_batch(batch_size):
-            feed_dict = unpacker(test_batch, _model, **kwargs)
-
-            y_pred = _model.predict(x=feed_dict.get('x', None))
-            y_true = feed_dict.get('y', None)
-
-            extend_data = {m.__name__: m(y_true, y_pred) for m in metrics}
-
-            ds_metrics_list.append(extend_data)
-
-        ds_metrics = pd.DataFrame(ds_metrics_list).mean()
-        batch.pipeline.update_variable('test_metrics', value=ds_metrics.to_dict(), mode='a')
-    else:
-        if len(test_metrics) == 0:
-            value = {m.__name__: np.nan for m in metrics}
-        else:
-            value = test_metrics[-1]
-        batch.pipeline.update_variable('test_metrics', value=value, mode='a')
-    batch.pipeline.set_variable('iter', train_iter + 1)
-    return None
-
-
 def _create_overlap_index(overlap_matrix):
     """ Get indices of nodules that overlaps using overlap_matrix. """
     argmax_ov = overlap_matrix.argmax(axis=1)
