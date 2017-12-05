@@ -1070,7 +1070,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
-                        batch_size=4, y_component='labels', dim_ordering='channels_last',
+                        batch_size=4, y_component='labels', data_format='channels_last',
                         show_progress=True):
         """ Get predictions of the model on data contained in batch.
 
@@ -1089,8 +1089,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             number of patches to feed in model in one iteration.
         y_component: str
             name of y component, can be 'masks' or labels.
-        dim_ordering: str
-            dimension ordering, can be 'channels_first' or 'channels_last'.
+        data_format: str
+            format of ANN input data, can be 'channels_first' or 'channels_last'.
 
         Returns
         -------
@@ -1101,9 +1101,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         patches_arr = self.get_patches(patch_shape=crop_shape,
                                        stride=strides,
                                        padding='reflect')
-        if dim_ordering == 'channels_first':
+        if data_format == 'channels_first':
             patches_arr = patches_arr[:, np.newaxis, ...]
-        elif dim_ordering == 'channels_last':
+        elif data_format == 'channels_last':
             patches_arr = patches_arr[..., np.newaxis]
 
         predictions = []
@@ -1132,23 +1132,30 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                data_attr='masks')
         return self
 
-    def unpack_component(self, component='images', dim_ordering='channels_last'):
+    def unpack_component(self, component='images', data_format='channels_last'):
         """ Basic way for unpacking 'images' or 'masks' from batch.
 
         Parameters
         ----------
         component : str
             component to unpack, can be 'images' or 'masks'.
-        dim_ordering : str
+        data_format : str
             can be 'channels_last' or 'channels_first'. Reflects where to put
             channels dimension: right after batch dimension or after all spatial axes.
 
         Returns
         -------
-        ndarray(batch_size, zdim, ydim, xdim, 1) or None
+        ndarray(batch_size, zdim, ydim, xdim, 1)
             unpacked 'images' or 'masks' component of batch as numpy array.
+
+        Raises
+        ------
+        AttributeError
+            if argument component is not 'images' or 'masks'.
         """
         if component not in ('masks', 'images'):
+            logger.warning("Component must be 'images' or 'masks'. "
+                           + "Got {}. Returning None.".format(component))
             return None
 
         if np.all(self.images_shape == self.images_shape[0, :]):
@@ -1156,76 +1163,79 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             x = np.stack([self.get(i, component) for i in range(len(self))])
 
-        if dim_ordering == 'channels_last':
+        if data_format == 'channels_last':
             x = x[..., np.newaxis]
-        elif dim_ordering == 'channels_first':
+        elif data_format == 'channels_first':
             x = x[:, np.newaxis, ...]
         return x
 
-    def _unpack_seg(self, dim_ordering='channels_last'):
+    def _unpack_seg(self, data_format='channels_last'):
         """ Unpack data from batch in format suitable for segmentation task.
 
         Parameters
         ----------
-        dim_ordering : str
+        data_format : str
             can be 'channels_last' or 'channels_first'. Reflects where to put
             channels dimension: right after batch dimension or after all spatial axes.
 
         Returns
         -------
         dict
-            {'inputs': images_array, 'targets': labels_array}
+            {'images': images_array, 'labels': labels_array}
 
         Note
         ----
-        'dim_ordering' argument reflects where to put '1'
+        'data_format' argument reflects where to put '1'
         for channels dimension both for images and masks.
         """
-        return {'inputs': self.unpack_component('images', dim_ordering),
-                'targets': self.unpack_component('masks', dim_ordering)}
+        return {'images': self.unpack_component('images', data_format),
+                'labels': self.unpack_component('masks', data_format)}
 
-    def _unpack_clf(self, threshold=10, dim_ordering='channels_last'):
+    def _unpack_clf(self, threshold=10, data_format='channels_last'):
         """ Unpack data from batch in format suitable for classification task.
 
         Parameters
         ----------
         threshold : int
             minimum number of '1' pixels in mask to consider it cancerous.
-        dim_ordering : str
+        data_format : str
             can be 'channels_last' or 'channels_first'. Reflects where to put
             channels dimension: right after batch dimension or after all spatial axes.
 
         Returns
         -------
         dict
-            {'inputs': images_array, 'targets': labels_array}
+            {'images': images_array, 'labels': labels_array}
 
         Note
         ----
-        'dim_ordering' argument reflects where to put '1' for channels dimension.
+        'data_format' argument reflects where to put '1' for channels dimension.
         """
         masks_labels = np.asarray([self.get(i, 'masks').sum() > threshold
                                    for i in range(len(self))], dtype=np.int)
 
-        return {'inputs': self.unpack_component('images', dim_ordering),
-                'targets': masks_labels[:, np.newaxis]}
+        return {'images': self.unpack_component('images', data_format),
+                'labels': masks_labels[:, np.newaxis]}
 
-    def _unpack_reg(self, threshold=10, dim_ordering='channels_last'):
+    def _unpack_reg(self, threshold=10, data_format='channels_last'):
         """ Unpack data from batch in format suitable for regression task.
 
         Parameters
         ----------
         threshold : int
             minimum number of '1' pixels in mask to consider it cancerous.
+        data_format : str
+            can be 'channels_last' or 'channels_first'. Reflects where to put
+            channels dimension: right after batch dimension or after all spatial axes.
 
         Returns
         -------
         dict
-            {'inputs': images_array, 'targets': y_regression_array}
+            {'images': images_array, 'labels': y_regression_array}
 
         Note
         ----
-        'dim_ordering' argument reflects where to put '1' for channels dimension.
+        'data_format' argument reflects where to put '1' for channels dimension.
 
         """
 
@@ -1251,21 +1261,31 @@ class CTImagesMaskedBatch(CTImagesBatch):
             sizes[item_pos, :] = nodule_sizes[mask_nod_indices, :]
             centers[item_pos, :] = nodule_centers[mask_nod_indices, :]
 
-        clf_dict = self.unpack_clf(threshold, dim_ordering)
-        x, labels = clf_dict['inputs'], clf_dict['targets']
+        clf_dict = self.unpack_clf(threshold, data_format)
+        x, labels = clf_dict['images'], clf_dict['labels']
         y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
 
-        return {'inputs': x, 'targets': y_regression_array}
+        return {'images': x, 'labels': y_regression_array}
 
-    @action
-    def set_targets(self, mode='segmentation', **kwargs):
+    def make_data(self, mode='segmentation', **kwargs):
         """ Prepare data in batch for training neural network.
 
         Parameters
         ----------
         mode : str
             mode can be one of following 'classification', 'regression'
-            or 'segmentation'.
+            or 'segmentation'. Default is 'segmentation'.
+        data_format : str
+            data format batch data. Can be 'channels_last'
+            or 'channels_first'. Default is 'channels_last'.
+        threshold : int
+            threshold value of '1' pixels in masks to consider it cancerous.
+            Default is 10.
+
+        Returns
+        -------
+        dict or None
+        feed dict for training neural network.
         """
         if mode == 'segmentation':
             feed_dict = self._unpack_seg(**kwargs)
@@ -1274,8 +1294,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif mode == 'classification':
             feed_dict = self._unpack_clf(**kwargs)
         else:
-            return self
-
-        self.targets = feed_dict['targets']
-        self.inputs = feed_dict['inputs']
-        return self
+            logger.warning("Argument 'mode' must be one of following strings: "
+                           + " ('segmentation', 'regression', 'classification') "
+                           + "Nothing happend.")
+            return None
+        return feed_dict
