@@ -1260,11 +1260,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return {'images': x, 'labels': y_regression_array}
 
-    def make_data(self, mode='segmentation', **kwargs):
+    def make_data(self, model=None, mode='segmentation', **kwargs):
         """ Prepare data in batch for training neural network.
 
         Parameters
         ----------
+        model : instance of BaseModel subclass
+            model that will take output of make_data as feed_dict.
         mode : str
             mode can be one of following 'classification', 'regression'
             or 'segmentation'. Default is 'segmentation'.
