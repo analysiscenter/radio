@@ -1174,7 +1174,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 value = attr_value
         return value
 
-    def classification_targets(self, threshold=10):
+    def classification_targets(self, threshold=10, **kwargs):
         """ Unpack data from batch in format suitable for classification task.
 
         Parameters
@@ -1192,7 +1192,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                    for i in range(len(self))], dtype=np.int)
         return masks_labels[..., np.newaxis]
 
-    def regression_targets(self, threshold=10):
+    def regression_targets(self, threshold=10, **kwargs):
         """ Unpack data from batch in format suitable for regression task.
 
         Parameters
@@ -1235,7 +1235,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return reg_targets
 
-    def segmentation_targets(self, data_format='channels_last'):
+    def segmentation_targets(self, data_format='channels_last', **kwargs):
         """ Unpack data from batch in format suitable for regression task.
 
         Parameters
