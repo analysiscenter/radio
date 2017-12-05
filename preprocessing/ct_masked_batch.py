@@ -22,6 +22,7 @@ from .mask import make_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
 from ..dataset import action, any_action_failed, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
+from ..dataset.dataset.models.tf import TFModel
 
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
@@ -1132,8 +1133,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                data_attr='masks')
         return self
 
-    def unpack_component(self, component='images', data_format='channels_last'):
-        """ Basic way for unpacking 'images' or 'masks' from batch.
+    def unpack(self, component='images', **kwargs):
+        """ Basic way for unpacking components from batch.
 
         Parameters
         ----------
@@ -1142,103 +1143,78 @@ class CTImagesMaskedBatch(CTImagesBatch):
         data_format : str
             can be 'channels_last' or 'channels_first'. Reflects where to put
             channels dimension: right after batch dimension or after all spatial axes.
+        kwargs : dict
+            key-word arguments that will be passed in callable if
+            component argument reffers to method of batch class.
 
         Returns
         -------
-        ndarray(batch_size, zdim, ydim, xdim, 1) or None
-            unpacked 'images' or 'masks' component of batch as numpy array.
+        ndarray(batch_size, ...) or None
         """
-        if component not in ('masks', 'images'):
+        if not hasattr(self, component):
             return None
 
-        if np.all(self.images_shape == self.images_shape[0, :]):
-            x = self.get(None, component).reshape(-1, *self.images_shape[0, :])
+        if component in ('images', 'masks'):
+            data_format = kwargs.get('data_format', 'channels_last')
+
+            if np.all(self.images_shape == self.images_shape[0, :]):
+                value = self.get(None, component).reshape(-1, *self.images_shape[0, :])
+            else:
+                value = np.stack([self.get(i, component) for i in range(len(self))])
+
+            if data_format == 'channels_last':
+                value = value[..., np.newaxis]
+            elif data_format == 'channels_first':
+                value = value[:, np.newaxis, ...]
         else:
-            x = np.stack([self.get(i, component) for i in range(len(self))])
+            attr_value = getattr(self, component)
+            if callable(attr_value):
+                value = attr_value(**kwargs)
+            else:
+                value = attr_value
+        return value
 
-        if data_format == 'channels_last':
-            x = x[..., np.newaxis]
-        elif data_format == 'channels_first':
-            x = x[:, np.newaxis, ...]
-        return x
-
-    def _unpack_seg(self, data_format='channels_last'):
-        """ Unpack data from batch in format suitable for segmentation task.
-
-        Parameters
-        ----------
-        data_format : str
-            can be 'channels_last' or 'channels_first'. Reflects where to put
-            channels dimension: right after batch dimension or after all spatial axes.
-
-        Returns
-        -------
-        dict
-            {'images': images_array, 'labels': labels_array}
-
-        Note
-        ----
-        'data_format' argument reflects where to put '1'
-        for channels dimension both for images and masks.
-        """
-        return {'images': self.unpack_component('images', data_format),
-                'labels': self.unpack_component('masks', data_format)}
-
-    def _unpack_clf(self, threshold=10, data_format='channels_last'):
+    def classification_targets(self, threshold=10):
         """ Unpack data from batch in format suitable for classification task.
 
         Parameters
         ----------
         threshold : int
             minimum number of '1' pixels in mask to consider it cancerous.
-        data_format : str
-            can be 'channels_last' or 'channels_first'. Reflects where to put
-            channels dimension: right after batch dimension or after all spatial axes.
 
         Returns
         -------
-        dict
-            {'images': images_array, 'labels': labels_array}
-
-        Note
-        ----
-        'data_format' argument reflects where to put '1' for channels dimension.
+        ndarray(batch_size, 1)
+            targets for classification task: labels corresponding to cancerous
+            nodules ('1') and non-cancerous nodules ('0').
         """
         masks_labels = np.asarray([self.get(i, 'masks').sum() > threshold
                                    for i in range(len(self))], dtype=np.int)
+        return masks_labels[..., np.newaxis]
 
-        return {'images': self.unpack_component('images', data_format),
-                'labels': masks_labels[:, np.newaxis]}
-
-    def _unpack_reg(self, threshold=10, data_format='channels_last'):
+    def regression_targets(self, threshold=10):
         """ Unpack data from batch in format suitable for regression task.
 
         Parameters
         ----------
         threshold : int
             minimum number of '1' pixels in mask to consider it cancerous.
-        data_format : str
-            can be 'channels_last' or 'channels_first'. Reflects where to put
-            channels dimension: right after batch dimension or after all spatial axes.
 
         Returns
         -------
-        dict
-            {'images': images_array, 'labels': y_regression_array}
-
-        Note
-        ----
-        'data_format' argument reflects where to put '1' for channels dimension.
+        ndarray(batch_size, 7)
+            targets for regression task: cancer center, size
+            and label(1 for cancerous and 0 for non-cancerous). Note that in case
+            of non-cancerous crop first 6 column of output array will be set to zero.
 
         """
-
         nodules = self.nodules
 
         sizes = np.zeros(shape=(len(self), 3), dtype=np.float)
         centers = np.zeros(shape=(len(self), 3), dtype=np.float)
 
         for item_pos, _ in enumerate(self.indices):
-            item_nodules = nodules[nodules.item_pos == item_pos]
+            item_nodules = nodules[nodules.patient_pos == item_pos]
 
             if len(item_nodules) == 0:
                 continue
@@ -1254,25 +1230,41 @@ class CTImagesMaskedBatch(CTImagesBatch):
             sizes[item_pos, :] = nodule_sizes[mask_nod_indices, :]
             centers[item_pos, :] = nodule_centers[mask_nod_indices, :]
 
-        clf_dict = self.unpack_clf(threshold, data_format)
-        x, labels = clf_dict['images'], clf_dict['labels']
-        y_regression_array = np.concatenate([centers, sizes, labels], axis=1)
+        labels = self.unpack('classification_targets', threshold=threshold)
+        reg_targets = np.concatenate([centers, sizes, labels], axis=1)
 
-        return {'images': x, 'labels': y_regression_array}
+        return reg_targets
 
-    def make_data(self, model=None, mode='segmentation', **kwargs):
+    def segmentation_targets(self, data_format='channels_last'):
+        """ Unpack data from batch in format suitable for regression task.
+
+        Parameters
+        ----------
+        data_format : str
+            data_format shows where to put new axis for channels dimension:
+            can be 'channels_last' or 'channels_first'.
+
+        Returns
+        -------
+        ndarray(batch_size, ...)
+            batch array with masks.
+        """
+        return self.unpack('masks', data_format=data_format)
+
+    @staticmethod
+    def make_data(batch, model=None, mode='segmentation', is_training=True, **kwargs):
         """ Prepare data in batch for training neural network.
 
         Parameters
         ----------
-        model : instance of BaseModel subclass
-            model that will take output of make_data as feed_dict.
         mode : str
             mode can be one of following 'classification', 'regression'
             or 'segmentation'. Default is 'segmentation'.
         data_format : str
             data format batch data. Can be 'channels_last'
             or 'channels_first'. Default is 'channels_last'.
+        is_training : bool
+            whether model is in training or prediction mode. Default is True.
         threshold : int
             threshold value of '1' pixels in masks to consider it cancerous.
             Default is 10.
@@ -1280,17 +1272,18 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns
         -------
         dict or None
-        feed dict for training neural network.
+            feed dict for training neural network.
         """
-        if mode == 'segmentation':
-            feed_dict = self._unpack_seg(**kwargs)
-        elif mode == 'regression':
-            feed_dict = self._unpack_reg(**kwargs)
-        elif mode == 'classification':
-            feed_dict = self._unpack_clf(**kwargs)
+        inputs = batch.unpack('images', **kwargs)
+        labels = None
+        if mode in ['segmentation', 'classification', 'regression']:
+            labels = batch.unpack(mode + '_targets', **kwargs)
         else:
-            logger.warning("Argument 'mode' must be one of following strings: "
-                           + " ('segmentation', 'regression', 'classification') "
-                           + "Nothing happend.")
-            return None
-        return feed_dict
+            raise ValueError("Argument 'mode' must have one of values: "
+                             + "'segmentation', 'classification' or 'regression'")
+
+        if isinstance(model, TFModel):
+            feed_dict = dict(images=inputs, labels=labels) if is_training else dict(images=inputs)
+            return dict(feed_dict=feed_dict, fetches=None)
+        else:
+            return dict(x=inputs, y=labels) if is_training else dict(x=inputs)
