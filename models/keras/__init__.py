@@ -2,3 +2,4 @@
 from .keras_res_nodule_net import KerasResNoduleNet
 from .keras_3dunet import Keras3DUNet
 from .keras_nodule_vgg import KerasNoduleVGG
+from .keras_model import KerasModel
