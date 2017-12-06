@@ -1252,8 +1252,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self.unpack('masks', data_format=data_format)
 
     @staticmethod
-    def make_data(batch, model=None, mode='segmentation', is_training=True, **kwargs):
-        """ Prepare data in batch for training neural network.
+    def make_data_tf(batch, model=None, mode='segmentation', is_training=True, **kwargs):
+        """ Prepare data in batch for training neural network implemented in tensorflow.
 
         Parameters
         ----------
@@ -1272,18 +1272,46 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns
         -------
         dict or None
-            feed dict for training neural network.
+            feed dict and fetches for training neural network.
         """
         inputs = batch.unpack('images', **kwargs)
-        labels = None
         if mode in ['segmentation', 'classification', 'regression']:
             labels = batch.unpack(mode + '_targets', **kwargs)
         else:
             raise ValueError("Argument 'mode' must have one of values: "
                              + "'segmentation', 'classification' or 'regression'")
 
-        if isinstance(model, TFModel):
-            feed_dict = dict(images=inputs, labels=labels) if is_training else dict(images=inputs)
-            return dict(feed_dict=feed_dict, fetches=None)
+        feed_dict = dict(images=inputs, labels=labels) if is_training else dict(images=inputs)
+        return dict(feed_dict=feed_dict, fetches=None)
+
+    @staticmethod
+    def make_data_keras(batch, model=None, mode='segmentation', is_training=True, **kwargs):
+        """ Prepare data in batch for training neural network implemented in keras.
+
+        Parameters
+        ----------
+        mode : str
+            mode can be one of following 'classification', 'regression'
+            or 'segmentation'. Default is 'segmentation'.
+        data_format : str
+            data format batch data. Can be 'channels_last'
+            or 'channels_first'. Default is 'channels_last'.
+        is_training : bool
+            whether model is in training or prediction mode. Default is True.
+        threshold : int
+            threshold value of '1' pixels in masks to consider it cancerous.
+            Default is 10.
+
+        Returns
+        -------
+        dict or None
+            kwargs for keras model train method:
+            {'x': ndarray(...), 'y': ndarrray(...)} for training neural network.
+        """
+        inputs = batch.unpack('images', **kwargs)
+        if mode in ['segmentation', 'classification', 'regression']:
+            labels = batch.unpack(mode + '_targets', **kwargs)
         else:
-            return dict(x=inputs, y=labels) if is_training else dict(x=inputs)
+            raise ValueError("Argument 'mode' must have one of values: "
+                             + "'segmentation', 'classification' or 'regression'")
+        return dict(x=inputs, y=labels) if is_training else dict(x=inputs)
