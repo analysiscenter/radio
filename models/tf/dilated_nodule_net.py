@@ -138,7 +138,7 @@ class DilatedNoduleNet(TFModel):
             x, skip = inputs
 
             if mode == 'deconv':
-                conv_kwargs = dict(filters=filters, strides=2)
+                conv_kwargs = dict(filters=filters, strides=2, kernel_size=upsampling_kernel)
                 x = conv_block(x, 'tna', **{**kwargs, **conv_kwargs})
             elif mode == 'repeat':
                 x = repeat_tensor(x, repeat_times)
