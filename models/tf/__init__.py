@@ -1,3 +1,4 @@
-""" Contains losses, useful utils specific for tensorflow and implementation of ANN architectures. """
-from .losses import dice_loss, jaccard_coef_logloss, log_loss, reg_l2_loss, tiversky_loss
-from .architectures import ResNodule3DNet50, DenseNoduleNet, DilatedNoduleNet
+""" Contains neural network architectures for lung cancer detection implemented in tensorflow. """
+from .dense_nodule_net import DenseNoduleNet
+from .res_nodule_net import ResNodule3DNet50
+from .dilated_nodule_net import DilatedNoduleNet
