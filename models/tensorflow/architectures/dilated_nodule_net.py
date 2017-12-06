@@ -55,7 +55,7 @@ class DilatedNoduleNet(TFModel):
 
     @classmethod
     def dilated_branches(cls, inputs, filters, kernel_size, dilation_rate, name,
-                         activation=tf.nn.relu, padding='same', is_training=True):
+                         activation=tf.nn.relu, padding='same', is_training=True, **kwargs):
         """ Convolutional block with parallel branches having different dilation rate.
 
         Parameters
@@ -91,23 +91,14 @@ class DilatedNoduleNet(TFModel):
         branches = []
         with tf.variable_scope(name):
             for f, k, d in zip(filters, kernel_size, dilation_rate):
-
-                if not isinstance(k, (tuple, list)):
-                    _ksize = [k] * 3
-                else:
-                    _ksize = k
-
-                if not isinstance(d, (tuple, list)):
-                    _drate = [d] * 3
-                else:
-                    _drate = d
-
                 b = bn_dilated_conv3d(inputs, f, _ksize, padding=padding,
                                       is_training=is_training, activation=activation,
                                       dilation=_drate, name='conv3d_rate_{}'.format(_drate[0]))
+
+                b = conv_block(inputs, layout='cna', kernel_size=k, dilation=d,
+                               activation=activation, is_training=is_training, **kwargs)
                 branches.append(b)
             outputs = tf.concat(branches, axis=4)
-
         return outputs
 
     @classmethod
