@@ -3,27 +3,6 @@
 import tensorflow as tf
 
 
-def log_loss(y_true, y_pred, epsilon=10e-7):
-    """ Log loss on input tensors.
-
-    Parameters
-    ----------
-    y_true : tf.Tensor
-        tensor with true labels.
-    y_pred : tf.Tensor
-        tensor with predicted logits;
-    epsilon : float or tf.constant(dtype=tf.float32)
-        small real value to avoid computing log(0).
-
-    Returns
-    -------
-    tf.Tensor
-        log loss on input tensors.
-    """
-    return tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
-                          + (1 - y_true) * tf.log(1 - y_pred + epsilon))
-
-
 def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
     """ L2 loss for prediction of cancer tumor's centers, sizes joined with binary classification task.
 
