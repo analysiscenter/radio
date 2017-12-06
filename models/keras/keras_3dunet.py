@@ -13,8 +13,8 @@ from keras.layers import (Input,
 from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
 
-from ..keras_model import KerasModel
-from ..losses import dice_loss
+from .keras_model import KerasModel
+from .losses import dice_loss
 
 
 class Keras3DUNet(KerasModel):

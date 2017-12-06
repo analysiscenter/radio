@@ -5,7 +5,7 @@ from keras.layers import Input
 from keras.layers import Conv3D, MaxPooling3D
 from keras.layers import Dense, BatchNormalization
 
-from ..keras_model import KerasModel
+from .keras_model import KerasModel
 
 
 class KerasNoduleVGG(KerasModel):

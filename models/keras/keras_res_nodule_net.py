@@ -9,7 +9,7 @@ from keras.layers import Activation
 from keras.layers import Dropout
 from keras.layers import BatchNormalization
 
-from ..keras_model import KerasModel
+from .keras_model import KerasModel
 
 
 class KerasResNoduleNet(KerasModel):
