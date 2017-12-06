@@ -148,11 +148,9 @@ class DilatedNoduleNet(TFModel):
             x = cls.crop(x, skip, data_format=kwargs.get('data_format'))
             x = tf.concat((skip, x), axis=axis)
 
-            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                     name='conv_I', is_training=is_training)
-
-            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                     name='conv_II', is_training=is_training)
+            dilated_kwargs = dict(filters=_filters, kernel_size=(3, 3, 3), dilation_rate=dilation_rate)
+            x = cls.dilated_branches(x, name='conv_I', **{**config, **dilated_kwargs})
+            x = cls.dilated_branches(x, name='conv_II', **{**config, **dilated_kwargs})
         return x
 
     @classmethod
@@ -184,11 +182,10 @@ class DilatedNoduleNet(TFModel):
         dilation_share /= dilation_share.sum()
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
         with tf.variable_scope(name):
-            x = cls.dilated_branches(inputs, _filters, (3, 3, 3), dilation_rate,
-                                     name='conv_I', is_training=is_training)
+            dilated_kwargs = dict(filters=_filters, kernel_size=(3, 3, 3), dilation_rate=dilation_rate)
+            x = cls.dilated_branches(inputs, name='conv_I', **{**config, **dilated_kwargs})
 
-            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                     name='conv_II', is_training=is_training)
+            x = cls.dilated_branches(x, name='conv_II', **{**config, **dilated_kwargs})
 
             downsampled_x = tf.layers.max_pooling3d(x, pool_size=(2, 2, 2),
                                                     strides=(2, 2, 2),
@@ -226,11 +223,11 @@ class DilatedNoduleNet(TFModel):
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
 
         with tf.variable_scope(name):
+            dilated_kwargs = dict(filters=_filters, kernel_size=(3, 3, 3), dilation_rate=dilation_rate)
             x = conv_block(inputs, 'cna', filters=filters, kernel_size=1,
                            activation=tf.nn.relu, is_training=is_training)
 
-            x = cls.dilated_branches(x, _filters, (3, 3, 3), dilation_rate,
-                                     name='conv3D_dilated', is_training=is_training)
+            x = cls.dilated_branches(x, name='conv3D_dilated', **{**config, **dilated_kwargs})
         return x
 
     @classmethod
