@@ -8,10 +8,10 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
 
     Parameters
     ----------
-    - y_true : tf.Tensor
+    y_true : tf.Tensor
         tensor containing true values for sizes of nodules, their centers
         and classes of crop(1 if cancerous 0 otherwise).
-    - y_pred : tf.Tensor
+    y_pred : tf.Tensor
         tensor containing predicted values for sizes of nodules, their centers
         and probability of cancer in given crop.
 
@@ -21,7 +21,7 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
         l2 loss for regression of cancer tumor center's coordinates,
         sizes joined with binary classification task.
 
-    NOTE
+    Note
     ----
     y_true and y_pred tensors must have [None, 7] shapes;
     y_true[:, :3] and y_pred[:, :3] correspond to normalized (from [0, 1] interval)
