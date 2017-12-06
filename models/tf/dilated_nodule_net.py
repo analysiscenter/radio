@@ -53,8 +53,7 @@ class DilatedNoduleNet(TFModel):
         return config
 
     @classmethod
-    def dilated_branches(cls, inputs, filters, kernel_size, dilation_rate, name,
-                         activation=tf.nn.relu, padding='same', is_training=True, **kwargs):
+    def dilated_branches(cls, inputs, filters, kernel_size, dilation_rate, name, **kwargs):
         """ Convolutional block with parallel branches having different dilation rate.
 
         Parameters
