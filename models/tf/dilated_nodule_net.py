@@ -144,8 +144,8 @@ class DilatedNoduleNet(TFModel):
             x = tf.concat((skip, x), axis=axis)
 
             dilated_kwargs = dict(filters=_filters, kernel_size=(3, 3, 3), dilation_rate=dilation_rate)
-            x = cls.dilated_branches(x, name='conv_I', **{**config, **dilated_kwargs})
-            x = cls.dilated_branches(x, name='conv_II', **{**config, **dilated_kwargs})
+            x = cls.dilated_branches(x, name='conv_dilation_rate_1', **{**config, **dilated_kwargs})
+            x = cls.dilated_branches(x, name='conv_dilation_rate_2', **{**config, **dilated_kwargs})
         return x
 
     @classmethod
