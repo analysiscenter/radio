@@ -121,7 +121,6 @@ class DilatedNoduleNet(TFModel):
         """
         config = cls.fill_params('body', **kwargs)
         kernel = cls.pop('upsampling_kernel', config)
-        is_training = cls.pop('is_training', config)
 
         mode = cls.pop('upsampling_mode', config)  # Added
         dilation_rate = cls.pop('dilation_rate', config)  # Added
@@ -174,8 +173,6 @@ class DilatedNoduleNet(TFModel):
         tf.Tensor
         """
         config = cls.fill_params('body', **kwargs)
-        is_training = cls.pop('is_training', config)
-
         dilation_rate = cls.pop('dilation_rate', config)
 
         dilation_share = np.asarray(cls.pop('dilation_share', config))
