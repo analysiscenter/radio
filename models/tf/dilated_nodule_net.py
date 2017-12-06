@@ -3,9 +3,9 @@
 
 import numpy as np
 import tensorflow as tf
-from ..utils import repeat_tensor
-from ....dataset.dataset.models.tf.layers import conv_block
-from ....dataset.dataset.models.tf import TFModel
+from .utils import repeat_tensor
+from ...dataset.dataset.models.tf.layers import conv_block
+from ...dataset.dataset.models.tf import TFModel
 
 
 class DilatedNoduleNet(TFModel):
