@@ -144,8 +144,8 @@ class DilatedNoduleNet(TFModel):
             x = tf.concat((skip, x), axis=axis)
 
             dilated_kwargs = dict(filters=_filters, kernel_size=(3, 3, 3), dilation_rate=dilation_rate)
-            x = cls.dilated_branches(x, name='conv_dilation_rate_1', **{**config, **dilated_kwargs})
-            x = cls.dilated_branches(x, name='conv_dilation_rate_2', **{**config, **dilated_kwargs})
+            x = cls.dilated_branches(x, name='conv_I', **{**config, **dilated_kwargs})
+            x = cls.dilated_branches(x, name='conv_II', **{**config, **dilated_kwargs})
         return x
 
     @classmethod
@@ -207,20 +207,15 @@ class DilatedNoduleNet(TFModel):
         tf.Tensor
         """
         config = cls.fill_params('body', **kwargs)
-        is_training = cls.pop('is_training', config)
-
         dilation_rate = cls.pop('dilation_rate', config)
-
         dilation_share = np.asarray(cls.pop('dilation_share', config))
         dilation_share /= dilation_share.sum()
         _filters = np.rint(filters * dilation_share).astype(np.int).tolist()
 
         with tf.variable_scope(name):
             dilated_kwargs = dict(filters=_filters, kernel_size=(3, 3, 3), dilation_rate=dilation_rate)
-            x = conv_block(inputs, 'cna', filters=filters, kernel_size=1,
-                           activation=tf.nn.relu, is_training=is_training)
-
-            x = cls.dilated_branches(x, name='conv3D_dilated', **{**config, **dilated_kwargs})
+            x = conv_block(inputs, **{**config, 'layout': 'cna', 'filters': filters, 'kernel_size': 1})
+            x = cls.dilated_branches(x, name='conv_I', **{**config, **dilated_kwargs})
         return x
 
     @classmethod
@@ -281,5 +276,5 @@ class DilatedNoduleNet(TFModel):
                            activation=tf.nn.sigmoid, layout='cna')
         with tf.variable_scope(name):
             x = conv_block(inputs, name='conv', **kwargs)
-            x = conv_block(x, **pred_kwargs)
+            x = conv_block(x, {**kwargs, **pred_kwargs})
         return x
