@@ -277,5 +277,5 @@ class DilatedNoduleNet(TFModel):
                            activation=tf.nn.sigmoid, layout='cna')
         with tf.variable_scope(name):
             x = conv_block(inputs, name='conv', **kwargs)
-            x = conv_block(x, {**kwargs, **pred_kwargs})
+            x = conv_block(x, **{**kwargs, **pred_kwargs})
         return x
