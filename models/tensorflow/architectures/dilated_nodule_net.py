@@ -91,9 +91,6 @@ class DilatedNoduleNet(TFModel):
         branches = []
         with tf.variable_scope(name):
             for f, k, d in zip(filters, kernel_size, dilation_rate):
-                b = bn_dilated_conv3d(inputs, f, _ksize, padding=padding,
-                                      is_training=is_training, activation=activation,
-                                      dilation=_drate, name='conv3d_rate_{}'.format(_drate[0]))
 
                 b = conv_block(inputs, layout='cna', kernel_size=k, dilation=d,
                                activation=activation, is_training=is_training, **kwargs)
