@@ -91,7 +91,7 @@ class DilatedNoduleNet(TFModel):
             for f, k, d in zip(filters, kernel_size, dilation_rate):
 
                 b = conv_block(inputs, layout='cna', kernel_size=k, dilation=d,
-                               filters=f, name='conv_dilation_{}'.format(d) **kwargs)
+                               filters=f, name='conv_dilation_{}'.format(d), **kwargs)
                 branches.append(b)
             outputs = tf.concat(branches, axis=4)
         return outputs
