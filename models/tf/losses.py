@@ -1,6 +1,9 @@
 """ Contains losses used in tensorflow models. """
 
 import tensorflow as tf
+from ...dataset.dataset.models.tf.losses import dice
+
+dice_loss = dice
 
 
 def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
