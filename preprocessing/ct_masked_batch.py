@@ -23,6 +23,7 @@ from .histo import sample_histo3d
 from .crop import make_central_crop
 from ..dataset import action, any_action_failed, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
 
+
 LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
                "%(levelname)-8s [%(asctime)s]  %(message)s")
 logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
