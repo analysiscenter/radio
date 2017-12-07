@@ -1,4 +1,5 @@
-""" Contains losses, usefull utils and ANN architectures implemented via keras. """
-from .losses import dice_loss, tiversky_loss
+""" Contains neural network architectures for lung cancer detection implemented in keras. """
+from .keras_res_nodule_net import KerasResNoduleNet
+from .keras_3dunet import Keras3DUNet
+from .keras_nodule_vgg import KerasNoduleVGG
 from .keras_model import KerasModel
-from .architectures import KerasVGG16, KerasVnet, KerasResNet50

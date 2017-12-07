@@ -1,28 +1,9 @@
-# pylint: disable=not-context-manager
 """ Contains losses used in tensorflow models. """
 
 import tensorflow as tf
+from ...dataset.dataset.models.tf.losses import dice
 
-
-def log_loss(y_true, y_pred, epsilon=10e-7):
-    """ Log loss on input tensors.
-
-    Parameters
-    ----------
-    y_true : tf.Tensor
-        tensor with true labels.
-    y_pred : tf.Tensor
-        tensor with predicted logits;
-    epsilon : float or tf.constant(dtype=tf.float32)
-        small real value to avoid computing log(0).
-
-    Returns
-    -------
-    tf.Tensor
-        log loss on input tensors.
-    """
-    return tf.reduce_mean(y_true * tf.log(y_pred + epsilon)
-                          + (1 - y_true) * tf.log(1 - y_pred + epsilon))
+dice_loss = dice
 
 
 def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
@@ -30,10 +11,10 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
 
     Parameters
     ----------
-    - y_true : tf.Tensor
+    y_true : tf.Tensor
         tensor containing true values for sizes of nodules, their centers
         and classes of crop(1 if cancerous 0 otherwise).
-    - y_pred : tf.Tensor
+    y_pred : tf.Tensor
         tensor containing predicted values for sizes of nodules, their centers
         and probability of cancer in given crop.
 
@@ -43,7 +24,7 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
         l2 loss for regression of cancer tumor center's coordinates,
         sizes joined with binary classification task.
 
-    NOTE
+    Note
     ----
     y_true and y_pred tensors must have [None, 7] shapes;
     y_true[:, :3] and y_pred[:, :3] correspond to normalized (from [0, 1] interval)
@@ -129,31 +110,6 @@ def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
                  + beta * tf.reduce_sum((1 - y_pred) * y_true))
 
     return -(truepos + smooth) / (truepos + smooth + fp_and_fn)
-
-
-def dice_loss(y_true, y_pred, smooth=1e-7):
-    """ Loss function base on dice coefficient.
-
-    Parameters
-    ----------
-    y_true : tf.Tensor
-        tensor containing target mask.
-    y_pred : tf.Tensor
-        tensor containing predicted mask.
-    smooth : float
-        small real value used for avoiding division by zero error.
-
-    Returns
-    -------
-    tf.Tensor
-        tensor containing tiversky loss.
-    """
-    y_true_f = tf.contrib.layers.flatten(y_true)
-    y_pred_f = tf.contrib.layers.flatten(y_pred)
-    intersection = tf.reduce_sum(y_true_f * y_pred_f)
-    answer = (2. * intersection + smooth) / (tf.reduce_sum(y_true_f)
-                                             + tf.reduce_sum(y_pred_f) + smooth)
-    return -answer
 
 
 def jaccard_coef_logloss(y_true, y_pred, smooth=1e-10):

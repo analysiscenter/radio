@@ -1097,9 +1097,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch = batch.rotate(angle=30, axes=(1, 2))
 
         """
-        if not isinstance(components, (tuple, list)):
-            _components = (components, )
-
+        _components = components if isinstance(components, (tuple, list)) else (components, )
         _angle = angle * np.random.rand() if random else angle
         for comp in _components:
             data = self.get(index, comp)
