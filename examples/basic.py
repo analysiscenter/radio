@@ -3,8 +3,8 @@ import os
 import sys
 import glob
 sys.path.append('..')
-from preprocessing import CTImagesBatch
-from dataset import FilesIndex, Dataset, action
+from radio.preprocessing import CTImagesBatch
+from radio.dataset import FilesIndex, Dataset, action
 
 
 class ExampleCTIBatch(CTImagesBatch):

@@ -1,0 +1,5 @@
+dill>=0.2.7
+numpy>=1.10
+tensorflow>=1.13 [tensorflow]
+tensorflow-gpu>=1.13 [tensorflow-gpu]
+keras>=2.0.0 [keras]
