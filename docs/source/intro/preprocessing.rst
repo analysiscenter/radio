@@ -58,10 +58,11 @@ Both ``dump`` and ``load`` from `blosc` can work component-wise:
 
 .. code-block:: python
 
-    pipeline_dump = (Pipeline()
-                     .dump(fmt='blosc', src=['spacing', 'origin']) # dump spacing, origin components
-                     .dump(dst='path/to/preprocessed/', fmt='blosc', src='images') # dumps scans itself
-                    )
+    pipeline_dump = (
+        Pipeline()
+        .dump(fmt='blosc', src=['spacing', 'origin']) # dump spacing, origin components
+        .dump(dst='path/to/preprocessed/', fmt='blosc', src='images') # dumps scans itself
+    )
 
     pipeline_load = Pipeline().load(fmt='blosc', src_blosc=['spacing', 'origin', 'images']) # equivalent to src_blosc=None
 
@@ -124,17 +125,20 @@ First, load info about cancerous nodules in a batch:
 
 .. code-block:: python
 
-    pipeline = (Pipeline()
-                .fetch_nodules_info(nodules_df=nodules_df) # nodules_df is a Pandas.DataFrame
-                                                       # containing info about nodules
-               )
+    pipeline = (
+        Pipeline()
+         .fetch_nodules_info(nodules_df=nodules_df) # nodules_df is a Pandas.DataFrame
+                                                    # containing info about nodules
+    )
 
 Then you can fill the ``masks``-component using the loaded info:
 
 .. code-block:: python
 
-    pipeline = (pipeline
-                .create_mask())
+    pipeline = (
+        pipeline
+        .create_mask()
+    )
 
 Sample crops from scan: preparing training examples for neural net
 --------------------------------------------------------------------
@@ -145,9 +149,10 @@ Let's start preprocessing with ``resize`` of scans:
 
 .. code-block:: python
 
-    pipeline = (Pipeline()
-                .resize(shape=(256, 512, 512))
-                )
+    pipeline = (
+        pipeline
+        .resize(shape=(256, 512, 512))
+    )
 
 Now all scans have the same shape **(256, 512, 512)**, it is
 possible to put them into a neural net. However, it may fail for two main reasons:
@@ -160,23 +165,26 @@ piece of code
 
 .. code-block:: python
 
-    pipeline = (pipeline
-                .resize(shape=(256, 512, 512))
-                .sample_nodules(nodule_size=(32, 64, 64),
-                                batch_size=20, share=0.5)
-                )
+    pipeline = (
+        pipeline
+        .resize(shape=(256, 512, 512))
+        .sample_nodules(nodule_size=(32, 64, 64),
+                        batch_size=20, share=0.5)
+    )
 
 will generate batches of size **20**, that will contain **10** cancerous and **10**
 noncancerous crops of shape **(32, 64, 64)**. Or, alternatively this code
 
 .. code-block:: python
 
-    pipeline = (pipeline
-                .resize(shape=(256, 512, 512))
-                .sample_nodules(nodule_size=(32, 64, 64),
-                                batch_size=20, share=0.6,
-                                variance=(100, 200, 200), histo=some_3d_histogram)
-                )
+    pipeline = (
+        pipeline
+        .resize(shape=(256, 512, 512))
+        .sample_nodules(nodule_size=(32, 64, 64),
+                        batch_size=20, share=0.6,
+                        variance=(100, 200, 200),
+                        histo=some_3d_histogram)
+    )
 
 will generate batches of size **20** with **12** cancerous crops. Pay attention to
 parameters ``variance`` and ``histo``:
@@ -193,11 +201,12 @@ Medical datasets are often small and require additional augmentation to avoid ov
 
 .. code-block:: python
 
-    pipeline = (pipeline
-                .resize(shape=(256, 512, 512))
-                .rotate(angle=90, axes=(1, 2), random=True)
-                .central_crop(crop_size=(32, 64, 64))
-                )
+    pipeline = (
+        pipeline
+        .resize(shape=(256, 512, 512))
+        .rotate(angle=90, axes=(1, 2), random=True)
+        .central_crop(crop_size=(32, 64, 64))
+    )
 
 This pipeline first resize all images to same shape and then sample rotated crops of shape **[32, 64, 64]**,
 rotation angle is random, from 0 to 90 degrees. Rotation is performed along **y and x** axes.
