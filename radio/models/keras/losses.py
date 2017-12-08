@@ -17,7 +17,7 @@ def dice_loss(y_true, y_pred, smooth=1e-6):
     Returns
     -------
     keras tensor
-        tensor containing tiversky loss.
+        tensor containing dice loss.
     """
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
