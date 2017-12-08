@@ -59,7 +59,7 @@ Both ``dump`` and ``load`` from `blosc` can work component-wise:
 .. code-block:: python
 
     pipeline_dump = (
-        Pipeline()
+        pipeline
         .dump(fmt='blosc', src=['spacing', 'origin']) # dump spacing, origin components
         .dump(dst='path/to/preprocessed/', fmt='blosc', src='images') # dumps scans itself
     )
@@ -126,7 +126,7 @@ First, load info about cancerous nodules in a batch:
 .. code-block:: python
 
     pipeline = (
-        Pipeline()
+        pipeline
          .fetch_nodules_info(nodules_df=nodules_df) # nodules_df is a Pandas.DataFrame
                                                     # containing info about nodules
     )
