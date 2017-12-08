@@ -90,8 +90,10 @@ of training `ResNodule3DNet50` model for classification task:
       .load(fmt='blosc')
       .normalize_hu()
       .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
-      .train_model('resnet', feed_dict={'images': F(CT.unpack, component='images')
-                                        'labels': F(CT.unpack, component='classification_targets')})
+      .train_model('resnet', feed_dict={
+          'images': F(CT.unpack, component='images')
+          'labels': F(CT.unpack, component='classification_targets')
+      })
   )
 
 Now train loop can be started:
