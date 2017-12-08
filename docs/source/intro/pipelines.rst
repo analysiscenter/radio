@@ -22,8 +22,8 @@ can be set up in a following way:
 .. code-block:: python
 
     from radio.pipelines import get_preprocessed
-    pipe = get_preprocessed(fmt='raw', shape=(128, 256, 256), nodules_df=nodules,
-                            batch_size=20, share=0.6, nodule_shape=(32, 64, 64))
+    pipeline = get_preprocessed(fmt='raw', shape=(128, 256, 256), nodules_df=nodules,
+                                batch_size=20, share=0.6, nodule_shape=(32, 64, 64))
 
 Pay attention to parameters `batch_size` and `share`: they allow
 to control the number of items in a batch of crops and the number
@@ -32,11 +32,14 @@ for training, say, `DenseNoduleNet`:
 
 .. code-block:: python
 
-    pipe = (pipe.init_model('static',class=DenseNoduleNet, model_name='dnod_net')
-                .train_model(model_name='dnod_net',
-                             feed_dict={'images': F(CT.unpack, component='images'),
-                                        'labels': F(CT.unpack, component='classification_targets')})
-            )
+    pipeline = (
+        pipeline
+        .init_model('static',class=DenseNoduleNet, model_name='dnod_net')
+        .train_model(model_name='dnod_net', feed_dict={
+            'images': F(CT.unpack, component='images'),
+            'labels': F(CT.unpack, component='classification_targets')
+        })
+    )
     (ctset >> pipe).run(BATCH_SIZE=12)
 
 Alternatively, we can choose to save dataset of crops
