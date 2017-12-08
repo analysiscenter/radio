@@ -48,15 +48,15 @@ scans. Preprocessing like this can be easily done with the following
 
 .. code-block:: python
 
-    dir_dump = '/path/to/preprocessed/' # preprocessed scans are stored here
-
-    prep_ppl = (dicomset.pipeline() # set up preprocessing workflow
-                .load(fmt='dicom')
-                .resize(shape=(128, 256, 256))
-                .normalize_hu()
-                .dump(dir_dump)) # dump results of the preprocessing
-
-    prep_ppl.run(batch_size=20) # run it only now
+    prep_ppl = (
+        dicomset
+        .pipeline()
+        .load(fmt='dicom')
+        .resize(shape=(128, 256, 256))
+        .normalize_hu()
+        .dump('/path/to/preprocessed/scans/')
+    )
+    prep_ppl.run(batch_size=20)
 
 See the :doc:`documentation <intro/preprocessing>` for the description of
 preprocessing actions implemented in the module.
@@ -74,10 +74,11 @@ a workflow):
 
     from radio.pipelines import get_crops
 
-    pipe = get_crops(fmt='raw', shape=(128, 256, 256), nodules_df=nodules, batch_size=20,
+    pipe = get_crops(fmt='raw', shape=(128, 256, 256),
+                     nodules_df=nodules, batch_size=20,
                      share=0.6, nodule_shape=(32, 64, 64))
 
-    (pipe >> ctset).gen_batch(batch_size=12, shuffle=True)
+    (ctset >> pipe).gen_batch(batch_size=12, shuffle=True)
 
     for batch in gen_batches:
         # ...
@@ -106,12 +107,17 @@ on scan crops of shape **[32, 64, 64]** can be implemented as follows:
     from radio.preprocessing.CTImagesMaskedBatch as CT
     from dataset import F
 
-    training_flow = (ctset.pipeline().
-                     .load(fmt='raw')
-                     .sample_nodules(nodule_size=(32, 64, 64), batch_size=20) # sample 20 crops from scans
-                     .init_model('static',class=DenseNoduleNet, model_name='dnod_net')
-                     .train_model(model_name='dnod_net', x=F(CT.unpack, component='images'),
-                                  y=F(CT.unpack, component='classification_targets')))
+    training_flow = (
+        ctset
+        .pipeline()
+        .load(fmt='raw')
+        .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
+        .init_model(mode='static', model_class=DenseNoduleNet, model_name='dnod_net')
+        .train_model('dnod_net', feed_dict={
+            'images': F(CTIMB.unpack, component='images'),
+            'labels': F(CTIMB.unpack, component='classification_targets')
+        })
+    )
 
     training_flow.run(batch_size=10)
 
