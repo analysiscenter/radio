@@ -21,9 +21,9 @@ can be set up in a following way:
 
 .. code-block:: python
 
-    from radio.pipelines import get_preprocessed  # function that build a pipeline
-    pipe = get_preprocessed(fmt='raw', shape=(128, 256, 256), nodules_df=nodules, batch_size=20,
-                            share=0.6, nodule_shape=(32, 64, 64))
+    from radio.pipelines import get_preprocessed
+    pipe = get_preprocessed(fmt='raw', shape=(128, 256, 256), nodules_df=nodules,
+                            batch_size=20, share=0.6, nodule_shape=(32, 64, 64))
 
 Pay attention to parameters `batch_size` and `share`: they allow
 to control the number of items in a batch of crops and the number
