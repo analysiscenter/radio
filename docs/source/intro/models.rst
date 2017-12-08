@@ -168,9 +168,9 @@ Same for segmentation:
       .normalize_hu()
       .init_model('static', Keras3DUNet, 'vnet', config=vnet_config)
       # Keras3DUNet has 'channels_first' dim_ordering
-      .train_model(model_name='resnet', feed_dict={
-          'images': F(CT.unpack, component='images'),
-          'labels': F(CT.unpack, component='segmentation_targets',
-                      data_format='channels_first')
-      })
+      .train_model(
+          model_name='resnet',
+          x=F(CT.unpack, component='images'),
+          y=F(CT.unpack, component='segmentation_targets', data_format='channels_first')
+      )
   )
