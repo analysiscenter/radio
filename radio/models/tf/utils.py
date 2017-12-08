@@ -32,7 +32,9 @@ def num_channels(input_tensor):
     int
         number of channels.
 
-    NOTE: channels last ordering is used.
+    Note
+    ----
+        channels last ordering is used.
     """
     return get_shape(input_tensor)[-1]
 
