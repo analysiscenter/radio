@@ -142,8 +142,10 @@ CTImagesMaskedBatch will be used:
       .load(fmt='blosc')
       .normalize_hu()
       .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
-      .train_model('resnet', feed_dict={'images': F(CT.unpack, component='images')
-                                        'labels': F(CT.unpack, component='regression_targets')})
+      .train_model(model_name='resnet', feed_dict={
+          'images': F(CT.unpack, component='images'),
+          'labels': F(CT.unpack, component='regression_targets')
+      })
   )
 
 Same for segmentation:
@@ -166,7 +168,9 @@ Same for segmentation:
       .normalize_hu()
       .init_model('static', Keras3DUNet, 'vnet', config=vnet_config)
       # Keras3DUNet has 'channels_first' dim_ordering
-      .train_model('resnet', feed_dict={'images': F(CT.unpack, component='images')
-                                        'labels': F(CT.unpack, component='segmentation_targets',
-                                                    data_format='channels_first')})
+      .train_model(model_name='resnet', feed_dict={
+          'images': F(CT.unpack, component='images'),
+          'labels': F(CT.unpack, component='segmentation_targets',
+                      data_format='channels_first')
+      })
   )
