@@ -11,11 +11,10 @@ The framework allows you to:
 ## Preprocess scans using implemented actions
 Preprocessing-module contains a set of [actions](https://github.com/analysiscenter/dataset), that allow to efficiently prepare a dataset of CT-scans for training neural nets.
 Say, you have a bunch of scans in **DICOM** format with varying shapes.
-First, you index the scans using the [pipeline](https://analysiscenter.github.io/cardio/intro/pipeline.html), just like that:
+First, you index the scans using the [pipeline](https://analysiscenter.github.io/radio/intro/pipeline.html), just like that:
 ```python
-	from radio import CTImagesBatch
+    from radio import CTImagesBatch
     from dataset import FilesIndex, Dataset
-
     dicomix = FilesIndex(path='path/to/dicom/*', no_ext=True) # set up the index
     dicomset = Dataset(index=dicomix, batch_class=CTImagesBatch) # init the dataset of dicom files
 ```
@@ -25,15 +24,15 @@ scans. Preprocessing like this can be easily done with the following
 pipeline, just like that:
 
 ```python
-    dir_dump = '/path/to/preprocessed/' # preprocessed scans are stored here
-
-    prep_ppl = (dicomset.pipeline() # set up preprocessing workflow
-                .load(fmt='dicom')
-                .resize(shape=(128, 256, 256))
-                .normalize_hu()
-                .dump(dir_dump)) # dump results of the preprocessing
-
-    prep_ppl.run(batch_size=20) # run it only now
+    prep_ppl = (
+        dicomset
+        .pipeline()
+        .load(fmt='dicom')
+        .resize(shape=(128, 256, 256))
+        .normalize_hu()
+        .dump('/path/to/preprocessed/scans/')
+    )
+    prep_ppl.run(batch_size=20)
 ```
 
 See the [documentation](https://analysiscenter.github.io/radio/intro/preprocessing.html) for the description of
@@ -49,10 +48,11 @@ a workflow):
 ```python
     from radio.pipelines import get_crops
 
-    pipe = get_crops(fmt='raw', shape=(128, 256, 256), nodules_df=nodules, batch_size=20,
+    pipe = get_crops(fmt='raw', shape=(128, 256, 256),
+                     nodules_df=nodules, batch_size=20,
                      share=0.6, nodule_shape=(32, 64, 64))
 
-    (pipe >> ctset).gen_batch(batch_size=12, shuffle=True)
+    (ctset >> pipe).gen_batch(batch_size=12, shuffle=True)
 
     for batch in gen_batches:
         # ...
@@ -76,13 +76,54 @@ on scan crops of shape **[32, 64, 64]** can be implemented as follows:
     from radio.preprocessing.CTImagesMaskedBatch as CT
     from dataset import F
 
-    training_flow = (ctset.pipeline().
-                     .load(fmt='raw')
-                     .sample_nodules(nodule_size=(32, 64, 64), batch_size=20) # sample 20 crops from scans
-                     .init_model('static',class=DenseNoduleNet, model_name='dnod_net')
-                     .train_model(model_name='dnod_net', x=F(CT.unpack, component='images'),
-                                  y=F(CT.unpack, component='classification_targets')))
+    training_flow = (
+        ctset
+        .pipeline()
+        .load(fmt='raw')
+        .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
+        .init_model(mode='static', model_class=DenseNoduleNet, model_name='dnod_net')
+        .train_model('dnod_net', feed_dict={
+            'images': F(CTIMB.unpack, component='images'),
+            'labels': F(CTIMB.unpack, component='classification_targets')
+        })
+    )
 
     training_flow.run(batch_size=10)
 ```
 See [models section](https://analysiscenter.github.io/lung_cancer/intro/models.html) for more information about implemented architectures and their application to cancer detection.
+
+## Installation
+
+> `RadIO` module is in the beta stage. Your suggestions and improvements are very welcome.
+
+> `RadIO` supports python 3.5 or higher.
+
+
+### Installation as a python package
+
+With [pipenv](https://docs.pipenv.org/):
+
+    pipenv install git+https://github.com/analysiscenter/radio.git#egg=radio
+
+With [pip](https://pip.pypa.io/en/stable/):
+
+    pip3 install git+https://github.com/analysiscenter/radio.git
+
+After that just import `radio`:
+```python
+import radio
+```
+
+
+### Installation as a project repository:
+
+When cloning repo from GitHub use flag ``--recursive`` to make sure that ``Dataset`` submodule is also cloned.
+
+    git clone --recursive https://github.com/analysiscenter/radio.git
+
+
+## Citing RadIO
+
+Please cite RadIO in your publications if it helps your research.
+
+    Khudorozhkov R., Emelyanov K., Koryagin A., Ushakov A. RadIO library for data science research of CT images. 2017.
