@@ -1,55 +1,88 @@
-# Lung-cancer
+# RadIO
 
-`Lung-cancer` is a framework for processing of batches of computational tomography (CT)-scans, with purpose of detecting cancerous nodules.
-The framework incorporates several modules:
-- preprocessing
-- models
-- pipelines
+`RadIO` is a framework for batch-processing of computational
+tomography (CT)-scans for deep learning experiments.
 
-## Preprocessing
-This module contains implementation of a set of [actions](https://github.com/analysiscenter/dataset), that allow to efficiently prepare a dataset of CT-scans for analysis with the use of neural nets. Say, we trained a net that allows to classify CT-scans of lungs of shape **[128, 256, 256]** as having cancerous nodules or not. We also need to classify a dataset of scans of shape **[256, 512, 512]** stored in **DICOM** format. Moreover, the net is trained on scans with pixel densities normalized to range **[0, 255]**. Clearly, if we want to obtain sensible results, we need to preprocess the scans in a similar way before putting them into the net. Preprocessing and dump of a set of scans can be easily done with the use of the following [pipeline](https://github.com/analysiscenter/dataset), just like that:
+The framework allows you to:
+- preprocess scans in a blink of an eye: load data asynchronously from disk, resize them in parallel
+- set up preprocessing workflows in a few lines of code
+- train with ease a zoo of high-performing neural nets for cancer detection
+
+## Preprocess scans using implemented actions
+Preprocessing-module contains a set of [actions](https://github.com/analysiscenter/dataset), that allow to efficiently prepare a dataset of CT-scans for training neural nets.
+Say, you have a bunch of scans in **DICOM** format with varying shapes.
+First, you index the scans using the [pipeline](https://analysiscenter.github.io/cardio/intro/pipeline.html), just like that:
 ```python
-from lung_cancer import CTImagesBatch
-from lung_cancer.dataset import FilesIndex, Dataset
-dicomix = FilesIndex(path='path/to/dicom/*', no_ext=True) # set up the index
-dicomset = Dataset(index=dicomix, batch_class=CTImagesBatch) # init the dataset of blosc files
-dir_dump = '/path/to/preprocessed/' # preprocessed scans are stored here
-prep_ppl = (dicomset.pipeline() # set up preprocessing workflow
-            .load(fmt='dicom')
-            .resize(shape=(128, 256, 256))
-            .normalize_hu()
-            .dump(dir_dump)) # dump results of the preprocessing
+	from radio import CTImagesBatch
+    from dataset import FilesIndex, Dataset
 
-prep_ppl.run(batch_size=20) # run it only now
+    dicomix = FilesIndex(path='path/to/dicom/*', no_ext=True) # set up the index
+    dicomset = Dataset(index=dicomix, batch_class=CTImagesBatch) # init the dataset of dicom files
 ```
-See the [documentation](doc/preprocessing.md) for the description of preprocessing actions implemented in the module.
+You may want to resize the scans to equal shape **[128, 256, 256]**,
+normalize voxel densities to range **[0, 255]** and dump transformed
+scans. Preprocessing like this can be easily done with the following
+pipeline, just like that:
 
-## Pipelines
-This module contains helper-functions that generate useful pipelines. In essence, pipelines represent ready-to-use workflows of scans' data processing. E.g., if one wants to experiment with training of [Vnet](linkvnet) on dataset of luna-scans `ctset`, he can simply execute the following pipeline-creator (without spending time on thinking how to chain actions in a preprocessing workflow):
 ```python
-from lung_cancer import get_preprocessed
-pipe = get_preprocessed(fmt='raw', shape=(128, 256, 256), nodules_df=nodules, batch_size=20,
-                        share=0.6, nodule_shape=(32, 64, 64))
-pipe = pipe.train_model(model='vnet', model_class=VnetModel)
-(pipe >> ctset).run(BATCH_SIZE=12)
-```
-See the [documentation](doc/pipelines.md) for more information about implemented workflows.
+    dir_dump = '/path/to/preprocessed/' # preprocessed scans are stored here
 
-## Working with neural nets.
-The module contains neural nets' architectures suitable for tasks of classification, segmentation, detection. Importantly, the module incorporates structures, that explicitly show how to apply the nets for task at hand (cancer detection). Both training and inferencing are covered. The list of models implemented in TensorFlow/Keras contains a set of high-performing architectures, including, but not limited to [VGG](vgglink), [ResNet](resnetlink) and [Vnet](vnetlink). Initialization and training of a new model (say, [DenseNet](linkondense)) on scan crops of shape **[32, 64, 64]** can be implemented as follows:
-```python
-from lung_cancer import CTImagesModels, DenseNet
-from lung_cancer.dataset import FilesIndex, Dataset
-prepdir = 'path/to/preprocessed/*' # preprocessed scans are stored here
-prepix = FilesIndex(path=prepdir, dirs=True)
-prepset = Dataset(index=prepix, batch_class=CTImagesModels)
-net = DenseNet('dense_net')
-train_ppl = (prepset.pipeline().
-            .load(fmt='blosc')
-            .sample_nodules(nodule_size=(32, 64, 64), batch_size=20) # sample 20 crops from scans
-            .train_on_crops('dense_net'))
+    prep_ppl = (dicomset.pipeline() # set up preprocessing workflow
+                .load(fmt='dicom')
+                .resize(shape=(128, 256, 256))
+                .normalize_hu()
+                .dump(dir_dump)) # dump results of the preprocessing
 
-train_ppl.run(batch_size=10)
+    prep_ppl.run(batch_size=20) # run it only now
 ```
 
-The [documentation](linkmodels) contains more information about implemented models and their application to cancer detection.
+See the [documentation](https://analysiscenter.github.io/radio/intro/preprocessing.html) for the description of
+preprocessing actions implemented in the module.
+
+## Preprocess scans using a workflow from the box
+Pipelines-module contains ready-to-use workflows for most frequent tasks.
+E.g. if you want to preprocess dataset of scans named ``ctset`` and
+prepare data for training a net, you can simply execute the following
+pipeline-creator (without spending time on thinking how to chain actions in
+a workflow):
+
+```python
+    from radio.pipelines import get_crops
+
+    pipe = get_crops(fmt='raw', shape=(128, 256, 256), nodules_df=nodules, batch_size=20,
+                     share=0.6, nodule_shape=(32, 64, 64))
+
+    (pipe >> ctset).gen_batch(batch_size=12, shuffle=True)
+
+    for batch in gen_batches:
+        # ...
+        # perform net training here
+```
+See [pipelines section](https://analysiscenter.github.io/lung_cancer/intro/pipelines.html) for more information about
+ready-made workflows.
+
+## Adding a neural-net model to a workflow
+Contains neural nets' architectures for task of classification,
+segmentation and detection. E.g., ``DenseNoduleNet``, an architecutre,
+inspired by DenseNet, but suited for 3D scans.:
+```python
+from radio.models import DenseNoduleNet
+```
+
+Using the architectures from Models, one can train deep learning systems
+for cancer detection. E.g., initialization and training of a new DenseNoduleNet
+on scan crops of shape **[32, 64, 64]** can be implemented as follows:
+```python
+    from radio.preprocessing.CTImagesMaskedBatch as CT
+    from dataset import F
+
+    training_flow = (ctset.pipeline().
+                     .load(fmt='raw')
+                     .sample_nodules(nodule_size=(32, 64, 64), batch_size=20) # sample 20 crops from scans
+                     .init_model('static',class=DenseNoduleNet, model_name='dnod_net')
+                     .train_model(model_name='dnod_net', x=F(CT.unpack, component='images'),
+                                  y=F(CT.unpack, component='classification_targets')))
+
+    training_flow.run(batch_size=10)
+```
+See [models section](https://analysiscenter.github.io/lung_cancer/intro/models.html) for more information about implemented architectures and their application to cancer detection.
