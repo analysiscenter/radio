@@ -58,7 +58,7 @@ a workflow):
         # ...
         # perform net training here
 ```
-See [pipelines section](https://analysiscenter.github.io/lung_cancer/intro/pipelines.html) for more information about
+See [pipelines section](https://analysiscenter.github.io/radio/intro/pipelines.html) for more information about
 ready-made workflows.
 
 ## Adding a neural-net model to a workflow
@@ -90,7 +90,7 @@ on scan crops of shape **[32, 64, 64]** can be implemented as follows:
 
     training_flow.run(batch_size=10)
 ```
-See [models section](https://analysiscenter.github.io/lung_cancer/intro/models.html) for more information about implemented architectures and their application to cancer detection.
+See [models section](https://analysiscenter.github.io/radio/intro/models.html) for more information about implemented architectures and their application to cancer detection.
 
 ## Installation
 
