@@ -4,8 +4,8 @@ for deep learning experiments.
 Documentation - https://analysiscenter.github.io/radio/
 """
 
-from setuptools import setup, find_packages
 import re
+from setuptools import setup, find_packages
 
 with open('radio/__init__.py', 'r') as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
