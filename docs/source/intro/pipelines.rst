@@ -21,14 +21,14 @@ can be set up in a following way:
 
 .. code-block:: python
 
-    from radio.pipelines import get_preprocessed
-    pipeline = get_preprocessed(fmt='raw', shape=(128, 256, 256), nodules_df=nodules,
+    from radio.pipelines import get_crops
+    pipeline = get_crops(fmt='raw', shape=(128, 256, 256), nodules_df=nodules,
                                 batch_size=20, share=0.6, nodule_shape=(32, 64, 64))
 
-Pay attention to parameters `batch_size` and `share`: they allow
+Pay attention to parameters ``batch_size`` and ``share``: they allow
 to control the number of items in a batch of crops and the number
-of cancerous crops. You can chain `pipe` with some additional actions
-for training, say, `DenseNoduleNet`:
+of cancerous crops. You can chain ``pipeline`` with some additional actions
+for training, say, ``DenseNoduleNet``:
 
 .. code-block:: python
 
@@ -40,21 +40,21 @@ for training, say, `DenseNoduleNet`:
             'labels': F(CT.unpack, component='classification_targets')
         })
     )
-    (ctset >> pipe).run(BATCH_SIZE=12)
+    (ctset >> pipeline).run(BATCH_SIZE=12)
 
-Alternatively, we can choose to save dataset of crops
+Alternatively, you can choose to save dataset of crops
 on disk and get back to training a net on it later:
 
 .. code-block:: python
 
-    pipe = pipe.dump('/path/to/crops/')
-    (ctset >> pipe).run(BATCH_SIZE=12)
+    pipeline = pipeline.dump('/path/to/crops/')
+    (ctset >> pipeline).run(BATCH_SIZE=12)
 
 Created pipeline will generate `~1500`
 training examples, in one run through Luna-dataset
 (one epoch). It may take a couple of hours to
 work through the pipeline, even for a high performing machine.
-The reason for this is that both `resize` and `load` are costly
+The reason for this is that both ``resize`` and ``load`` are costly
 operations.
 
 That being said, for implementing an efficient learning procedure
@@ -66,17 +66,17 @@ Faster workflow
 ---------------
 
 Preparation of richer training dataset can be achieved in two steps.
-During the first step we dump large sets of cancerous and non-cancerous
+During the first step you dump large sets of cancerous and non-cancerous
 crops in separate folders:
 
 .. code-block:: python
 
     from radio.pipelines import split_dump
-    pipe = split_dump(cancer_path='/train/cancer', non_cancer_path='/train/non_cancer')
-    (ctset >> pipe).run()
+    pipeline = split_dump(cancer_path='/train/cancer', non_cancer_path='/train/non_cancer')
+    (ctset >> pipeline).run()
 
 You can combine cancerous and non-cancerous crops from two folders.
-First, we associate a :class:`dataset <dataset.Dataset>` with each folder:
+First, you associate a :class:`dataset <dataset.Dataset>` with each folder:
 
 .. code-block:: python
 
@@ -84,12 +84,12 @@ First, we associate a :class:`dataset <dataset.Dataset>` with each folder:
     cancer_set = Dataset(index=FilesIndex('/train/cancer/*', dirs=True))
     non_cancer_set = Dataset(index=FilesIndex('/train/non_cancer/*', dirs=True))
 
-You can balance crops from two dataset in any proportion we want:
+You can balance crops from two dataset in any proportion you want:
 
 .. code-block:: python
 
     from radio.pipelines import combine_crops
-    pipe = combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10))
+    pipeline = combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10))
 
 Pay attention to parameter ``batch_sizes`` in ``combine_crops``-functions.
 It defines how many cancerous and non-cancerous crops will be included

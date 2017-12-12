@@ -93,7 +93,7 @@ Adding a neural-net model to a workflow
 
 Contains neural nets' architectures for task of classification,
 segmentation and detection. E.g., ``DenseNoduleNet``, an architecutre,
-inspired by DenseNet, but suited for 3D scans.
+inspired by [DenseNet](https://arxiv.org/abs/1608.06993), but suited for 3D scans.
 
 .. code-block:: python
 
@@ -112,6 +112,8 @@ on scan crops of shape **[32, 64, 64]** can be implemented as follows:
         ctset
         .pipeline()
         .load(fmt='raw')
+        .fetch_nodules_info(nodules_df)
+        .create_mask()
         .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
         .init_model(mode='static', model_class=DenseNoduleNet, model_name='dnod_net')
         .train_model('dnod_net', feed_dict={

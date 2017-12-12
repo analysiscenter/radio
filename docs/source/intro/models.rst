@@ -1,14 +1,14 @@
 Models
 ======
 
-RadIO has implementations of neural network architectures
+**RadIO** has implementations of neural network architectures
 that can be used for lung cancer detection.
-Models interface is implemented without any binding to `CTImagesBatch`
-and `CTImagesMaskedBatch` structure.
+Models interface is implemented without any binding to ``CTImagesBatch``
+and ``CTImagesMaskedBatch`` structure.
 Typically, models accepts input data in tuple of ndarray's or dict
 with values being ndarrays.
 
-In RadIO models can be distinguished by tasks that they perform:
+In **RadIO** models can be distinguished by tasks that they perform:
 
 * segmentation
 * classification
@@ -60,7 +60,7 @@ or ``CTImagesMaskedBatch`` into suitable format.
 
 * **Regression**: NN is trained to predict location, sizes and probability
   of cancer tumor at once. Altogether, there are 7 target values:
-  three for location (z, y, x coordinates), three for sizes (z-diam, y-dima, x-diam)
+  three for location (z, y, x coordinates), three for sizes (z-diam, y-dim, x-diam)
   and one for probability of cancer. Use :doc:`regression_targets <../api/unpackers>`.
 
 * **Classification**: labelling input crops or scans with probability of cancer
@@ -68,9 +68,9 @@ or ``CTImagesMaskedBatch`` into suitable format.
 
 ------------------------------------------------------------------------------------
 
-For simplicity, Call batch method `.unpack` with desired argument
-(e.g. 'regression_targets') in dataset's `.train_model' method, see example
-of training `ResNodule3DNet50` model for classification task:
+For simplicity, Call batch method ``.unpack`` with desired argument
+(e.g. 'regression_targets') in dataset's ``.train_model`` method, see example
+of training ``ResNodule3DNet50`` model for classification task:
 
 .. code-block:: python
 
@@ -89,6 +89,8 @@ of training `ResNodule3DNet50` model for classification task:
     ds.Pipeline()
       .load(fmt='blosc')
       .normalize_hu()
+      .fetch_nodules_info(nodules_df)
+      .create_mask()
       .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
       .train_model('resnet', feed_dict={
           'images': F(CT.unpack, component='images')
@@ -102,7 +104,7 @@ Now train loop can be started:
 
   (train_dataset >> train_ppl).run(batch_size=16)
 
-In example above `init_model` and `train_model` methods are methods of
+In example above ``init_model`` and ``train_model`` methods are methods of
 ds.Pipeline instances.
 
 **init_model** method is called just once
@@ -143,6 +145,8 @@ CTImagesMaskedBatch will be used:
     ds.Pipeline()
       .load(fmt='blosc')
       .normalize_hu()
+      .fetch_nodules_info(nodules_df)
+      .create_mask()
       .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
       .train_model(model_name='resnet', feed_dict={
           'images': F(CT.unpack, component='images'),
@@ -168,6 +172,8 @@ Same for segmentation:
     ds.Pipeline()
       .load(fmt='blosc')
       .normalize_hu()
+      .fetch_nodules_info(nodules_df)
+      .create_mask()
       .init_model('static', Keras3DUNet, 'vnet', config=vnet_config)
       # Keras3DUNet has 'channels_first' dim_ordering
       .train_model(

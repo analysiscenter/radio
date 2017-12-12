@@ -19,15 +19,17 @@ The ``preprocessing``-module is primarily adapted to work with two
 large datasets, available in open access: `Luna-dataset <https://luna16.grand-challenge.org/data/>`_
 (**.raw**-format) and `DsBowl2017-dataset <https://www.kaggle.com/c/data-science-bowl-2017>`_ (**.dicom**-format).
 Consider, you have one of these two datasets (or a part of it) downloaded in
-folder `path/to/scans`. The first step is to set up an index.
+folder ``path/to/scans``. The first step is to set up an index.
 :class:`~dataset.FilesIndex` from :mod:`dataset`-module reduces the
 task to defining a ``glob``-mask for a needed set of scans:
 
 .. code-block:: python
 
-    from radio import CTImagesBatch
+    from radio import CTImagesBatch as CTIMB
     from radio.dataset import FilesIndex, Dataset, Pipeline
-    ctset = FilesIndex(path='path/to/scans/*', no_ext=True)
+
+    ctx = FilesIndex(path='path/to/scans/*', no_ext=True)
+    ctset = Datset(index=ctx, batch_class=CTIMB)
     pipeline = Pipeline()
 
 For loading scans you only need to call action ``load`` specifying
@@ -60,11 +62,11 @@ Both ``dump`` and ``load`` from `blosc` can work component-wise:
 
     pipeline_dump = (
         pipeline
-        .dump(fmt='blosc', src=['spacing', 'origin']) # dump spacing, origin components
-        .dump(dst='path/to/preprocessed/', fmt='blosc', src='images') # dumps scans itself
+        .dump(fmt='blosc', components=['spacing', 'origin']) # dump spacing, origin components
+        .dump(dst='path/to/preprocessed/', fmt='blosc', components='images') # dumps scans itself
     )
 
-    pipeline_load = Pipeline().load(fmt='blosc', src_blosc=['spacing', 'origin', 'images']) # equivalent to src_blosc=None
+    pipeline_load = Pipeline().load(fmt='blosc', components=['spacing', 'origin', 'images'])
 
 
 Resize and unify spacing
@@ -76,7 +78,7 @@ output shape in z, y, x order:
 
 .. code-block:: python
 
-    batch = batch.resize(shape=(128, 256, 256))
+    pipeline = pipeline.resize(shape=(128, 256, 256))
 
 Currently module supports two different resize-engines:
 :mod:`scipy.interpolate` and ``PIL-simd``. While the second engine
@@ -87,16 +89,15 @@ in a following way:
 
 .. code-block:: python
 
-    batch = batch.resize(shape=(128, 256, 256), method='scipy')
+    pipeline = pipeline.resize(shape=(128, 256, 256), method='scipy')
 
 Sometimes, it may be useful to convert scans to the same real-world scale,
-rather than simply reshape to same size. It might be useful if parts of scans
-with similar real-world shapes would have same voxel-sizes.
+rather than simply reshape to same size.
 This can be achieved through ``unify_spacing``-action:
 
 .. code-block:: python
 
-    batch = batch.unify_spacing(spacing=(3.0, 2.0, 2.0), shape=(128, 256, 256))
+    pipeline = pipeline.unify_spacing(spacing=(3.0, 2.0, 2.0), shape=(128, 256, 256))
 
 To control real-world world scale of scans, you can specify ``spacing``,
 that represents distances in millimeters between adjacent voxels along three axes.
@@ -107,7 +108,7 @@ resize parameters and padding mode:
 
 .. code-block:: python
 
-    batch = batch.unify_spacing(spacing=(3.0, 2.0, 2.0), shape=(128, 256, 256),
+    pipeline = pipeline.unify_spacing(spacing=(3.0, 2.0, 2.0), shape=(128, 256, 256),
                                 padding='reflect', engine='pil-simd')
 
 So far it was all about ``images``-components, that can be viewed as
@@ -208,8 +209,8 @@ Medical datasets are often small and require additional augmentation to avoid ov
         .central_crop(crop_size=(32, 64, 64))
     )
 
-This pipeline first resize all images to same shape and then sample rotated crops of shape **[32, 64, 64]**,
-rotation angle is random, from 0 to 90 degrees. Rotation is performed along **y and x** axes.
+This pipeline first resizes all images to same shape and then samples rotated crops of shape **[32, 64, 64]**;
+rotation angle is random, from 0 to 90 degrees. Rotation is performed along **z** ax.
 Crops are padded by zeroes after rotation, if needed.
 
 Accessing Batch components
