@@ -514,11 +514,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw images (with meta in .mhd)
 
-            Notes
-            -----
-            Method does NO conversion to HU
-            NO multithreading is used, as SimpleITK (sitk) lib crashes
-            in multithreading mode in our experiments.
+        Notes
+        -----
+        Method does NO conversion to HU
+        NO multithreading is used, as SimpleITK (sitk) lib crashes
+        in multithreading mode in our experiments.
         """
         list_of_arrs = []
         for patient_id in self.indices:
