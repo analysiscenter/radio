@@ -93,7 +93,7 @@ Adding a neural-net model to a workflow
 
 Contains neural nets' architectures for task of classification,
 segmentation and detection. E.g., ``DenseNoduleNet``, an architecutre,
-inspired by [DenseNet](https://arxiv.org/abs/1608.06993), but suited for 3D scans.
+inspired by `DenseNet <https://arxiv.org/abs/1608.06993>`, but suited for 3D scans.
 
 .. code-block:: python
 
@@ -105,7 +105,7 @@ on scan crops of shape **[32, 64, 64]** can be implemented as follows:
 
 .. code-block:: python
 
-    from radio.preprocessing.CTImagesMaskedBatch as CT
+    from radio.preprocessing import CTImagesMaskedBatch as CTIMB
     from dataset import F
 
     training_flow = (
