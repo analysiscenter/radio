@@ -11,7 +11,7 @@ The framework allows you to:
 ## Preprocess scans using implemented actions
 Preprocessing-module contains a set of [actions](https://github.com/analysiscenter/dataset), that allow to efficiently prepare a dataset of CT-scans for training neural nets.
 Say, you have a bunch of scans in **DICOM** format with varying shapes.
-First, you index the scans using the [pipeline](https://analysiscenter.github.io/radio/intro/pipeline.html), just like that:
+First, you index the scans using the [pipeline](https://analysiscenter.github.io/dataset/intro/pipeline.html), just like that:
 ```python
 from radio import CTImagesBatch as CTIB
 from dataset import FilesIndex, Dataset
@@ -81,6 +81,8 @@ training_flow = (
     ctset
     .pipeline()
     .load(fmt='raw')
+    .fetch_nodules_info(nodules_df)
+    .create_mask()
     .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
     .init_model(mode='static', model_class=DenseNoduleNet,
                 model_name='dnod_net')
