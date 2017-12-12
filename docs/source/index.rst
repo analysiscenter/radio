@@ -38,6 +38,7 @@ First, you index the scans using the :mod:`dataset <http://analysiscenter.github
 
     from radio import CTImagesBatch
     from dataset import FilesIndex, Dataset
+
     dicomix = FilesIndex(path='path/to/dicom/*', no_ext=True) # set up the index
     dicomset = Dataset(index=dicomix, batch_class=CTImagesBatch) # init the dataset of dicom files
 
