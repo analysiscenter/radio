@@ -49,8 +49,8 @@ def get_nodules_numba(data, positions, size):
                  Contains nodules' starting indices along [zyx]-axis accordingly in `data`.
     size :       ndarray(3,) of int
                  Contains nodules' sizes along each axis (z,y,x).
-    Note
-    ----
+    Notes
+    -----
     Dtypes of positions and size arrays must be the same.
 
     Returns
@@ -218,8 +218,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         int
             Position of item
 
-        Note
-        ----
+        Notes
+        -----
         This is an overload of get_pos from base Batch-class,
         see corresponding docstring for detailed explanation.
         """
@@ -272,8 +272,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                           inside `skyscraper`.
 
 
-        Note
-        ----
+        Notes
+        -----
         The method fills in record array self.nodules that contains the following information about nodules:
                                - self.nodules.nodule_center -- ndarray(num_nodules, 3) centers of
                                  nodules in world coords;
@@ -418,8 +418,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
     def create_mask(self):
         """ Create `masks` component from `nodules` component.
 
-        Note
-        ----
+        Notes
+        -----
         `nodules` must be not None before calling this method.
         see fetch_nodules_info() for more details.
         """
@@ -718,8 +718,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 list(np.histogram()), used for sampling cancerous locations.
 
 
-        Note
-        ----
+        Notes
+        -----
         Execute action only after .fetch_nodules_info().
         """
         # infer bins' bounds from histo
@@ -787,8 +787,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """ Filter record-array self.nodules s.t. only records about cancerous nodules
         that have non-zero intersection with scan-boxes be present.
 
-        Note
-        ----
+        Notes
+        -----
         can be called only after execution of fetch_nodules_info and _refresh_nodules_info
         """
         # nodules start and trailing pixel-coords
@@ -899,8 +899,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
              Resulting batch, where `images` are xips and corresponding `masks`.
 
 
-        Note
-        ----
+        Notes
+        -----
         Method changes nodules sizes' and creates new `masks` that corresponds
         to data after xip.
         """
@@ -957,8 +957,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
     def flip(self):
         """ Invert the order of slices for each patient
 
-        Example
-        -------
+        Examples
+        --------
         >>> batch = batch.flip()
         """
         logger.warning("There is no implementation of flip method for class " +

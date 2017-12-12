@@ -24,8 +24,8 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
         l2 loss for regression of cancer tumor center's coordinates,
         sizes joined with binary classification task.
 
-    Note
-    ----
+    Notes
+    -----
     y_true and y_pred tensors must have [None, 7] shapes;
     y_true[:, :3] and y_pred[:, :3] correspond to normalized (from [0, 1] interval)
     zyx coordinates of cancer tumor, while y_true[:, 3:6] and y_pred[:, 3:6]

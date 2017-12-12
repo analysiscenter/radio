@@ -67,8 +67,8 @@ def assemble_patches(patches, stride, out_arr, fake):
     fake :    ndarray
               instrumental array for syntax binding of guvectorize
 
-    Note
-    ----
+    Notes
+    -----
     `out_arr.shape`, `stride`, `patches.shape` are used to infer
     the number of sections for each dimension.
     We assume that the number of patches = len(patches)

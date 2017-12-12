@@ -58,8 +58,8 @@ async def encode_dump_array(data, folder, filename, mode):
         Mode of encoding to int8. Can be either 'quantization' or 'linear'
         or None
 
-    Note
-    ----
+    Notes
+    -----
     currently, two modes of encoding are supported:
      - 'linear': maps linearly data-range to int8-range and then rounds off fractional part.
      - 'quantization': attempts to use histogram of pixel densities to come up with a
@@ -143,8 +143,8 @@ async def dump_data(data_items, folder, i8_encoding_mode):
     i8_encoding_mode: str, int, or dict
         contains mode of encoding to int8
 
-    Note
-    ----
+    Notes
+    -----
     Depending on supplied format in data_items, each data-item will be either
         pickle-serialized (if 'pkl') or blosc-packed (if 'blk')
     """

@@ -28,8 +28,8 @@ class Keras3DUNet(KerasModel):
 
     Architecture is inspired by 3D U-Net (Çiçek et Al., https://arxiv.org/abs/1606.06650).
 
-    Note
-    ----
+    Notes
+    -----
     Implementation requires the input tensor having shape=(batch_size, 1, 32, 64, 64).
     """
     def build_config(self):
@@ -56,8 +56,8 @@ class Keras3DUNet(KerasModel):
         keras tensor
             output tensor.
 
-        Note
-        ----
+        Notes
+        -----
         `channels_first` dim-ordering is used.
         """
         with tf.variable_scope(scope):
@@ -100,8 +100,8 @@ class Keras3DUNet(KerasModel):
         keras tensor
             output tensor.
 
-        Note
-        ----
+        Notes
+        -----
         `channels_first` dim-ordering is used.
         """
         with tf.variable_scope(scope):
@@ -149,8 +149,8 @@ class Keras3DUNet(KerasModel):
         keras tensor
             ouput tensor.
 
-        Note
-        ----
+        Notes
+        -----
         `channels_first` dim-ordering is used.
         """
         with tf.variable_scope(scope):

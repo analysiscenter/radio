@@ -13,10 +13,11 @@ Preprocessing-module contains a set of [actions](https://github.com/analysiscent
 Say, you have a bunch of scans in **DICOM** format with varying shapes.
 First, you index the scans using the [pipeline](https://analysiscenter.github.io/radio/intro/pipeline.html), just like that:
 ```python
-    from radio import CTImagesBatch
-    from dataset import FilesIndex, Dataset
-    dicomix = FilesIndex(path='path/to/dicom/*', no_ext=True) # set up the index
-    dicomset = Dataset(index=dicomix, batch_class=CTImagesBatch) # init the dataset of dicom files
+from radio import CTImagesBatch as CTIB
+from dataset import FilesIndex, Dataset
+
+dicomix = FilesIndex(path='path/to/dicom/*', no_ext=True) # set up the index
+dicomset = Dataset(index=dicomix, batch_class=CTIB) # init the dataset of dicom files
 ```
 You may want to resize the scans to equal shape **[128, 256, 256]**,
 normalize voxel densities to range **[0, 255]** and dump transformed
@@ -24,15 +25,15 @@ scans. Preprocessing like this can be easily done with the following
 pipeline, just like that:
 
 ```python
-    prep_ppl = (
-        dicomset
-        .pipeline()
-        .load(fmt='dicom')
-        .resize(shape=(128, 256, 256))
-        .normalize_hu()
-        .dump('/path/to/preprocessed/scans/')
-    )
-    prep_ppl.run(batch_size=20)
+prep_ppl = (
+    dicomset
+    .pipeline()
+    .load(fmt='dicom')
+    .resize(shape=(128, 256, 256))
+    .normalize_hu()
+    .dump('/path/to/preprocessed/scans/')
+)
+prep_ppl.run(batch_size=20)
 ```
 
 See the [documentation](https://analysiscenter.github.io/radio/intro/preprocessing.html) for the description of
@@ -46,17 +47,17 @@ pipeline-creator (without spending time on thinking how to chain actions in
 a workflow):
 
 ```python
-    from radio.pipelines import get_crops
+from radio.pipelines import get_crops
 
-    pipe = get_crops(fmt='raw', shape=(128, 256, 256),
-                     nodules_df=nodules, batch_size=20,
-                     share=0.6, nodule_shape=(32, 64, 64))
+pipe = get_crops(fmt='raw', shape=(128, 256, 256),
+                 nodules_df=nodules, batch_size=20,
+                 share=0.6, nodule_shape=(32, 64, 64))
 
-    (ctset >> pipe).gen_batch(batch_size=12, shuffle=True)
+(ctset >> pipe).gen_batch(batch_size=12, shuffle=True)
 
-    for batch in gen_batches:
-        # ...
-        # perform net training here
+for batch in gen_batches:
+    # ...
+    # perform net training here
 ```
 See [pipelines section](https://analysiscenter.github.io/radio/intro/pipelines.html) for more information about
 ready-made workflows.
@@ -73,22 +74,24 @@ Using the architectures from Models, one can train deep learning systems
 for cancer detection. E.g., initialization and training of a new DenseNoduleNet
 on scan crops of shape **[32, 64, 64]** can be implemented as follows:
 ```python
-    from radio.preprocessing.CTImagesMaskedBatch as CT
-    from dataset import F
+from radio.preprocessing import CTImagesMaskedBatch as CTIMB
+from dataset import F
 
-    training_flow = (
-        ctset
-        .pipeline()
-        .load(fmt='raw')
-        .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
-        .init_model(mode='static', model_class=DenseNoduleNet, model_name='dnod_net')
-        .train_model('dnod_net', feed_dict={
-            'images': F(CTIMB.unpack, component='images'),
-            'labels': F(CTIMB.unpack, component='classification_targets')
-        })
-    )
+training_flow = (
+    ctset
+    .pipeline()
+    .load(fmt='raw')
+    .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
+    .init_model(mode='static', model_class=DenseNoduleNet,
+                model_name='dnod_net')
+    .train_model('dnod_net', feed_dict={
+        'images': F(CTIMB.unpack, component='images'),
+        'labels': F(CTIMB.unpack, component='classification_targets')
+    })
+)
 
-    training_flow.run(batch_size=10)
+training_flow.run(batch_size=10)
+
 ```
 See [models section](https://analysiscenter.github.io/radio/intro/models.html) for more information about implemented architectures and their application to cancer detection.
 

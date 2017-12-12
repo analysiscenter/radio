@@ -38,8 +38,8 @@ class KerasResNoduleNet(KerasModel):
     dropout_rate : float
         probability of dropout. default: 0.35.
 
-    Note
-    ----
+    Notes
+    -----
     Implementation requires the input tensor having shape=(batch_size, 32, 64, 64, 1).
     """
     def identity_block(self, inputs, kernel_size, filters, stage, block):

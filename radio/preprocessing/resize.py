@@ -43,8 +43,8 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
           (res, out_patient.shape), resulting `skyscraper` and shape of
           resized scan inside this `scyscraper`.
 
-    Note
-    ----
+    Notes
+    -----
     Shape of resulting array has to be inferred
     from out_patient
     """

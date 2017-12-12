@@ -138,8 +138,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         (1st_Batch, 2nd_Batch)
 
 
-        Note
-        ----
+        Notes
+        -----
         Method does not change the structure of input Batch.index. Indices of output
         batches are simply subsets of input Batch.index.
         """
@@ -204,8 +204,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         batch
              large batch with length = sum of lengths of concated batches
 
-        Note
-        ----
+        Notes
+        -----
         Old batches' indexes are dropped. New large batch has new
         np-arange index.
         if None-entries or batches of len=0 are included in the list of batches,
@@ -254,8 +254,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         -------
         (new_batch, rest_batch)
 
-        Note
-        ----
+        Notes
+        -----
         Merge performs split (of middle-batch) and then two concats
         because of speed considerations.
         """
@@ -315,8 +315,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         -------
         self
 
-        Example
-        -------
+        Examples
+        --------
         DICOM example
         initialize batch for storing batch of 3 patients with following IDs:
 
@@ -366,8 +366,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ndarray
                 3d-scan as np.ndarray
 
-        Note
-        ----
+        Notes
+        -----
         Conversion to hounsfield unit scale using meta from dicom-scans is performed.
         """
         # put 2d-scans for each patient in a list
@@ -463,8 +463,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 tuple of strings with names of components of data
                 that should be loaded into self
 
-        Note
-        ----
+        Notes
+        -----
         NO conversion to HU is done for blosc
         (because usually it's done before).
         """
@@ -512,8 +512,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw images (with meta in .mhd)
 
-            Note
-            ----
+            Notes
+            -----
             NO conversion to HU is done
             NO multithreading is used, as SimpleITK (sitk) lib crashes
             in multithreading mode in our experiments.
@@ -566,8 +566,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             0 or None disable the cast. 1 stands for 'linear', 2 - for 'quantization'.
             Can also be component-wise dict of modes, e.g.: {'images': 'linear', 'masks': 0}.
 
-        Example
-        -------
+        Examples
+        --------
         Initialize batch and load data
 
         >>> ind = ['1ae34g90', '3hf82s76']
@@ -641,8 +641,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         int
             Position of item
 
-        Note
-        ----
+        Notes
+        -----
         This is an overload of get_pos from base Batch-class,
         see corresponding docstring for detailed explanation.
         """
@@ -767,8 +767,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         batch
              new batch, empty batch or self-batch.
 
-        Note
-        ----
+        Notes
+        -----
         Output of each worker should correspond to individual patient.
         """
         if any_action_failed(list_of_arrs):
@@ -968,8 +968,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         order :      the order of scipy-interpolation (<= 5)
                      large value improves precision, but slows down the computaion.
 
-        Example
-        -------
+        Examples
+        --------
         >>> shape = (128, 256, 256)
         >>> batch = batch.resize(shape=shape, order=2, method='scipy')
         >>> batch = batch.resize(shape=shape, resample=PIL.Image.BILINEAR)
@@ -1036,12 +1036,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                        Note: this argument is passed by inbatch_parallel
 
 
-        Note
-        ----
+        Notes
+        -----
         see CTImagesBatch.resize for more info about methods' params.
 
-        Example
-        -------
+        Examples
+        --------
         >>> shape = (128, 256, 256)
         >>> batch = batch.unify_spacing(shape=shape, spacing=(1.0, 1.0, 1.0),
                                         order=2, method='scipy', padding='reflect')
@@ -1082,12 +1082,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ndarray
                 ndarray of 3D rotated image.
 
-        Note
-        ----
+        Notes
+        -----
         zero padding automatically added after rotation.
 
-        Example
-        -------
+        Examples
+        --------
         Rotate images on 90 degrees:
 
         >>> batch = batch.rotate(angle=90, axes=(1, 2), random=False)
@@ -1146,12 +1146,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         erosion_radius : int
                          radius of erosion to be performed.
 
-        Note
-        ----
+        Notes
+        -----
         Sets HU of every pixel outside lungs to DARK_HU = -2000.
 
-        Example
-        -------
+        Examples
+        --------
 
         >>> batch = batch.segment(erosion_radius=4, num_threads=20)
         """
@@ -1212,8 +1212,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ndarray
                 4d-ndaray of patches; first dimension enumerates patches
 
-        Note
-        ----
+        Notes
+        -----
         Shape of all patients data is needed to be the same at this step,
         resize/unify_spacing is required before.
         """
@@ -1255,8 +1255,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         data_attr :  str
                      batch component name to store new data.
 
-        Note
-        ----
+        Notes
+        -----
         If stride != patch.shape(), averaging of overlapped regions is used.
         `scan_shape`, patches.shape(), `stride` are used to infer the number of items
         in new skyscraper. If patches were padded, padding is removed for skyscraper.
@@ -1307,8 +1307,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         max_hu : int
                  maximum value for hu that will be used as trimming threshold.
 
-        Example
-        -------
+        Examples
+        --------
         >>> batch = batch.normalize_hu(min_hu=-1300, max_hu=600)
         """
         # trimming and scaling to [0, 1]
@@ -1325,8 +1325,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def flip(self):    # pylint: disable=no-self-use
         """ Invert the order of slices for each patient
 
-        Example
-        -------
+        Examples
+        --------
         >>> batch = batch.flip()
         """
         return flip_patient_numba
@@ -1344,8 +1344,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                         e.g. 0.7 means that we take slice with number
                         int(0.7 * number of slices for person)
 
-        Example
-        -------
+        Examples
+        --------
         Here self.index[5] usually smth like 'a1de03fz29kf6h2'
 
         >>> patch = batch.get_axial_slice(5, 0.6)

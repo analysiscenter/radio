@@ -22,8 +22,8 @@ def rotate_3D(image, angle, axes=(1, 2)):
     ndarray
            3D rotated scan
 
-    Note
-    ----
+    Notes
+    -----
     Zero-padding automatically added after rotation.
     """
     rotated_image = scipy.ndimage.interpolation.rotate(image, angle, axes, reshape=False)

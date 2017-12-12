@@ -53,13 +53,13 @@ def insert_cropped(where, what, origin):
     None
         changes `where` array.
 
-    Note
-    ----
+    Notes
+    -----
     What-array is cropped if origin<0 or what-array
     is too large to be put in where-array.
 
-    Example
-    -------
+    Examples
+    --------
         where = np.zeros(shape=(3, 3, 3), dtype='int')
         what = np.ones(shape=(2, 2, 2), dtype='int')
         origin = np.asarray([2, 2, 2])

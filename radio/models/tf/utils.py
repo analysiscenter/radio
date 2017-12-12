@@ -32,8 +32,8 @@ def num_channels(input_tensor):
     int
         number of channels.
 
-    Note
-    ----
+    Notes
+    -----
         channels last ordering is used.
     """
     return get_shape(input_tensor)[-1]
@@ -50,7 +50,7 @@ def repeat_tensor(input_tensor, times):
         number of times to repeat input tensor tensor along each axis.
 
     Returns
-    ------
+    -------
     tf.Tensor
         repeated tensor.
     """
