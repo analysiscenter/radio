@@ -25,20 +25,20 @@ def min_max_sum_fn(a, b, flag):
 
     Parameters
     ----------
-    a :    int or float
-           left operand.
-    b :    int or float
-           right operand;
+    a : int or float
+        left operand.
+    b : int or float
+        right operand;
     flag : int
-           either 0, 1 or 2.
-            0 for max function;
-            1 for min function;
-            2 for sum function.
+        either 0, 1 or 2.
+        0 for max function;
+        1 for min function;
+        2 for sum function.
 
     Returns
     -------
     int or float
-                result of function or 0.
+        result of function or 0.
     """
     if flag == 0:
         return max(a, b)
@@ -55,23 +55,24 @@ def numba_xip(arr, l, m, n, flag, fill_value):
 
     Parameters
     ----------
-    arr :        ndarray(l, m, n)
-                 input array for computing xip.
-    l :          int
-                 z-dim of `arr`.
-    m :          int
-                 y-dim of `arr`.
-    n :          int
-                 x-dim of `arr`.
-    flag :       int
-                 0, 1 or 2; corresponds to max, min and average
-                 functions for xip operation.
+    arr : ndarray(l, m, n)
+        input array for computing xip.
+    l : int
+        z-dim of `arr`.
+    m : int
+        y-dim of `arr`.
+    n : int
+        x-dim of `arr`.
+    flag : int
+        0, 1 or 2; corresponds to max, min and average
+        functions for xip operation.
     fill_value : int
-                 default value to fill resulting array.
+        default value to fill resulting array.
+
     Returns
     -------
     ndarray
-            xip ndarray.
+        xip ndarray.
     """
     res = np.full((m, n), fill_value, dtype=arr.dtype)
     for j in range(m):
@@ -88,28 +89,28 @@ def make_xip(data, step, depth,
 
     Parameters
     ----------
-    data :       ndarray
-                 3d array, patient scan or crop
-    step :       int
-                 stride-step along axe, to apply the func.
-    depth :      int
-                 depth of slices (aka `kernel`) along axe made on each step for computing.
-    start :      int
-                 number of slize by 0-axis to start operation
-    end :        int
-                 number of slize by 0-axis to stop operation
-    func :       int
-                 either 0, 1 or 2.
-                 0 for max function;
-                 1 for min function;
-                 2 for sum function.
+    data : ndarray
+        3d array, patient scan or crop
+    step : int
+        stride-step along axe, to apply the func.
+    depth : int
+        depth of slices (aka `kernel`) along axe made on each step for computing.
+    start : int
+        number of slize by 0-axis to start operation
+    end : int
+        number of slize by 0-axis to stop operation
+    func : int
+        either 0, 1 or 2.
+        0 for max function;
+        1 for min function;
+        2 for sum function.
     fill_value : int
-                 default value to fill resulting array.
+        default value to fill resulting array.
 
     Returns
     -------
     ndarray
-           xip ndarray
+        xip ndarray
     """
     if data.shape[0] < depth:
         depth = data.shape[0]
@@ -140,21 +141,21 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
 
         Parameters
         ----------
-        step :       int
-                     stride-step along axe, to apply the func.
-        depth :      int
-                     depth of slices (aka `kernel`) along axe made on each step for computing.
-        func :       str
-                     Possible values are 'max', 'min' and 'avg'.
+        step : int
+            stride-step along axe, to apply the func.
+        depth : int
+            depth of slices (aka `kernel`) along axe made on each step for computing.
+        func : str
+            Possible values are 'max', 'min' and 'avg'.
         projection : str
-                     Possible values: 'axial', 'coroanal', 'sagital'.
-                     In case of 'coronal' and 'sagital' projections tensor
-                     will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
+            Possible values: 'axial', 'coroanal', 'sagital'.
+            In case of 'coronal' and 'sagital' projections tensor
+            will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
 
         Returns
         -------
         ndarray
-               resulting ndarray after func is applied.
+            resulting ndarray after func is applied.
 
         """
     _projection = _PROJECTIONS[projection]

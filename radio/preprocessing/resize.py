@@ -21,27 +21,27 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
 
     Parameters
     ----------
-    patient :     ndarray
-                  3D array
+    patient : ndarray
+        3D array
     out_patient : ndarray
-                  resulting array
-    res :         ndarray
-                  resulting `skyscraper` for the whole batch.
-                  used later by `_post`-func in _inbatch_parallel
-    order :       int
-                  order of interpolation
-    res_factor :  tuple or None
-                  resize factor along (z,y,x) in int ir float for interpolation.
-                  If not None, can yield array of shape != out_patient.shape,
-                  then crop/pad is used
-    padding :     str
-                  mode of padding, any mode of np.pad()
+        resulting array
+    res : ndarray
+        resulting `skyscraper` for the whole batch.
+        used later by `_post`-func in _inbatch_parallel
+    order : int
+        order of interpolation
+    res_factor : tuple or None
+        resize factor along (z,y,x) in int ir float for interpolation.
+        If not None, can yield array of shape != out_patient.shape,
+        then crop/pad is used
+    padding : str
+        mode of padding, any mode of np.pad()
 
     Returns
     -------
     tuple
-          (res, out_patient.shape), resulting `skyscraper` and shape of
-          resized scan inside this `scyscraper`.
+        (res, out_patient.shape), resulting `skyscraper` and shape of
+        resized scan inside this `scyscraper`.
 
     Notes
     -----
@@ -76,32 +76,32 @@ def resize_pil(input_array, output_array, res, axes_pairs=None, shape_resize=Non
 
     Parameters
     ----------
-    input_array :   ndarray
-                    array to be resized.
-    ouput_array :   ndarray
-                    array, where the result should be put.
-    res :           ndarray
-                    resulting `skyscraper` for the whole batch.
-                    used later by `_post`-func in _inbatch_parallel
-    axes_pairs :    tuple, list of tuples or None
-                    pairs of axes for 2d resizes, then averaging is performed,
-                    e.g., ((0,1),(1,2),(0,2))
-                    if None, defaults to ((0, 1), (1, 2))
-    shape_resize :  tuple, list, ndarray or None
-                    shape of array after resize.
-                    If None, infer shape from `ouput_array.shape`.
-    resample :      str or None
-                    type of PIL resize's resampling method, e.g.
-                    `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.
-                    If None, `BILINEAR` is used.
-    padding :       str
-                    mode of padding, any mode of np.pad()
+    input_array : ndarray
+        array to be resized.
+    ouput_array : ndarray
+        array, where the result should be put.
+    res : ndarray
+        resulting `skyscraper` for the whole batch.
+        used later by `_post`-func in _inbatch_parallel
+    axes_pairs : tuple, list of tuples or None
+        pairs of axes for 2d resizes, then averaging is performed,
+        e.g., ((0,1),(1,2),(0,2))
+        if None, defaults to ((0, 1), (1, 2))
+    shape_resize : tuple, list, ndarray or None
+        shape of array after resize.
+        If None, infer shape from `ouput_array.shape`.
+    resample : str or None
+        type of PIL resize's resampling method, e.g.
+        `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.
+        If None, `BILINEAR` is used.
+    padding : str
+        mode of padding, any mode of np.pad()
 
     Returns
     -------
     tuple
-          (res, out_patient.shape), resulting `skyscraper` and shape of
-          resized scan inside this `scyscraper`.
+        (res, out_patient.shape), resulting `skyscraper` and shape of
+        resized scan inside this `scyscraper`.
     """
     # if resample not given, set to bilinear
     resample = Image.BILINEAR if resample is None else resample
@@ -133,23 +133,23 @@ def _seq_resize(input_array, shape, axes, resample):
 
     Parameters
     ----------
-    input_array: ndarray
-                 3D array
-    shape :      tuple, list or ndarray
-                 shape of 3d scan after resize, (z,y,x).
-    axes :       tuple, list or ndarray
-                 axes for slicing. E.g., `shape` = (z, y, x) and axes = (0, 1). We first loop over
-                 2d-slices [i, :, :] and reshape input to shape = (input_array.shape[0], y, x).
-                 then loop over slices [:, i, :] and reshape the result to shape = (z, y, x).
-    resample :   str or None
-                 type of PIL resize's resampling method, e.g.
-                 `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.
-                 If None, `BILINEAR` is used.
+    input_array : ndarray
+        3D array
+    shape : tuple, list or ndarray
+        shape of 3d scan after resize, (z,y,x).
+    axes : tuple, list or ndarray
+        axes for slicing. E.g., `shape` = (z, y, x) and axes = (0, 1). We first loop over
+        2d-slices [i, :, :] and reshape input to shape = (input_array.shape[0], y, x).
+        then loop over slices [:, i, :] and reshape the result to shape = (z, y, x).
+    resample : str or None
+        type of PIL resize's resampling method, e.g.
+        `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.
+        If None, `BILINEAR` is used.
 
     Returns
     -------
     ndarray
-            resized 3D array
+        resized 3D array
     """
     result = input_array
 
@@ -168,20 +168,20 @@ def _slice_and_resize(input_array, axis, slice_shape, resample):
     Parameters
     ----------
     input_array : ndarray
-                  3D array
-    axis :        int
-                  axis along which slices are taken
+        3D array
+    axis : int
+        axis along which slices are taken
     slice_shape : tuple,list or ndarray
-                  (y,x) shape of each slice after resize
-    resample :    str or None
-                  type of PIL resize's resampling method, e.g.
-                  `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.
-                  If None, `BILINEAR` is used.
+        (y,x) shape of each slice after resize
+    resample : str or None
+        type of PIL resize's resampling method, e.g.
+        `BILINEAR`, `BICUBIC`,`LANCZOS` or `NEAREST`.
+        If None, `BILINEAR` is used.
 
     Returns
     -------
     ndarray
-            3D array in which each slice along chosen axis is resized
+        3D array in which each slice along chosen axis is resized
     """
     # init the resulting array
     result_shape = np.insert(np.array(slice_shape), axis, input_array.shape[axis])
@@ -207,17 +207,17 @@ def to_shape(data, shape, padding):
 
     Parameters
     ----------
-    data :    ndarray
-              3D array for reshaping
-    shape :   tuple, list or ndarray
-              data shape after crop or pad
+    data : ndarray
+        3D array for reshaping
+    shape : tuple, list or ndarray
+        data shape after crop or pad
     padding : str
-              mode of padding, any of the modes of np.pad()
+        mode of padding, any of the modes of np.pad()
 
     Returns
     -------
     ndarray
-            cropped and padded data
+        cropped and padded data
     """
     # calculate shapes discrepancy
     data_shape = np.asarray(data.shape)

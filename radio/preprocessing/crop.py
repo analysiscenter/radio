@@ -8,14 +8,14 @@ def make_central_crop(image, crop_size):
 
     Parameters
     ----------
-    image :     ndarray
-                3D image of shape `(dim1, dim2, dim3)`.
+    image : ndarray
+        3D image of shape `(dim1, dim2, dim3)`.
     crop_size : ndarray or tuple
-                Size of crop along three dimensions `(int, int, int)`
+        Size of crop along three dimensions `(int, int, int)`
     Returns
     -------
     ndarray
-            3D crop from image.
+        3D crop from image.
     """
     crop_size = np.asarray(crop_size)
     crop_halfsize = np.ceil(crop_size / 2).astype(np.int)

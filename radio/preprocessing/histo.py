@@ -4,19 +4,19 @@ import numpy as np
 
 
 def cart_triples(*arrs):
-    """ Get array of element-wise triples from sequence of 3 arrays
+    """ Get array of cartesian triples from three arrays.
 
-    Match elements of arrays at each position (first-with-first) into triples.
+    The order is triples is lexicographic.
 
     Parameters
     ----------
     arrs : tuple, list or ndarray
-           Any sequence of 3d ndarrays.
+        Any sequence of 3d ndarrays.
 
     Returns
     -------
     ndarray
-            2d-array of triples (array1_item_n,array2_item_n,array3_item_n)
+        2d-array of triples (array1_item_n,array2_item_n,array3_item_n)
     """
     res = np.transpose(np.stack(np.meshgrid(*arrs)), axes=(2, 1, 3, 0))
     return res.reshape(-1, 3)
@@ -28,16 +28,16 @@ def sample_histo3d(histo, size):
     Parameters
     ----------
     histo : tuple
-            (bins, edges) of np.histogram(). `bins` is a 3d-array, number of points in a specific cube.
-            `edges` is a list of 3 arrays of len = (nbins_in_dimension + 1),
-            represents bounds of bins' boxes.
-    size :  int
-            length of sample to be generated
+        (bins, edges) of np.histogram(). `bins` is a 3d-array, number of points in a specific cube.
+        `edges` is a list of 3 arrays of len = (nbins_in_dimension + 1),
+        represents bounds of bins' boxes.
+    size : int
+        length of sample to be generated
 
     Returns
     -------
     ndarray
-            3d-array of shape = (size, 3), contains samples from histo-distribution
+        3d-array of shape = (size, 3), contains samples from histo-distribution
     """
     # infer probabilities of bins, sample number of bins according to these probs
     probs = (histo[0] / np.sum(histo[0])).reshape(-1)
@@ -53,17 +53,24 @@ def sample_histo3d(histo, size):
 
 
 def sample_ellipsoid_region(center, axes, mult_range, size):
-    """ Create a sample from *almost* uniform distribution with support given by a peel of a 3d-ellispoid.
+    """ Create a sample from `almost` uniform distribution with support given by a peel of a 3d-ellispoid.
 
-    Args:
-        center: seq of len=3 representing center of the ellipsoid to be used for sampling.
-        axes: seq of len=3 representing three axes of the ellipsoid.
-        mult_range: seq of len=2 representing range that defines the peel. E.g., mult_range = (1.0, 1.2).
-            Then the peel is defined as a region, bounded from inside and outside by surfaces of two ellipsoids.
-            The interior one has axes = 1.0 * axes, while the exterior one has axes = 1.2 * axes.
-        size: len of sample to be generated.
+    Parameters
+    ----------
+    center : tuple, list or ndarray
+        center of the ellipsoid to be used for sampling.
+    axes : tuple, list or ndarray
+        three axes of the ellipsoid.
+    mult_range : tuple, list
+        range that defines the peel. E.g., mult_range = (1.0, 1.2).
+        Then the peel is defined as a region, bounded from inside and outside by surfaces of two ellipsoids.
+        The interior one has axes = 1.0 * axes, while the exterior one has axes = 1.2 * axes.
+    size : int
+        len of sample to be generated.
 
-    Return:
+    Returns
+    -------
+    ndarray
         3d-array of shape = (size, 3) containing generated sample.
     """
     # generate uniform sample of polar and azimuthal angles

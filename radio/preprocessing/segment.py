@@ -16,9 +16,10 @@ def largest_label_volume(image, background=-1):
 
     Parameters
     ----------
-    image :      ndarray
+    image : ndarray
     background : int or float
-                 image background color
+        image background color
+
     Returns
     -------
     int
@@ -42,20 +43,20 @@ def calc_lung_mask_numba(patient, out_patient, res, erosion_radius=7):
 
     Parameters
     ----------
-    patient :        ndarray
-                     input 3D scan.
-    out_patient :    ndarray
-                     resulting array with segmented lungs
+    patient : ndarray
+        input 3D scan.
+    out_patient : ndarray
+        resulting array with segmented lungs
     erosion_radius : int
-                     radius to use to erod the lungs' border
-    res :            ndarray
-                     `skyscraper` where to put the resized patient
+        radius to use to erod the lungs' border
+    res : ndarray
+        `skyscraper` where to put the resized patient
 
     Returns
     -------
     tuple
-          (res, out_patient.shape), resulting `skyscraper` and shape of
-          segmented scan inside this `scyscraper`.
+        (res, out_patient.shape), resulting `skyscraper` and shape of
+        segmented scan inside this `scyscraper`.
 
     """
 

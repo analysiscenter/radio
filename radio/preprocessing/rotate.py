@@ -11,16 +11,16 @@ def rotate_3D(image, angle, axes=(1, 2)):
     Parameters
     ----------
     image : ndarray
-            3D scan, (z,y,x).
+        3D scan, (z,y,x).
     angle : float
-            angle of rotation.
+        angle of rotation.
     axes :  tuple
-            (int, int), axes that specify rotation plane.
+        (int, int), axes that specify rotation plane.
 
     Returns
     -------
     ndarray
-           3D rotated scan
+        3D rotated scan
 
     Notes
     -----

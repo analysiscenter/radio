@@ -44,7 +44,7 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
     share : float
         share of cancer crops in the batch.
     histo : tuple
-        :func:`numpy.histogramdd` output.
+        :func:`numpy.histogram` output.
         Used for sampling non-cancerous crops
     variance : tuple, list or ndarray of float
         variances of normally distributed random shifts of

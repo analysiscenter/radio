@@ -12,19 +12,19 @@ def get_patches_numba(img, shape, stride, out_arr, fake):
 
     Parameters
     ----------
-    img :     ndarray
-              input 3d scan (ct-scan for one patient),
-              assumes scan is already padded.
-    shape :   ndarray
-              3D array with shape of patch (z,y,x)
-    stride :  ndarray
-              3D array with strides of a patch along (z,y,x)
-              (if not equal to patch_shape, patches will overlap)
+    img : ndarray
+        input 3d scan (ct-scan for one patient),
+        assumes scan is already padded.
+    shape : ndarray
+        3D array with shape of patch (z,y,x)
+    stride : ndarray
+        3D array with strides of a patch along (z,y,x)
+        (if not equal to patch_shape, patches will overlap)
     out_arr : ndarray
-              resulting 4d-array, where all patches are put. New dimension (first)
-              enumerates patches (number_of_patches,z,y,x)
-    fake :    ndarray
-              instrumental array for syntax binding of guvectorize
+        resulting 4d-array, where all patches are put. New dimension (first)
+        enumerates patches (number_of_patches,z,y,x)
+    fake : ndarray
+        instrumental array for syntax binding of guvectorize
 
     """
 
@@ -59,13 +59,13 @@ def assemble_patches(patches, stride, out_arr, fake):
     patches : ndarray
               4d array of patches, first dim enumerates
               patches; other dims are spatial with order (z,y,x)
-    stride :  ndarray
-              stride to extract patches in (z,y,x) dims
+    stride : ndarray
+        stride to extract patches in (z,y,x) dims
     out_arr : ndarray
-              3d-array, where assembled scan is put.
-              Should be filled with zeroes before calling function.
-    fake :    ndarray
-              instrumental array for syntax binding of guvectorize
+        3d-array, where assembled scan is put.
+        Should be filled with zeroes before calling function.
+    fake : ndarray
+        instrumental array for syntax binding of guvectorize
 
     Notes
     -----
@@ -113,20 +113,20 @@ def calc_padding_size(img_shape, patch_shape, stride):
 
     Parameters
     ----------
-    img_shape :   ndarray
-                  shape of 3d-scan along (z,y,x)
+    img_shape : ndarray
+        shape of 3d-scan along (z,y,x)
     patch_shape : ndarray
-                  shape of patch along (z,y,x)
-    stride :      ndarray
-                  stride to slides over scan, in (z,y,x) dims.
+        shape of patch along (z,y,x)
+    stride : ndarray
+        stride to slides over scan, in (z,y,x) dims.
 
     Returns
     -------
     list or None
-                list of tuples with padding sizes
-                Pad widths in four dims; the first dim enumerates patients,
-                others are spatial axes (z,y,x)
-                if no padding is needed, return None
+        list of tuples with padding sizes
+        Pad widths in four dims; the first dim enumerates patients,
+        others are spatial axes (z,y,x)
+        if no padding is needed, return None
     """
     overshoot = (img_shape - patch_shape + stride) % stride
 
