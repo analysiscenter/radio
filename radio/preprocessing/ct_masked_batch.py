@@ -50,8 +50,8 @@ def get_nodules_numba(data, positions, size):
     size : ndarray(3,) of int
         Contains nodules' sizes along each axis (z,y,x).
 
-    Note
-    ----
+    Notes
+    -----
     Dtypes of positions and size arrays must be the same.
 
     Returns
@@ -990,8 +990,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         -------
         batch
 
-        Example
-        -------
+        Examples
+        --------
         >>> batch = batch.flip()
         """
         logger.warning("There is no implementation of flip method for class " +
