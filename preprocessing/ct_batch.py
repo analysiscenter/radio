@@ -89,6 +89,21 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         return 'images', 'spacing', 'origin'
 
+    def _if_component_filled(self, component):
+        """ Check if component is filled with data.
+
+        Parameters
+        ----------
+        component : str
+            component to be checked
+
+        Returns
+        -------
+        bool
+            True if filled, False if not.
+        """
+        return getattr(self, component, None) is not None
+
     def _init_data(self, bounds=None, **kwargs):
         """ Initialize _bounds and components (images, origin, spacing).
 
@@ -537,7 +552,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     @action
-    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
+    @inbatch_parallel(init='_init_dump', post='_post_default', target='async', update=False)
     async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
         """ Dump scans data (3d-array) on specified path in specified format
 
@@ -882,6 +897,28 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             all_args += [item_args]
 
         return all_args
+
+    def _init_dump(self , **kwargs):
+        """ Init function for dump.
+
+        Checks if all components that should be dumped are non-None.
+
+        Parameters
+        ----------
+        **kwargs:
+            components : str or list/tuple
+                components that we need to dump
+        """
+        components = kwargs.get('components', self.components)
+        _empty = [component for component in components if not self._if_component_filled(component)]
+
+        # if some of the components for dump are empty, print warning and do not dump anything
+        if len(_empty) > 0:
+
+            return [None] * len(self)
+        else:
+            return self.indices
+
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """ Gather outputs of different workers for actions, rebuild `images` component.
