@@ -24,11 +24,8 @@ from .crop import make_central_crop
 from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
 
 
-LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
-               "%(levelname)-8s [%(asctime)s]  %(message)s")
-logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
-
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+# logger initialization
+logger = logging.getLogger(__name__) # pylint: disable=invalid-name
 
 
 @njit(nogil=True)
