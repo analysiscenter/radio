@@ -934,6 +934,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 components that we need to dump
         """
         components = kwargs.get('components', self.components)
+
+        # make sure that components is iterable
+        components = [components] if isinstance(components, str) else components
+
         _empty = [component for component in components if not self._if_component_filled(component)]
 
         # if some of the components for dump are empty, print warning and do not dump anything
