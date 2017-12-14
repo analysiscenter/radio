@@ -182,3 +182,10 @@ Same for segmentation:
           y=F(CT.unpack, component='segmentation_targets', data_format='channels_first')
       )
   )
+
+Note, that dataset package contains ready to use implementations of popular
+Neural Networks architectures requiring minimum code for building
+model specific to your task. For instance, here is DenseNet with custom
+convolution in the begining:
+
+.. code-block:: python
