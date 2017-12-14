@@ -5,6 +5,7 @@
 """ Batch class for storing CT-scans. """
 
 import os
+import logging
 import dill as pickle
 
 import numpy as np
@@ -24,6 +25,8 @@ from .patches import get_patches_numba, assemble_patches, calc_padding_size
 from .rotate import rotate_3D
 from .dump import dump_data
 
+# logger initialization
+logger = logging.getLogger(__name__) # pylint: disable=invalid-name
 
 AIR_HU = -2000
 DARK_HU = -2000
@@ -554,7 +557,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @action
     @inbatch_parallel(init='_init_dump', post='_post_default', target='async', update=False)
     async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
-        """ Dump scans data (3d-array) on specified path in specified format
+        """ Dump chosen ``components`` of scans' batcn in folder ``dst`` in specified format.
+
+        When some of the ``components`` are ``None``, a warning is printed and nothing is dumped.
+        By default (``components is None``) ``dump`` attempts to dump all components.
 
         Parameters
         ----------
@@ -602,6 +608,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         - ./data/blosc_preprocessed/3hf82s76/spacing/data.pkl
         - ./data/blosc_preprocessed/3hf82s76/origin/data.pkl
         """
+        # if ix is None, do nothing
+        if ix is None:
+            return
+
         # if components-arg is not supplied, dump all components
         if components is None:
             components = self.components
@@ -898,10 +908,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return all_args
 
-    def _init_dump(self , **kwargs):
+    def _init_dump(self, **kwargs):
         """ Init function for dump.
 
-        Checks if all components that should be dumped are non-None.
+        Checks if all components that should be dumped are non-None. If some are None,
+        prints warning and make sures that nothing is dumped.
 
         Parameters
         ----------
@@ -914,11 +925,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # if some of the components for dump are empty, print warning and do not dump anything
         if len(_empty) > 0:
-
+            logger.warning('Components %r are empty. Nothing is dumped!', _empty)
             return [None] * len(self)
         else:
             return self.indices
-
 
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """ Gather outputs of different workers for actions, rebuild `images` component.
