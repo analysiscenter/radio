@@ -513,6 +513,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     return decoder(debyted)
 
             comp_path = os.path.join(self.index.get_fullpath(ix), source, 'data' + '.' + ext)
+            if not os.path.exists(comp_path):
+                raise OSError("File with component {} doesn't exist".format(source))
 
             # read the component
             async with aiofiles.open(comp_path, mode='rb') as file:
@@ -775,6 +777,18 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         return (self.spacing * self.images_shape) / new_shape
 
+    def _reraise_worker_exceptions(self, worker_outputs):
+        """ Reraise exceptions coming from worker-functions, if there are any.
+
+        Parameters
+        ----------
+        worker_outputs : list
+            list of workers' results
+        """
+        if any_action_failed(worker_outputs):
+            all_errors = self.get_errors(worker_outputs)
+            raise RuntimeError("Failed parallelizing. Some of the workers failed with following errors: ", all_errors)
+
     def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
         """ Gatherer outputs of different workers, update `images` component
 
@@ -796,9 +810,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----
         Output of each worker should correspond to individual patient.
         """
-        if any_action_failed(list_of_arrs):
-            raise ValueError("Failed while parallelizing")
-
+        self._reraise_worker_exceptions(list_of_arrs)
         res = self
         if update:
             new_data = np.concatenate(list_of_arrs, axis=0)
@@ -826,8 +838,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self
             changes self's components
         """
-        if any_action_failed(list_of_dicts):
-            raise ValueError("Failed while parallelizing")
+        self._reraise_worker_exceptions(list_of_dicts)
 
         # if images is in dict, update bounds
         if 'images' in list_of_dicts[0]:
@@ -912,7 +923,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """ Init function for dump.
 
         Checks if all components that should be dumped are non-None. If some are None,
-        prints warning and make sures that nothing is dumped.
+        prints warning and makes sure that nothing is dumped.
 
         Parameters
         ----------
@@ -926,7 +937,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # if some of the components for dump are empty, print warning and do not dump anything
         if len(_empty) > 0:
             logger.warning('Components %r are empty. Nothing is dumped!', _empty)
-            return [None] * len(self)
+            return [None]
         else:
             return self.indices
 
@@ -946,8 +957,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 spacing : list, tuple or ndarray
                           if supplied, assume that unify_spacing is performed
         """
-        if any_action_failed(all_outputs):
-            raise ValueError("Failed while parallelizing")
+        self._reraise_worker_exceptions(all_outputs)
 
         new_bounds = np.cumsum([patient_shape[0] for _, patient_shape
                                 in [[0, (0, )]] + all_outputs])
