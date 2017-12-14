@@ -437,6 +437,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 ix_pos = self._get_verified_pos(ix)
 
                 # read shape and put it into shapes
+                if not os.path.exists(filename):
+                    raise OSError("Component {} for item {} cannot be found on disk".format(component, ix))
                 with open(filename, 'rb') as file:
                     shapes[ix_pos, :] = pickle.load(file)
 
@@ -444,9 +446,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             # TODO: once bounds for other components are added, make sure they are updated here in the right way
             self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
 
-            # fill the component with zeroes (memory preallocation)
+            # preallocate the component
             skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
-            setattr(self, component, np.zeros(skysc_shape))
+            setattr(self, component, np.empty(skysc_shape))
 
     def _init_load_blosc(self, **kwargs):
         """ Init-function for load from blosc.
