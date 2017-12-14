@@ -823,9 +823,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         list_of_arrs : list
                        list of ndarrays of patients' masks.
         """
-        if any_action_failed(list_of_arrs):
-            raise ValueError("Failed while parallelizing")
-
+        self._reraise_worker_exceptions(list_of_arrs)
         new_masks = np.concatenate(list_of_arrs, axis=0)
         self.masks = new_masks
 
