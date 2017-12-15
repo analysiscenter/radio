@@ -4,7 +4,7 @@ Pipelines
 
 Pipelines are workflows that greatly simplify
 deep learning research on CT-scans. Each workflow is represented
-in a form of preprocessing :func:`actions <dataset.action>`,
+in a form of preprocessing `actions https://analysiscenter.github.io/dataset/intro/batch.html#action-methods`_,
 chained in a :class:`pipeline <dataset.Pipeline>`.
 
 Let us start with a workflow that allows to perform a full-scale
