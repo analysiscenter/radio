@@ -74,35 +74,35 @@ of training ``ResNodule3DNet50`` model for classification task:
 
 .. code-block:: python
 
-  from radio import CTImagesMaskedBatch as CT
-  from radio.models.tf import ResNodule3DNet50
-  from radio import dataset as ds
-  from radio.dataset import F
+    from radio import CTImagesMaskedBatch as CT
+    from radio.models.tf import ResNodule3DNet50
+    from radio import dataset as ds
+    from radio.dataset import F
 
-  resnet_config = {
-    'num_targets': 1,
-    'optimizer': 'Adam',
-    'loss': tf.losses.log_loss,
-  }
+    resnet_config = {
+      'num_targets': 1,
+      'optimizer': 'Adam',
+      'loss': tf.losses.log_loss,
+    }
 
-  train_ppl = (
-    ds.Pipeline()
-      .load(fmt='blosc')
-      .normalize_hu()
-      .fetch_nodules_info(nodules_df)
-      .create_mask()
-      .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
-      .train_model('resnet', feed_dict={
-          'images': F(CT.unpack, component='images')
-          'labels': F(CT.unpack, component='classification_targets')
-      })
-  )
+    train_ppl = (
+      ds.Pipeline()
+        .load(fmt='blosc')
+        .normalize_hu()
+        .fetch_nodules_info(nodules_df)
+        .create_mask()
+        .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
+        .train_model('resnet', feed_dict={
+            'images': F(CT.unpack, component='images')
+            'labels': F(CT.unpack, component='classification_targets')
+        })
+    )
 
 Now train loop can be started:
 
 .. code-block:: python
 
-  (train_dataset >> train_ppl).run(batch_size=16)
+    (train_dataset >> train_ppl).run(batch_size=16)
 
 In example above ``init_model`` and ``train_model`` methods are methods of
 ds.Pipeline instances.
@@ -131,61 +131,90 @@ CTImagesMaskedBatch will be used:
 
 .. code-block:: python
 
-  from radio import CTImagesMaskedBatch as CT
-  from radio import dataset as ds
-  from radio.models.tf import ResNodule3DNet50, reg_l2_loss
+    from radio import CTImagesMaskedBatch as CT
+    from radio import dataset as ds
+    from radio.models.tf import ResNodule3DNet50, reg_l2_loss
 
-  resnet_config = {
-    'num_targets': 7,
-    'optimizer': 'Adam',
-    'loss': reg_l2_loss
-  }
+    resnet_config = {
+      'num_targets': 7,
+      'optimizer': 'Adam',
+      'loss': reg_l2_loss
+    }
 
-  train_ppl = (
-    ds.Pipeline()
-      .load(fmt='blosc')
-      .normalize_hu()
-      .fetch_nodules_info(nodules_df)
-      .create_mask()
-      .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
-      .train_model(model_name='resnet', feed_dict={
-          'images': F(CT.unpack, component='images'),
-          'labels': F(CT.unpack, component='regression_targets')
-      })
-  )
+    train_ppl = (
+      ds.Pipeline()
+        .load(fmt='blosc')
+        .normalize_hu()
+        .fetch_nodules_info(nodules_df)
+        .create_mask()
+        .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
+        .train_model(model_name='resnet', feed_dict={
+            'images': F(CT.unpack, component='images'),
+            'labels': F(CT.unpack, component='regression_targets')
+        })
+    )
 
 Same for segmentation:
 
 .. code-block:: python
 
-  from radio import CTImagesMaskedBatch as CT
-  from radio import dataset as ds
-  from radio.models import Keras3DUNet
-  from radio.models.keras.losses import dice_loss, tiversky_loss
+    from radio import CTImagesMaskedBatch as CT
+    from radio import dataset as ds
+    from radio.models import Keras3DUNet
+    from radio.models.keras.losses import dice_loss, tiversky_loss
 
-  vnet_config = {
-    'optimizer': 'Adam',
-    'loss': tiversky_loss
-  }
+    vnet_config = {
+      'optimizer': 'Adam',
+      'loss': tiversky_loss
+    }
 
-  train_ppl = (
-    ds.Pipeline()
-      .load(fmt='blosc')
-      .normalize_hu()
-      .fetch_nodules_info(nodules_df)
-      .create_mask()
-      .init_model('static', Keras3DUNet, 'vnet', config=vnet_config)
-      # Keras3DUNet has 'channels_first' dim_ordering
-      .train_model(
-          model_name='resnet',
-          x=F(CT.unpack, component='images'),
-          y=F(CT.unpack, component='segmentation_targets', data_format='channels_first')
-      )
-  )
+    train_ppl = (
+      ds.Pipeline()
+        .load(fmt='blosc')
+        .normalize_hu()
+        .fetch_nodules_info(nodules_df)
+        .create_mask()
+        .init_model('static', Keras3DUNet, 'vnet', config=vnet_config)
+        # Keras3DUNet has 'channels_first' dim_ordering
+        .train_model(
+            model_name='resnet',
+            x=F(CT.unpack, component='images'),
+            y=F(CT.unpack, component='segmentation_targets', data_format='channels_first')
+        )
+    )
 
 Note, that dataset package contains ready to use implementations of popular
 Neural Networks architectures requiring minimum code for building
-model specific to your task. For instance, here is DenseNet with custom
-convolution in the begining:
+model specific to your task. For instance, below building of custom DenseNet
+is shown:
 
 .. code-block:: python
+
+    from radio.dataset.dataset.models.tf import DenseNet
+
+    densenet_config = dict(
+        inputs=dict(
+            images={'shape': (32, 64, 64, 1)},
+            labels={'name': 'targets', 'shape': 1}
+        ),
+        optimizer='Adam',
+        loss='logloss',
+        build=True
+    )
+
+    densenet_config['input_block/inputs'] = 'images'
+    densenet_config['input_block/layout'] = 'cnap'
+    densenet_config['input_block/kernel_size'] = 7
+    densenet_config['input_block/pool_size'] = 3
+    densenet_config['input_block/pool_strides'] = (1, 2, 2)
+
+    densenet_config['body/num_blocks'] = [6, 12, 24, 32]
+
+    densenet_config['head/layout'] = 'Vdfa'
+    densenet_config['head/activation'] = tf.nn.sigmoid
+
+    custom_densenet = DenseNet(config=densenet_config)
+
+More detailed information about models configuration can be found
+:mod:`dataset models <https://analysiscenter.github.io/dataset/intro/models.html>`
+section.
