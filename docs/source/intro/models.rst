@@ -54,11 +54,11 @@ or ``CTImagesMaskedBatch`` into suitable format.
 
 ------------------------------------------------------------------------------------
 
-* **Segmentation**: NN is trained to predict binary mask.
+* **Segmentation**: neural network is trained to predict binary mask.
   Each pixel of the mask may be between 1 for cancerous region and 0 otherwise.
   Use :doc:`segmentation_targets <../api/unpackers>`.
 
-* **Regression**: NN is trained to predict location, sizes and probability
+* **Regression**: neural network is trained to predict location, sizes and probability
   of cancer tumor at once. Altogether, there are 7 target values:
   three for location (z, y, x coordinates), three for sizes (z-diam, y-dim, x-diam)
   and one for probability of cancer. Use :doc:`regression_targets <../api/unpackers>`.
@@ -122,7 +122,7 @@ callable that can be used for unpacking data from batch in a format suitable for
 ANN learning. This method is called on every iteration.
 
 Full description ``dataset.Pipeline`` methods that enables interaction with models
-can be seen in :mod:`dataset <https://analysiscenter.github.io/dataset/intro/models.html>` package documentation.
+can be seen in `dataset <https://analysiscenter.github.io/dataset/intro/models.html>`_ package documentation.
 
 The same model can be configured for regression task: the only thing
 required is to change number of target values and loss functions
@@ -183,14 +183,27 @@ Same for segmentation:
         )
     )
 
-Also it worth to say that dataset package contains :func:`ready to use
-implementations dataset.intro.models` of popular Neural Networks architectures requiring
-minimum code for building model specific to your task.
-For instance, custom DenseNet model can be built with following lines:
+Also it's worth to say that dataset package contains
+`ready to use implementations <https://analysiscenter.github.io/dataset/intro/models_zoo.html>`_
+of popular neural networks architectures requiring
+minimum code for description of model specific to your task.
+For instance, custom DenseNet model can be build using basic DenseNet model
+from dataset package with following lines:
 
 .. code-block:: python
 
     from radio.dataset.dataset.models.tf import DenseNet
+
+    class CustomDenseNet(DenseNet):
+      @classmethod
+      def default_config(cls):
+          config = DenseNet.default_config()
+          input_config = dict(layout='cnap', filters=16, kernel_size=7,
+                              pool_size=3, pool_strides=(1, 2, 2))
+
+          config['input_block'].update(input_config)
+          config['body']['num_blocks'] = [6, 12, 24, 16]
+          return config
 
     densenet_config = dict(
         inputs=dict(
@@ -202,19 +215,8 @@ For instance, custom DenseNet model can be built with following lines:
         build=True
     )
 
-    densenet_config['input_block/inputs'] = 'images'
-    densenet_config['input_block/layout'] = 'cnap'
-    densenet_config['input_block/kernel_size'] = 7
-    densenet_config['input_block/pool_size'] = 3
-    densenet_config['input_block/pool_strides'] = (1, 2, 2)
+    custom_densenet = CustomDenseNet(config=densenet_config)
 
-    densenet_config['body/num_blocks'] = [6, 12, 24, 32]
-
-    densenet_config['head/layout'] = 'Vdfa'
-    densenet_config['head/activation'] = tf.nn.sigmoid
-
-    custom_densenet = DenseNet(config=densenet_config)
-
-More detailed information about models configuration can be found
-:mod:`dataset models <https://analysiscenter.github.io/dataset/intro/models.html>`
-section.
+More detailed information about how to build and configure tensorflow models can be found in
+`how to write a custom model <https://analysiscenter.github.io/dataset/intro/tf_models#how-to-write-a-custom-model>`_
+section of dataset documentation.
