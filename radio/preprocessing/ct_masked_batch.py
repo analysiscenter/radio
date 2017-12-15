@@ -255,12 +255,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
-    def fetch_nodules_info(self, nodules_df=None, nodules_records=None, update=False, images_loaded=True):
+    def fetch_nodules_info(self, nodules=None, nodules_records=None, update=False, images_loaded=True):
         """Extract nodules' info from nodules_df into attribute self.nodules.
 
         Parameters
         ----------
-        nodules_df : pd.DataFrame
+        nodules : pd.DataFrame
             contains:
              - 'seriesuid': index of patient or series.
              - 'coordZ','coordY','coordX': coordinates of nodules center.
@@ -312,7 +312,15 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         else:
             # assume that nodules_df is supplied and load from it
-            nodules_df = nodules_df.set_index('seriesuid')
+            required_columns = np.array(['seriesuid', 'diameter_mm',
+                                         'coordZ', 'coordY', 'coordX'])
+
+            if not (isinstance(nodules, pd.DataFrame) and np.all(np.in1d(required_columns, nodules.columns))):
+                raise ValueError(("Argument 'nodules' must be pandas DataFrame"
+                                 + " with {} columns. Make sure that data provided"
+                                 + " in correct format.").format(required_columns.tolist()))
+
+            nodules_df = nodules.set_index('seriesuid')
 
             unique_indices = nodules_df.index.unique()
             inter_index = np.intersect1d(unique_indices, self.indices)
