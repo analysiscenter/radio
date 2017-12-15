@@ -6,14 +6,18 @@
 Welcome to RadIO's documentation!
 =================================
 
-**RadIO** is a framework for batch-processing of computational
+**RadIO** is a framework for batch-processing of computed
 tomography (CT)-scans for deep learning experiments.
 
-The framework allows you to:
+Main features:
 
-* preprocess scans in a blink of an eye: load data asynchronously from disk, resize them in parallel
-* set up preprocessing workflows in a few lines of code
-* train with ease a zoo of high-performing neural nets for cancer detection
+* Asynchronously load files from **DICOM** or **MetaImage** (mhd/raw)
+* Dump files to `blosc <http://blosc.org/>`_ to reduce size of datasets and accelerate load
+* Resize CT-scans in parallel using PIL or Scipy for faster preprocessing
+* Set up workflows with minimum code with :func:`actions <dataset.action>` or use ready-made :doc:`pipelines <intro/pipelines>` for preprocessing or training models
+* Train with ease a zoo of 18 high-performing neural networks for classification or segmentation
+* Sample crops of any size from CT-scans for training, predict `on the whole scan <https://analysiscenter.github.io/lung_cancer//api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan>`_
+* Customize distribution of crop `locations <https://analysiscenter.github.io/radio/intro/preprocessing.html?highlight=histogram#sample-crops-from-scan-preparing-training-examples-for-neural-net>`_ for improving training
 
 Contents
 ========
