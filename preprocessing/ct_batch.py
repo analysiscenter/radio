@@ -448,7 +448,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
             # preallocate the component
             skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
-            setattr(self, component, np.empty(skysc_shape))
+            setattr(self, component, np.zeros(skysc_shape))
 
     def _init_load_blosc(self, **kwargs):
         """ Init-function for load from blosc.
@@ -612,10 +612,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         - ./data/blosc_preprocessed/3hf82s76/spacing/data.pkl
         - ./data/blosc_preprocessed/3hf82s76/origin/data.pkl
         """
-        # if ix is None, do nothing
-        if ix is None:
-            return
-
         # if components-arg is not supplied, dump all components
         if components is None:
             components = self.components
@@ -943,7 +939,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # if some of the components for dump are empty, print warning and do not dump anything
         if len(_empty) > 0:
             logger.warning('Components %r are empty. Nothing is dumped!', _empty)
-            return [None]
+            return []
         else:
             return self.indices
 
