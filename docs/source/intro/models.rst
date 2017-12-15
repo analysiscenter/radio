@@ -183,10 +183,10 @@ Same for segmentation:
         )
     )
 
-Note, that dataset package contains ready to use implementations of popular
-Neural Networks architectures requiring minimum code for building
-model specific to your task. For instance, below building of custom DenseNet
-is shown:
+Also it worth to say that dataset package contains :func:`ready to use
+implementations dataset.intro.models` of popular Neural Networks architectures requiring
+minimum code for building model specific to your task.
+For instance, custom DenseNet model can be built with following lines:
 
 .. code-block:: python
 
