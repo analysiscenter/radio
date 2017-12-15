@@ -21,14 +21,11 @@ from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
-from ..dataset import action, any_action_failed, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
+from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
 
 
-LOGGING_FMT = (u"%(filename)s[LINE:%(lineno)d]#" +
-               "%(levelname)-8s [%(asctime)s]  %(message)s")
-logging.basicConfig(format=LOGGING_FMT, level=logging.DEBUG)
-
-logger = logging.getLogger(__name__)  # pylint: disable=invalid-name
+# logger initialization
+logger = logging.getLogger(__name__) # pylint: disable=invalid-name
 
 
 @njit(nogil=True)
@@ -842,9 +839,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         list_of_arrs : list
             list of ndarrays of patients' masks.
         """
-        if any_action_failed(list_of_arrs):
-            raise ValueError("Failed while parallelizing")
-
+        self._reraise_worker_exceptions(list_of_arrs)
         new_masks = np.concatenate(list_of_arrs, axis=0)
         self.masks = new_masks
 
