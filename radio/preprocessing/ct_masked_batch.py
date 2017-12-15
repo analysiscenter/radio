@@ -266,8 +266,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_df : pd.DataFrame
             contains:
              - 'seriesuid': index of patient or series.
-             - 'z','y','x': coordinates of nodules center.
-             - 'diameter': diameter, in mm.
+             - 'coordZ','coordY','coordX': coordinates of nodules center.
+             - 'diameter_mm': diameter, in mm.
         nodules_records : np.recarray
             if not None, should
             contain the same fields as describe in Note.
