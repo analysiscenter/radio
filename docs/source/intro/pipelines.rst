@@ -43,7 +43,7 @@ for training, say, ``DenseNoduleNet``:
     (ctset >> pipeline).run(BATCH_SIZE=12)
 
 Alternatively, you can choose to save dataset of crops
-on disk and get back to training a net on it later:
+on disk and get back to training a network on it later:
 
 .. code-block:: python
 

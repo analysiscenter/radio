@@ -112,7 +112,7 @@ resize parameters and padding mode:
                                 padding='reflect', engine='pil-simd')
 
 So far it was all about ``images``-components, that can be viewed as
-an **X**-input of a net. What about net's target, **Y**-input?
+an **X**-input of a neural network. What about network's target, **Y**-input?
 
 Create masks with ``CTImagesMaskedBatch``
 -----------------------------------------
@@ -141,7 +141,7 @@ Then you can fill the ``masks``-component using the loaded info:
         .create_mask()
     )
 
-Sample crops from scan: preparing training examples for neural net
+Sample crops from scan: preparing training examples for neural network
 --------------------------------------------------------------------
 
 RadIO has ``sample_nodules`` that allows to generate batches of small crops, balancing cancerous
@@ -156,7 +156,7 @@ Let's start preprocessing with ``resize`` of scans:
     )
 
 Now all scans have the same shape **(256, 512, 512)**, it is
-possible to put them into a neural net. However, it may fail for two main reasons:
+possible to put them into a neural network. However, it may fail for two main reasons:
 
 * only small number of scans (say, 3) of such size can be put into a memory of a GPU
 * typically, there are not so many scans available for training (888 for Luna-dataset). As a result, making only one training example out of a scan is rather wasteful.
