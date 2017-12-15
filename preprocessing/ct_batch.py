@@ -5,6 +5,7 @@
 """ Batch class for storing CT-scans. """
 
 import os
+import logging
 import dill as pickle
 
 import numpy as np
@@ -24,6 +25,8 @@ from .patches import get_patches_numba, assemble_patches, calc_padding_size
 from .rotate import rotate_3D
 from .dump import dump_data
 
+# logger initialization
+logger = logging.getLogger(__name__) # pylint: disable=invalid-name
 
 AIR_HU = -2000
 DARK_HU = -2000
@@ -88,6 +91,21 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             names of components returned from __getitem__.
         """
         return 'images', 'spacing', 'origin'
+
+    def _if_component_filled(self, component):
+        """ Check if component is filled with data.
+
+        Parameters
+        ----------
+        component : str
+            component to be checked
+
+        Returns
+        -------
+        bool
+            True if filled, False if not.
+        """
+        return getattr(self, component, None) is not None
 
     def _init_data(self, bounds=None, **kwargs):
         """ Initialize _bounds and components (images, origin, spacing).
@@ -419,6 +437,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 ix_pos = self._get_verified_pos(ix)
 
                 # read shape and put it into shapes
+                if not os.path.exists(filename):
+                    raise OSError("Component {} for item {} cannot be found on disk".format(component, ix))
                 with open(filename, 'rb') as file:
                     shapes[ix_pos, :] = pickle.load(file)
 
@@ -426,7 +446,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             # TODO: once bounds for other components are added, make sure they are updated here in the right way
             self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
 
-            # fill the component with zeroes (memory preallocation)
+            # preallocate the component
             skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
             setattr(self, component, np.zeros(skysc_shape))
 
@@ -495,6 +515,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     return decoder(debyted)
 
             comp_path = os.path.join(self.index.get_fullpath(ix), source, 'data' + '.' + ext)
+            if not os.path.exists(comp_path):
+                raise OSError("File with component {} doesn't exist".format(source))
 
             # read the component
             async with aiofiles.open(comp_path, mode='rb') as file:
@@ -537,9 +559,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     @action
-    @inbatch_parallel(init='indices', post='_post_default', target='async', update=False)
+    @inbatch_parallel(init='_init_dump', post='_post_default', target='async', update=False)
     async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
-        """ Dump scans data (3d-array) on specified path in specified format
+        """ Dump chosen ``components`` of scans' batcn in folder ``dst`` in specified format.
+
+        When some of the ``components`` are ``None``, a warning is printed and nothing is dumped.
+        By default (``components is None``) ``dump`` attempts to dump all components.
 
         Parameters
         ----------
@@ -750,6 +775,18 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         return (self.spacing * self.images_shape) / new_shape
 
+    def _reraise_worker_exceptions(self, worker_outputs):
+        """ Reraise exceptions coming from worker-functions, if there are any.
+
+        Parameters
+        ----------
+        worker_outputs : list
+            list of workers' results
+        """
+        if any_action_failed(worker_outputs):
+            all_errors = self.get_errors(worker_outputs)
+            raise RuntimeError("Failed parallelizing. Some of the workers failed with following errors: ", all_errors)
+
     def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
         """ Gatherer outputs of different workers, update `images` component
 
@@ -771,9 +808,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----
         Output of each worker should correspond to individual patient.
         """
-        if any_action_failed(list_of_arrs):
-            raise ValueError("Failed while parallelizing")
-
+        self._reraise_worker_exceptions(list_of_arrs)
         res = self
         if update:
             new_data = np.concatenate(list_of_arrs, axis=0)
@@ -801,8 +836,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self
             changes self's components
         """
-        if any_action_failed(list_of_dicts):
-            raise ValueError("Failed while parallelizing")
+        self._reraise_worker_exceptions(list_of_dicts)
 
         # if images is in dict, update bounds
         if 'images' in list_of_dicts[0]:
@@ -883,6 +917,32 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return all_args
 
+    def _init_dump(self, **kwargs):
+        """ Init function for dump.
+
+        Checks if all components that should be dumped are non-None. If some are None,
+        prints warning and makes sure that nothing is dumped.
+
+        Parameters
+        ----------
+        **kwargs:
+            components : str or list/tuple
+                components that we need to dump
+        """
+        components = kwargs.get('components', self.components)
+
+        # make sure that components is iterable
+        components = [components] if isinstance(components, str) else components
+
+        _empty = [component for component in components if not self._if_component_filled(component)]
+
+        # if some of the components for dump are empty, print warning and do not dump anything
+        if len(_empty) > 0:
+            logger.warning('Components %r are empty. Nothing is dumped!', _empty)
+            return []
+        else:
+            return self.indices
+
     def _post_rebuild(self, all_outputs, new_batch=False, **kwargs):
         """ Gather outputs of different workers for actions, rebuild `images` component.
 
@@ -899,8 +959,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 spacing : list, tuple or ndarray
                           if supplied, assume that unify_spacing is performed
         """
-        if any_action_failed(all_outputs):
-            raise ValueError("Failed while parallelizing")
+        self._reraise_worker_exceptions(all_outputs)
 
         new_bounds = np.cumsum([patient_shape[0] for _, patient_shape
                                 in [[0, (0, )]] + all_outputs])
