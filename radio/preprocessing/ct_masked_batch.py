@@ -300,7 +300,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules = nodules_records
 
         else:
-            # assume that nodules_df is supplied and load from it
+            # assume that nodules is supplied and load from it
             required_columns = np.array(['seriesuid', 'diameter_mm',
                                          'coordZ', 'coordY', 'coordX'])
 
