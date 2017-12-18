@@ -26,8 +26,8 @@ def dice_loss(y_true, y_pred, smooth=1e-6):
     return -answer
 
 
-def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
-    """ Tiversky loss function.
+def tversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
+    """ Tversky loss function.
 
     Parameters
     ----------
@@ -45,7 +45,7 @@ def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     Returns
     -------
     keras tensor
-        tensor containing tiversky loss.
+        tensor containing tversky loss.
     """
     y_true = K.flatten(y_true)
     y_pred = K.flatten(y_pred)

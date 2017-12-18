@@ -82,8 +82,8 @@ def iou_3d(y_true, y_pred, epsilon=10e-7):
     return iou_tensor
 
 
-def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
-    """ Tiversky loss function.
+def tversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
+    """ Tversky loss function.
 
     Parameters
     ----------
@@ -101,7 +101,7 @@ def tiversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     Returns
     -------
     tf.Tensor
-        tensor containing tiversky loss.
+        tensor containing tversky loss.
     """
     y_true = tf.contrib.layers.flatten(y_true)
     y_pred = tf.contrib.layers.flatten(y_pred)

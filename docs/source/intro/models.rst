@@ -161,11 +161,11 @@ Same for segmentation:
     from radio import CTImagesMaskedBatch as CT
     from radio import dataset as ds
     from radio.models import Keras3DUNet
-    from radio.models.keras.losses import dice_loss, tiversky_loss
+    from radio.models.keras.losses import dice_loss, tversky_loss
 
     vnet_config = {
       'optimizer': 'Adam',
-      'loss': tiversky_loss
+      'loss': tversky_loss
     }
 
     train_ppl = (
