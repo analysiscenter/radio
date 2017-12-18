@@ -12,12 +12,12 @@ import numpy as np
 
 
 @jit(nogil=True)
-def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='edge'):
+def resize_scipy(patient, out_patient, res, order=3, factor=None, padding='edge'):
     """ Resize 3d scan and put it into out_patient.
 
     Resize engine is scipy.ndimage.interpolation.zoom.
-    If res_factor is not supplied, infer resize factor from out_patient.shape.
-    otherwise, use res_factor for resize and then crop/pad resized array to out_patient.shape.
+    If factor is not supplied, infer resize factor from out_patient.shape.
+    otherwise, use factor for resize and then crop/pad resized array to out_patient.shape.
 
     Parameters
     ----------
@@ -30,7 +30,7 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
         used later by `_post`-func in _inbatch_parallel
     order : int
         order of interpolation
-    res_factor : tuple or None
+    factor : tuple or None
         resize factor along (z,y,x) in int ir float for interpolation.
         If not None, can yield array of shape != out_patient.shape,
         then crop/pad is used
@@ -52,13 +52,13 @@ def resize_scipy(patient, out_patient, res, order=3, res_factor=None, padding='e
     shape = out_patient.shape
 
     # define resize factor, perform resizing and put the result into out_patient
-    if res_factor is None:
-        res_factor = np.array(out_patient.shape) / np.array(patient.shape)
-        out_patient[:, :, :] = scipy.ndimage.interpolation.zoom(patient, res_factor,
+    if factor is None:
+        factor = np.array(out_patient.shape) / np.array(patient.shape)
+        out_patient[:, :, :] = scipy.ndimage.interpolation.zoom(patient, factor,
                                                                 order=order)
     else:
         out_patient[:, :, :] = to_shape((scipy.ndimage.interpolation.
-                                         zoom(patient, res_factor, order=order)),
+                                         zoom(patient, factor, order=order)),
                                         shape=shape, padding=padding)
 
     # return out-array for the whole batch
