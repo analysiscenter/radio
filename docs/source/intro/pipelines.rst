@@ -21,9 +21,33 @@ can be set up in a following way:
 
 .. code-block:: python
 
+    import pandas as pd
+    from radio import dataset as ds
+
+    nodules = pd.read_csv('/path/to/annotation/nodules.csv')
+
+    get_crops = (
+      ds.Pipeline()
+        .load(fmt='raw')
+        .fetch_nodules_info(nodules=nodules)
+        .unify_spacing(shape=(128, 256, 256), method='pil-simd',
+                       padding='reflect', spacing=(1.7, 1.0, 1.0))
+        .create_mask()
+        .normalize_hu()
+        .sample_nodules(nodule_size=(32, 64, 64), batch_size=20, share=0.5)
+        .run(batch_size=8, lazy=True, shuffle=True)
+    )
+
+Due to the fact that pipelines similiar to that commonly occure in practice,
+**RadIO** contains ready-to-use parametrized functions that return popular
+preprocessing pipelines. For instance, the ``pipeline`` written above can be
+got just with calling ``get_crops`` function:
+
+.. code-block:: python
+
     from radio.pipelines import get_crops
-    pipeline = get_crops(fmt='raw', shape=(128, 256, 256), nodules_df=nodules,
-                                batch_size=20, share=0.6, nodule_shape=(32, 64, 64))
+    pipeline = get_crops(fmt='raw', shape=(128, 256, 256), nodules=nodules,
+                         batch_size=20, share=0.6, nodule_shape=(32, 64, 64))
 
 Pay attention to parameters ``batch_size`` and ``share``: they allow
 to control the number of items in a batch of crops and the number
