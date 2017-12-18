@@ -92,20 +92,20 @@ def insert_cropped(where, what, origin):
 
 
 @njit(nogil=True)
-def make_mask_numba(batch_mask, img_start, img_end, nodules_start, nodules_size):
+def make_mask_numba(batch_mask, start, end, nodules_start, nodules_size):
     """ Make mask using information about nodules location and sizes.
 
     Takes batch_masks already filled with zeros,
-    `img_start` and `img_end` positions of coresponding patient's data array in batch_mask,
+    `img` and `img` positions of coresponding patient's data array in batch_mask,
 
     Parameters
     ----------
     batch_mask : ndarray
         `masks` from batch, just initialised (filled with zeroes).
-    img_start : ndarray
+    start : ndarray
         for each nodule, start position of patient in `skyscraper` is given
         by (nodule_index, z_start, y_start, x_start)
-    img_end : ndarray
+    end : ndarray
         for each nodule, end position of patient in `skyscraper` is given
         by (nodule_index, z_start, y_start, x_start)
     nodules_start : ndarray(4,)
@@ -123,7 +123,7 @@ def make_mask_numba(batch_mask, img_start, img_end, nodules_start, nodules_size)
                           int(nodule_size[1]),
                           int(nodule_size[2])))
 
-        patient_mask = batch_mask[img_start[i, 0]: img_end[i, 0],
-                                  img_start[i, 1]: img_end[i, 1],
-                                  img_start[i, 2]: img_end[i, 2]]
+        patient_mask = batch_mask[start[i, 0]: end[i, 0],
+                                  start[i, 1]: end[i, 1],
+                                  start[i, 2]: end[i, 2]]
         insert_cropped(patient_mask, nodule, nodules_start[i, :])
