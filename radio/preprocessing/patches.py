@@ -7,12 +7,12 @@ from numba import guvectorize, int64, float64
 @guvectorize([(float64[:, :, :], int64[:], int64[:], float64[:, :, :, :], int64[:])],
              '(n, m, k),(r),(r),(p, l, s, t)->()',
              nopython=True, target='parallel')
-def get_patches_numba(img, shape, stride, out_arr, fake):
-    """ Get all patches from padded 3d scan, put them into out_arr
+def get_patches_numba(image, shape, stride, out, fake):
+    """ Get all patches from padded 3d scan, put them into out.
 
     Parameters
     ----------
-    img : ndarray
+    image : ndarray
         input 3d scan (ct-scan for one patient),
         assumes scan is already padded.
     shape : ndarray
@@ -20,7 +20,7 @@ def get_patches_numba(img, shape, stride, out_arr, fake):
     stride : ndarray
         3D array with strides of a patch along (z,y,x)
         (if not equal to patch_shape, patches will overlap)
-    out_arr : ndarray
+    out : ndarray
         resulting 4d-array, where all patches are put. New dimension (first)
         enumerates patches (number_of_patches,z,y,x)
     fake : ndarray
@@ -29,13 +29,13 @@ def get_patches_numba(img, shape, stride, out_arr, fake):
     """
 
     # for convenience put img.shape in ndarray
-    img_shape = np.zeros(3)
-    img_shape[:] = img.shape[:]
+    image_shape = np.zeros(3)
+    image_shape[:] = image.shape[:]
 
     # compute number of patches along all axes
-    num_sections = (img_shape - shape) // stride + 1
+    num_sections = (image_shape - shape) // stride + 1
 
-    # iterate over patches, put them into out_arr
+    # iterate over patches, put them into out
     ctr = 0
     for ix in range(int(num_sections[0])):
         for iy in range(int(num_sections[1])):
@@ -43,16 +43,16 @@ def get_patches_numba(img, shape, stride, out_arr, fake):
                 slc_x = slice(ix * stride[0], ix * stride[0] + shape[0])
                 slc_y = slice(iy * stride[1], iy * stride[1] + shape[1])
                 slc_z = slice(iz * stride[2], iz * stride[2] + shape[2])
-                out_arr[ctr, :, :, :] = img[slc_x, slc_y, slc_z]
+                out[ctr, :, :, :] = image[slc_x, slc_y, slc_z]
                 ctr += 1
 
 
 @guvectorize([(float64[:, :, :, :], int64[:], float64[:, :, :], int64[:])],
              '(p, l, s, t),(q),(m, n, k)->()',
              nopython=True, target='parallel')
-def assemble_patches(patches, stride, out_arr, fake):
+def assemble_patches(patches, stride, out, fake):
     """ Assemble patches into one 3d ct-scan with shape scan_shape,
-    put new scan into out_arr
+    put new scan into out
 
     Parameters
     ----------
@@ -61,7 +61,7 @@ def assemble_patches(patches, stride, out_arr, fake):
               patches; other dims are spatial with order (z,y,x)
     stride : ndarray
         stride to extract patches in (z,y,x) dims
-    out_arr : ndarray
+    out : ndarray
         3d-array, where assembled scan is put.
         Should be filled with zeroes before calling function.
     fake : ndarray
@@ -69,29 +69,29 @@ def assemble_patches(patches, stride, out_arr, fake):
 
     Notes
     -----
-    `out_arr.shape`, `stride`, `patches.shape` are used to infer
+    `out.shape`, `stride`, `patches.shape` are used to infer
     the number of sections for each dimension.
     We assume that the number of patches = len(patches)
     corresponds to num_sections.
     Overlapping patches are allowed (stride != patch.shape).
     In this case pixel values are averaged across overlapping patches
     We assume that integer number of patches can be put into
-    out_arr using stride.
+    out using stride.
 
     """
-    out_arr_shape = np.zeros(3)
-    out_arr_shape[:] = out_arr.shape[:]
+    out_shape = np.zeros(3)
+    out_shape[:] = out.shape[:]
 
     # cast patch.shape to ndarray
     patch_shape = np.zeros(3)
     patch_shape[:] = patches.shape[1:]
 
     # compute the number of sections
-    num_sections = (out_arr_shape - patch_shape) // stride + 1
+    num_sections = (out_shape - patch_shape) // stride + 1
 
-    # iterate over patches, put them into corresponding place in out_arr
+    # iterate over patches, put them into corresponding place in out
     # also increment pixel weight if it belongs to a patch
-    weights_inv = np.zeros_like(out_arr)
+    weights_inv = np.zeros_like(out)
     ctr = 0
     for ix in range(int(num_sections[0])):
         for iy in range(int(num_sections[1])):
@@ -99,12 +99,12 @@ def assemble_patches(patches, stride, out_arr, fake):
                 slc_x = slice(ix * stride[0], ix * stride[0] + patch_shape[0])
                 slc_y = slice(iy * stride[1], iy * stride[1] + patch_shape[1])
                 slc_z = slice(iz * stride[2], iz * stride[2] + patch_shape[2])
-                out_arr[slc_x, slc_y, slc_z] += patches[ctr, :, :, :]
+                out[slc_x, slc_y, slc_z] += patches[ctr, :, :, :]
                 weights_inv[slc_x, slc_y, slc_z] += 1.0
                 ctr += 1
 
     # weight resulting image
-    out_arr /= weights_inv
+    out /= weights_inv
 
 
 def calc_padding_size(img_shape, patch_shape, stride):
