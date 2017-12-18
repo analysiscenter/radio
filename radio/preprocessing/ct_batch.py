@@ -60,8 +60,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         contains world coordinates of (0, 0, 0)-pixel of scans
     """
 
-    #   Names of components returned from __getitem__.
-    #   Required by base Batch class in dataset submodule.
     components = "images", "spacing", "origin"
 
     def __init__(self, index, *args, **kwargs):
