@@ -210,22 +210,61 @@ Medical datasets are often small and require additional augmentation to avoid ov
     )
 
 This pipeline first resizes all images to same shape and then samples rotated crops of shape **[32, 64, 64]**;
-rotation angle is random, from 0 to 90 degrees. Rotation is performed along **z** ax.
+rotation angle is random, from 0 to 90 degrees. Rotation is performed about **z**-axis.
 Crops are padded by zeroes after rotation, if needed.
 
 Accessing Batch components
 --------------------------
 
 You may want to access ``CTImagesBatch`` or ``CTImagesMaskedBatch``-data directly. E.g., if you decide to write your own :func:`actions <dataset.action>`.
-Batch-classes has such functionality: 3d-scan for an item indexed by ``nb``
+Batch-classes has such functionality: 3d-scan for an item indexed by ``ix``
 from a ``batch`` can be accessed in the following way:
 
 .. code-block:: python
 
-    image_3d_nb = batch.get(nb, 'images')
+    image_3d_ix = batch.get(ix, 'images')
 
-The same goes for other components of item ``nb``:
+The same goes for other components of item ``ix``:
 
 .. code-block:: python
 
-    spacing_nb = batch.get(nb, 'spacing')
+    spacing_ix = batch.get(ix, 'spacing')
+
+Or, alternatively
+
+.. code-block:: python
+
+    image_3d_ix = getattr(batch[ix], 'images')
+    spacing_ix = batch[ix].spacing
+
+It is sometimes useful to print indices of all items from a ``batch``:
+
+.. code-block:: python
+
+    print(batch.indices) # batch.indices is a list of indices of all items
+
+Writing your own actions
+------------------------
+
+Now that you know how to work with components of ``CTImagesBatch``, you can write your own action. E.g., you need an
+action, that subtracts mean-values of voxel densities from each scan. You can easily inherit one of
+batch classes of **RadIO** (we suggest to use ``CTImagesMaskedBatch``) add make your action ``center`` a method of this
+class, just like that:
+
+.. code-block:: python
+
+    from RadIO.dataset import action
+    from RadIO import CTImagesMaskedBatch
+
+    class CTImagesCustomBatch(CTImagesMaskedBatch):
+        """ Ct-scans batch class with your own action """
+
+        @action  # action-decorator allows you to use your method to chain your methods with other actions in pipelines
+        def center(self):
+            """ Center values of pixels in each scan from batch """
+            for ix in self.indices:
+                mean_ix = np.mean(self.get(ix, 'images'))
+                images_ix = getattr(self[ix], 'images')
+                images_ix[:] -= mean_ix
+
+            return self  # action must always return a batch-object
