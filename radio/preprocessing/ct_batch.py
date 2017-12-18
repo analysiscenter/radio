@@ -1207,7 +1207,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Examples
         --------
-
         >>> batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get mask with specified params, apply it to scans
