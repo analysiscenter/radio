@@ -1190,7 +1190,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def segment(self, erosion_radius=2):
-        """ Segment lungs content from 3D array.
+        """ Segment lungs' content from 3D array.
 
         Paramters
         ---------
@@ -1207,6 +1207,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Examples
         --------
+
         >>> batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get mask with specified params, apply it to scans
