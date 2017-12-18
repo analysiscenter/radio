@@ -23,14 +23,14 @@ RUN_BATCH_SIZE = 8
 NON_CANCER_BATCH_SIZE = 1030  # NON_CANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
 
 
-def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, share=0.5, histo=None,
+def get_crops(nodules, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, share=0.5, histo=None,
               variance=(36, 144, 144), hu_lims=(-1000, 400), **kwargs):
     """ Get pipeline that performs preprocessing and crops cancerous/non-cancerous nodules in
     a chosen proportion.
 
     Parameters
     ----------
-    nodules_df : pd.DataFrame
+    nodules : pd.DataFrame
         contains:
          - 'seriesuid': index of patient or series.
          - 'z','y','x': coordinates of nodules center.
@@ -79,7 +79,7 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
     # set up the pipeline
     pipeline = (Pipeline()
                 .load(fmt=fmt)
-                .fetch_nodules_info(nodules_df=nodules_df)
+                .fetch_nodules_info(nodules=nodules)
                 .unify_spacing(**args_unify_spacing)
                 .create_mask()
                 .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
@@ -90,8 +90,8 @@ def get_crops(nodules_df, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, s
     return pipeline
 
 
-def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', nodule_shape=(32, 64, 64),
-               variance=(36, 144, 144), **kwargs):
+def split_dump(cancer_path, non_cancer_path, nodules, histo=None, fmt='raw',
+               nodule_shape=(32, 64, 64), variance=(36, 144, 144), **kwargs):
     """ Get pipeline for dumping cancerous crops in one folder and random noncancerous crops in another.
 
     Parameters
@@ -100,7 +100,7 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', 
         directory to dump cancerous crops in.
     non_cancer_path : str
         directory to dump non-cancerous crops in.
-    nodules_df : pd.DataFrame
+    nodules : pd.DataFrame
         contains:
          - 'seriesuid': index of patient or series.
          - 'z','y','x': coordinates of nodules center.
@@ -137,16 +137,17 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', 
     args_unify_spacing.update(kwargs)
 
     # set up args-dicts
-    args_dump_cancer = dict(dst=cancer_path, n_iters=N_ITERS, nodule_size=nodule_shape, variance=variance,
-                            share=1.0, batch_size=None)
-    args_sample_ncancer = dict(nodule_size=nodule_shape, histo=histo, batch_size=NON_CANCER_BATCH_SIZE, share=0.0)
+    args_dump_cancer = dict(dst=cancer_path, n_iters=N_ITERS, nodule_size=nodule_shape,
+                            variance=variance, share=1.0, batch_size=None)
+    args_sample_ncancer = dict(nodule_size=nodule_shape, histo=histo,
+                               batch_size=NON_CANCER_BATCH_SIZE, share=0.0)
 
     # define pipeline. Two separate tasks are performed at once, in one run:
     # 1) sampling and dumping of cancerous crops in wrapper-action sample_sump_cancerous
     # 2) sampling and dumping of non-cancerous crops in separate actions
     pipeline = (Pipeline()
                 .load(fmt=fmt)
-                .fetch_nodules_info(nodules_df=nodules_df)
+                .fetch_nodules_info(nodules=nodules)
                 .unify_spacing(**args_unify_spacing)
                 .create_mask()
                 .sample_dump(**args_dump_cancer)  # sample and dump cancerous crops
@@ -157,12 +158,12 @@ def split_dump(cancer_path, non_cancer_path, nodules_df, histo=None, fmt='raw', 
 
     return pipeline
 
-def update_histo(nodules_df, histo, fmt='raw', **kwargs):
+def update_histo(nodules, histo, fmt='raw', **kwargs):
     """ Pipeline for updating histogram using info in dataset of scans.
 
     Parameters
     ----------
-    nodules_df : pd.DataFrame
+    nodules : pd.DataFrame
         contains:
          - 'seriesuid': index of patient or series.
          - 'z','y','x': coordinates of nodules center.
@@ -197,7 +198,7 @@ def update_histo(nodules_df, histo, fmt='raw', **kwargs):
     # perform unify_spacing and call histo-updating action
     pipeline = (Pipeline()
                 .load(fmt=fmt)
-                .fetch_nodules_info(nodules_df=nodules_df)
+                .fetch_nodules_info(nodules=nodules)
                 .unify_spacing(**args_unify_spacing)
                 .create_mask()
                 .update_nodules_histo(histo)
