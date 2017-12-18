@@ -128,8 +128,8 @@ First, load info about cancerous nodules in a batch:
 
     pipeline = (
         pipeline
-         .fetch_nodules_info(nodules_df=nodules_df) # nodules_df is a Pandas.DataFrame
-                                                    # containing info about nodules
+         .fetch_nodules_info(nodules=nodules) # nodules is a Pandas.DataFrame
+                                              # containing info about nodules
     )
 
 Then you can fill the ``masks``-component using the loaded info:
