@@ -28,7 +28,7 @@ def get_patches_numba(image, shape, stride, out, fake):
 
     """
 
-    # for convenience put img.shape in ndarray
+    # for convenience put image.shape in ndarray
     image_shape = np.zeros(3)
     image_shape[:] = image.shape[:]
 
