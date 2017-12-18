@@ -89,7 +89,7 @@ of training ``ResNodule3DNet50`` model for classification task:
       ds.Pipeline()
         .load(fmt='blosc')
         .normalize_hu()
-        .fetch_nodules_info(nodules_df)
+        .fetch_nodules_info(nodules)
         .create_mask()
         .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
         .train_model('resnet', feed_dict={
@@ -145,7 +145,7 @@ CTImagesMaskedBatch will be used:
       ds.Pipeline()
         .load(fmt='blosc')
         .normalize_hu()
-        .fetch_nodules_info(nodules_df)
+        .fetch_nodules_info(nodules)
         .create_mask()
         .init_model('static', ResNodule3DNet50, 'resnet', config=resnet_config)
         .train_model(model_name='resnet', feed_dict={
@@ -172,7 +172,7 @@ Same for segmentation:
       ds.Pipeline()
         .load(fmt='blosc')
         .normalize_hu()
-        .fetch_nodules_info(nodules_df)
+        .fetch_nodules_info(nodules)
         .create_mask()
         .init_model('static', Keras3DUNet, 'vnet', config=vnet_config)
         # Keras3DUNet has 'channels_first' dim_ordering
