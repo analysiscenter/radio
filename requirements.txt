@@ -9,5 +9,4 @@ scipy>=0.17.0
 scikit-image>=0.13.0
 dill
 scikit-learn
-tf
 Keras>=2.0.0
