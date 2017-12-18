@@ -529,7 +529,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         -----
         Method does NO conversion to HU
         NO multithreading is used, as SimpleITK (sitk) lib crashes
-        in multithreading mode in our experiments.
+        in multithreading mode in experiments.
         """
         list_of_arrs = []
         for patient_id in self.indices:
