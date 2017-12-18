@@ -245,7 +245,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def fetch_nodules_info(self, nodules=None, nodules_records=None, update=False, images_loaded=True):
-        """Extract nodules' info from nodules_df into attribute self.nodules.
+        """Extract nodules' info from nodules into attribute self.nodules.
 
         Parameters
         ----------
