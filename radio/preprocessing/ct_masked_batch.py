@@ -317,8 +317,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
             if not (isinstance(nodules, pd.DataFrame) and np.all(np.in1d(required_columns, nodules.columns))):
                 raise ValueError(("Argument 'nodules' must be pandas DataFrame"
-                                 + " with {} columns. Make sure that data provided"
-                                 + " in correct format.").format(required_columns.tolist()))
+                                  + " with {} columns. Make sure that data provided"
+                                  + " in correct format.").format(required_columns.tolist()))
 
             nodules_df = nodules.set_index('seriesuid')
 
