@@ -14,8 +14,8 @@ of your choice.
 Preprocessing workflow
 ----------------------
 
-The workflow, that includes load of data from disk, resize
-to shape **[128, 256, 256]**, and preparing batch of **20**
+The workflow, that includes load of data from disk, resizes
+to shape **[128, 256, 256]**, and prepares batch of **20**
 cancerous and non-cancerous crops of shape **[32, 64, 64]**,
 can be set up in a following way:
 
