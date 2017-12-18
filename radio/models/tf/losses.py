@@ -6,15 +6,15 @@ from ...dataset.dataset.models.tf.losses import dice
 dice_loss = dice
 
 
-def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
+def reg_l2_loss(labels, y_pred, lambda_coords=0.75):
     """ L2 loss for prediction of cancer tumor's centers, sizes joined with binary classification task.
 
     Parameters
     ----------
-    y_true : tf.Tensor
+    labels : tf.Tensor
         tensor containing true values for sizes of nodules, their centers
         and classes of crop(1 if cancerous 0 otherwise).
-    y_pred : tf.Tensor
+    predictions : tf.Tensor
         tensor containing predicted values for sizes of nodules, their centers
         and probability of cancer in given crop.
 
@@ -26,16 +26,16 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
 
     Notes
     -----
-    y_true and y_pred tensors must have [None, 7] shapes;
-    y_true[:, :3] and y_pred[:, :3] correspond to normalized (from [0, 1] interval)
-    zyx coordinates of cancer tumor, while y_true[:, 3:6] and y_pred[:, 3:6]
+    labels and predictions tensors must have [None, 7] shapes;
+    labels[:, :3] and predictions[:, :3] correspond to normalized (from [0, 1] interval)
+    zyx coordinates of cancer tumor, while labels[:, 3:6] and predictions[:, 3:6]
     correspond to sizes of cancer tumor along zyx axes(also normalized),
-    finally, y_true[:, 6] and y_pred[:, 6] represent whether cancer tumor presents
+    finally, labels[:, 6] and predictions[:, 6] represent whether cancer tumor presents
     or not in the current crop.
     """
-    clf_true, clf_pred = y_true[:, 6], y_pred[:, 6]
-    centers_true, centers_pred = y_true[:, :3], y_pred[:, :3]
-    sizes_true, sizes_pred = y_true[:, 3:6], y_pred[:, 3:6]
+    clf_true, clf_pred = labels[:, 6], predictions[:, 6]
+    centers_true, centers_pred = labels[:, :3], predictions[:, :3]
+    sizes_true, sizes_pred = labels[:, 3:6], predictions[:, 3:6]
 
     centers_loss = 0.5 * tf.reduce_sum((centers_true - centers_pred) ** 2, axis=1)
     sizes_loss = 0.5 * tf.reduce_sum((tf.sqrt(sizes_true) - tf.sqrt(sizes_pred)) ** 2, axis=1)
@@ -45,14 +45,14 @@ def reg_l2_loss(y_true, y_pred, lambda_coords=0.75):
     return tf.reduce_mean(loss)
 
 
-def iou_3d(y_true, y_pred, epsilon=10e-7):
+def iou_3d(labels, predictions, epsilon=10e-7):
     """ Compute intersection over union in 3D case for input tensors.
 
     Parameters
     ----------
-    y_true : tf.Tensor
+    labels : tf.Tensor
         tensor containg true values for sizes of nodules and their centers.
-    y_pred : tf.Tensor
+    predictions : tf.Tensor
         tensor containing predicted values for sizes of nodules and their centers.
     epsilon : float
         small real value used for avoiding division by zero error.
@@ -64,11 +64,11 @@ def iou_3d(y_true, y_pred, epsilon=10e-7):
     """
     with tf.variable_scope('IOU'):
         tf_epsilon = tf.constant([epsilon], tf.float32)
-        r_true = y_true[:, :3]
-        r_pred = y_pred[:, :3]
+        r_true = labels[:, :3]
+        r_pred = predictions[:, :3]
 
-        s_true = y_true[:, 3:6]
-        s_pred = y_pred[:, 3:6]
+        s_true = labels[:, 3:6]
+        s_pred = predictions[:, 3:6]
 
         abs_r_diff = tf.abs(r_true - r_pred)
         abs_s_diff = tf.abs(s_true - s_pred)
@@ -82,14 +82,14 @@ def iou_3d(y_true, y_pred, epsilon=10e-7):
     return iou_tensor
 
 
-def tversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
+def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tversky loss function.
 
     Parameters
     ----------
-    y_true : tf.Tensor
+    labels : tf.Tensor
         tensor containing target mask.
-    y_pred : tf.Tensor
+    predictions : tf.Tensor
         tensor containing predicted mask.
     alpha : float
         real value, weight of '0' class.
@@ -103,23 +103,23 @@ def tversky_loss(y_true, y_pred, alpha=0.3, beta=0.7, smooth=1e-10):
     tf.Tensor
         tensor containing tversky loss.
     """
-    y_true = tf.contrib.layers.flatten(y_true)
-    y_pred = tf.contrib.layers.flatten(y_pred)
-    truepos = tf.reduce_sum(y_true * y_pred)
-    fp_and_fn = (alpha * tf.reduce_sum(y_pred * (1 - y_true))
-                 + beta * tf.reduce_sum((1 - y_pred) * y_true))
+    labels = tf.contrib.layers.flatten(labels)
+    predictions = tf.contrib.layers.flatten(predictions)
+    truepos = tf.reduce_sum(labels * predictions)
+    fp_and_fn = (alpha * tf.reduce_sum(predictions * (1 - labels))
+                 + beta * tf.reduce_sum((1 - predictions) * labels))
 
     return -(truepos + smooth) / (truepos + smooth + fp_and_fn)
 
 
-def jaccard_coef_logloss(y_true, y_pred, smooth=1e-10):
+def jaccard_coef_logloss(labels, predictions, smooth=1e-10):
     """ Loss function based on jaccard coefficient.
 
     Parameters
     ----------
-    y_true : tf.Tensor
+    labels : tf.Tensor
         tensor containing target mask.
-    y_pred : tf.Tensor
+    predictions : tf.Tensor
         tensor containing predicted mask.
     smooth : float
         small real value used for avoiding division by zero error.
@@ -129,10 +129,10 @@ def jaccard_coef_logloss(y_true, y_pred, smooth=1e-10):
     tf.Tensor
         tensor containing negative logarithm of jaccard coefficient.
     """
-    y_true = tf.contrib.layers.flatten(y_true)
-    y_pred = tf.contrib.layers.flatten(y_pred)
-    truepos = tf.reduce_sum(y_true * y_pred)
-    falsepos = tf.reduce_sum(y_pred) - truepos
-    falseneg = tf.reduce_sum(y_true) - truepos
+    labels = tf.contrib.layers.flatten(labels)
+    predictions = tf.contrib.layers.flatten(predictions)
+    truepos = tf.reduce_sum(labels * predictions)
+    falsepos = tf.reduce_sum(predictions) - truepos
+    falseneg = tf.reduce_sum(labels) - truepos
     jaccard = (truepos + smooth) / (smooth + truepos + falseneg + falsepos)
     return -tf.log(jaccard + smooth)
