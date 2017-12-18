@@ -6,7 +6,7 @@ from ...dataset.dataset.models.tf.losses import dice
 dice_loss = dice
 
 
-def reg_l2_loss(labels, y_pred, lambda_coords=0.75):
+def reg_l2_loss(labels, predictions, lambda_coords=0.75):
     """ L2 loss for prediction of cancer tumor's centers, sizes joined with binary classification task.
 
     Parameters
