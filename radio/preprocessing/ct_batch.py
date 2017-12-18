@@ -902,7 +902,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 shape_after_resize = (self.images_shape * self.spacing
                                       / np.asarray(kwargs['spacing']))
                 shape_after_resize = np.rint(shape_after_resize).astype(np.int)
-                item_args['res_factor'] = self.spacing[i, :] / np.array(kwargs['spacing'])
+                item_args['factor'] = self.spacing[i, :] / np.array(kwargs['spacing'])
                 item_args['shape_resize'] = shape_after_resize[i, :]
 
             all_args += [item_args]
@@ -1035,7 +1035,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def unify_spacing(self, patient, out_patient, res, res_factor,
+    def unify_spacing(self, patient, out_patient, res, factor,
                       shape_resize, spacing=(1, 1, 1), shape=(128, 256, 256),
                       method='pil-simd', order=3, padding='edge', axes_pairs=None,
                       resample=None, *args, **kwargs):
@@ -1077,7 +1077,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         res : ndarray
             New `images` to replace data inside `images` component.
             Note: this argument is passed by inbatch_parallel
-        res_factor : tuple
+        factor : tuple
             (float), factor to make resize by.
             Note: this argument is passed by inbatch_parallel
         shape_resize : tuple
@@ -1100,7 +1100,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         if method == 'scipy':
             args_resize = dict(patient=patient, out_patient=out_patient,
-                               res=res, order=order, res_factor=res_factor, padding=padding)
+                               res=res, order=order, factor=factor, padding=padding)
             return resize_scipy(**args_resize)
         elif method == 'pil-simd':
             args_resize = dict(input_array=patient, output_array=out_patient,
