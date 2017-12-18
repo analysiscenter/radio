@@ -83,7 +83,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     components : tuple of strings.
         List names of data components of a batch, which are `images`,
         `masks`, `origin` and `spacing`.
-        NOTE: Implementation of this property is required by Base class.
+        NOTE: Implementation of this attribute is required by Base class.
     num_nodules : int
         number of nodules in batch
     images : ndarray
