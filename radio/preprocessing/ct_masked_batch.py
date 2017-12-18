@@ -115,6 +115,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                               ('spacing', np.float, (3,)),
                               ('origin', np.float, (3,))])
 
+    components = "images", "masks", "spacing", "origin"
+
     @staticmethod
     def make_indices(size):
         """ Generate list of batch indices of given `size`.
@@ -153,19 +155,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.nodules = None
         self.inputs = None
         self.targets = None
-
-    @property
-    def components(self):
-        """ Components' property.
-
-        See doc of Base batch in dataset for information.
-
-        Returns
-        -------
-        tuple
-            names of components returned from __getitem__.
-        """
-        return 'images', 'masks', 'spacing', 'origin'
 
     def nodules_to_df(self, nodules):
         """ Convert nodules_info ndarray into pandas dataframe.
