@@ -15,6 +15,10 @@ with open('docs/source/index.rst', 'r') as f:
     long_description = f.read()
 
 
+with open('./requirements.txt') as f:
+    requirements = [line.strip() for line in f.readlines()]
+
+
 setup(
     name='radio',
     packages=find_packages(exclude=['examples']),
@@ -27,19 +31,7 @@ setup(
     long_description=long_description,
     zip_safe=False,
     platforms='any',
-    install_requires=[
-        'numpy>=1.11',
-        'pandas',
-        'pydicom>=0.9.9',
-        'aiofiles>=0.3.1',
-        'SimpleITK',
-        'scipy>=0.17.0',
-        'scikit-image>=0.13.0',
-        'scikit-learn',
-        'dill',
-        'blosc>=1.5.0',
-        'numba>=0.36.1'
-    ],
+    install_requires=requirements,
     extras_require={
         'tensorflow': ['tensorflow>=1.4'],
         'tensorflow-gpu': ['tensorflow-gpu>=1.4'],
