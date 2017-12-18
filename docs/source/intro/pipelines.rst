@@ -38,7 +38,7 @@ can be set up in a following way:
         .run(batch_size=8, lazy=True, shuffle=True)
     )
 
-Due to the fact that pipelines similiar to that commonly occure in practice,
+Due to the fact that similar pipelines commonly occure in practice,
 **RadIO** contains ready-to-use parametrized functions that return popular
 preprocessing pipelines. For instance, the ``pipeline`` written above can be
 got just with calling ``get_crops`` function:
