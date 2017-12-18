@@ -60,6 +60,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         contains world coordinates of (0, 0, 0)-pixel of scans
     """
 
+    #   Names of components returned from __getitem__.
+    #   Required by base Batch class in dataset submodule.
+    components = "images", "spacing", "origin"
+
     def __init__(self, index, *args, **kwargs):
         """ Execute Batch construction and init of basic attributes
 
@@ -78,19 +82,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self.spacing = None
         self._init_data(spacing=np.ones(shape=(len(self), 3)), origin=np.zeros(shape=(len(self), 3)),
                         bounds=np.array([], dtype='int'))
-
-    @property
-    def components(self):
-        """ Components' property.
-
-        See doc of Base batch in dataset for information.
-
-        Returns
-        -------
-        (str, str, str)
-            names of components returned from __getitem__.
-        """
-        return 'images', 'spacing', 'origin'
 
     def _if_component_filled(self, component):
         """ Check if component is filled with data.
