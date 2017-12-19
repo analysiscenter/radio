@@ -136,43 +136,40 @@ def make_xip(data, step, depth,
 def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
     """ Make intensity projection (maximum, minimum, average)
 
-        Popular radiologic transformation: max, min, avg applyied along an axe.
-        Notice that axe is chosen in accordance with projection argument.
+    Popular radiologic transformation: max, min, avg applyied along an axe.
+    Notice that axe is chosen in accordance with projection argument.
 
-        Parameters
-        ----------
-        step : int
-            stride-step along axe, to apply the func.
-        depth : int
-            depth of slices (aka `kernel`) along axe made on each step for computing.
-        func : str
-            Possible values are 'max', 'min' and 'avg'.
-        projection : str
-            Possible values: 'axial', 'coroanal', 'sagital'.
-            In case of 'coronal' and 'sagital' projections tensor
-            will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
+    Parameters
+    ----------
+    step : int
+        stride-step along axe, to apply the func.
+    depth : int
+        depth of slices (aka `kernel`) along axe made on each step for computing.
+    func : str
+        Possible values are 'max', 'min' and 'avg'.
+    projection : str
+        Possible values: 'axial', 'coroanal', 'sagital'.
+        In case of 'coronal' and 'sagital' projections tensor
+        will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
 
-        Returns
-        -------
-        ndarray
-            resulting ndarray after func is applied.
+    Returns
+    -------
+    ndarray
+        resulting ndarray after func is applied.
 
-        """
+    """
     _projection = _PROJECTIONS[projection]
     _reverse_projection = _REVERSE_PROJECTIONS[projection]
     _function = _NUMBA_FUNC[func]
 
-    def out_function(data, start=0, end=-1):
-        data_tr = data.transpose(_projection)
-        if _function == 0:
-            fill_value = np.finfo(data.dtype).min
-        elif _function == 1:
-            fill_value = np.finfo(data.dtype).max
-        else:
-            fill_value = 0
-        result = make_xip(data_tr, step=step, depth=depth,
-                          start=start, stop=end,
-                          func=_function, fill_value=fill_value)
-        result = result.transpose(_reverse_projection)
-        return result / depth if _function == 2 else result
-    return out_function
+    data_tr = data.transpose(_projection)
+    if _function == 0:
+        fill_value = np.finfo(data.dtype).min
+    elif _function == 1:
+        fill_value = np.finfo(data.dtype).max
+    else:
+        fill_value = 0
+    result = make_xip(data_tr, step=step, depth=depth, start=start,
+                      stop=end, func=_function, fill_value=fill_value)
+    result = result.transpose(_reverse_projection)
+    return result / depth if _function == 2 else result
