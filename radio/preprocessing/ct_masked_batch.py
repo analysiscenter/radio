@@ -473,7 +473,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             logger.warning("Info about nodules location must " +
                            "be loaded before calling this method. " +
                            "Nothing happened.")
-        mask = np.zeros(shape=(len(self) * shape[0], ) + tuple(shape[1:]))
+        mask = np.zeros(shape=(len(self) * shape[0], *shape[1:]))
 
         # infer scale factor; assume patients are already resized to equal
         # shapes
