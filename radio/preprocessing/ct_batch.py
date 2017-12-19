@@ -1148,7 +1148,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch = batch.rotate(angle=30, axes=(1, 2))
 
         """
-        _components = np.array(components)
+        _components = np.asarray(components)
         _angle = angle * np.random.rand() if random else angle
         for comp in _components:
             data = self.get(index, comp)
