@@ -890,35 +890,28 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def make_xip(self, step=2, depth=10, func='max',
-                 projection='axial', *args, **kwargs):
-        """ Make intensity projection (maximum, minimum, average) and corresponding masks.
+    def make_xip(self, depth, stride=2, mode='max', projection='axial', padding='reflect', **kwargs):
+        """ Make intensity projection (maximum, minimum, mean or median).
+
+        Notice that axis is chosen according to projection argument.
 
         Parameters
         ----------
-        step : int
-            stride-step along axe, to apply the func.
+        image : ndarray(k,l,m)
+            input 3D image corresponding to CT-scan.
         depth : int
-            depth of slices (aka `kernel`) along axe made on each step for computing.
-        func : str
-            Possible values are 'max', 'min' and 'avg'.
+            number of slices over which xip operation is performed.
+        stride : int
+            stride-step along projection dimension.
+        mode : str
+            Possible values are 'max', 'min', 'mean' or 'median'.
         projection : str
-            Possible values: 'axial', 'coroanal', 'sagital'.
+            Possible values: 'axial', 'coronal', 'sagital'.
             In case of 'coronal' and 'sagital' projections tensor
             will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
-
-        Returns
-        -------
-        batch
-            Resulting batch, where `images` are xips and corresponding `masks`.
-
-        Notes
-        -----
-        Method changes nodules sizes' and creates new `masks` that corresponds
-        to data after xip.
+        padding : str
+            mode of padding that will be passed in numpy.padding function.
         """
-        batch = super().make_xip(step=step, depth=depth, func=func,
-                                 projection=projection, *args, **kwargs)
 
         if projection == 'axial':
             _projection = 0
@@ -927,11 +920,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif projection == 'sagital':
             _projection = 2
 
+        batch = super().make_xip(step=step, depth=depth, mode=mode,
+                                 projection=projection, padding=padding, **kwargs)
+
         if self.nodules is not None:
+            projection_spacing = self.nodules.spacing[:, _projection]
             batch.nodules = self.nodules
-            batch.nodules.nodule_size[:, _projection] += (depth
-                                                          * self.nodules.spacing[:, _projection])  # pylint: disable=unsubscriptable-object
-        batch.spacing = self.rescale(batch.images_shape)
+            batch.nodules.nodule_size[:, _projection] += (depth * projection_spacing)  # pylint: disable=unsubscriptable-object
         batch._rescale_spacing()   # pylint: disable=protected-access
         if self.masks is not None:
             batch.create_mask()
