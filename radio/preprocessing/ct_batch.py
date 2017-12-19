@@ -1206,8 +1206,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         padding : str
             mode of padding that will be passed in numpy.padding function.
         """
-        output_batch = self._make_xip(depth=depth, stride=stride, mode=mode,
-                                      projection=projection, padding=padding)  # pylint: disable=no-value-for-parameter
+        output_batch = self._make_xip(depth=depth, stride=stride, mode=mode,  # pylint: disable=no-value-for-parameter
+                                      projection=projection, padding=padding)
         output_batch.spacing = self.rescale(output_batch.images_shape)
         return output_batch
 
