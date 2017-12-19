@@ -1156,24 +1156,23 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
-    def make_xip(self, step=2, depth=10, func='max', projection='axial', *args, **kwargs):
+    def make_xip(self, stride=2, depth=10, func='max', projection='axial', *args, **kwargs):
         """ Make intensity projection (maximum, minimum, average)
 
-        Popular radiologic transformation: max, min, avg applyied along an axe.
-        Notice that axe is chosen in accordance with projection argument.
+        Notice that axis is chosen in accordance with projection argument.
 
         Parameters
         ----------
-        step : int
-            stride-step along axe, to apply the func.
+        stride : int
+            stride-step along channels dimension.
         depth : int
-            depth of slices (aka `kernel`) along axe made on each step for computing.
+            number of slices over which pooling is performed.
         func : str
             Possible values are 'max', 'min' and 'avg'.
         projection : str
-            Possible values: 'axial', 'coroanal', 'sagital'.
+            Possible values: 'axial', 'coronal', 'sagital'.
             In case of 'coronal' and 'sagital' projections tensor
-            will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
+            will be transposed from [z, y, x] to [x, z, y] and [y, z, x].
 
         Returns
         -------
@@ -1181,7 +1180,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             batch with xip
 
         """
-        return xip_fn_numba(func, projection, step, depth)
+        return xip_fn_numba(func, projection, stride, depth)
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
     def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
