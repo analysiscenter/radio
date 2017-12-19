@@ -1161,7 +1161,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
-    def make_xip(self, image, stride=2, depth=10, func='max', projection='axial', *args, **kwargs):
+    def make_xip(self, image, stride=2, depth=10, mode='max',
+                 projection='axial', padding='reflect', *args, **kwargs):
         """ Make intensity projection (maximum, minimum, average)
 
         Notice that axis is chosen in accordance with projection argument.
@@ -1187,7 +1188,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             batch with xip
 
         """
-        return make_xip_numba(image, func, projection, stride, depth)
+        return make_xip_numba(image, depth, stride, mode, projection, padding)
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
     def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
