@@ -6,9 +6,11 @@ import numpy as np
 from numba import njit
 
 
-_PROJECTIONS = {"axial": [0, 1, 2],
-                "coronal": [1, 0, 2],
-                "sagital": [2, 0, 1]}
+PROJECTIONS = {
+    'axial': [0, 1, 2],
+    'coronal': [1, 0, 2],
+    'sagital': [2, 0, 1]
+}
 
 _REVERSE_PROJECTIONS = {"axial": [0, 1, 2],
                         "coronal": [1, 0, 2],
