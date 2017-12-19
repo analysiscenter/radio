@@ -78,7 +78,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = None
         self.origin = None
         self.spacing = None
-        self._init_data(spacing=np.ones(shape=(len(self), 3)), origin=np.zeros(shape=(len(self), 3)),
+        self._init_data(spacing=np.ones(shape=(len(self), 3)),
+                        origin=np.zeros(shape=(len(self), 3)),
                         bounds=np.array([], dtype='int'))
 
     def _if_component_filled(self, component):
