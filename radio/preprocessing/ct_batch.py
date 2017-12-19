@@ -422,6 +422,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
         # make iterable out of components-arg
+        logger.warning("Components passed in _prealloc_skyscaper_components: {}: {}".format(components, type(components)))
         components = np.asarray(components).reshape(-1)
 
         # load shapes, perform memory allocation
