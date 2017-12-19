@@ -768,7 +768,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             ndarray(n_patients, 3) with spacing values for each
             patient along z, y, x axes.
         """
-        return (self.spacing * self.images_shape) / np.asarray(new_shape).reshape(-1)
+        return (self.spacing * self.images_shape) / new_shape
 
     def _reraise_worker_exceptions(self, worker_outputs):
         """ Reraise exceptions coming from worker-functions, if there are any.
