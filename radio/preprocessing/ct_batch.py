@@ -1171,10 +1171,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----------
         image : ndarray(k,l,m)
             input 3D image corresponding to CT-scan.
-        stride : int
-            stride-step along projection dimension.
         depth : int
             number of slices over which xip operation is performed.
+        stride : int
+            stride-step along projection dimension.
         mode : str
             Possible values are 'max', 'min', 'mean' or 'median'.
         projection : str
