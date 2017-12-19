@@ -890,7 +890,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def make_xip(self, depth, stride=2, mode='max', projection='axial', padding='reflect', **kwargs):
+    def make_xip(self, depth, stride=1, mode='max', projection='axial', padding='reflect', **kwargs):
         """ Make intensity projection (maximum, minimum, mean or median).
 
         Notice that axis is chosen according to projection argument.
