@@ -12,9 +12,11 @@ PROJECTIONS = {
     'sagital': [2, 0, 1]
 }
 
-_REVERSE_PROJECTIONS = {"axial": [0, 1, 2],
-                        "coronal": [1, 0, 2],
-                        "sagital": [1, 2, 0]}
+REVERSE_PROJECTIONS = {
+    'axial': [0, 1, 2],
+    'coronal': [1, 0, 2],
+    'sagital': [1, 2, 0]
+}
 
 _NUMBA_FUNC = {'max': 0, 'min': 1, 'mean': 2}
 
