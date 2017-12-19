@@ -1081,10 +1081,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             (float), factor to make resize by.
             Note: this argument is passed by inbatch_parallel
         shape_resize : tuple
-            It is possible provide `shape_resize` (shape after resize)
+            It is possible to provide `shape_resize` argument (shape after resize)
             instead of spacing. Then array with `shape_resize`
             will be cropped/padded for shape to = `shape` arg.
-            Note: this argument is passed by inbatch_parallel
+            Note that this argument is passed by inbatch_parallel
 
         Notes
         -----
