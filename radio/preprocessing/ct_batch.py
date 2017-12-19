@@ -423,7 +423,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # make iterable out of components-arg
         logger.warning("Components passed in _prealloc_skyscaper_components: {}: {}".format(components, type(components)))
-        components = np.asarray(components).reshape(-1)
+        components = list(components)
 
         # load shapes, perform memory allocation
         for component in components:
