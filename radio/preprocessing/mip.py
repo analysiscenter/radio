@@ -171,7 +171,7 @@ def xip_fn_numba(image, func='max', projection="axial", step=2, depth=10):
         fill_value = np.finfo(image.dtype).max
     else:
         fill_value = 0
-    result = make_xip(image_tr, step=step, depth=depth, start=start,
+    result = make_xip(image_tr, step=step, depth=depth, start=0,
                       stop=end, func=_function, fill_value=fill_value)
     result = result.transpose(_reverse_projection)
     return result / depth if _function == 2 else result
