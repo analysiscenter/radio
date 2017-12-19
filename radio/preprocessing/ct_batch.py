@@ -1159,9 +1159,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             data = self.get(index, comp)
             rotate_3D(data, _angle, axes)
 
-    @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
-    def make_xip(self, image, depth, stride=2, mode='max',
+    def _make_xip(self, image, depth, stride=2, mode='max',
                  projection='axial', padding='reflect', *args, **kwargs):
         """ Make intensity projection (maximum, minimum, mean or median).
 
@@ -1185,6 +1184,31 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             mode of padding that will be passed in numpy.padding function.
         """
         return make_xip_numba(image, depth, stride, mode, projection, padding)
+
+    @action
+    def make_xip(self, depth, stride=2, mode='max', projection='axial', padding='reflect'):
+        """ Make intensity projection (maximum, minimum, mean or median).
+
+        Notice that axis is chosen according to projection argument.
+
+        Parameters
+        ----------
+        depth : int
+            number of slices over which xip operation is performed.
+        stride : int
+            stride-step along projection dimension.
+        mode : str
+            Possible values are 'max', 'min', 'mean' or 'median'.
+        projection : str
+            Possible values: 'axial', 'coronal', 'sagital'.
+            In case of 'coronal' and 'sagital' projections tensor
+            will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
+        padding : str
+            mode of padding that will be passed in numpy.padding function.
+        """
+        output_batch = self._make_xip(depth, stride, mode, projection, padding)
+        output_batch.spacing = self.rescale(batch.images_shape)
+        return output_batch
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
     def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
