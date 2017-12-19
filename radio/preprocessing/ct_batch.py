@@ -1120,7 +1120,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             This argument is passed by inbatch_parallel
         angle : float
             degree of rotation.
-        components : list, tuple or str
+        components : list, tuple of strings or str
             name(s) of components to rotate each item in it.
         axes : tuple
             (int, int), plane of rotation specified by two axes (zyx-ordering).
