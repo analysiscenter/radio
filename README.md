@@ -66,7 +66,7 @@ for batch in gen_batches:
 See [pipelines section](https://analysiscenter.github.io/radio/intro/pipelines.html) for more information about
 ready-made workflows.
 
-## Adding a neural-net model to a workflow
+## Adding a neural network model to a workflow
 Contains neural nets' architectures for task of classification,
 segmentation and detection. E.g., ``DenseNoduleNet``, an architecutre,
 inspired by DenseNet, but suited for 3D scans.:
