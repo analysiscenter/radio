@@ -18,7 +18,7 @@ from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Datase
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
-from .mip import xip_fn_numba
+from .mip import make_xip_numba
 from .flip import flip_patient_numba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
@@ -1187,7 +1187,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             batch with xip
 
         """
-        return xip_fn_numba(image, func, projection, stride, depth)
+        return make_xip_numba(image, func, projection, stride, depth)
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
     def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
