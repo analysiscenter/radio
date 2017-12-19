@@ -1168,6 +1168,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
+        image : ndarray(k,l,m)
+            input 3D image corresponding to CT-scan.
         stride : int
             stride-step along channels dimension.
         depth : int
