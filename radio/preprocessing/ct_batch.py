@@ -1161,7 +1161,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
     def _make_xip(self, image, depth, stride=2, mode='max',
-                 projection='axial', padding='reflect', *args, **kwargs):
+                  projection='axial', padding='reflect', *args, **kwargs):
         """ Make intensity projection (maximum, minimum, mean or median).
 
         Notice that axis is chosen according to projection argument.
