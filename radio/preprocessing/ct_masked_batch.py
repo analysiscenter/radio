@@ -153,8 +153,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         super().__init__(index, *args, **kwargs)
         self.masks = None
         self.nodules = None
-        self.inputs = None
-        self.targets = None
 
     def nodules_to_df(self, nodules):
         """ Convert nodules_info ndarray into pandas dataframe.
