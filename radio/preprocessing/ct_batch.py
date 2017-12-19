@@ -1229,7 +1229,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        crop_size : tuple
+        crop_size : tuple, list or ndarray
             (int, int, int), size of crop, in `z,y,x`.
 
         Returns
