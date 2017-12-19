@@ -920,7 +920,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif projection == 'sagital':
             _projection = 2
 
-        batch = super().make_xip(step=step, depth=depth, mode=mode,
+        batch = super().make_xip(stride=stride, depth=depth, mode=mode,
                                  projection=projection, padding=padding, **kwargs)
 
         if self.nodules is not None:
