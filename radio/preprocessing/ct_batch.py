@@ -1161,32 +1161,28 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
-    def make_xip(self, image, stride=2, depth=10, mode='max',
+    def make_xip(self, image, depth, stride=2, mode='max',
                  projection='axial', padding='reflect', *args, **kwargs):
-        """ Make intensity projection (maximum, minimum, average)
+        """ Make intensity projection (maximum, minimum, mean or median).
 
-        Notice that axis is chosen in accordance with projection argument.
+        Notice that axis is chosen according to projection argument.
 
         Parameters
         ----------
         image : ndarray(k,l,m)
             input 3D image corresponding to CT-scan.
         stride : int
-            stride-step along channels dimension.
+            stride-step along projection dimension.
         depth : int
-            number of slices over which pooling is performed.
-        func : str
-            Possible values are 'max', 'min' and 'avg'.
+            number of slices over which xip operation is performed.
+        mode : str
+            Possible values are 'max', 'min', 'mean' or 'median'.
         projection : str
             Possible values: 'axial', 'coronal', 'sagital'.
             In case of 'coronal' and 'sagital' projections tensor
-            will be transposed from [z, y, x] to [x, z, y] and [y, z, x].
-
-        Returns
-        -------
-        batch
-            batch with xip
-
+            will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
+        padding : str
+            mode of padding that will be passed in numpy.padding function.
         """
         return make_xip_numba(image, depth, stride, mode, projection, padding)
 
