@@ -133,7 +133,7 @@ def make_xip(data, step, depth,
     return out_array
 
 
-def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
+def xip_fn_numba(image, func='max', projection="axial", step=2, depth=10):
     """ Make intensity projection (maximum, minimum, average)
 
     Popular radiologic transformation: max, min, avg applyied along an axe.
@@ -141,6 +141,8 @@ def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
 
     Parameters
     ----------
+    image : ndarray(k,l,m)
+        input 3D image corresponding to CT-scan or its crop
     step : int
         stride-step along axe, to apply the func.
     depth : int
