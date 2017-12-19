@@ -268,6 +268,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Merge performs split (of middle-batch) and then two concats
         because of speed considerations.
         """
+        batches = [batch for batch in batches if batch is not None]
+        batches = [batch for batch in batches if len(batch) > 0]
+        
         if batch_size is None:
             return (cls.concat(batches), None)
         if np.sum([len(batch) for batch in batches]) <= batch_size:
