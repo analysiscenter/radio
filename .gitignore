@@ -1,7 +1,5 @@
 *.pyc
 .cache/*
-pycache
-pycache/*
-*/pycache/*
+pycache/
 .ipynb_checkpoints
-docs/build
+build/
