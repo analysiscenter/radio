@@ -920,16 +920,18 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch = super().make_xip(step=step, depth=depth, func=func,
                                  projection=projection, *args, **kwargs)
 
-        batch.nodules = self.nodules
         if projection == 'axial':
             _projection = 0
         elif projection == 'coronal':
             _projection = 1
         elif projection == 'sagital':
             _projection = 2
-        batch.nodules.nodule_size[:, _projection] += (depth
-                                                      * self.nodules.spacing[:, _projection])  # pylint: disable=unsubscriptable-object
-        batch.spacing = self.rescale(batch[0].shape)
+
+        if self.nodules is not None:
+            batch.nodules = self.nodules
+            batch.nodules.nodule_size[:, _projection] += (depth
+                                                          * self.nodules.spacing[:, _projection])  # pylint: disable=unsubscriptable-object
+        batch.spacing = self.rescale(batch.images_shape)
         batch._rescale_spacing()   # pylint: disable=protected-access
         if self.masks is not None:
             batch.create_mask()
