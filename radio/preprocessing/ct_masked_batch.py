@@ -905,7 +905,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         projection : str
             Possible values: 'axial', 'coroanal', 'sagital'.
             In case of 'coronal' and 'sagital' projections tensor
-            will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
+            will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
 
         Returns
         -------
