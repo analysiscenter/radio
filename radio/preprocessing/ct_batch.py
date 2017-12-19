@@ -426,6 +426,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # load shapes, perform memory allocation
         for component in components:
+            logger.warning("Current component is: {}".format(component))
             shapes = np.zeros((len(self), 3), dtype=np.int)
             for ix in self.indices:
                 filename = os.path.join(self.index.get_fullpath(ix), component, 'data.shape')
