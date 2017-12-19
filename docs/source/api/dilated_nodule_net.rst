@@ -1,8 +1,8 @@
--------------
-TFDilatedVnet
--------------
+----------------
+DilatedNoduleNet
+----------------
 
-Vnet architercture with dilated convolutions for 3D images segmentation
+Architercture with dilated convolutions for 3D images segmentation
 implemented on tensorflow.
 
 
