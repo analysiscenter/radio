@@ -1186,7 +1186,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return make_xip_numba(image, depth, stride, mode, projection, padding)
 
     @action
-    def make_xip(self, depth, stride=2, mode='max', projection='axial', padding='reflect', **kwargs):
+    def make_xip(self, depth, stride=1, mode='max', projection='axial', padding='reflect', **kwargs):
         """ Make intensity projection (maximum, minimum, mean or median).
 
         Notice that axis is chosen according to projection argument.
