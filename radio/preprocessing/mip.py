@@ -164,14 +164,14 @@ def xip_fn_numba(image, func='max', projection="axial", step=2, depth=10):
     _reverse_projection = _REVERSE_PROJECTIONS[projection]
     _function = _NUMBA_FUNC[func]
 
-    data_tr = data.transpose(_projection)
+    image_tr = image.transpose(_projection)
     if _function == 0:
-        fill_value = np.finfo(data.dtype).min
+        fill_value = np.finfo(image.dtype).min
     elif _function == 1:
-        fill_value = np.finfo(data.dtype).max
+        fill_value = np.finfo(image.dtype).max
     else:
         fill_value = 0
-    result = make_xip(data_tr, step=step, depth=depth, start=start,
+    result = make_xip(image_tr, step=step, depth=depth, start=start,
                       stop=end, func=_function, fill_value=fill_value)
     result = result.transpose(_reverse_projection)
     return result / depth if _function == 2 else result
