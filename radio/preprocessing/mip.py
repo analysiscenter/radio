@@ -4,9 +4,7 @@
 
 import math
 import numpy as np
-from numba import jit, prange, stencil
-from time import time
-from scipy.ndimage import maximum_filter1d
+from numba import jit
 
 
 PROJECTIONS = {
