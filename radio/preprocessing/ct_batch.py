@@ -422,12 +422,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
         # make iterable out of components-arg
-        logger.warning("Components passed in _prealloc_skyscaper_components: {}: {}".format(components, type(components)))
         components = list(components)
 
         # load shapes, perform memory allocation
         for component in components:
-            logger.warning("Current component is: {}".format(component))
             shapes = np.zeros((len(self), 3), dtype=np.int)
             for ix in self.indices:
                 filename = os.path.join(self.index.get_fullpath(ix), component, 'data.shape')
