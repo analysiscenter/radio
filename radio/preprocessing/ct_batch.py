@@ -1208,7 +1208,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         output_batch = self._make_xip(depth=depth, stride=stride, mode=mode,
                                       projection=projection, padding=padding)
-        output_batch.spacing = self.rescale(batch.images_shape)
+        output_batch.spacing = self.rescale(output_batch.images_shape)
         return output_batch
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
