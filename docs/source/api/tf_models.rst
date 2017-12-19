@@ -5,6 +5,6 @@ Tensorflow Models
 .. toctree::
    :maxdepth: 4
 
-   tf_densenet
-   tf_resnet
-   tf_dilated_vnet
+   dense_nodule_net
+   res_nodule_net
+   dilated_nodule_net
