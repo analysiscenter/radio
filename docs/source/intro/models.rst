@@ -174,10 +174,10 @@ Same for segmentation:
         .normalize_hu()
         .fetch_nodules_info(nodules=nodules)
         .create_mask()
-        .init_model('static', Keras3DUNet, 'vnet', config=vnet_config)
+        .init_model('static', Keras3DUNet, 'unet', config=vnet_config)
         # Keras3DUNet has 'channels_first' dim_ordering
         .train_model(
-            model_name='resnet',
+            model_name='unet',
             x=F(CT.unpack, component='images', data_format='channels_first'),
             y=F(CT.unpack, component='segmentation_targets', data_format='channels_first')
         )
