@@ -95,7 +95,24 @@ def _create_overlap_index(overlap_matrix):
 
 
 def overlap_nodules(batch, nodules_true, nodules_pred):
-    """ Accumulate info about overlap between true and predicted nodules in pipeline vars. """
+    """ Accumulate info about overlap between true and predicted nodules in pipeline vars.
+
+    Parameters
+    ----------
+    batch : CTImagesMaskedBatch
+        input batch
+    nodules_true : numpy record array
+        numpy record array of type CTImagesMaskedBatch.nodules_dtype
+        with true nodules.
+    nodules_pred : numpy record array
+        numpy record array of type CTImagesMaskedBatch.nodules_dtype
+        with predicted nodules.
+
+    Returns
+    -------
+    dict
+        {'true_stats': pd.DataFrame, 'pred_stats': pd.DataFrame}
+    """
     true_df = (
         batch
         .nodules_to_df(nodules_true)
