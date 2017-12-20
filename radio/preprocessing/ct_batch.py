@@ -271,6 +271,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         batches = [batch for batch in batches if batch is not None]
         batches = [batch for batch in batches if len(batch) > 0]
+        
         if batch_size is None:
             return (cls.concat(batches), None)
         if np.sum([len(batch) for batch in batches]) <= batch_size:
