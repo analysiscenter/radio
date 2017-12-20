@@ -18,7 +18,7 @@ from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Datase
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
-from .mip import xip_fn_numba
+from .mip import make_xip_numba
 from .flip import flip_patient_numba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
@@ -78,7 +78,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = None
         self.origin = None
         self.spacing = None
-        self._init_data(spacing=np.ones(shape=(len(self), 3)), origin=np.zeros(shape=(len(self), 3)),
+        self._init_data(spacing=np.ones(shape=(len(self), 3)),
+                        origin=np.zeros(shape=(len(self), 3)),
                         bounds=np.array([], dtype='int'))
 
     def _if_component_filled(self, component):
@@ -142,7 +143,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Returns
         -------
-        tuple
+        tuple of batches
             (1st_Batch, 2nd_Batch)
 
 
@@ -303,12 +304,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----------
         fmt : str
             type of data. Can be 'dicom'|'blosc'|'raw'|'ndarray'
-        components : list/tuple/string
+        components : tuple, list, ndarray of strings or str
             Contains names of batch component(s) that should be loaded.
             As of now, works only if fmt='blosc'. If fmt != 'blosc', all
             available components are loaded. If None and fmt = 'blosc', again,
             all components are loaded.
-        bounds : ndarray(n_patients, dtype=np.int) or None
+        bounds : ndarray(n_patients + 1, dtype=np.int) or None
             Needed iff fmt='ndarray'. Bound-floors for items from a `skyscraper`
             (stacked scans).
         **kwargs
@@ -354,7 +355,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         elif fmt == 'blosc':
             components = self.components if components is None else components
             # convert components_blosc to iterable
-            components = [components] if isinstance(components, str) else components
+            components = np.asarray(components).reshape(-1)
 
             self._load_blosc(components=components)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
@@ -420,7 +421,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
         # make iterable out of components-arg
-        components = [components] if isinstance(components, str) else components
+        components = list(components)
 
         # load shapes, perform memory allocation
         for component in components:
@@ -563,7 +564,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----------
         dst : str
             destination-folder where all patients' data should be put
-        components : str or list/tuple
+        components : tuple, list, ndarray of strings or str
             component(s) that we need to dump (smth iterable or string). If not
             supplied, dump all components
         fmt : 'blosc'
@@ -613,7 +614,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise NotImplementedError('Dump to {} is not implemented yet'.format(fmt))
 
         # make sure that components is iterable
-        components = [components] if isinstance(components, str) else components
+        components = np.asarray(components).reshape(-1)
         data_items = dict()
 
         for component in components:
@@ -874,10 +875,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         **kwargs
-                shape : list, tuple or ndarray
-                    (z,y,x); shape of every image in image component after action is performed.
-                spacing : list, tuple or ndarray
-                    if supplied, assume that unify_spacing is performed
+                shape : tuple, list or ndarray of int
+                    (z,y,x)-shape of every image in image component after action is performed.
+                spacing : tuple, list or ndarray of float
+                    (z,y,x)-spacing for each image. If supplied, assume that
+                    unify_spacing is performed.
 
         Returns
         -------
@@ -920,13 +922,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         **kwargs:
-            components : str or list/tuple
+            components : tuple, list, ndarray of strings or str
                 components that we need to dump
         """
         components = kwargs.get('components', self.components)
 
         # make sure that components is iterable
-        components = [components] if isinstance(components, str) else components
+        components = np.asarray(components).reshape(-1)
 
         _empty = [component for component in components if not self._if_component_filled(component)]
 
@@ -948,10 +950,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             if True, returns new batch with data agregated
             from all_ouputs. if False, changes self.
         **kwargs
-                shape : list, tuple or ndarray
-                    (z,y,x); shape of every image in image component after action is performed.
-                spacing : list, tuple or ndarray
-                    if supplied, assume that unify_spacing is performed
+                shape : list, tuple or ndarray of int
+                    (z,y,x)-shape of every image in image component after action is performed.
+                spacing : tuple, list or ndarray of float
+                    (z,y,x)-spacing for each image. If supplied, assume that
+                    unify_spacing is performed.
         """
         self._reraise_worker_exceptions(all_outputs)
 
@@ -1002,8 +1005,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        shape : tuple
-            (z, y, x) shape that should be AFTER resize.
+        shape : tuple, list or ndarray of int
+            (z,y,x)-shape that should be AFTER resize.
             Note, that ct-scan dim_ordering also should be `z,y,x`
         method : str
             interpolation package to be used. Either 'pil-simd' or 'scipy'.
@@ -1047,11 +1050,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        spacing : tuple
-            (z,y,x) spacing after resize.
+        spacing : tuple, list or ndarray of float
+            (z,y,x)-spacing after resize.
             Should be passed as key-argument.
-        shape : tuple
-            (z,y,x,) shape after crop/pad.
+        shape : tuple, list or ndarray of int
+            (z,y,x)-shape after crop/pad.
             Should be passed as key-argument.
         method : str
             interpolation method ('pil-simd' or 'resize').
@@ -1122,13 +1125,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             This argument is passed by inbatch_parallel
         angle : float
             degree of rotation.
-        components : list, tuple of strings or str
+        components : tuple, list, ndarray of strings or str
             name(s) of components to rotate each item in it.
-        axes : tuple
+        axes : tuple, list or ndarray of int
             (int, int), plane of rotation specified by two axes (zyx-ordering).
         random : bool
             if True, then degree specifies maximum angle of rotation.
-
 
         Returns
         -------
@@ -1150,39 +1152,63 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch = batch.rotate(angle=30, axes=(1, 2))
 
         """
-        _components = np.asarray(components)
+        _components = np.asarray(components).reshape(-1)
         _angle = angle * np.random.rand() if random else angle
         for comp in _components:
             data = self.get(index, comp)
             rotate_3D(data, _angle, axes)
 
-    @action
-    @inbatch_parallel(init='_init_images', post='_post_default', target='nogil', new_batch=True)
-    def make_xip(self, stride=2, depth=10, func='max', projection='axial', *args, **kwargs):
-        """ Make intensity projection (maximum, minimum, average)
+    @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
+    def _make_xip(self, image, depth, stride=2, mode='max',
+                  projection='axial', padding='reflect', *args, **kwargs):
+        """ Make intensity projection (maximum, minimum, mean or median).
 
-        Notice that axis is chosen in accordance with projection argument.
+        Notice that axis is chosen according to projection argument.
 
         Parameters
         ----------
-        stride : int
-            stride-step along channels dimension.
+        image : ndarray(k,l,m)
+            input 3D image corresponding to CT-scan.
         depth : int
-            number of slices over which pooling is performed.
-        func : str
-            Possible values are 'max', 'min' and 'avg'.
+            number of slices over which xip operation is performed.
+        stride : int
+            stride-step along projection dimension.
+        mode : str
+            Possible values are 'max', 'min', 'mean' or 'median'.
         projection : str
             Possible values: 'axial', 'coronal', 'sagital'.
             In case of 'coronal' and 'sagital' projections tensor
-            will be transposed from [z, y, x] to [x, z, y] and [y, z, x].
-
-        Returns
-        -------
-        batch
-            batch with xip
-
+            will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
+        padding : str
+            mode of padding that will be passed in numpy.padding function.
         """
-        return xip_fn_numba(func, projection, stride, depth)
+        return make_xip_numba(image, depth, stride, mode, projection, padding)
+
+    @action
+    def make_xip(self, depth, stride=1, mode='max', projection='axial', padding='reflect', **kwargs):
+        """ Make intensity projection (maximum, minimum, mean or median).
+
+        Notice that axis is chosen according to projection argument.
+
+        Parameters
+        ----------
+        depth : int
+            number of slices over which xip operation is performed.
+        stride : int
+            stride-step along projection dimension.
+        mode : str
+            Possible values are 'max', 'min', 'mean' or 'median'.
+        projection : str
+            Possible values: 'axial', 'coronal', 'sagital'.
+            In case of 'coronal' and 'sagital' projections tensor
+            will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
+        padding : str
+            mode of padding that will be passed in numpy.padding function.
+        """
+        output_batch = self._make_xip(depth=depth, stride=stride, mode=mode,  # pylint: disable=no-value-for-parameter
+                                      projection=projection, padding=padding)
+        output_batch.spacing = self.rescale(output_batch.images_shape)
+        return output_batch
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
     def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
@@ -1230,14 +1256,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        crop_size : tuple, list or ndarray
-            (int, int, int), size of crop, in `z,y,x`.
+        crop_size : tuple, list or ndarray of int
+            (z,y,x)-shape of crop.
 
         Returns
         -------
         batch
         """
-        crop_size = np.asarray(crop_size)
+        crop_size = np.asarray(crop_size).reshape(-1)
         crop_halfsize = np.rint(crop_size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
         if any(np.any(shape < crop_size) for shape in img_shapes):
@@ -1258,10 +1284,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        patch_shape : tuple, list or ndarray
-            (z_dim,y_dim,x_dim), shape of a single patch.
-        stride : tuple, list or ndarray
-            (int, int, int), stride to slide over each patient's data.
+        patch_shape : tuple, list or ndarray of int
+            (z,y,x)-shape of a single patch.
+        stride : tuple, list or ndarray of int
+            (z,y,x)-stride to slide over each patient's data.
         padding : str
             padding-type (see doc of np.pad for available types).
         data_attr : str
@@ -1278,9 +1304,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         resize/unify_spacing is required before.
         """
 
-        patch_shape, stride = np.asarray(patch_shape), np.asarray(stride)
+        patch_shape = np.asarray(patch_shape).reshape(-1)
+        stride = np.asarray(stride).reshape(-1)
+
         img_shape = self.images_shape[0]
-        data_4d = np.reshape(getattr(self, data_attr), (-1, ) + tuple(img_shape))
+        data_4d = np.reshape(getattr(self, data_attr), (-1, *img_shape))
 
         # add padding if necessary
         pad_width = calc_padding_size(img_shape, patch_shape, stride)
@@ -1291,12 +1319,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # init tensor with patches
         num_sections = (np.asarray(data_padded.shape[1:]) - patch_shape) // stride + 1
-        patches = np.zeros(shape=(len(self), np.prod(num_sections)) + tuple(patch_shape))
+        patches = np.zeros(shape=(len(self), np.prod(num_sections), *patch_shape))
 
         # put patches into the tensor
         fake = np.zeros(len(self))
         get_patches_numba(data_padded, patch_shape, stride, patches, fake)
-        patches = np.reshape(patches, (len(self) * np.prod(num_sections), ) + tuple(patch_shape))
+        patches = np.reshape(patches, (len(self) * np.prod(num_sections), *patch_shape))
         return patches
 
     def load_from_patches(self, patches, stride, scan_shape, data_attr='images'):
@@ -1307,11 +1335,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         patches : ndarray
-            4d-array of patches, with dims: `(patch_nb, z, y, x)`.
-        scan_shape : tuple, list or ndarray
-            (z,y,x), shape of individual scan (should be same for all scans).
-        stride : tuple, list or ndarray
-            stride-step used for gathering data from patches.
+            4d-array of patches, with dims: `(num_patches, z, y, x)`.
+        scan_shape : tuple, list or ndarray of int
+            (z,y,x)-shape of individual scan (should be same for all scans).
+        stride : tuple, list or ndarray of int
+            (z,y,x)-stride step used for gathering data from patches.
         data_attr : str
             batch component name to store new data.
 
@@ -1322,8 +1350,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         in new skyscraper. If patches were padded, padding is removed for skyscraper.
 
         """
-        scan_shape, stride = np.asarray(scan_shape), np.asarray(stride)
-        patch_shape = np.asarray(patches.shape[1:])
+        scan_shape = np.asarray(scan_shape).reshape(-1)
+        stride = np.asarray(stride).reshape(-1)
+        patch_shape = np.asarray(patches.shape[1:]).reshape(-1)
 
         # infer what padding was applied to scans when extracting patches
         pad_width = calc_padding_size(scan_shape, patch_shape, stride)
@@ -1337,8 +1366,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         scan_shape_adj = scan_shape + shape_delta
 
         # init 4d tensor and put assembled scans into it
-        data_4d = np.zeros((len(self), ) + tuple(scan_shape_adj))
-        patches = np.reshape(patches, (len(self), -1) + tuple(patch_shape))
+        data_4d = np.zeros((len(self), *scan_shape_adj))
+        patches = np.reshape(patches, (len(self), -1, *patch_shape))
         fake = np.zeros(len(self))
         assemble_patches(patches, stride, data_4d, fake)
 
@@ -1351,7 +1380,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             data_4d = data_4d[:, slc_z, slc_y, slc_x]
 
         # reshape 4d-data to skyscraper form and put it into needed attr
-        data_4d = data_4d.reshape((len(self) * scan_shape[0], ) + tuple(scan_shape[1:]))
+        data_4d = data_4d.reshape((len(self) * scan_shape[0], *scan_shape[1:]))
         setattr(self, data_attr, data_4d)
 
     @action

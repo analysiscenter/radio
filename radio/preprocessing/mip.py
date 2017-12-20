@@ -2,177 +2,171 @@
 # pylint: disable=missing-docstring
 """ Numba-rized functions for XIP intensity projection (maximum, minimum, average) calculation """
 
+import math
 import numpy as np
-from numba import njit
+from numba import jit
 
 
-_PROJECTIONS = {"axial": [0, 1, 2],
-                "coronal": [1, 0, 2],
-                "sagital": [2, 0, 1]}
-
-_REVERSE_PROJECTIONS = {"axial": [0, 1, 2],
-                        "coronal": [1, 0, 2],
-                        "sagital": [1, 2, 0]}
-
-_NUMBA_FUNC = {'max': 0, 'min': 1, 'mean': 2}
+PROJECTIONS = {
+    'axial': [0, 1, 2],
+    'coronal': [1, 0, 2],
+    'sagital': [2, 0, 1]
+}
 
 
-@njit(nogil=True)
-def min_max_sum_fn(a, b, flag):
-    """ Apply njit binary opertaion to `a` and `b`.
-
-    Binary operation defined by flag.
-
-    Parameters
-    ----------
-    a : int or float
-        left operand.
-    b : int or float
-        right operand;
-    flag : int
-        either 0, 1 or 2.
-        0 for max function;
-        1 for min function;
-        2 for sum function.
-
-    Returns
-    -------
-    int or float
-        result of function or 0.
-    """
-    if flag == 0:
-        return max(a, b)
-    elif flag == 1:
-        return min(a, b)
-    elif flag == 2:
-        return a + b
-    return 0
+REVERSE_PROJECTIONS = {
+    'axial': [0, 1, 2],
+    'coronal': [1, 0, 2],
+    'sagital': [1, 2, 0]
+}
 
 
-@njit(nogil=True)
-def numba_xip(arr, l, m, n, flag, fill_value):
-    """ Compute njit xip (intensity projection) for given slice.
+MODES = {
+    'max': 0,
+    'min': 1,
+    'mean': 2,
+    'median': 3
+}
+
+
+@jit(nogil=True, nopython=True)
+def maximum_filter1d(data, out):
+    """ Compute maximum intensity projection along zero-axis.
 
     Parameters
     ----------
-    arr : ndarray(l, m, n)
-        input array for computing xip.
-    l : int
-        z-dim of `arr`.
-    m : int
-        y-dim of `arr`.
-    n : int
-        x-dim of `arr`.
-    flag : int
-        0, 1 or 2; corresponds to max, min and average
-        functions for xip operation.
-    fill_value : int
-        default value to fill resulting array.
-
-    Returns
-    -------
-    ndarray
-        xip ndarray.
+    data : ndarray(l, m, n)
+        input 3d array for for computing xip operation.
+    out : ndarray(m, n)
+        output 2d array used to store results of xip operation.
     """
-    res = np.full((m, n), fill_value, dtype=arr.dtype)
-    for j in range(m):
-        for k in range(n):
-            for i in range(l):
-                res[j, k] = min_max_sum_fn(res[j, k], arr[i, j, k], flag)
-    return res
+    for i in range(data.shape[1]):
+        for j in range(data.shape[2]):
+            out[i, j] = np.max(data[:, i, j])
 
 
-@njit(nogil=True)
-def make_xip(data, step, depth,
-             start=0, stop=-1, func=0, fill_value=0):
+@jit(nogil=True, nopython=True)
+def minimum_filter1d(data, out):
+    """ Compute minimum intensity projection along zero-axis.
+
+    Parameters
+    ----------
+    data : ndarray(l, m, n)
+        input 3d array for for computing xip operation.
+    out : ndarray(m, n)
+        output 2d array used to store results of xip operation.
+    """
+    for i in range(data.shape[1]):
+        for j in range(data.shape[2]):
+            out[i, j] = np.min(data[:, i, j])
+
+
+@jit(nogil=True, nopython=True)
+def average_filter1d(data, out):
+    """ Compute average intensity projection along zero-axis.
+
+    Parameters
+    ----------
+    data : ndarray(l, m, n)
+        input 3d array for for computing xip operation.
+    out : ndarray(m, n)
+        output 2d array used to store results of xip operation.
+    """
+    for i in range(data.shape[1]):
+        for j in range(data.shape[2]):
+            out[i, j] = np.mean(data[:, i, j])
+
+
+@jit(nogil=True, nopython=True)
+def median_filter1d(data, out):
+    """ Compute median intensity projection along zero-axis.
+
+    Parameters
+    ----------
+    data : ndarray(l, m, n)
+        input 3d array for for computing xip operation.
+    out : ndarray(m, n)
+        output 2d array used to store results of xip operation.
+    """
+    for i in range(data.shape[1]):
+        for j in range(data.shape[2]):
+            sorted_data = np.sort(data[:, i, j])
+            out[i, j] = sorted_data[math.ceil(data.shape[0] / 2)]
+
+
+@jit(nogil=True, nopython=True)
+def numba_xip(image, depth, mode, step):
     """ Apply xip operation to scan of one patient.
 
     Parameters
     ----------
     data : ndarray
-        3d array, patient scan or crop
-    step : int
-        stride-step along axe, to apply the func.
+        3d array, patient scan or its crop.
+    depth : int
+        number of neighborhood points along zero axis for xip kernel function.
+    mode : int
+        one of following values: 0, 1, 2, 3, that correspond to
+        'maximum', 'minimum', 'mean' and 'median' projections.
+    stride : int
+        stride-step along zero axis.
+
+    Returns
+    -------
+    ndarray(m, k, l)
+        image after xip operation transform.
+    """
+    size = (image.shape[0] - 2 * math.floor(depth / 2)) // step
+    out_data = np.empty(shape=(size, image.shape[1], image.shape[2]), dtype=image.dtype)
+    for i in range(0, size):
+        ix = i * step
+        if mode == 0:
+            maximum_filter1d(image[ix: ix + depth, ...], out_data[i, ...])
+        elif mode == 1:
+            minimum_filter1d(image[ix: ix + depth, ...], out_data[i, ...])
+        elif mode == 2:
+            average_filter1d(image[ix: ix + depth, ...], out_data[i, ...])
+        elif mode == 3:
+            median_filter1d(image[ix: ix + depth, ...], out_data[i, ...])
+    return out_data
+
+
+def make_xip_numba(image, depth, stride=1, mode='max', projection='axial', padding='reflect'):
+    """ Compute intensity projection (maximum, minimum, mean or median) on input 3d image.
+
+    Popular radiological transformation: max, min, mean or median applyied along an axis.
+    Notice that axis is chosen according to projection argument.
+
+    Parameters
+    ----------
+    image : ndarray(k,l,m)
+        input 3D image corresponding to CT-scan or its crop
+    stride : int
+        stride-step along axis, to apply the func.
     depth : int
         depth of slices (aka `kernel`) along axe made on each step for computing.
-    start : int
-        number of slize by 0-axis to start operation
-    end : int
-        number of slize by 0-axis to stop operation
-    func : int
-        either 0, 1 or 2.
-        0 for max function;
-        1 for min function;
-        2 for sum function.
-    fill_value : int
-        default value to fill resulting array.
+    mode : str
+        Possible values are 'max', 'min', 'mean' or 'median'.
+    projection : str
+        Possible values: 'axial', 'coronal', 'sagital'.
+        In case of 'coronal' and 'sagital' projections tensor
+        will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
 
     Returns
     -------
     ndarray
-        xip ndarray
+        resulting ndarray after kernel function is applied.
+
     """
-    if data.shape[0] < depth:
-        depth = data.shape[0]
+    padding_lower, padding_upper = math.floor(depth / 2), math.floor(depth / 2)
 
-    if stop < 0 or stop + depth > data.shape[0]:
-        stop = data.shape[0] - depth
+    extra_padding = (image.shape[0] - padding_lower - padding_upper) % stride
 
-    new_shape = [0, data.shape[1], data.shape[2]]
-    new_shape[0] = (stop - start) // step + 1
-    out_array = np.zeros((new_shape[0], new_shape[1], new_shape[2]), dtype=data.dtype)
-    counter = 0
-    for x in range(start, stop + 1, step):
-        out_array[counter, :, :] = numba_xip(data[x: x + depth],
-                                             depth,
-                                             data.shape[1],
-                                             data.shape[2],
-                                             func, fill_value)
-        counter += 1
+    padding_lower += math.floor(extra_padding / 2)
+    padding_upper += math.floor(extra_padding / 2)
 
-    return out_array
+    image_tr = image.transpose(PROJECTIONS[projection])
+    image_tr = np.pad(image_tr, [(padding_lower, padding_upper),
+                                 (0, 0), (0, 0)], mode=padding)
 
-
-def xip_fn_numba(func='max', projection="axial", step=2, depth=10):
-    """ Make intensity projection (maximum, minimum, average)
-
-        Popular radiologic transformation: max, min, avg applyied along an axe.
-        Notice that axe is chosen in accordance with projection argument.
-
-        Parameters
-        ----------
-        step : int
-            stride-step along axe, to apply the func.
-        depth : int
-            depth of slices (aka `kernel`) along axe made on each step for computing.
-        func : str
-            Possible values are 'max', 'min' and 'avg'.
-        projection : str
-            Possible values: 'axial', 'coroanal', 'sagital'.
-            In case of 'coronal' and 'sagital' projections tensor
-            will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
-
-        Returns
-        -------
-        ndarray
-            resulting ndarray after func is applied.
-
-        """
-    _projection = _PROJECTIONS[projection]
-    _reverse_projection = _REVERSE_PROJECTIONS[projection]
-    _function = _NUMBA_FUNC[func]
-
-    def out_function(data, start=0, end=-1):
-        data_tr = data.transpose(_projection)
-        if _function == 0:
-            fill_value = np.finfo(data.dtype).min
-        elif _function == 1:
-            fill_value = np.finfo(data.dtype).max
-        else:
-            fill_value = 0
-        result = make_xip(data_tr, step=step, depth=depth,
-                          start=start, stop=end,
-                          func=_function, fill_value=fill_value)
-        result = result.transpose(_reverse_projection)
-        return result / depth if _function == 2 else result
-    return out_function
+    result = numba_xip(image_tr, step=stride, depth=depth, mode=MODES[mode])
+    return result.transpose(REVERSE_PROJECTIONS[projection])

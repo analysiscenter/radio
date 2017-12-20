@@ -21,9 +21,9 @@ class KerasModel(Model, BaseModel):
     keras models. Implements train and predict methods.
 
     """
-    def __init__(self, name=None, config=None, *args, **kwargs):
+    def __init__(self, config=None, *args, **kwargs):
         """ Create keras model. """
-        BaseModel.__init__(self, name, config, *args, **kwargs)
+        BaseModel.__init__(self, config, *args, **kwargs)
 
     def build_config(self):
         """ Build config. """

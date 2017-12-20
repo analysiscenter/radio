@@ -395,7 +395,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Parameters
         ----------
         size : list or tuple of ndarrays
-            ndarray(3, ) with diameters of nodules in (z,y,x);
+            ndarray(3, ) with diameters of nodules in (z,y,x).
         variance : ndarray(3, )
             diagonal elements of multivariate normal distribution,
             for sampling random shifts along (z,y,x) correspondingly.
@@ -464,7 +464,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Returns
         -------
         ndarray
-            3d array with masks in form of `skyscraper`
+            3d array with masks in form of `skyscraper`.
 
         # TODO: one part of code from here repeats create_mask function
             better to unify these two func
@@ -473,7 +473,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             logger.warning("Info about nodules location must " +
                            "be loaded before calling this method. " +
                            "Nothing happened.")
-        mask = np.zeros(shape=(len(self) * shape[0], ) + tuple(shape[1:]))
+        mask = np.zeros(shape=(len(self) * shape[0], *shape[1:]))
 
         # infer scale factor; assume patients are already resized to equal
         # shapes
@@ -514,7 +514,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             crop shape along (z,y,x).
         histo : tuple
             np.histogram()'s output.
-            3d-histogram, represented by tuple (bins, edges)
+            3d-histogram, represented by tuple (bins, edges).
 
         Returns
         -------
@@ -549,7 +549,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
                        mask_shape=None, histo=None):
         """ Sample random crops of `images` and `masks` from batch.
 
-
         Create random crops, both with and without nodules in it, from input batch.
 
         Parameters
@@ -557,23 +556,23 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch_size : int
             number of nodules in the output batch. Required,
             if share=0.0. If None, resulting batch will include all
-            cancerous nodules
+            cancerous nodules.
         nodule_size : tuple, list or ndarray of int
             crop shape along (z,y,x).
         share : float
             share of cancer crops in the batch.
             if input CTImagesBatch contains less cancer
-            nodules than needed random nodules will be taken;
-        variance : tuple, list of float
+            nodules than needed random nodules will be taken.
+        variance : tuple, list or ndarray of float
             variances of normally distributed random shifts of
-            nodules' start positions
-        mask_shape : tuple, list or ndarray
-            size of `masks` crop in (z, y, x)-order. If not None,
+            nodules' start positions.
+        mask_shape : tuple, list or ndarray of int
+            size of `masks` crop in (z,y,x)-order. If not None,
             crops with masks would be of mask_shape.
             If None, mask crop shape would be equal to crop_size.
         histo : tuple
             np.histogram()'s output.
-            Used for sampling non-cancerous crops
+            Used for sampling non-cancerous crops.
 
         Returns
         -------
@@ -703,8 +702,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             folder to dump nodules in.
         n_iters : int
             number of iterations to be performed.
-        nodule_size : tuple or list
-            shape of sampled nodules.
+        nodule_size : tuple, list or ndarray of int
+            (z,y,x)-shape of sampled nodules.
         batch_size : int or None
             size of generated batches.
         share : float
@@ -867,15 +866,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Parameters
         ----------
         all_outputs : list
-            list of outputs. Each item is given by tuple
+            list of outputs. Each item is given by tuple.
         new_batch : bool
             if True, returns new batch with data agregated
             from all_ouputs. if False, changes self.
         **kwargs
-                shape : list, tuple or ndarray
-                    (z,y,x); shape of every image in image component after action is performed.
-                spacing : list, tuple or ndarray
-                    if supplied, assume that unify_spacing is performed
+                shape : list, tuple or ndarray of int
+                    (z,y,x)-shape of every image in image component after action is performed.
+                spacing : tuple, list or ndarray of float
+                    (z,y,x)-spacing for each image. If supplied, assume that
+                    unify_spacing is performed.
 
         Returns
         -------
@@ -890,46 +890,43 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def make_xip(self, step=2, depth=10, func='max',
-                 projection='axial', *args, **kwargs):
-        """ Make intensity projection (maximum, minimum, average) and corresponding masks.
+    def make_xip(self, depth, stride=1, mode='max', projection='axial', padding='reflect', **kwargs):
+        """ Make intensity projection (maximum, minimum, mean or median).
+
+        Notice that axis is chosen according to projection argument.
 
         Parameters
         ----------
-        step : int
-            stride-step along axe, to apply the func.
+        image : ndarray(k,l,m)
+            input 3D image corresponding to CT-scan.
         depth : int
-            depth of slices (aka `kernel`) along axe made on each step for computing.
-        func : str
-            Possible values are 'max', 'min' and 'avg'.
+            number of slices over which xip operation is performed.
+        stride : int
+            stride-step along projection dimension.
+        mode : str
+            Possible values are 'max', 'min', 'mean' or 'median'.
         projection : str
-            Possible values: 'axial', 'coroanal', 'sagital'.
+            Possible values: 'axial', 'coronal', 'sagital'.
             In case of 'coronal' and 'sagital' projections tensor
-            will be transposed from [z,y,x] to [x, z, y] and [y, z, x].
-
-        Returns
-        -------
-        batch
-            Resulting batch, where `images` are xips and corresponding `masks`.
-
-        Notes
-        -----
-        Method changes nodules sizes' and creates new `masks` that corresponds
-        to data after xip.
+            will be transposed from [z,y,x] to [x,z,y] and [y,z,x].
+        padding : str
+            mode of padding that will be passed in numpy.padding function.
         """
-        batch = super().make_xip(step=step, depth=depth, func=func,
-                                 projection=projection, *args, **kwargs)
 
-        batch.nodules = self.nodules
         if projection == 'axial':
             _projection = 0
         elif projection == 'coronal':
             _projection = 1
         elif projection == 'sagital':
             _projection = 2
-        batch.nodules.nodule_size[:, _projection] += (depth
-                                                      * self.nodules.spacing[:, _projection])  # pylint: disable=unsubscriptable-object
-        batch.spacing = self.rescale(batch[0].shape)
+
+        batch = super().make_xip(stride=stride, depth=depth, mode=mode,
+                                 projection=projection, padding=padding, **kwargs)
+
+        if self.nodules is not None:
+            projection_spacing = self.nodules.spacing[:, _projection]
+            batch.nodules = self.nodules
+            batch.nodules.nodule_size[:, _projection] += (depth * projection_spacing)  # pylint: disable=unsubscriptable-object
         batch._rescale_spacing()   # pylint: disable=protected-access
         if self.masks is not None:
             batch.create_mask()
@@ -941,16 +938,16 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Parameters
         ----------
-        crop_size : tuple(int, int, int)
-            shape of central crop along three axes(z,y,x order is used).
+        crop_size : tuple, list or ndarray of int
+            (z,y,x)-shape of central crop along three axes(z,y,x order is used).
         crop_mask : bool
-            if True, crop the mask in the same way
+            if True, crop the mask in the same way.
 
         Returns
         -------
         batch
         """
-        crop_size = np.asarray(crop_size)
+        crop_size = np.asarray(crop_size).reshape(-1)
         img_shapes = [np.asarray(self.get(i, 'images').shape)
                       for i in range(len(self))]
         if any(np.any(shape < crop_size) for shape in img_shapes):
@@ -1003,7 +1000,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
-                        batch_size=4, y_component='labels', data_format='channels_last',
+                        batch_size=4, targets_mode='labels', data_format='channels_last',
                         show_progress=True):
         """ Get predictions of the model on data contained in batch.
 
@@ -1016,20 +1013,25 @@ class CTImagesMaskedBatch(CTImagesBatch):
         ----------
         model_name : str
             name of model that will be used for predictions.
-        strides : tuple(int, int, int)
-            strides for patching operation
+        strides : tuple, list or ndarray of int
+            (z,y,x)-strides for patching operation.
+        crop_shape : tuple, list or ndarray of int
+            (z,y,x)-shape of crops.
         batch_size : int
             number of patches to feed in model in one iteration.
-        y_component: str
-            name of y component, can be 'masks' or labels.
+        targets_mode: str
+            name of y component, can be 'segmentation', 'regression' or 'classification'.
         data_format: str
-            format of ANN input data, can be 'channels_first' or 'channels_last'.
+            format of neural network input data,
+            can be 'channels_first' or 'channels_last'.
 
         Returns
         -------
         CTImagesMaskedBatch.
         """
         _model = self.get_model_by_name(model_name)
+        crop_shape = np.asarray(crop_shape).reshape(-1)
+        strides = np.asarray(strides).reshape(-1)
 
         patches_arr = self.get_patches(patch_shape=crop_shape,
                                        stride=strides,
@@ -1046,7 +1048,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         for i in iterations:
             current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
-            if y_component == 'labels':
+            if y_component == 'classification':
                 current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
                                                for prob in current_prediction.ravel()])
 
