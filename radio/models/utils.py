@@ -94,14 +94,19 @@ def _create_overlap_index(overlap_matrix):
     return max_ov, argmax_ov
 
 
-def overlap_true_pred_nodules(batch):
+def overlap_nodules(batch, nodules_true, nodules_pred):
     """ Accumulate info about overlap between true and predicted nodules in pipeline vars. """
-    ppl_nodules_true = batch.pipeline.get_variable('nodules_true', init=list)
-    ppl_nodules_pred = batch.pipeline.get_variable('nodules_pred', init=list)
+    true_df = (
+        batch
+        .nodules_to_df(nodules_true)
+        .assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+    )
 
-    batch_nodules_true = batch.nodules
-    batch.fetch_nodules_from_mask()
-    batch_nodules_pred = batch.nodules
+    pred_df = (
+        batch
+        .nodules_to_df(nodules_pred)
+        .assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+    )
 
     true_df = batch.nodules_to_df(batch_nodules_true).set_index('nodule_id')
     true_df = true_df.assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
@@ -141,6 +146,4 @@ def overlap_true_pred_nodules(batch):
         true_out.append(nods_true)
         pred_out.append(nods_pred)
 
-    ppl_nodules_true.append(pd.concat(true_out))
-    ppl_nodules_pred.append(pd.concat(pred_out))
-    return batch
+        return {'true_stats': pd.concat(true_out), 'pred_stats': pd.concat(pred_out)}
