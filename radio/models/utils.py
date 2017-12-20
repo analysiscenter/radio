@@ -125,12 +125,6 @@ def overlap_nodules(batch, nodules_true, nodules_pred):
         .assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
     )
 
-    true_df = batch.nodules_to_df(batch_nodules_true).set_index('nodule_id')
-    true_df = true_df.assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
-
-    pred_df = batch.nodules_to_df(batch_nodules_pred).set_index('nodule_id')
-    pred_df = pred_df.assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
-
     true_out, pred_out = [], []
     true_gr, pred_gr = true_df.groupby('source_id'), pred_df.groupby('source_id')
     for group_name in {**true_gr.groups, **pred_gr.groups}:
