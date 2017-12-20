@@ -1000,7 +1000,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
-                        batch_size=4, y_component='labels', data_format='channels_last',
+                        batch_size=4, targets_mode='labels', data_format='channels_last',
                         show_progress=True):
         """ Get predictions of the model on data contained in batch.
 
@@ -1019,8 +1019,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             (z,y,x)-shape of crops.
         batch_size : int
             number of patches to feed in model in one iteration.
-        y_component: str
-            name of y component, can be 'masks' or labels.
+        targets_mode: str
+            name of y component, can be 'segmentation', 'regression' or 'classification'.
         data_format: str
             format of neural network input data,
             can be 'channels_first' or 'channels_last'.
@@ -1048,7 +1048,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         for i in iterations:
             current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
-            if y_component == 'labels':
+            if y_component == 'classification':
                 current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
                                                for prob in current_prediction.ravel()])
 
