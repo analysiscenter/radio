@@ -14,10 +14,10 @@ of your choice.
 Preprocessing workflow
 ----------------------
 
-The workflow, that includes load of data from disk, resizes
+Say, you need a workflow that loads scans from disk, resizes them
 to shape **[128, 256, 256]**, and prepares batch of **20**
-cancerous and non-cancerous crops of shape **[32, 64, 64]**,
-can be set up in a following way:
+cancerous and non-cancerous crops of shape **[32, 64, 64]**. The straightforward
+approach is to chain several actions:
 
 .. code-block:: python
 
@@ -38,10 +38,9 @@ can be set up in a following way:
         .run(batch_size=8, lazy=True, shuffle=True)
     )
 
-Similar pipelines commonly occure in practice,
-**RadIO** contains ready-to-use parametrized functions that return frequently used
-preprocessing pipelines. For instance, the ``pipeline`` written above can be
-got just with calling ``get_crops`` function:
+The simpler approach is to use ``get_crops``-function that manufactures frequently
+used preprocessing pipelines. With ``get_crops`` you can get the pipeline written above
+in two lines of code:
 
 .. code-block:: python
 
@@ -86,20 +85,33 @@ we advise to use another workflow, that allows to generate more
 than `100000` training examples after running one time through
 the Luna-dataset.
 
+**Requirements for ** ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+    of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
+
 Faster workflow
 ---------------
 
-Preparation of richer training dataset can be achieved in two steps.
+Preparation of richer training dataset can be achieved in two steps using two pipeline-creators:
+``split_dump`` and ``combine_crops``.
+
+**Step 1**
+
 During the first step you dump large sets of cancerous and non-cancerous
-crops in separate folders:
+crops in separate folders using ``split_dump``:
 
 .. code-block:: python
 
     from radio.pipelines import split_dump
-    pipeline = split_dump(cancer_path='/train/cancer', non_cancer_path='/train/non_cancer')
-    (ctset >> pipeline).run()
+    pipeline = split_dump(cancer_path='/train/cancer', non_cancer_path='/train/non_cancer',
+                          nodules=nodules)
+    (ctset >> pipeline).run()  # one run through Luna; may take a couple of hours
 
-You can combine cancerous and non-cancerous crops from two folders.
+**Requirements for ** ``split_dump``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+    of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
+
+**Step 2**
+
+You can now combine cancerous and non-cancerous crops from two folders using ``combine_crops``.
 First, you associate a :class:`dataset <dataset.Dataset>` with each folder:
 
 .. code-block:: python
@@ -117,4 +129,20 @@ You can balance crops from two dataset in any proportion you want:
 
 Pay attention to parameter ``batch_sizes`` in ``combine_crops``-functions.
 It defines how many cancerous and non-cancerous crops will be included
-in batches.
+in batches. Just like with `get_crops`, it is easy to add training of *ResNet* to
+``pipeline``:
+
+.. code-block:: python
+
+    pipeline = (
+        pipeline
+        .init_model('static',class=ResNodule3DNet50, model_name='resnet')
+        .train_model(model_name='resnet', feed_dict={
+        'images': F(CT.unpack, component='images'),
+            'labels': F(CT.unpack, component='classification_targets')
+        })
+    )
+    (ctset >> pipeline).run(BATCH_SIZE=12)
+
+**Requirements for ** ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
+by ``split_dump``(see  **Step 1** ).
