@@ -95,7 +95,7 @@ def _create_overlap_index(overlap_matrix):
 
 
 def overlap_nodules(batch, nodules_true, nodules_pred):
-    """ Accumulate info about overlap between true and predicted nodules in pipeline vars.
+    """ Get info about overlap between true and predicted nodules.
 
     Parameters
     ----------
