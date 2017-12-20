@@ -178,7 +178,7 @@ Same for segmentation:
         # Keras3DUNet has 'channels_first' dim_ordering
         .train_model(
             model_name='resnet',
-            x=F(CT.unpack, component='images'),
+            x=F(CT.unpack, component='images', data_format='channels_first'),
             y=F(CT.unpack, component='segmentation_targets', data_format='channels_first')
         )
     )
