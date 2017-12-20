@@ -45,13 +45,17 @@ in two lines of code:
 .. code-block:: python
 
     from radio.pipelines import get_crops
-    pipeline = get_crops(fmt='raw', shape=(128, 256, 256), nodules=nodules,
+    pipeline = get_crops(fmt='raw', shape=(128, 256, 256), nodules=nodules, histo=some_3d_histogram,
                          batch_size=20, share=0.6, nodule_shape=(32, 64, 64))
 
 Pay attention to parameters ``batch_size`` and ``share``: they allow
 to control the number of items in a batch of crops and the number
-of cancerous crops. You can chain ``pipeline`` with some additional actions
-for training, say, ``DenseNoduleNet``:
+of cancerous crops. Parameter ``histo`` controls the distribution which
+is used for sampling locations of random (noncancerous) crops. Although
+``histo`` accepts any 3d-histogram, we advise to use
+`histogram based on distribution of cancer location  <Calculation of cancer location distribution>`_.
+
+You can chain ``pipeline`` with some additional actions for training, say, ``DenseNoduleNet``:
 
 .. code-block:: python
 
@@ -146,3 +150,7 @@ in batches. Just like with `get_crops`, it is easy to add training of *ResNet* t
 
 **Requirements for ** ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
 by ``split_dump``(see  **Step 1** ).
+
+Calculation of cancer location distribution
+-------------------------------------------
+Another useful pipeline-creator is
