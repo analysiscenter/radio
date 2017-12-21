@@ -1053,10 +1053,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                                for prob in current_prediction.ravel()])
 
             if targets_mode == 'regression':
-                masks_patch = create_mask_reg(current_prediction[:, :3],
-                                              current_prediction[:, 3:6],
-                                              current_prediction[:, 6],
-                                              crop_shape, 0.01)
+                current_prediction = create_mask_reg(current_prediction[:, :3],
+                                                     current_prediction[:, 3:6],
+                                                     current_prediction[:, 6],
+                                                     crop_shape, 0.01)
 
             predictions.append(current_prediction)
 
