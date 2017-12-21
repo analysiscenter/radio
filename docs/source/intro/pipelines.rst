@@ -53,7 +53,7 @@ to control the number of items in a batch of crops and the number
 of cancerous crops. Parameter ``histo`` controls the distribution which
 is used for sampling locations of random (noncancerous) crops. Although
 ``histo`` accepts any 3d-histogram, we advise to use
-`histogram based on distribution of cancer location  <Calculation of cancer location distribution>`_.
+`histogram based on distribution of cancer location  <#calculation-of-cancer-location-distribution>`_.
 
 You can chain ``pipeline`` with some additional actions for training, say, ``DenseNoduleNet``:
 
@@ -98,7 +98,8 @@ Faster workflow
 Preparation of richer training dataset can be achieved in two steps using two pipeline-creators:
 ``split_dump`` and ``combine_crops``.
 
-**Step 1**
+Step 1
+^^^^^^
 
 During the first step you dump large sets of cancerous and non-cancerous
 crops in separate folders using ``split_dump``:
@@ -113,7 +114,8 @@ crops in separate folders using ``split_dump``:
 **Requirements** for ``split_dump``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
 of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
 
-**Step 2**
+Step 2
+^^^^^^
 
 You can now combine cancerous and non-cancerous crops from two folders using ``combine_crops``.
 First, you associate a :class:`dataset <dataset.Dataset>` with each folder:
@@ -149,7 +151,7 @@ in batches. Just like with `get_crops`, it is easy to add training of *ResNet* t
     (ctset >> pipeline).run(BATCH_SIZE=12)
 
 **Requirements** for ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
-by ``split_dump`` (see  **Step 1** ).
+by ``split_dump`` (see  `#step-1`_ ).
 
 Calculation of cancer location distribution
 -------------------------------------------
