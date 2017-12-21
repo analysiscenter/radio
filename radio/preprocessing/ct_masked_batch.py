@@ -1000,7 +1000,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
-                        batch_size=4, targets_mode='labels', data_format='channels_last',
+                        batch_size=4, targets_mode='segmentation', data_format='channels_last',
                         show_progress=True):
         """ Get predictions of the model on data contained in batch.
 
@@ -1048,20 +1048,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
         for i in iterations:
             current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
-            if y_component == 'classification':
+            if targets_mode == 'classification':
                 current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
                                                for prob in current_prediction.ravel()])
 
-            if y_component == 'regression':
+            if targets_mode == 'regression':
                 masks_patch = create_mask_reg(current_prediction[:, :3],
                                               current_prediction[:, 3:6],
                                               current_prediction[:, 6],
                                               crop_shape, 0.01)
 
-                current_prediction = np.squeeze(masks_patch)
             predictions.append(current_prediction)
 
         patches_mask = np.concatenate(predictions, axis=0)
+        patches_mask = np.squeeze(patches_mask)
         self.load_from_patches(patches_mask, stride=strides,
                                scan_shape=tuple(self.images_shape[0, :]),
                                data_attr='masks')
