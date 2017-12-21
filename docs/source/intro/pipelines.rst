@@ -110,8 +110,8 @@ crops in separate folders using ``split_dump``:
                           nodules=nodules)
     (ctset >> pipeline).run()  # one run through Luna; may take a couple of hours
 
-**Requirements for** ``split_dump``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
-    of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
+**Requirements** for ``split_dump``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
 
 **Step 2**
 
