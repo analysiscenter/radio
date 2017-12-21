@@ -148,7 +148,7 @@ in batches. Just like with `get_crops`, it is easy to add training of *ResNet* t
     )
     (ctset >> pipeline).run(BATCH_SIZE=12)
 
-*\ **Requirements**\ * for ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
+**Requirements** for ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
 by ``split_dump`` (see  **Step 1** ).
 
 Calculation of cancer location distribution
