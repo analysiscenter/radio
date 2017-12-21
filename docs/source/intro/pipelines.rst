@@ -89,8 +89,8 @@ we advise to use another workflow, that allows to generate more
 than `100000` training examples after running one time through
 the Luna-dataset.
 
-**Requirements for** ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
-    of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
+**Requirements** for ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
 
 Faster workflow
 ---------------
@@ -148,8 +148,8 @@ in batches. Just like with `get_crops`, it is easy to add training of *ResNet* t
     )
     (ctset >> pipeline).run(BATCH_SIZE=12)
 
-**Requirements for** ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
-by ``split_dump``(see  **Step 1** ).
+*\ **Requirements**\ * for ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
+by ``split_dump`` (see  **Step 1** ).
 
 Calculation of cancer location distribution
 -------------------------------------------
@@ -181,5 +181,5 @@ You can now use ``histo`` in pipeline ``get_crops`` to sample batches of cancero
 In that way, cancerous and noncancerous examples will be cropped from similar locations. This, of course, makes
 training datasets more balanced.
 
-**Requirements for** ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+**Requirements** for ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
 of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
