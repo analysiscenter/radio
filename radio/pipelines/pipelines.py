@@ -58,7 +58,7 @@ def get_crops(nodules, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, shar
                 (z,y,x) shape after crop/pad.
             method : str
                 interpolation method ('pil-simd' or 'resize').
-                See :meth:`~.preprocessing.ct_batch.CTImagesBatch.resize`.
+                See :func:`~radio.CTImagesBatch.resize`.
             order : None or int
                 order of scipy-interpolation (<=5), if used.
             padding : str
@@ -122,7 +122,7 @@ def split_dump(cancer_path, non_cancer_path, nodules, histo=None, fmt='raw',
                 (z,y,x) shape after crop/pad.
             method : str
                 interpolation method ('pil-simd' or 'resize').
-                See :meth:`~.preprocessing.ct_batch.CTImagesBatch.resize` for more information.
+                See :func:`~radio.CTImagesBatch.resize` for more information.
             order : None or int
                 order of scipy-interpolation (<=5), if used.
             padding : str
@@ -181,7 +181,7 @@ def update_histo(nodules, histo, fmt='raw', **kwargs):
                 (z,y,x) shape after crop/pad.
             method : str
                 interpolation method ('pil-simd' or 'resize').
-                See :meth:`~.preprocessing.ct_batch.CTImagesBatch.resize` for more information.
+                See :func:`~radio.CTImagesBatch.resize` for more information.
             order : None or int
                 order of scipy-interpolation (<=5), if used.
             padding : str

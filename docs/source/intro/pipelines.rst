@@ -52,7 +52,7 @@ Pay attention to parameters ``batch_size`` and ``share``: they allow
 to control the number of items in a batch of crops and the number
 of cancerous crops. Parameter ``histo`` controls the distribution which
 is used for sampling locations of random (noncancerous) crops. Although
-``histo`` accepts any 3d-histogram, we advise to use :ref:`histogram based on distribution of cancer location  <histocalc>`_.
+``histo`` accepts any 3d-histogram, we advise to use :ref:`distribution of cancer location <Histocalc>`.
 You can chain ``pipeline`` with some additional actions for training, say, ``DenseNoduleNet``:
 
 .. code-block:: python
@@ -95,6 +95,8 @@ Faster workflow
 
 Preparation of richer training dataset can be achieved in two steps using two pipeline-creators:
 ``split_dump`` and ``combine_crops``.
+
+.. _StepFirst:
 
 Step 1
 ^^^^^^
@@ -149,9 +151,9 @@ in batches. Just like with `get_crops`, it is easy to add training of *ResNet* t
     (ctset >> pipeline).run(BATCH_SIZE=12)
 
 **Requirements** for ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
-by ``split_dump`` (see  `#step-1`_ ).
+by ``split_dump`` (see  :ref:`StepFirst` ).
 
-.. _histocalc:
+.. _Histocalc:
 
 Calculation of cancer location distribution
 -------------------------------------------
