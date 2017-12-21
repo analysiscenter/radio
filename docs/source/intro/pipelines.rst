@@ -67,7 +67,7 @@ You can chain ``pipeline`` with some additional actions for training, say, ``Den
             'labels': F(CT.unpack, component='classification_targets')
         })
     )
-    (ctset >> pipeline).run(BATCH_SIZE=12)
+    (ctset >> pipeline).run()
 
 Alternatively, you can choose to save dataset of crops
 on disk and get back to training a network on it later:
@@ -75,7 +75,7 @@ on disk and get back to training a network on it later:
 .. code-block:: python
 
     pipeline = pipeline.dump('/path/to/crops/')
-    (ctset >> pipeline).run(BATCH_SIZE=12)
+    (ctset >> pipeline).run()
 
 Created pipeline will generate `~1500`
 training examples, in one run through Luna-dataset
@@ -89,7 +89,7 @@ we advise to use another workflow, that allows to generate more
 than `100000` training examples after running one time through
 the Luna-dataset.
 
-**Requirements for ** ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+**Requirements for** ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
     of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
 
 Faster workflow
@@ -110,7 +110,7 @@ crops in separate folders using ``split_dump``:
                           nodules=nodules)
     (ctset >> pipeline).run()  # one run through Luna; may take a couple of hours
 
-**Requirements for ** ``split_dump``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+**Requirements for** ``split_dump``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
     of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
 
 **Step 2**
@@ -148,9 +148,38 @@ in batches. Just like with `get_crops`, it is easy to add training of *ResNet* t
     )
     (ctset >> pipeline).run(BATCH_SIZE=12)
 
-**Requirements for ** ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
+**Requirements for** ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
 by ``split_dump``(see  **Step 1** ).
 
 Calculation of cancer location distribution
 -------------------------------------------
-Another useful pipeline-creator is
+Another useful pipeline-creator is ``update_histo``. With ``update_histo`` you can get a histogram-estimate
+of distribution of cancer-location inside preprocessed scans:
+
+.. code-block:: python
+
+    from radio.pipelines import update_histo
+    SHAPE = (400, 512, 512)  # default shape of resize in preprocessing
+    ranges = list(zip([0]*3, SHAPE)) # boxes of preprocessed scans
+    histo = list(np.histogramdd(np.empty((0, 3)), range=ranges, bins=4))  # init empty 3d-histogram
+
+    pipeline = update_histo(nodules, histo)
+
+It is time to run a dataset of scans through ``pipeline`` and accumulate information about cancer-location
+in ``histo``:
+
+.. code-block:: python
+
+    (ctset >> pipeline).run() # may take a couple of hours
+
+You can now use ``histo`` in pipeline ``get_crops`` to sample batches of cancerous and noncancerous crops:
+
+.. code-block:: python
+
+        pipeline = get_crops(nodules=nodules, histo=histo)
+
+In that way, cancerous and noncancerous examples will be cropped from similar locations. This, of course, makes
+training datasets more balanced.
+
+**Requirements for** ``get_crops``: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
