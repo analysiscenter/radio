@@ -1058,10 +1058,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                               current_prediction[:, 6],
                                               crop_shape, 0.01)
 
-                current_prediction = np.squeeze(masks_patch)
             predictions.append(current_prediction)
 
         patches_mask = np.concatenate(predictions, axis=0)
+        patches_mask = np.squeeze(patches_mask)
         self.load_from_patches(patches_mask, stride=strides,
                                scan_shape=tuple(self.images_shape[0, :]),
                                data_attr='masks')
