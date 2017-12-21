@@ -4,7 +4,7 @@ Pipelines
 
 Pipelines are workflows that greatly simplify
 deep learning research on CT-scans. Each workflow is represented
-in a form of preprocessing `actions https://analysiscenter.github.io/dataset/intro/batch.html#action-methods`_,
+in a form of preprocessing `actions <https://analysiscenter.github.io/dataset/intro/batch.html#action-methods>`_,
 chained in a :class:`pipeline <dataset.Pipeline>`.
 
 Let us start with a workflow that allows to perform a full-scale
@@ -52,9 +52,7 @@ Pay attention to parameters ``batch_size`` and ``share``: they allow
 to control the number of items in a batch of crops and the number
 of cancerous crops. Parameter ``histo`` controls the distribution which
 is used for sampling locations of random (noncancerous) crops. Although
-``histo`` accepts any 3d-histogram, we advise to use
-`histogram based on distribution of cancer location  <#calculation-of-cancer-location-distribution>`_.
-
+``histo`` accepts any 3d-histogram, we advise to use :ref:`histogram based on distribution of cancer location  <histocalc>`_.
 You can chain ``pipeline`` with some additional actions for training, say, ``DenseNoduleNet``:
 
 .. code-block:: python
@@ -152,6 +150,8 @@ in batches. Just like with `get_crops`, it is easy to add training of *ResNet* t
 
 **Requirements** for ``combine_crops``: datasets of cancerous and noncancerous crops, prepared
 by ``split_dump`` (see  `#step-1`_ ).
+
+.. _histocalc:
 
 Calculation of cancer location distribution
 -------------------------------------------
