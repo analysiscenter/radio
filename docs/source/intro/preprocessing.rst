@@ -143,7 +143,7 @@ Then you can fill the ``masks``-component using the loaded info and action :func
     )
 
 Sample crops from scan: preparing training examples for neural network
---------------------------------------------------------------------
+----------------------------------------------------------------------
 
 RadIO has :func:`~radio.CTImagesMaskedBatch.sample_nodules` that allows to generate batches of small crops, balancing cancerous
 and non-cancerous examples.
@@ -200,7 +200,7 @@ Augment data on-the-fly
 -----------------------
 
 Medical datasets are often small and require additional augmentation to avoid overfitting. For this purpose, it is possible to combine
-:func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.rotate` and :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop`:
+:func:`~radio.CTImagesBatch.rotate` and :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop`:
 
 .. code-block:: python
 
