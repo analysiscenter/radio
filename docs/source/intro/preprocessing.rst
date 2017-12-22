@@ -32,7 +32,7 @@ task to defining a ``glob``-mask for a needed set of scans:
     ctset = Datset(index=ctx, batch_class=CTIMB)
     pipeline = Pipeline()
 
-For loading scans you only need to call action ``load`` specifying
+For loading scans you only need to call action  :func:`~radio.CTImagesBatch.load` specifying
 format of dataset:
 
 .. code-block:: python
@@ -40,7 +40,7 @@ format of dataset:
     pipeline = pipeline.load(fmt='raw') # use fmt = 'dicom' for load of dicom-scans
 
 After performing some preprocessing operations you may need to save the
-results on disk. Action ``dump`` is of help here:
+results on disk. Action :func:`~radio.CTImagesBatch.dump` is of help here:
 
 .. code-block:: python
 
@@ -50,13 +50,13 @@ results on disk. Action ``dump`` is of help here:
 In the end, data of each scan from the batch will be packed with
 :func:`blosc <blosc.pack_array>` and dumped into folder.
 Dumped scans can be loaded later using the same methodology.
-To do this, specify `blosc`-format when performing ``load``:
+To do this, specify `blosc`-format when performing :func:`~radio.CTImagesBatch.load`:
 
 .. code-block:: python
 
     pipeline = Pipeline().load(fmt='blosc')
 
-Both ``dump`` and ``load`` from `blosc` can work component-wise:
+Both :func:`~radio.CTImagesBatch.dump` and :func:`~radio.CTImagesBatch.load` from `blosc` can work component-wise:
 
 .. code-block:: python
 
@@ -68,12 +68,13 @@ Both ``dump`` and ``load`` from `blosc` can work component-wise:
 
     pipeline_load = Pipeline().load(fmt='blosc', components=['spacing', 'origin', 'images'])
 
+.. _ResizeUspac:
 
 Resize and unify spacing
 ------------------------
 
 Another step of preprocessing is **resize** of scans to a specific shape.
-``preprocessing``-module has ``resize``-action, specifying desired
+``preprocessing``-module has :func:`~radio.CTImagesBatch.resize`-action, specifying desired
 output shape in z, y, x order:
 
 .. code-block:: python
@@ -93,7 +94,7 @@ in a following way:
 
 Sometimes, it may be useful to convert scans to the same real-world scale,
 rather than simply reshape to same size.
-This can be achieved through ``unify_spacing``-action:
+This can be achieved through :func:`~radio.CTImagesBatch.unify_spacing`-action:
 
 .. code-block:: python
 
@@ -122,7 +123,7 @@ It naturally has one new component - ``masks``. ``Masks`` have the same
 shape as ``images`` and store cancer-masks of different items
 in a binary format, where value of each voxel is either **0** (non-cancerous voxel) or
 **1** (cancerous voxel). ``masks`` can be made in two steps.
-First, load info about cancerous nodules in a batch:
+First, load info about cancerous nodules in a batch with :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info`:
 
 .. code-block:: python
 
@@ -132,7 +133,7 @@ First, load info about cancerous nodules in a batch:
                                               # containing info about nodules
     )
 
-Then you can fill the ``masks``-component using the loaded info:
+Then you can fill the ``masks``-component using the loaded info and action :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.create_mask`:
 
 .. code-block:: python
 
@@ -144,9 +145,9 @@ Then you can fill the ``masks``-component using the loaded info:
 Sample crops from scan: preparing training examples for neural network
 --------------------------------------------------------------------
 
-RadIO has ``sample_nodules`` that allows to generate batches of small crops, balancing cancerous
+RadIO has :func:`~radio.CTImagesMaskedBatch.sample_nodules` that allows to generate batches of small crops, balancing cancerous
 and non-cancerous examples.
-Let's start preprocessing with ``resize`` of scans:
+Let's start preprocessing with :ref:`resize <ResizeUspac>` of scans:
 
 .. code-block:: python
 
@@ -161,8 +162,8 @@ possible to put them into a neural network. However, it may fail for two main re
 * only small number of scans (say, 3) of such size can be put into a memory of a GPU
 * typically, there are not so many scans available for training (888 for Luna-dataset). As a result, making only one training example out of a scan is rather wasteful.
 
-A more efficient approach is to crop out interesting parts of scans. E.g., this
-piece of code
+A more efficient approach is to crop out interesting parts of scans using :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules`.
+E.g., this piece of code
 
 .. code-block:: python
 
@@ -188,7 +189,7 @@ noncancerous crops of shape **(32, 64, 64)**. Or, alternatively this code
     )
 
 will generate batches of size **20** with **12** cancerous crops. Pay attention to
-parameters ``variance`` and ``histo``:
+parameters ``variance`` and ``histo`` of :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules`:
 
 * ``variance`` introduces variability in the location of cancerous nodule inside the crop. E.g., if set to **(100, 200, 200)**, the location of cancerous nodule will be sampled from normal distribution with zero-mean and variances **(100, 200, 200)** along three axes.
 
@@ -198,7 +199,8 @@ parameters ``variance`` and ``histo``:
 Augment data on-the-fly
 -----------------------
 
-Medical datasets are often small and require additional augmentation to avoid overfitting. For this purpose, it is possible to combine ``rotate`` and ``central_crop``:
+Medical datasets are often small and require additional augmentation to avoid overfitting. For this purpose, it is possible to combine
+:func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.rotate` and :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop`:
 
 .. code-block:: python
 
@@ -246,9 +248,9 @@ It is sometimes useful to print indices of all items from a ``batch``:
 Writing your own actions
 ------------------------
 
-Now that you know how to work with components of ``CTImagesBatch``, you can write your own action. E.g., you need an
+Now that you know how to work with components of :class:`~radio.CTImagesBatch`, you can write your own action. E.g., you need an
 action, that subtracts mean-values of voxel densities from each scan. You can easily inherit one of
-batch classes of **RadIO** (we suggest to use ``CTImagesMaskedBatch``) add make your action ``center`` a method of this
+batch classes of **RadIO** (we suggest to use :class:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch`) add make your action ``center`` a method of this
 class, just like that:
 
 .. code-block:: python
@@ -259,7 +261,7 @@ class, just like that:
     class CTImagesCustomBatch(CTImagesMaskedBatch):
         """ Ct-scans batch class with your own action """
 
-        @action  # action-decorator allows you to use your method to chain your methods with other actions in pipelines
+        @action  # action-decorator allows you to chain your method with other actions in pipelines
         def center(self):
             """ Center values of pixels in each scan from batch """
             for ix in self.indices:
@@ -268,3 +270,13 @@ class, just like that:
                 images_ix[:] -= mean_ix
 
             return self  # action must always return a batch-object
+
+You can then chain your action ``center`` with other actions of :class:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch`
+to form custom preprocessing pipelines:
+
+.. code-block:: python
+
+    pipeline = (Pipeline()
+                .load(fmt='blosc')  # load data
+                .center()  # mean-normalize scans
+                .sample_nodules(batch_size=20))  # sample cancerous and noncancerous crops
