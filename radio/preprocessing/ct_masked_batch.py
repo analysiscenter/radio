@@ -1020,7 +1020,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch_size : int
             number of patches to feed in model in one iteration.
         targets_mode: str
-            name of y component, can be 'segmentation', 'regression' or 'classification'.
+            type of targets 'segmentation', 'regression' or 'classification'.
         data_format: str
             format of neural network input data,
             can be 'channels_first' or 'channels_last'.
