@@ -1,7 +1,6 @@
 """ Different useful functions when working with models and CTImagesMaskedBatch. """
 
 import numpy as np
-import pandas as pd
 from numba import njit
 
 
@@ -132,13 +131,19 @@ def overlap_nodules(batch, nodules_true, nodules_pred):
             nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
         except KeyError:
             nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
-            pred_out.append(nods_pred.assign(overlap_index=lambda df: [np.nan] * nods_true.shape[0]))  # pylint: disable=cell-var-from-loop
+            nods_pred.loc[:, 'overlap_index'] = np.nan
+            nods_pred.loc[:, 'source_id'] = group_name
+            nods_pred = nods_pred.set_index('nodule_id')
+            pred_out.append(nods_pred)
             continue
         try:
             nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
         except KeyError:
             nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
-            true_out.append(nods_true.assign(overlap_index=lambda df: [np.nan] * nods_pred.shape[0]))  # pylint: disable=cell-var-from-loop
+            nods_true.loc[:, 'overlap_index'] = np.nan
+            nods_true.loc[:, 'source_id'] = group_name
+            nods_true = nods_true.set_index('nodule_id')
+            true_out.append(nods_true)
             continue
 
         nods_true = nods_true.set_index('nodule_id').loc[:, ['diam', 'locZ', 'locY', 'locX']]
@@ -162,4 +167,4 @@ def overlap_nodules(batch, nodules_true, nodules_pred):
         true_out.append(nods_true)
         pred_out.append(nods_pred)
 
-        return {'true_stats': pd.concat(true_out), 'pred_stats': pd.concat(pred_out)}
+    return {'true_stats': true_out, 'pred_stats': pred_out}
