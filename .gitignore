@@ -2,4 +2,5 @@
 .cache/*
 pycache/
 .ipynb_checkpoints
+*.png
 build/
