@@ -1001,7 +1001,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
                         batch_size=4, targets_mode='segmentation', data_format='channels_last',
-                        show_progress=True):
+                        show_progress=True, model_type='tf'):
         """ Get predictions of the model on data contained in batch.
 
         Transforms scan data into patches of shape CROP_SHAPE and then feed
@@ -1024,6 +1024,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         data_format: str
             format of neural network input data,
             can be 'channels_first' or 'channels_last'.
+        model_type : str
+            represents type of model that will be used for prediction.
+            Possible values are 'keras' or 'tf'.
 
         Returns
         -------
@@ -1046,7 +1049,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if show_progress:
             iterations = tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
         for i in iterations:
-            current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
+            if model_type == 'tf':
+                current_prediction = np.asarray(_model.predict(feed_dict={'images': patches_arr[i: i + batch_size, ...]}))
+            else:
+                current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
             if targets_mode == 'classification':
                 current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
