@@ -421,7 +421,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
         # make iterable out of components-arg
-        components = list(components)
+        components = [components] if isinstance(components, str) else list(components)
 
         # load shapes, perform memory allocation
         for component in components:
