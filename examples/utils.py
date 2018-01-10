@@ -43,7 +43,6 @@ def show_slices(batches, scan_indices, ns_slice, grid=True, **kwargs):
         # set inverse-spacing grid
         if grid:
             inv_spacing = 1 / batch.get(scan_index, 'spacing').reshape(-1)[1:]
-            print(inv_spacing)
             step_mult = 50
             xticks = np.arange(0, slc.shape[0], step_mult * inv_spacing[0])
             yticks = np.arange(0, slc.shape[1], step_mult * inv_spacing[1])
