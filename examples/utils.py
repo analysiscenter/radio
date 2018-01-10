@@ -1,8 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def show_slices(batches, scan_indices, ns_slice, **kwargs):
-def show_slices(batches, scan_indices, ns_slice, **kwargs):
+def show_slices(batches, scan_indices, ns_slice, grid=True, **kwargs):
     """ Plot slice with number n_slice from scan with index given by scan_index from batch
     """
     font_caption = {'family': 'serif',
@@ -42,17 +41,18 @@ def show_slices(batches, scan_indices, ns_slice, **kwargs):
                         fontdict=font_caption, transform=axes[0][i].transAxes)
 
         # set inverse-spacing grid
-        inv_spacing = 1 / batch.get(scan_index, 'spacing').reshape(-1)[1:]
-        print(inv_spacing)
-        step_mult = 50
-        xticks = np.arange(0, slc.shape[0], step_mult * inv_spacing[0])
-        yticks = np.arange(0, slc.shape[1], step_mult * inv_spacing[1])
-        axes[0][i].set_xticks(xticks, minor=True)
-        axes[0][i].set_yticks(yticks, minor=True)
-        axes[0][i].set_xticks([], minor=False)
-        axes[0][i].set_yticks([], minor=False)
+        if grid:
+            inv_spacing = 1 / batch.get(scan_index, 'spacing').reshape(-1)[1:]
+            print(inv_spacing)
+            step_mult = 50
+            xticks = np.arange(0, slc.shape[0], step_mult * inv_spacing[0])
+            yticks = np.arange(0, slc.shape[1], step_mult * inv_spacing[1])
+            axes[0][i].set_xticks(xticks, minor=True)
+            axes[0][i].set_yticks(yticks, minor=True)
+            axes[0][i].set_xticks([], minor=False)
+            axes[0][i].set_yticks([], minor=False)
 
-        axes[0][i].grid(color='r', linewidth=1.5, alpha=0.5, which='minor')
+            axes[0][i].grid(color='r', linewidth=1.5, alpha=0.5, which='minor')
 
 
     plt.show()
