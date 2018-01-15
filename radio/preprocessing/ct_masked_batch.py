@@ -1049,11 +1049,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         if show_progress:
             iterations = tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
         for i in iterations:
-            if model_type == 'tf':
-                current_prediction = np.asarray(_model.predict(feed_dict={'images': patches_arr[i: i + batch_size, ...]}))
-            else:
-                current_prediction = np.asarray(_model.predict(patches_arr[i: i + batch_size, ...]))
 
+            if model_type == 'tf':
+                _prediction = _model.predict(feed_dict={'images': patches_arr[i: i + batch_size, ...]})
+            else:
+                _prediction = _model.predict(patches_arr[i: i + batch_size, ...])
+
+            current_prediction = np.asarray(_prediction)
             if targets_mode == 'classification':
                 current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
                                                for prob in current_prediction.ravel()])
