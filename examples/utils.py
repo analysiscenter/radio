@@ -55,7 +55,8 @@ def show_slices(batches, scan_indices, ns_slice, grid=True, **kwargs):
         axes[0][i].imshow(slc, cmap=plt.cm.gray, clim=clim)
         axes[0][i].set_xlabel('Shape: {}'.format(slc.shape[1]), fontdict=font)
         axes[0][i].set_ylabel('Shape: {}'.format(slc.shape[0]), fontdict=font)
-        axes[0][i].set_title('Scan #{}, slice #{} \n \n'.format(i, n_slice), fontdict=font_caption)
+        title = 'Scan' if component == 'images' else 'Mask'
+        axes[0][i].set_title('{} #{}, slice #{} \n \n'.format(title, scan_index, n_slice), fontdict=font_caption)
         axes[0][i].text(0.2, -0.25, 'Total slices: {}'.format(len(batch.get(scan_index, component))),
                         fontdict=font_caption, transform=axes[0][i].transAxes)
 
