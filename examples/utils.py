@@ -31,7 +31,9 @@ def show_slices(batches, scan_indices, ns_slice, grid=True, **kwargs):
     def iterize(arg):
         return arg if isinstance(arg, (list, tuple)) else (arg, )
 
-    batches, scan_indices, ns_slice  = [iterize(arg) for arg in (batches, scan_indices, ns_slice)]
+    components = kwargs.get('components', 'images')
+    batches, scan_indices, ns_slice, components  = [iterize(arg) for arg in (batches, scan_indices,
+                                                                             ns_slice, components)]
     clims = kwargs.get('clims', (-1200, 300))
     clims = clims if isinstance(clims[0], (tuple, list)) else (clims, )
 
@@ -40,18 +42,21 @@ def show_slices(batches, scan_indices, ns_slice, grid=True, **kwargs):
     def lengthen(arg):
         return arg if len(arg) == n_boxes else arg * n_boxes
 
-    batches, scan_indices, ns_slice, clims = [lengthen(arg) for arg in (batches, scan_indices, ns_slice, clims)]
+    batches, scan_indices, ns_slice, clims, components = [lengthen(arg) for arg in (batches, scan_indices, ns_slice,
+                                                                                    clims, components)]
 
     # plot slices
     _, axes = plt.subplots(1, n_boxes, squeeze=False, figsize=(10, 4 * n_boxes))
 
-    for i, batch, scan_index, n_slice, clim in zip(range(n_boxes), batches, scan_indices, ns_slice, clims):
-        slc = batch.get(scan_index, 'images')[n_slice]
+    zipped = zip(range(n_boxes), batches, scan_indices, ns_slice, clims, components)
+
+    for i, batch, scan_index, n_slice, clim, component in zipped:
+        slc = batch.get(scan_index, component)[n_slice]
         axes[0][i].imshow(slc, cmap=plt.cm.gray, clim=clim)
         axes[0][i].set_xlabel('Shape: {}'.format(slc.shape[1]), fontdict=font)
         axes[0][i].set_ylabel('Shape: {}'.format(slc.shape[0]), fontdict=font)
         axes[0][i].set_title('Scan #{}, slice #{} \n \n'.format(i, n_slice), fontdict=font_caption)
-        axes[0][i].text(0.2, -0.25, 'Total slices: {}'.format(len(batch.get(scan_index, 'images'))),
+        axes[0][i].text(0.2, -0.25, 'Total slices: {}'.format(len(batch.get(scan_index, component))),
                         fontdict=font_caption, transform=axes[0][i].transAxes)
 
         # set inverse-spacing grid
