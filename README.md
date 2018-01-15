@@ -54,7 +54,7 @@ a workflow):
 from radio.pipelines import get_crops
 
 pipe = get_crops(fmt='raw', shape=(128, 256, 256),
-                 nodules_df=nodules, batch_size=20,
+                 nodules=nodules, batch_size=20,
                  share=0.6, nodule_shape=(32, 64, 64))
 
 (ctset >> pipe).gen_batch(batch_size=12, shuffle=True)

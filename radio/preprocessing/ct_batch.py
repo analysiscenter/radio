@@ -365,13 +365,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_dicom(self, patient_id, *args, **kwargs):
+    def _load_dicom(self, patient_id, **kwargs):
         """ Read dicom file, load 3d-array and convert to Hounsfield Units (HU).
 
         Parameters
         ----------
         patient_id : str
-            patient dicom file index from batch, to be loaded and
+            patient dicom file index from batch, to be loaded.
 
         Returns
         -------
@@ -383,13 +383,24 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Conversion to hounsfield unit scale using meta from dicom-scans is performed.
         """
         # put 2d-scans for each patient in a list
+        patient_pos = self.index.get_pos(patient_id)
         patient_folder = self.index.get_fullpath(patient_id)
         list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
                           for s in os.listdir(patient_folder)]
 
         list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
-        intercept_pat = list_of_dicoms[0].RescaleIntercept
-        slope_pat = list_of_dicoms[0].RescaleSlope
+
+        dicom_slice = list_of_dicoms[0]
+        intercept_pat = dicom_slice.RescaleIntercept
+        slope_pat = dicom_slice.RescaleSlope
+
+        self.spacing[patient_pos, ...] = np.asarray([float(dicom_slice.SliceThickness),
+                                                     float(dicom_slice.PixelSpacing[0]),
+                                                     float(dicom_slice.PixelSpacing[1])], dtype=np.float)
+
+        self.origin[patient_pos, ...] = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
+                                                    float(dicom_slice.ImagePositionPatient[0]),
+                                                    float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
 
         patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
 
