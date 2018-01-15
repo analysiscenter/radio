@@ -1,5 +1,19 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
+def get_nodules_pixel_coords(batch):
+    """ get numpy array of nodules-locations and diameter in relative coords
+    """
+    nodules_dict = dict()
+    nodules_dict.update(numeric_ix=batch.nodules.patient_pos)
+    pixel_zyx = np.rint((batch.nodules.nodule_center - batch.nodules.origin) / batch.nodules.spacing).astype(np.int)
+    nodules_dict.update({'coord' + letter: pixel_zyx[:, i] for i, letter in enumerate(['Z', 'Y', 'X'])})
+    nodules_dict.update({'diameter_pixels': (np.rint(batch.nodules.nodule_size / batch.nodules.spacing).mean(axis=1)
+                                             .astype(np.int))})
+    pixel_nodules_df = pd.DataFrame.from_dict(nodules_dict).loc[:, ('numeric_ix', 'coordZ', 'coordY',
+                                                                    'coordX', 'diameter_pixels')]
+    return pixel_nodules_df
 
 def show_slices(batches, scan_indices, ns_slice, grid=True, **kwargs):
     """ Plot slice with number n_slice from scan with index given by scan_index from batch
