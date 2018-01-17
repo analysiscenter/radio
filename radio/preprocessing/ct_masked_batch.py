@@ -948,6 +948,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch
         """
         crop_size = np.asarray(crop_size).reshape(-1)
+        crop_halfsize = np.rint(crop_size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape)
                       for i in range(len(self))]
         if any(np.any(shape < crop_size) for shape in img_shapes):
@@ -968,6 +969,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.images = np.concatenate(cropped_images, axis=0)
         if crop_mask and self.masks is not None:
             self.masks = np.concatenate(cropped_masks, axis=0)
+
+        # recalculate origin, refresh nodules_info, leave only relevant nodules
+        self.origin = self.origin + self.spacing * crop_halfsize
+        self._refresh_nodules_info()
+        self._filter_nodules_info()
+
         return self
 
     def flip(self):
