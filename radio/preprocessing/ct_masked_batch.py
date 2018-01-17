@@ -974,7 +974,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         self.origin = self.origin + self.spacing * crop_halfsize
         if self.nodules is not None:
             self._refresh_nodules_info()
-        self._filter_nodules_info()
+            self._filter_nodules_info()
 
         return self
 
