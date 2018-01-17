@@ -972,7 +972,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         # recalculate origin, refresh nodules_info, leave only relevant nodules
         self.origin = self.origin + self.spacing * crop_halfsize
-        self._refresh_nodules_info()
+        if self.nodules is not None:
+            self._refresh_nodules_info()
         self._filter_nodules_info()
 
         return self
