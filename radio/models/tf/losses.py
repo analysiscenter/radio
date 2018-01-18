@@ -1,9 +1,6 @@
 """ Contains losses used in tensorflow models. """
 
 import tensorflow as tf
-from ...dataset.dataset.models.tf.losses import dice
-
-dice_loss = dice
 
 
 def reg_l2_loss(labels, predictions, lambda_coords=0.75):
@@ -110,6 +107,31 @@ def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
                  + beta * tf.reduce_sum((1 - predictions) * labels))
 
     return -(truepos + smooth) / (truepos + smooth + fp_and_fn)
+
+
+def dice_loss(labels, predictions, smooth=1e-6):
+    """ Loss function base on dice coefficient.
+
+    Parameters
+    ----------
+    labels : tf.Tensor
+        tensor containing target mask.
+    predictions : tf.Tensor
+        tensor containing predicted mask.
+    smooth : float
+        small real value used for avoiding division by zero error.
+
+    Returns
+    -------
+    tf.Tensor
+        tensor containing dice loss.
+    """
+    labels = tf.contrib.layers.flatten(labels)
+    predictions = tf.contrib.layers.flatten(predictions)
+    intersection = tf.reduce_sum(labels * predictions)
+    answer = (2. * intersection + smooth) / (tf.reduce_sum(labels)
+                                             + tf.reduce_sum(predictions) + smooth)
+    return -answer
 
 
 def jaccard_coef_logloss(labels, predictions, smooth=1e-10):
