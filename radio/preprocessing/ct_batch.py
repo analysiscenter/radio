@@ -1221,10 +1221,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         output_batch.spacing = self.rescale(output_batch.images_shape)
         return output_batch
 
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil', new_batch=True)
-    def calc_lung_mask(self, *args, **kwargs):     # pylint: disable=unused-argument, no-self-use
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
+    def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use
         """ Return a mask for lungs """
-        return calc_lung_mask_numba
+        return calc_lung_mask_numba(patient, out_patient, res, erosion_radius)
 
     @action
     def segment(self, erosion_radius=2):
@@ -1425,8 +1425,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='nogil')
-    def flip(self):    # pylint: disable=no-self-use
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    def flip(self, patient, out_patient, res):    # pylint: disable=no-self-use
         """ Invert the order of slices for each patient
 
         Returns
@@ -1437,7 +1437,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         --------
         >>> batch = batch.flip()
         """
-        return flip_patient_numba
+        return flip_patient_numba(patient, out_patient, res)
 
     def get_axial_slice(self, person_number, slice_height):
         """ Get axial slice (e.g., for plots)
