@@ -15,6 +15,18 @@ def get_nodules_pixel_coords(batch):
                                                                     'coordX', 'diameter_pixels')]
     return pixel_nodules_df
 
+def num_of_cancerous_pixels(batch, max_num=10):
+    """ Calculate number of cancerous pixels in items from batch
+    """
+    stats = dict()
+    n_print = min(max_num, len(batch))
+    for i in range(n_print):
+        stats.update({'Scan ' + str(i): int(np.sum(batch.get(i, 'masks')))})
+
+    stats = {'Number of cancerous  pixels: ': stats}
+    stats_df = pd.DataFrame.from_dict(stats, orient='index').loc[:, ['Scan '+ str(i) for i in range(n_print)]]
+    return stats_df
+
 def show_slices(batches, scan_indices, ns_slice, grid=True, **kwargs):
     """ Plot slice with number n_slice from scan with index given by scan_index from batch
     """
