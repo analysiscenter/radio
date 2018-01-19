@@ -28,15 +28,10 @@ Tutorials
 
 In all, there are four tutorials:
 
-* In the `first <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.I.ipynb>`_ one you can learn how to set up a dataset of CT-scans and
-set up a basic preprocessing workflow.
-* In the `second tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.II.ipynb>`_ we discuss in depth preprocessing and augmenting capabilities of
-RadIO.
-* The `third tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.III.ipynb>`_ aims to explain how RadIO can help you to generate batches of crops,
-that can be used for training a segmenting net on task of cancer segmentation.
-* Lastly, in the `fourth tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.IV.ipynb>`_
- you will train a set of segmenting neural networks (including `V-Net <https://arxiv.org/abs/1606.04797>`_)
-from RadIO's zoo of models.
+* In the `first <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.I.ipynb>`_ one you can learn how to set up a dataset of CT-scans and set up a basic preprocessing workflow.
+* In the `second tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.II.ipynb>`_ we discuss in depth preprocessing and augmenting capabilities of RadIO.
+* The `third tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.III.ipynb>`_ aims to explain how RadIO can help you to generate batches of crops, that can be used for training a segmenting net on task of cancer segmentation.
+* Lastly, in the `fourth tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.IV.ipynb>`_ you will train a set of segmenting neural networks (including `V-Net <https://arxiv.org/abs/1606.04797>`_) from RadIO's zoo of models.
 
 Contents
 ========
@@ -68,7 +63,7 @@ First, you index the scans using the :mod:`dataset <http://analysiscenter.github
 You may want to resize the scans to equal shape **[128, 256, 256]**,
 normalize voxel densities to range **[0, 255]** and dump transformed
 scans. Preprocessing like this can be easily done with the following
-:class:`pipeline <dataset.Pipeline>` , just like that:
+:class:`pipeline <dataset.Pipeline>`, just like that:
 
 .. code-block:: python
 

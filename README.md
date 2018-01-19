@@ -12,6 +12,10 @@ Main features:
 - Sample crops of any size from CT-scans for training, predict [on the whole scan](https://analysiscenter.github.io/lung_cancer//api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan)
 - Customize distribution of crop [locations](https://analysiscenter.github.io/radio/intro/preprocessing.html?highlight=histogram#sample-crops-from-scan-preparing-training-examples-for-neural-net) for improving training
 
+This documentation is made to provide a comprehensive review of RadIO's capabilities. Nevertheless,
+we advise you to take a look at the [tutorials-section](https://github.com/analysiscenter/radio/tree/master/tutorials) on
+our [repo](https://github.com/analysiscenter/radio).
+
 # Tutorials
 
 In all, there are four tutorials:
