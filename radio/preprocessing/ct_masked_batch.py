@@ -897,8 +897,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Parameters
         ----------
-        image : ndarray(k,l,m)
-            input 3D image corresponding to CT-scan.
         depth : int
             number of slices over which xip operation is performed.
         stride : int
@@ -978,7 +976,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def flip(self):
+    def flip(self):  # pylint: disable=arguments-differ
         """ Invert the order of slices for each patient
 
         Returns

@@ -49,7 +49,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     components : tuple of strings.
         List names of data components of a batch, which are `images`,
         `origin` and `spacing`.
-        NOTE: Implementation of this property is required by Base class.
+        NOTE: Implementation of this attribute is required by Base class.
     index : dataset.index
         represents indices of scans from a batch
     images : ndarray
@@ -368,16 +368,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def _load_dicom(self, patient_id, **kwargs):
         """ Read dicom file, load 3d-array and convert to Hounsfield Units (HU).
 
-        Parameters
-        ----------
-        patient_id : str
-            patient dicom file index from batch, to be loaded.
-
-        Returns
-        -------
-        ndarray
-            3d-scan as np.ndarray
-
         Notes
         -----
         Conversion to hounsfield unit scale using meta from dicom-scans is performed.
@@ -480,9 +470,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        ix : str
-            item index from batch to load 3D array
-            and stack with others in images component.
         **kwargs
             components : tuple
                 tuple of strings with names of components of data
@@ -1131,9 +1118,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        index : int
-            index of patient in batch.
-            This argument is passed by inbatch_parallel
         angle : float
             degree of rotation.
         components : tuple, list, ndarray of strings or str
@@ -1178,8 +1162,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        image : ndarray(k,l,m)
-            input 3D image corresponding to CT-scan.
         depth : int
             number of slices over which xip operation is performed.
         stride : int
@@ -1223,11 +1205,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
     def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use
-        """ Return a mask for lungs """
+        """ Return a mask for lungs
+
+        Parameters
+        ----------
+        erosion_radius : int
+            radius of erosion to be performed.
+        """
         return calc_lung_mask_numba(patient, out_patient, res, erosion_radius)
 
     @action
-    def segment(self, erosion_radius=2):
+    def segment(self, erosion_radius=2, **kwargs):
         """ Segment lungs' content from 3D array.
 
         Paramters
@@ -1249,7 +1237,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get mask with specified params, apply it to scans
-        mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius)
+        mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius, **kwargs)  # pylint: disable=no-value-for-parameter
         lungs_mask = mask_batch.images
         self.images *= lungs_mask
 
