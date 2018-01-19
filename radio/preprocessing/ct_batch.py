@@ -1135,6 +1135,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Notes
         -----
         zero padding automatically added after rotation.
+        Use this action in the end of pipelines for purposes of augmentation.
+        E.g., after :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules`
 
         Examples
         --------

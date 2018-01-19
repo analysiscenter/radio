@@ -271,6 +271,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Notes
         -----
+        Run this action only after  :func:`~radio.CTImagesBatch.load`.
         The method fills in record array self.nodules that contains the following information about nodules:
                                - self.nodules.nodule_center -- ndarray(num_nodules, 3) centers of
                                  nodules in world coords;
@@ -433,7 +434,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         Notes
         -----
         `nodules` must be not None before calling this method.
-        see fetch_nodules_info() for more details.
+        see :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info`
+        for more details.
         """
         if self.nodules is None:
             logger.warning("Info about nodules location must " +
