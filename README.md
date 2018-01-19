@@ -12,6 +12,20 @@ Main features:
 - Sample crops of any size from CT-scans for training, predict [on the whole scan](https://analysiscenter.github.io/lung_cancer//api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan)
 - Customize distribution of crop [locations](https://analysiscenter.github.io/radio/intro/preprocessing.html?highlight=histogram#sample-crops-from-scan-preparing-training-examples-for-neural-net) for improving training
 
+# Tutorials
+
+In all, there are four tutorials:
+
+- In the [first](https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.I.ipynb) one you can learn how to set up a dataset of CT-scans and
+set up a basic preprocessing workflow.
+- In the [second tutorial](https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.II.ipynb) we discuss in depth preprocessing and augmenting capabilities of
+RadIO.
+- The [third tutorial](https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.III.ipynb) aims to explain how RadIO can help you to generate batches of crops,
+that can be used for training a segmenting net on task of cancer segmentation.
+- Lastly, in the [fourth tutorial](https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.IV.ipynb)
+you will train a set of segmenting neural networks (including [V-Net](https://arxiv.org/abs/1606.04797))
+from RadIO's zoo of models.
+
 ## Preprocess scans using implemented actions
 Preprocessing-module contains a set of [actions](https://github.com/analysiscenter/dataset), that allow to efficiently prepare a dataset of CT-scans for training neural nets.
 Say, you have a bunch of scans in **DICOM** format with varying shapes.
