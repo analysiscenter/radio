@@ -49,7 +49,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     components : tuple of strings.
         List names of data components of a batch, which are `images`,
         `origin` and `spacing`.
-        NOTE: Implementation of this property is required by Base class.
+        NOTE: Implementation of this attribute is required by Base class.
     index : dataset.index
         represents indices of scans from a batch
     images : ndarray
