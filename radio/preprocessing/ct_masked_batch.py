@@ -976,7 +976,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def flip(self):
+    def flip(self):  # pylint: disable=arguments-differ
         """ Invert the order of slices for each patient
 
         Returns
