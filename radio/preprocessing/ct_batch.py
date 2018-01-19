@@ -1131,9 +1131,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        index : int
-            index of patient in batch.
-            This argument is passed by inbatch_parallel
         angle : float
             degree of rotation.
         components : tuple, list, ndarray of strings or str
