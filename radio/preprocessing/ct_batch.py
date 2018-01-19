@@ -1228,7 +1228,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return calc_lung_mask_numba(patient, out_patient, res, erosion_radius)
 
     @action
-    def segment(self, erosion_radius=2):
+    def segment(self, erosion_radius=2, **kwargs):
         """ Segment lungs' content from 3D array.
 
         Paramters
@@ -1250,7 +1250,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get mask with specified params, apply it to scans
-        mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius)  # pylint: disable=no-value-for-parameter
+        mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius, **kwargs)  # pylint: disable=no-value-for-parameter
         lungs_mask = mask_batch.images
         self.images *= lungs_mask
 
