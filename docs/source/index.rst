@@ -17,7 +17,7 @@ Main features:
 * Set up workflows with minimum code with :func:`actions <dataset.action>` or use ready-made :doc:`pipelines <intro/pipelines>` for preprocessing or training models
 * Train with ease a zoo of 18 high-performing neural networks for classification or segmentation
 * Sample crops of any size from CT-scans for training, predict `on the whole scan <https://analysiscenter.github.io/lung_cancer//api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan>`_
-* Customize distribution of crop `locations <https://analysiscenter.github.io/radio/intro/preprocessing.html?highlight=histogram#sample-crops-from-scan-preparing-training-examples-for-neural-net>`_ for improving training
+* Customize distribution of crop locations for improving training
 
 Contents
 ========
