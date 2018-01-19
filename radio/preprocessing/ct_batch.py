@@ -368,16 +368,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def _load_dicom(self, patient_id, **kwargs):
         """ Read dicom file, load 3d-array and convert to Hounsfield Units (HU).
 
-        Parameters
-        ----------
-        patient_id : str
-            patient dicom file index from batch, to be loaded.
-
-        Returns
-        -------
-        ndarray
-            3d-scan as np.ndarray
-
         Notes
         -----
         Conversion to hounsfield unit scale using meta from dicom-scans is performed.
@@ -480,9 +470,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        ix : str
-            item index from batch to load 3D array
-            and stack with others in images component.
         **kwargs
             components : tuple
                 tuple of strings with names of components of data
