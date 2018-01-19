@@ -1218,7 +1218,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
     def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use
-        """ Return a mask for lungs """
+        """ Return a mask for lungs
+
+        Parameters
+        ----------
+        erosion_radius : int
+            radius of erosion to be performed.
+        """
         return calc_lung_mask_numba(patient, out_patient, res, erosion_radius)
 
     @action
