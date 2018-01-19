@@ -1249,7 +1249,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch = batch.segment(erosion_radius=4, num_threads=20)
         """
         # get mask with specified params, apply it to scans
-        mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius)
+        mask_batch = self.calc_lung_mask(erosion_radius=erosion_radius)  # pylint: disable=no-value-for-parameter
         lungs_mask = mask_batch.images
         self.images *= lungs_mask
 
