@@ -1220,7 +1220,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     def segment(self, erosion_radius=2, **kwargs):
         """ Segment lungs' content from 3D array.
 
-        Paramters
+        Parameters
         ---------
         erosion_radius : int
             radius of erosion to be performed.
