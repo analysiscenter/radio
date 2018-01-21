@@ -174,6 +174,22 @@ After that just import `RadIO`::
 
 Citing RadIO
 ==============
-Please cite RadIO in your publications if it helps your research.::
+
+Please cite RadIO in your publications if it helps your research.
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1156363.svg
+   :target: https://doi.org/10.5281/zenodo.1156363
+
+::
 
     Khudorozhkov R., Emelyanov K., Koryagin A. RadIO library for data science research of CT images. 2017.
+
+::
+
+    @misc{cardio_2017_1156363,
+      author = {Khudorozhkov R., Emelyanov K., Koryagin A.},
+      title  = {RadIO library for data science research of CT images},
+      year   = 2017,
+      doi    = {10.5281/zenodo.1156363},
+      url    = {https://doi.org/10.5281/zenodo.1156363}
+    }
