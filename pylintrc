@@ -1,0 +1,22 @@
+[MASTER]
+extension-pkg-whitelist=numpy
+
+[FORMAT]
+max-line-length=120
+max-attributes=8
+max-args=8
+max-locals=20
+min-similarity-lines=6
+max-module-lines=1600
+
+[BASIC]
+good-names=_,x,y,z,i,j,k,l,m,n,p,r,u,ex
+
+[TYPECHECK]
+ignored-modules=numpy
+
+[MISCELLANEOUS]
+notes=
+
+[MESSAGE CONTROL]
+disable=invalid-name, unsubscriptable-object, unused-argument, no-self-use, not-context-manager
