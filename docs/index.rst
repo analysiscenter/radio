@@ -186,7 +186,7 @@ Please cite RadIO in your publications if it helps your research.
 
 ::
 
-    @misc{cardio_2017_1156363,
+    @misc{radio_2017_1156363,
       author = {Khudorozhkov R., Emelyanov K., Koryagin A.},
       title  = {RadIO library for data science research of CT images},
       year   = 2017,
