@@ -153,4 +153,4 @@ When cloning repo from GitHub use flag ``--recursive`` to make sure that ``Datas
 
 Please cite RadIO in your publications if it helps your research.
 
-    Khudorozhkov R., Emelyanov K., Koryagin A., Ushakov A. RadIO library for data science research of CT images. 2017.
+    Khudorozhkov R., Emelyanov K., Koryagin A. RadIO library for data science research of CT images. 2017.
