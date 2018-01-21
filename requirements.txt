@@ -1,0 +1,11 @@
+numpy>=1.10
+pandas>=0.21.0
+pydicom>=0.9.9
+blosc>=1.5.0
+numba>=0.36.1
+aiofiles>=0.3.1
+SimpleITK
+scipy>=0.17.0
+scikit-image>=0.13.0
+dill>=0.2.7
+scikit-learn
