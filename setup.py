@@ -11,7 +11,7 @@ with open('radio/__init__.py', 'r') as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)
 
 
-with open('docs/source/index.rst', 'r') as f:
+with open('docs/index.rst', 'r') as f:
     long_description = f.read()
 
 
