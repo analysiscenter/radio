@@ -11,6 +11,7 @@ Let us start with a workflow that allows to perform a full-scale
 preprocessing over a dataset of scans and start training the model
 of your choice.
 
+
 Preprocessing workflow
 ----------------------
 
@@ -38,8 +39,8 @@ approach is to chain several actions:
         .run(batch_size=8, lazy=True, shuffle=True)
     )
 
-The simpler approach is to use :func:`~radio.pipelines.pipelines.get_crops`-function that manufactures frequently
-used preprocessing pipelines. With :func:`~radio.pipelines.pipelines.get_crops` you can get the pipeline written above
+The simpler approach is to use :func:`~.pipelines.get_crops`-function that manufactures frequently
+used preprocessing pipelines. With :func:`~.pipelines.get_crops` you can get the pipeline written above
 in two lines of code:
 
 .. code-block:: python
@@ -79,7 +80,7 @@ Created pipeline will generate `~1500`
 training examples, in one run through Luna-dataset
 (one epoch). It may take a couple of hours to
 work through the pipeline, even for a high performing machine.
-The reason for this is that both :func:`~radio.CTImagesBatch.unify_spacing` and :func:`~radio.CTImagesBatch.load` are costly
+The reason for this is that both :meth:`~.CTImagesBatch.unify_spacing` and :meth:`~.CTImagesBatch.load` are costly
 operations.
 
 That being said, for implementing an efficient learning procedure
@@ -87,14 +88,16 @@ we advise to use another workflow, that allows to generate more
 than `100000` training examples after running one time through
 the Luna-dataset.
 
-**Requirements** for :func:`~radio.pipelines.pipelines.get_crops`: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+**Requirements** for :func:`~.pipelines.get_crops`: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
 of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
+
 
 Faster workflow
 ---------------
 
 Preparation of richer training dataset can be achieved in two steps using two pipeline-creators:
-:func:`~radio.pipelines.pipelines.split_dump` and :func:`~radio.pipelines.pipelines.combine_crops`.
+:func:`~.pipelines.split_dump` and :func:`~.pipelines.combine_crops`.
+
 
 .. _StepFirst:
 
@@ -102,7 +105,7 @@ Step 1
 ^^^^^^
 
 During the first step you dump large sets of cancerous and non-cancerous
-crops in separate folders using :func:`~radio.pipelines.pipelines.split_dump`:
+crops in separate folders using :func:`~.pipelines.split_dump`:
 
 .. code-block:: python
 
@@ -111,13 +114,14 @@ crops in separate folders using :func:`~radio.pipelines.pipelines.split_dump`:
                           nodules=nodules)
     (ctset >> pipeline).run()  # one run through Luna; may take a couple of hours
 
-**Requirements** for :func:`~radio.pipelines.pipelines.split_dump`: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+**Requirements** for :func:`~.pipelines.split_dump`: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
 of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
+
 
 Step 2
 ^^^^^^
 
-You can now combine cancerous and non-cancerous crops from two folders using :func:`~radio.pipelines.pipelines.combine_crops`.
+You can now combine cancerous and non-cancerous crops from two folders using :func:`~.pipelines.combine_crops`.
 First, you associate a :class:`dataset <dataset.Dataset>` with each folder:
 
 .. code-block:: python
@@ -133,9 +137,9 @@ You can balance crops from two dataset in any proportion you want:
     from radio.pipelines import combine_crops
     pipeline = combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10))
 
-Pay attention to parameter ``batch_sizes`` in :func:`~radio.pipelines.pipelines.combine_crops`-function.
+Pay attention to parameter ``batch_sizes`` in :func:`~.pipelines.combine_crops`-function.
 It defines how many cancerous and non-cancerous crops will be included
-in batches. Just like with :func:`~radio.pipelines.pipelines.get_crops`, it is easy to add training of *ResNet* to
+in batches. Just like with :func:`~.pipelines.get_crops`, it is easy to add training of *ResNet* to
 ``pipeline``:
 
 .. code-block:: python
@@ -150,14 +154,15 @@ in batches. Just like with :func:`~radio.pipelines.pipelines.get_crops`, it is e
     )
     (ctset >> pipeline).run(BATCH_SIZE=12)
 
-**Requirements** for :func:`~radio.pipelines.pipelines.combine_crops`: datasets of cancerous and noncancerous crops, prepared
-by :func:`~radio.pipelines.pipelines.split_dump` (see  :ref:`StepFirst` ).
+**Requirements** for :func:`~.pipelines.combine_crops`: datasets of cancerous and noncancerous crops, prepared
+by :func:`~.pipelines.split_dump` (see :ref:`StepFirst`).
+
 
 .. _Histocalc:
 
 Calculation of cancer location distribution
 -------------------------------------------
-Another useful pipeline-creator is :func:`~radio.pipelines.pipelines.update_histo`. With :func:`~radio.pipelines.pipelines.update_histo`
+Another useful pipeline-creator is :func:`~radio.pipelines.pipelines.update_histo`. With :func:`~.pipelines.update_histo`
 you can get a histogram-estimate of distribution of cancer-location inside preprocessed scans:
 
 .. code-block:: python
@@ -176,7 +181,7 @@ in ``histo``:
 
     (ctset >> pipeline).run() # may take a couple of hours
 
-You can now use ``histo`` in pipeline :func:`~radio.pipelines.pipelines.get_crops`` to sample batches of cancerous and noncancerous crops:
+You can now use ``histo`` in pipeline :func:`~.pipelines.get_crops`` to sample batches of cancerous and noncancerous crops:
 
 .. code-block:: python
 
@@ -185,5 +190,5 @@ You can now use ``histo`` in pipeline :func:`~radio.pipelines.pipelines.get_crop
 In that way, cancerous and noncancerous examples will be cropped from similar locations. This, of course, makes
 training datasets more balanced.
 
-**Requirements** for :func:`~radio.pipelines.pipelines.update_histo`: Dataset of scans in **DICOM** or **MetaImage**. ``pandas.DataFrame``
+**Requirements** for :func:`~.pipelines.update_histo`: Dataset of scans in **DICOM** or **MetaImage** and ``pandas.DataFrame``
 of nodules-annotations in `Luna-format <https://luna16.grand-challenge.org/data/>`_.
