@@ -1,6 +1,6 @@
 # RadIO
 
-**RadIO** is a framework for data science research of computer tomography (CT) imaging.
+**RadIO** is a framework for data science research of computed tomography (CT) imaging.
 
 Main features:
 - Asynchronously load **DICOM** and **MetaImage** (mhd/raw) files
