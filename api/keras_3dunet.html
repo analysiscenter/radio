@@ -1,0 +1,281 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Keras3DUNet &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="KerasNoduleVGG" href="keras_nodule_vgg.html" />
+    <link rel="prev" title="KerasResNoduleNet" href="keras_res_nodule_net.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="keras_nodule_vgg.html" title="KerasNoduleVGG"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="keras_res_nodule_net.html" title="KerasResNoduleNet"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="models.html" >Models</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="keras_models.html" accesskey="U">Keras Models</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="keras3dunet">
+<h1>Keras3DUNet<a class="headerlink" href="#keras3dunet" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="radio.models.Keras3DUNet">
+<em class="property">class </em><code class="descclassname">radio.models.</code><code class="descname">Keras3DUNet</code><span class="sig-paren">(</span><em>config=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/keras/keras_3dunet.html#Keras3DUNet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.Keras3DUNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">radio.models.keras.keras_model.KerasModel</span></code></p>
+<p>Model incapsulating 3D U-Net architecture for 3D scans implemented in keras.</p>
+<p>Class extends KerasModel class.</p>
+<p>Contains description of ‘bottleneck_block’, ‘reduction_block’ and
+‘upsampling_block’. Current 3D U-Net architecture is implemented
+inside _build method using these blocks.</p>
+<p>Architecture is inspired by 3D U-Net (Çiçek et Al., <a class="reference external" href="https://arxiv.org/abs/1606.06650">https://arxiv.org/abs/1606.06650</a>).</p>
+<p class="rubric">Notes</p>
+<p>Implementation requires the input tensor having shape=(batch_size, 1, 32, 64, 64).</p>
+<dl class="method">
+<dt id="radio.models.Keras3DUNet.bottleneck_block">
+<code class="descname">bottleneck_block</code><span class="sig-paren">(</span><em>inputs</em>, <em>filters</em>, <em>scope</em>, <em>padding='same'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/keras/keras_3dunet.html#Keras3DUNet.bottleneck_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.Keras3DUNet.bottleneck_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply bottleneck block transform to input tensor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of output filters required by Conv3D operation.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – scope name for block, will be used as an argument of tf.variable_scope.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – padding mode, can be ‘same’ or ‘valid’.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><cite>channels_first</cite> dim-ordering is used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="radio.models.Keras3DUNet.build_config">
+<code class="descname">build_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/keras/keras_3dunet.html#Keras3DUNet.build_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.Keras3DUNet.build_config" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="radio.models.Keras3DUNet.compile">
+<code class="descname">compile</code><span class="sig-paren">(</span><em>optimizer</em>, <em>loss</em>, <em>metrics=None</em>, <em>loss_weights=None</em>, <em>sample_weight_mode=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#radio.models.Keras3DUNet.compile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configures the model for training.</p>
+<dl class="docutils">
+<dt># Arguments</dt>
+<dd><dl class="first last docutils">
+<dt>optimizer: str (name of optimizer) or optimizer object.</dt>
+<dd>See [optimizers](/optimizers).</dd>
+<dt>loss: str (name of objective function) or objective function.</dt>
+<dd>See [losses](/losses).
+If the model has multiple outputs, you can use a different loss
+on each output by passing a dictionary or a list of losses.
+The loss value that will be minimized by the model
+will then be the sum of all individual losses.</dd>
+<dt>metrics: list of metrics to be evaluated by the model</dt>
+<dd>during training and testing.
+Typically you will use <cite>metrics=[‘accuracy’]</cite>.
+To specify different metrics for different outputs of a
+multi-output model, you could also pass a dictionary,
+such as <cite>metrics={‘output_a’: ‘accuracy’}</cite>.</dd>
+<dt>loss_weights: Optional list or dictionary specifying scalar</dt>
+<dd>coefficients (Python floats) to weight the loss contributions
+of different model outputs.
+The loss value that will be minimized by the model
+will then be the <em>weighted sum</em> of all individual losses,
+weighted by the <cite>loss_weights</cite> coefficients.
+If a list, it is expected to have a 1:1 mapping
+to the model’s outputs. If a tensor, it is expected to map
+output names (strings) to scalar coefficients.</dd>
+<dt>sample_weight_mode: if you need to do timestep-wise</dt>
+<dd>sample weighting (2D weights), set this to <cite>“temporal”</cite>.
+<cite>None</cite> defaults to sample-wise weights (1D).
+If the model has multiple outputs, you can use a different
+<cite>sample_weight_mode</cite> on each output by passing a
+dictionary or a list of modes.</dd>
+<dt><a href="#id1"><span class="problematic" id="id2">**</span></a>kwargs: when using the Theano backend, these arguments</dt>
+<dd>are passed into K.function. When using the Tensorflow backend,
+these arguments are passed into <cite>tf.Session.run</cite>.</dd>
+</dl>
+</dd>
+<dt># Raises</dt>
+<dd><dl class="first last docutils">
+<dt>ValueError: In case of invalid arguments for</dt>
+<dd><cite>optimizer</cite>, <cite>loss</cite>, <cite>metrics</cite> or <cite>sample_weight_mode</cite>.</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="radio.models.Keras3DUNet.reduction_block">
+<code class="descname">reduction_block</code><span class="sig-paren">(</span><em>inputs</em>, <em>filters</em>, <em>scope</em>, <em>pool_size=(2</em>, <em>2</em>, <em>2)</em>, <em>padding='same'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/keras/keras_3dunet.html#Keras3DUNet.reduction_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.Keras3DUNet.reduction_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply reduction block transform to input tensor.</p>
+<p>Layer consists of two 3D-convolutional layers with batch normalization
+before ‘relu’ activation and max_pooling3d layer in the end.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>keras tensor</em>) – input tensor.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of filters in first and second covnolutions.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – scope name for block, will be used as an argument of tf.variable_scope.</li>
+<li><strong>pool_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a><em>, </em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a><em>)</em>) – size of pooling kernel along three axis, required by Conv3D operation.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – padding mode for convolutions, can be ‘same’ or ‘valid’.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">output tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><cite>channels_first</cite> dim-ordering is used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="radio.models.Keras3DUNet.upsampling_block">
+<code class="descname">upsampling_block</code><span class="sig-paren">(</span><em>inputs</em>, <em>skip_connect_tensor</em>, <em>filters</em>, <em>scope</em>, <em>padding='same'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/keras/keras_3dunet.html#Keras3DUNet.upsampling_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.Keras3DUNet.upsampling_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply upsampling transform to two input tensors.</p>
+<p>First of all, UpSampling3D transform is applied to inputs. Then output
+tensor of operation is concatenated with skip_connect_tensor. After this
+two 3D-convolutions with batch normalization before ‘relu’ activation
+are applied.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>keras tensor</em>) – input tensor from previous layer.</li>
+<li><strong>skip_connect_tensor</strong> (<em>keras tensor</em>) – input tensor from simmiliar layer from reduction branch of 3D U-Net.</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of filters in convolutional layers.</li>
+<li><strong>scope</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – name of scope for block.</li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – padding mode for convolutions, can be ‘same’ or ‘valid’.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">ouput tensor.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">keras tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p><cite>channels_first</cite> dim-ordering is used.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="keras_res_nodule_net.html"
+                        title="previous chapter">KerasResNoduleNet</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="keras_nodule_vgg.html"
+                        title="next chapter">KerasNoduleVGG</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/keras_3dunet.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="keras_nodule_vgg.html" title="KerasNoduleVGG"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="keras_res_nodule_net.html" title="KerasResNoduleNet"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="models.html" >Models</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="keras_models.html" >Keras Models</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

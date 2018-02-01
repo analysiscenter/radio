@@ -1,0 +1,279 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Pipelines &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Models" href="models.html" />
+    <link rel="prev" title="Preprocessing" href="preprocessing.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="preprocessing.html" title="Preprocessing"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="pipelines">
+<h1>Pipelines<a class="headerlink" href="#pipelines" title="Permalink to this headline">¶</a></h1>
+<p>Pipelines are workflows that greatly simplify
+deep learning research on CT-scans. Each workflow is represented
+in a form of preprocessing <a class="reference external" href="https://analysiscenter.github.io/dataset/intro/batch.html#action-methods">actions</a>,
+chained in a <a class="reference external" href="https://analysiscenter.github.io/dataset/api/dataset.pipeline.html#dataset.Pipeline" title="(in Dataset v0.3)"><code class="xref py py-class docutils literal"><span class="pre">pipeline</span></code></a>.</p>
+<p>Let us start with a workflow that allows to perform a full-scale
+preprocessing over a dataset of scans and start training the model
+of your choice.</p>
+<div class="section" id="preprocessing-workflow">
+<h2>Preprocessing workflow<a class="headerlink" href="#preprocessing-workflow" title="Permalink to this headline">¶</a></h2>
+<p>Say, you need a workflow that loads scans from disk, resizes them
+to shape <strong>[128, 256, 256]</strong>, and prepares batch of <strong>20</strong>
+cancerous and non-cancerous crops of shape <strong>[32, 64, 64]</strong>. The straightforward
+approach is to chain several actions:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="kn">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">dataset</span> <span class="k">as</span> <span class="n">ds</span>
+
+<span class="n">nodules</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;/path/to/annotation/nodules.csv&#39;</span><span class="p">)</span>
+
+<span class="n">get_crops</span> <span class="o">=</span> <span class="p">(</span>
+  <span class="n">ds</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;pil-simd&#39;</span><span class="p">,</span>
+                   <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;reflect&#39;</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="p">(</span><span class="mf">1.7</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">normalize_hu</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">sample_nodules</span><span class="p">(</span><span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">lazy</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The simpler approach is to use <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.get_crops" title="radio.pipelines.pipelines.get_crops"><code class="xref py py-func docutils literal"><span class="pre">get_crops()</span></code></a>-function that manufactures frequently
+used preprocessing pipelines. With <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.get_crops" title="radio.pipelines.pipelines.get_crops"><code class="xref py py-func docutils literal"><span class="pre">get_crops()</span></code></a> you can get the pipeline written above
+in two lines of code:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio.pipelines</span> <span class="kn">import</span> <span class="n">get_crops</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">get_crops</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">,</span> <span class="n">histo</span><span class="o">=</span><span class="n">some_3d_histogram</span><span class="p">,</span>
+                     <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">nodule_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Pay attention to parameters <code class="docutils literal"><span class="pre">batch_size</span></code> and <code class="docutils literal"><span class="pre">share</span></code>: they allow
+to control the number of items in a batch of crops and the number
+of cancerous crops. Parameter <code class="docutils literal"><span class="pre">histo</span></code> controls the distribution which
+is used for sampling locations of random (noncancerous) crops. Although
+<code class="docutils literal"><span class="pre">histo</span></code> accepts any 3d-histogram, we advise to use <a class="reference internal" href="#histocalc"><span class="std std-ref">distribution of cancer location</span></a>.
+You can chain <code class="docutils literal"><span class="pre">pipeline</span></code> with some additional actions for training, say, <code class="docutils literal"><span class="pre">DenseNoduleNet</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="s1">&#39;static&#39;</span><span class="p">,</span><span class="n">class</span><span class="o">=</span><span class="n">DenseNoduleNet</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;dnod_net&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">train_model</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;dnod_net&#39;</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;classification_targets&#39;</span><span class="p">)</span>
+    <span class="p">})</span>
+<span class="p">)</span>
+<span class="p">(</span><span class="n">ctset</span> <span class="o">&gt;&gt;</span> <span class="n">pipeline</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Alternatively, you can choose to save dataset of crops
+on disk and get back to training a network on it later:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="s1">&#39;/path/to/crops/&#39;</span><span class="p">)</span>
+<span class="p">(</span><span class="n">ctset</span> <span class="o">&gt;&gt;</span> <span class="n">pipeline</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Created pipeline will generate <cite>~1500</cite>
+training examples, in one run through Luna-dataset
+(one epoch). It may take a couple of hours to
+work through the pipeline, even for a high performing machine.
+The reason for this is that both <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.unify_spacing" title="radio.CTImagesBatch.unify_spacing"><code class="xref py py-meth docutils literal"><span class="pre">unify_spacing()</span></code></a> and <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.load" title="radio.CTImagesBatch.load"><code class="xref py py-meth docutils literal"><span class="pre">load()</span></code></a> are costly
+operations.</p>
+<p>That being said, for implementing an efficient learning procedure
+we advise to use another workflow, that allows to generate more
+than <cite>100000</cite> training examples after running one time through
+the Luna-dataset.</p>
+<p><strong>Requirements</strong> for <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.get_crops" title="radio.pipelines.pipelines.get_crops"><code class="xref py py-func docutils literal"><span class="pre">get_crops()</span></code></a>: Dataset of scans in <strong>DICOM</strong> or <strong>MetaImage</strong>. <code class="docutils literal"><span class="pre">pandas.DataFrame</span></code>
+of nodules-annotations in <a class="reference external" href="https://luna16.grand-challenge.org/data/">Luna-format</a>.</p>
+</div>
+<div class="section" id="faster-workflow">
+<h2>Faster workflow<a class="headerlink" href="#faster-workflow" title="Permalink to this headline">¶</a></h2>
+<p>Preparation of richer training dataset can be achieved in two steps using two pipeline-creators:
+<a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.split_dump" title="radio.pipelines.pipelines.split_dump"><code class="xref py py-func docutils literal"><span class="pre">split_dump()</span></code></a> and <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.combine_crops" title="radio.pipelines.pipelines.combine_crops"><code class="xref py py-func docutils literal"><span class="pre">combine_crops()</span></code></a>.</p>
+<div class="section" id="step-1">
+<span id="stepfirst"></span><h3>Step 1<a class="headerlink" href="#step-1" title="Permalink to this headline">¶</a></h3>
+<p>During the first step you dump large sets of cancerous and non-cancerous
+crops in separate folders using <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.split_dump" title="radio.pipelines.pipelines.split_dump"><code class="xref py py-func docutils literal"><span class="pre">split_dump()</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio.pipelines</span> <span class="kn">import</span> <span class="n">split_dump</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">split_dump</span><span class="p">(</span><span class="n">cancer_path</span><span class="o">=</span><span class="s1">&#39;/train/cancer&#39;</span><span class="p">,</span> <span class="n">non_cancer_path</span><span class="o">=</span><span class="s1">&#39;/train/non_cancer&#39;</span><span class="p">,</span>
+                      <span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">)</span>
+<span class="p">(</span><span class="n">ctset</span> <span class="o">&gt;&gt;</span> <span class="n">pipeline</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>  <span class="c1"># one run through Luna; may take a couple of hours</span>
+</pre></div>
+</div>
+<p><strong>Requirements</strong> for <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.split_dump" title="radio.pipelines.pipelines.split_dump"><code class="xref py py-func docutils literal"><span class="pre">split_dump()</span></code></a>: Dataset of scans in <strong>DICOM</strong> or <strong>MetaImage</strong>. <code class="docutils literal"><span class="pre">pandas.DataFrame</span></code>
+of nodules-annotations in <a class="reference external" href="https://luna16.grand-challenge.org/data/">Luna-format</a>.</p>
+</div>
+<div class="section" id="step-2">
+<h3>Step 2<a class="headerlink" href="#step-2" title="Permalink to this headline">¶</a></h3>
+<p>You can now combine cancerous and non-cancerous crops from two folders using <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.combine_crops" title="radio.pipelines.pipelines.combine_crops"><code class="xref py py-func docutils literal"><span class="pre">combine_crops()</span></code></a>.
+First, you associate a <a class="reference external" href="https://analysiscenter.github.io/dataset/api/dataset.dataset.html#dataset.Dataset" title="(in Dataset v0.3)"><code class="xref py py-class docutils literal"><span class="pre">dataset</span></code></a> with each folder:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># datasets of cancerous and non-cancerous crops</span>
+<span class="n">cancer_set</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">FilesIndex</span><span class="p">(</span><span class="s1">&#39;/train/cancer/*&#39;</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+<span class="n">non_cancer_set</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">FilesIndex</span><span class="p">(</span><span class="s1">&#39;/train/non_cancer/*&#39;</span><span class="p">,</span> <span class="n">dirs</span><span class="o">=</span><span class="bp">True</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>You can balance crops from two dataset in any proportion you want:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio.pipelines</span> <span class="kn">import</span> <span class="n">combine_crops</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">combine_crops</span><span class="p">(</span><span class="n">cancer_set</span><span class="p">,</span> <span class="n">non_cancer_set</span><span class="p">,</span> <span class="n">batch_sizes</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Pay attention to parameter <code class="docutils literal"><span class="pre">batch_sizes</span></code> in <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.combine_crops" title="radio.pipelines.pipelines.combine_crops"><code class="xref py py-func docutils literal"><span class="pre">combine_crops()</span></code></a>-function.
+It defines how many cancerous and non-cancerous crops will be included
+in batches. Just like with <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.get_crops" title="radio.pipelines.pipelines.get_crops"><code class="xref py py-func docutils literal"><span class="pre">get_crops()</span></code></a>, it is easy to add training of <em>ResNet</em> to
+<code class="docutils literal"><span class="pre">pipeline</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="s1">&#39;static&#39;</span><span class="p">,</span><span class="n">class</span><span class="o">=</span><span class="n">ResNodule3DNet50</span><span class="p">,</span> <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;resnet&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">train_model</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span>
+    <span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;classification_targets&#39;</span><span class="p">)</span>
+    <span class="p">})</span>
+<span class="p">)</span>
+<span class="p">(</span><span class="n">ctset</span> <span class="o">&gt;&gt;</span> <span class="n">pipeline</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">BATCH_SIZE</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Requirements</strong> for <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.combine_crops" title="radio.pipelines.pipelines.combine_crops"><code class="xref py py-func docutils literal"><span class="pre">combine_crops()</span></code></a>: datasets of cancerous and noncancerous crops, prepared
+by <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.split_dump" title="radio.pipelines.pipelines.split_dump"><code class="xref py py-func docutils literal"><span class="pre">split_dump()</span></code></a> (see <a class="reference internal" href="#stepfirst"><span class="std std-ref">Step 1</span></a>).</p>
+</div>
+</div>
+<div class="section" id="calculation-of-cancer-location-distribution">
+<span id="histocalc"></span><h2>Calculation of cancer location distribution<a class="headerlink" href="#calculation-of-cancer-location-distribution" title="Permalink to this headline">¶</a></h2>
+<p>Another useful pipeline-creator is <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.update_histo" title="radio.pipelines.pipelines.update_histo"><code class="xref py py-func docutils literal"><span class="pre">update_histo()</span></code></a>. With <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.update_histo" title="radio.pipelines.pipelines.update_histo"><code class="xref py py-func docutils literal"><span class="pre">update_histo()</span></code></a>
+you can get a histogram-estimate of distribution of cancer-location inside preprocessed scans:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio.pipelines</span> <span class="kn">import</span> <span class="n">update_histo</span>
+<span class="n">SHAPE</span> <span class="o">=</span> <span class="p">(</span><span class="mi">400</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">)</span>  <span class="c1"># default shape of resize in preprocessing</span>
+<span class="n">ranges</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">([</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">3</span><span class="p">,</span> <span class="n">SHAPE</span><span class="p">))</span> <span class="c1"># boxes of preprocessed scans</span>
+<span class="n">histo</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">histogramdd</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)),</span> <span class="nb">range</span><span class="o">=</span><span class="n">ranges</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>  <span class="c1"># init empty 3d-histogram</span>
+
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">update_histo</span><span class="p">(</span><span class="n">nodules</span><span class="p">,</span> <span class="n">histo</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>It is time to run a dataset of scans through <code class="docutils literal"><span class="pre">pipeline</span></code> and accumulate information about cancer-location
+in <code class="docutils literal"><span class="pre">histo</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">ctset</span> <span class="o">&gt;&gt;</span> <span class="n">pipeline</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span> <span class="c1"># may take a couple of hours</span>
+</pre></div>
+</div>
+<p>You can now use <code class="docutils literal"><span class="pre">histo</span></code> in pipeline <code class="xref py py-func docutils literal"><span class="pre">get_crops`()</span></code> to sample batches of cancerous and noncancerous crops:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">get_crops</span><span class="p">(</span><span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">,</span> <span class="n">histo</span><span class="o">=</span><span class="n">histo</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In that way, cancerous and noncancerous examples will be cropped from similar locations. This, of course, makes
+training datasets more balanced.</p>
+<p><strong>Requirements</strong> for <a class="reference internal" href="../api/pipelines.html#radio.pipelines.pipelines.update_histo" title="radio.pipelines.pipelines.update_histo"><code class="xref py py-func docutils literal"><span class="pre">update_histo()</span></code></a>: Dataset of scans in <strong>DICOM</strong> or <strong>MetaImage</strong> and <code class="docutils literal"><span class="pre">pandas.DataFrame</span></code>
+of nodules-annotations in <a class="reference external" href="https://luna16.grand-challenge.org/data/">Luna-format</a>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Pipelines</a><ul>
+<li><a class="reference internal" href="#preprocessing-workflow">Preprocessing workflow</a></li>
+<li><a class="reference internal" href="#faster-workflow">Faster workflow</a><ul>
+<li><a class="reference internal" href="#step-1">Step 1</a></li>
+<li><a class="reference internal" href="#step-2">Step 2</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#calculation-of-cancer-location-distribution">Calculation of cancer location distribution</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="preprocessing.html"
+                        title="previous chapter">Preprocessing</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="models.html"
+                        title="next chapter">Models</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/intro/pipelines.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="models.html" title="Models"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="preprocessing.html" title="Preprocessing"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

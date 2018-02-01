@@ -1,0 +1,353 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Models &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="API" href="../api/api.html" />
+    <link rel="prev" title="Pipelines" href="pipelines.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../api/api.html" title="API"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="pipelines.html" title="Pipelines"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="models">
+<h1>Models<a class="headerlink" href="#models" title="Permalink to this headline">¶</a></h1>
+<p><strong>RadIO</strong> has implementations of neural network architectures
+that can be used for lung cancer detection.
+Models interface is implemented without any binding to <code class="docutils literal"><span class="pre">CTImagesBatch</span></code>
+and <code class="docutils literal"><span class="pre">CTImagesMaskedBatch</span></code> structure.
+Typically, models accepts input data in tuple of ndarray’s or dict
+with values being ndarrays.</p>
+<p>In <strong>RadIO</strong> models can be distinguished by tasks that they perform:</p>
+<ul class="simple">
+<li>segmentation</li>
+<li>classification</li>
+<li>regression</li>
+</ul>
+<p>Each of these categories has notable architectures, loss functions
+and target forms.</p>
+<div class="section" id="architectures">
+<h2>Architectures<a class="headerlink" href="#architectures" title="Permalink to this headline">¶</a></h2>
+<p>Full list of models contained in RadIO.models submodule:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="25%" />
+<col width="20%" />
+<col width="22%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Model</th>
+<th class="head">Classification</th>
+<th class="head">Regression</th>
+<th class="head">Segmentation</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>KerasResNoduleNet50</td>
+<td>+</td>
+<td>+</td>
+<td>-</td>
+</tr>
+<tr class="row-odd"><td>KerasNoduleVGG</td>
+<td>+</td>
+<td>+</td>
+<td>-</td>
+</tr>
+<tr class="row-even"><td>Keras3DUNet</td>
+<td>-</td>
+<td>-</td>
+<td>+</td>
+</tr>
+<tr class="row-odd"><td>ResNodule3DNet50</td>
+<td>+</td>
+<td>+</td>
+<td>-</td>
+</tr>
+<tr class="row-even"><td>DilatedNoduleNet</td>
+<td>-</td>
+<td>-</td>
+<td>+</td>
+</tr>
+<tr class="row-odd"><td>DenseNoduleNet</td>
+<td>+</td>
+<td>+</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="loss-functions">
+<h2>Loss functions<a class="headerlink" href="#loss-functions" title="Permalink to this headline">¶</a></h2>
+<p>Description of implemented loss functions:</p>
+<ul class="simple">
+<li><a class="reference internal" href="../api/tf_loss.html"><span class="doc">tensorflow losses</span></a></li>
+<li><a class="reference internal" href="../api/keras_loss.html"><span class="doc">keras losses</span></a></li>
+</ul>
+</div>
+<div class="section" id="network-s-targets">
+<h2>Network’s targets<a class="headerlink" href="#network-s-targets" title="Permalink to this headline">¶</a></h2>
+<p>Each type of task requires specific function that unpacks data from <code class="docutils literal"><span class="pre">CTImagesBatch</span></code>
+or <code class="docutils literal"><span class="pre">CTImagesMaskedBatch</span></code> into suitable format.</p>
+<hr class="docutils" />
+<ul class="simple">
+<li><strong>Segmentation</strong>: neural network is trained to predict binary mask.
+Each pixel of the mask may be between 1 for cancerous region and 0 otherwise.
+Use <a class="reference internal" href="../api/unpackers.html"><span class="doc">segmentation_targets</span></a>.</li>
+<li><strong>Regression</strong>: neural network is trained to predict location, sizes and probability
+of cancer tumor at once. Altogether, there are 7 target values:
+three for location (z, y, x coordinates), three for sizes (z-diam, y-dim, x-diam)
+and one for probability of cancer. Use <a class="reference internal" href="../api/unpackers.html"><span class="doc">regression_targets</span></a>.</li>
+<li><strong>Classification</strong>: labelling input crops or scans with probability of cancer
+presence. Use <a class="reference internal" href="../api/unpackers.html"><span class="doc">classification_targets</span></a>.</li>
+</ul>
+<hr class="docutils" />
+<p>For simplicity, Call batch method <code class="docutils literal"><span class="pre">.unpack</span></code> with desired argument
+(e.g. ‘regression_targets’) in dataset’s <code class="docutils literal"><span class="pre">.train_model</span></code> method, see example
+of training <code class="docutils literal"><span class="pre">ResNodule3DNet50</span></code> model for classification task:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">CTImagesMaskedBatch</span> <span class="k">as</span> <span class="n">CT</span>
+<span class="kn">from</span> <span class="nn">radio.models.tf</span> <span class="kn">import</span> <span class="n">ResNodule3DNet50</span>
+<span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">dataset</span> <span class="k">as</span> <span class="n">ds</span>
+<span class="kn">from</span> <span class="nn">radio.dataset</span> <span class="kn">import</span> <span class="n">F</span>
+
+<span class="n">resnet_config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">&#39;num_targets&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s1">&#39;optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;loss&#39;</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">losses</span><span class="o">.</span><span class="n">log_loss</span><span class="p">,</span>
+<span class="p">}</span>
+
+<span class="n">train_ppl</span> <span class="o">=</span> <span class="p">(</span>
+  <span class="n">ds</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">normalize_hu</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="s1">&#39;static&#39;</span><span class="p">,</span> <span class="n">ResNodule3DNet50</span><span class="p">,</span> <span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">resnet_config</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">train_model</span><span class="p">(</span><span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">)</span>
+        <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;classification_targets&#39;</span><span class="p">)</span>
+    <span class="p">})</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Now train loop can be started:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">train_dataset</span> <span class="o">&gt;&gt;</span> <span class="n">train_ppl</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">16</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In example above <code class="docutils literal"><span class="pre">init_model</span></code> and <code class="docutils literal"><span class="pre">train_model</span></code> methods are methods of
+ds.Pipeline instances.</p>
+<p><strong>init_model</strong> method is called just once
+when pipeline object is being constructed. First argument of this method is
+type of model: ‘static’ or ‘dynamic’. Second – model’s class,
+third argument – name of model, last one – model’s configuration dict.
+Configuration dictionary may contain parameters that will be used by a model
+when it is being built. More information about configuration dictionary, models types
+and their interaction with <code class="docutils literal"><span class="pre">ds.Pipeline</span></code> instances
+can be found in <a class="reference internal" href="../api/models.html"><span class="doc">models section</span></a>
+of dataset package documentation.</p>
+<p><strong>train_model</strong> method accepts name of the model as its first argument and
+callable that can be used for unpacking data from batch in a format suitable for
+ANN learning. This method is called on every iteration.</p>
+<p>Full description <code class="docutils literal"><span class="pre">dataset.Pipeline</span></code> methods that enables interaction with models
+can be seen in <a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models.html">dataset</a> package documentation.</p>
+<p>The same model can be configured for regression task: the only thing
+required is to change number of target values and loss functions
+in configuration dictionary. Also, another method for unpacking data from
+CTImagesMaskedBatch will be used:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">CTImagesMaskedBatch</span> <span class="k">as</span> <span class="n">CT</span>
+<span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">dataset</span> <span class="k">as</span> <span class="n">ds</span>
+<span class="kn">from</span> <span class="nn">radio.models.tf</span> <span class="kn">import</span> <span class="n">ResNodule3DNet50</span><span class="p">,</span> <span class="n">reg_l2_loss</span>
+
+<span class="n">resnet_config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">&#39;num_targets&#39;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span>
+  <span class="s1">&#39;optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;loss&#39;</span><span class="p">:</span> <span class="n">reg_l2_loss</span>
+<span class="p">}</span>
+
+<span class="n">train_ppl</span> <span class="o">=</span> <span class="p">(</span>
+  <span class="n">ds</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">normalize_hu</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="s1">&#39;static&#39;</span><span class="p">,</span> <span class="n">ResNodule3DNet50</span><span class="p">,</span> <span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">resnet_config</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">train_model</span><span class="p">(</span><span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;resnet&#39;</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span>
+        <span class="s1">&#39;images&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;labels&#39;</span><span class="p">:</span> <span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;regression_targets&#39;</span><span class="p">)</span>
+    <span class="p">})</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Same for segmentation:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">CTImagesMaskedBatch</span> <span class="k">as</span> <span class="n">CT</span>
+<span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">dataset</span> <span class="k">as</span> <span class="n">ds</span>
+<span class="kn">from</span> <span class="nn">radio.models</span> <span class="kn">import</span> <span class="n">Keras3DUNet</span>
+<span class="kn">from</span> <span class="nn">radio.models.keras.losses</span> <span class="kn">import</span> <span class="n">dice_loss</span><span class="p">,</span> <span class="n">tversky_loss</span>
+
+<span class="n">vnet_config</span> <span class="o">=</span> <span class="p">{</span>
+  <span class="s1">&#39;optimizer&#39;</span><span class="p">:</span> <span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
+  <span class="s1">&#39;loss&#39;</span><span class="p">:</span> <span class="n">tversky_loss</span>
+<span class="p">}</span>
+
+<span class="n">train_ppl</span> <span class="o">=</span> <span class="p">(</span>
+  <span class="n">ds</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">normalize_hu</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">init_model</span><span class="p">(</span><span class="s1">&#39;static&#39;</span><span class="p">,</span> <span class="n">Keras3DUNet</span><span class="p">,</span> <span class="s1">&#39;unet&#39;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">vnet_config</span><span class="p">)</span>
+    <span class="c1"># Keras3DUNet has &#39;channels_first&#39; dim_ordering</span>
+    <span class="o">.</span><span class="n">train_model</span><span class="p">(</span>
+        <span class="n">model_name</span><span class="o">=</span><span class="s1">&#39;unet&#39;</span><span class="p">,</span>
+        <span class="n">x</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">,</span> <span class="n">data_format</span><span class="o">=</span><span class="s1">&#39;channels_first&#39;</span><span class="p">),</span>
+        <span class="n">y</span><span class="o">=</span><span class="n">F</span><span class="p">(</span><span class="n">CT</span><span class="o">.</span><span class="n">unpack</span><span class="p">,</span> <span class="n">component</span><span class="o">=</span><span class="s1">&#39;segmentation_targets&#39;</span><span class="p">,</span> <span class="n">data_format</span><span class="o">=</span><span class="s1">&#39;channels_first&#39;</span><span class="p">)</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Also it’s worth to say that dataset package contains
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/models_zoo.html">ready to use implementations</a>
+of popular neural networks architectures requiring
+minimum code for description of model specific to your task.
+For instance, custom DenseNet model can be build using basic DenseNet model
+from dataset package with following lines:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio.dataset.dataset.models.tf</span> <span class="kn">import</span> <span class="n">DenseNet</span>
+
+<span class="k">class</span> <span class="nc">CustomDenseNet</span><span class="p">(</span><span class="n">DenseNet</span><span class="p">):</span>
+  <span class="nd">@classmethod</span>
+  <span class="k">def</span> <span class="nf">default_config</span><span class="p">(</span><span class="n">cls</span><span class="p">):</span>
+      <span class="n">config</span> <span class="o">=</span> <span class="n">DenseNet</span><span class="o">.</span><span class="n">default_config</span><span class="p">()</span>
+      <span class="n">input_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">layout</span><span class="o">=</span><span class="s1">&#39;cnap&#39;</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">kernel_size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+                          <span class="n">pool_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">pool_strides</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+      <span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_block&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">input_config</span><span class="p">)</span>
+      <span class="n">config</span><span class="p">[</span><span class="s1">&#39;body&#39;</span><span class="p">][</span><span class="s1">&#39;num_blocks&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">6</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">16</span><span class="p">]</span>
+      <span class="k">return</span> <span class="n">config</span>
+
+<span class="n">densenet_config</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+        <span class="n">images</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">1</span><span class="p">)},</span>
+        <span class="n">labels</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;targets&#39;</span><span class="p">,</span> <span class="s1">&#39;shape&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
+    <span class="p">),</span>
+    <span class="n">optimizer</span><span class="o">=</span><span class="s1">&#39;Adam&#39;</span><span class="p">,</span>
+    <span class="n">loss</span><span class="o">=</span><span class="s1">&#39;logloss&#39;</span><span class="p">,</span>
+    <span class="n">build</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="n">custom_densenet</span> <span class="o">=</span> <span class="n">CustomDenseNet</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">densenet_config</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>More detailed information about how to build and configure tensorflow models can be found in
+<a class="reference external" href="https://analysiscenter.github.io/dataset/intro/tf_models#how-to-write-a-custom-model">how to write a custom model</a>
+section of dataset documentation.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Models</a><ul>
+<li><a class="reference internal" href="#architectures">Architectures</a></li>
+<li><a class="reference internal" href="#loss-functions">Loss functions</a></li>
+<li><a class="reference internal" href="#network-s-targets">Network’s targets</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="pipelines.html"
+                        title="previous chapter">Pipelines</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../api/api.html"
+                        title="next chapter">API</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/intro/models.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="../api/api.html" title="API"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="pipelines.html" title="Pipelines"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

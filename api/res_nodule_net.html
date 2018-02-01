@@ -1,0 +1,135 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ResNodule3DNet50 &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="DilatedNoduleNet" href="dilated_nodule_net.html" />
+    <link rel="prev" title="DenseNoduleNet" href="dense_nodule_net.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dilated_nodule_net.html" title="DilatedNoduleNet"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="dense_nodule_net.html" title="DenseNoduleNet"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="models.html" >Models</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="tf_models.html" accesskey="U">Tensorflow Models</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="resnodule3dnet50">
+<h1>ResNodule3DNet50<a class="headerlink" href="#resnodule3dnet50" title="Permalink to this headline">¶</a></h1>
+<p>ResNet-alike architecture for 3D images classification implemented
+on tensorflow.</p>
+<dl class="class">
+<dt id="radio.models.ResNodule3DNet50">
+<em class="property">class </em><code class="descclassname">radio.models.</code><code class="descname">ResNodule3DNet50</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/res_nodule_net.html#ResNodule3DNet50"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.ResNodule3DNet50" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">radio.dataset.dataset.models.tf.resnet.ResNet50</span></code></p>
+<p>Implementation of custom DenseNet architecture for lung cancer detection.</p>
+<dl class="classmethod">
+<dt id="radio.models.ResNodule3DNet50.default_config">
+<em class="property">classmethod </em><code class="descname">default_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/res_nodule_net.html#ResNodule3DNet50.default_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.ResNodule3DNet50.default_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Specification of custom block parameters.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="dense_nodule_net.html"
+                        title="previous chapter">DenseNoduleNet</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="dilated_nodule_net.html"
+                        title="next chapter">DilatedNoduleNet</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/res_nodule_net.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="dilated_nodule_net.html" title="DilatedNoduleNet"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="dense_nodule_net.html" title="DenseNoduleNet"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="models.html" >Models</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="tf_models.html" >Tensorflow Models</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

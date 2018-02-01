@@ -1,0 +1,356 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Preprocessing &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Pipelines" href="pipelines.html" />
+    <link rel="prev" title="Welcome to RadIO’s documentation!" href="../index.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipelines.html" title="Pipelines"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to RadIO’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="preprocessing">
+<h1>Preprocessing<a class="headerlink" href="#preprocessing" title="Permalink to this headline">¶</a></h1>
+<p>Module allows to perform a number of preprocessing actions on a dataset of scans.</p>
+<p><cite>RadIO</cite> works with batches of scans, wrapped in a class <code class="docutils literal"><span class="pre">CTImagesBatch</span></code>.
+The class stores scans’ data in <a class="reference external" href="https://analysiscenter.github.io/dataset/api/dataset.batch.html#dataset.Batch" title="(in Dataset v0.3)"><code class="xref py py-class docutils literal"><span class="pre">components</span></code></a> which represents main attributes
+of scans. E.g., scans itself are stacked in one
+tall 3d <code class="docutils literal"><span class="pre">numpy</span></code>-array (called <cite>skyscraper</cite>) and stored in <code class="docutils literal"><span class="pre">images</span></code>-component. The other
+components are <code class="docutils literal"><span class="pre">spacing</span></code> and <code class="docutils literal"><span class="pre">origin</span></code>, which store important meta.</p>
+<p>So, what can be done with the data?</p>
+<div class="section" id="load-and-dump">
+<h2>Load and dump<a class="headerlink" href="#load-and-dump" title="Permalink to this headline">¶</a></h2>
+<p>The <code class="docutils literal"><span class="pre">preprocessing</span></code>-module is primarily adapted to work with two
+large datasets, available in open access: <a class="reference external" href="https://luna16.grand-challenge.org/data/">Luna-dataset</a>
+(<strong>.raw</strong>-format) and <a class="reference external" href="https://www.kaggle.com/c/data-science-bowl-2017">DsBowl2017-dataset</a> (<strong>.dicom</strong>-format).
+Consider, you have one of these two datasets (or a part of it) downloaded in
+folder <code class="docutils literal"><span class="pre">path/to/scans</span></code>. The first step is to set up an index.
+<a class="reference external" href="https://analysiscenter.github.io/dataset/api/dataset.index.html#dataset.FilesIndex" title="(in Dataset v0.3)"><code class="xref py py-class docutils literal"><span class="pre">FilesIndex</span></code></a> from <code class="xref py py-mod docutils literal"><span class="pre">dataset</span></code>-module reduces the
+task to defining a <code class="docutils literal"><span class="pre">glob</span></code>-mask for a needed set of scans:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">radio</span> <span class="kn">import</span> <span class="n">CTImagesBatch</span> <span class="k">as</span> <span class="n">CTIMB</span>
+<span class="kn">from</span> <span class="nn">radio.dataset</span> <span class="kn">import</span> <span class="n">FilesIndex</span><span class="p">,</span> <span class="n">Dataset</span><span class="p">,</span> <span class="n">Pipeline</span>
+
+<span class="n">ctx</span> <span class="o">=</span> <span class="n">FilesIndex</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s1">&#39;path/to/scans/*&#39;</span><span class="p">,</span> <span class="n">no_ext</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">ctset</span> <span class="o">=</span> <span class="n">Datset</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="n">ctx</span><span class="p">,</span> <span class="n">batch_class</span><span class="o">=</span><span class="n">CTIMB</span><span class="p">)</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For loading scans you only need to call action  <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.load" title="radio.CTImagesBatch.load"><code class="xref py py-meth docutils literal"><span class="pre">load()</span></code></a> specifying
+format of dataset:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;raw&#39;</span><span class="p">)</span> <span class="c1"># use fmt = &#39;dicom&#39; for load of dicom-scans</span>
+</pre></div>
+</div>
+<p>After performing some preprocessing operations you may need to save the
+results on disk. Action <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.dump" title="radio.CTImagesBatch.dump"><code class="xref py py-meth docutils literal"><span class="pre">dump()</span></code></a> is of help here:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="o">...</span> <span class="c1"># some preprocessing actions</span>
+<span class="n">pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dst</span><span class="o">=</span><span class="s1">&#39;path/to/preprocessed/&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In the end, data of each scan from the batch will be packed with
+<a class="reference external" href="http://python-blosc.blosc.org/reference.html#blosc.pack_array" title="(in python-blosc v1.5)"><code class="xref py py-func docutils literal"><span class="pre">blosc</span></code></a> and dumped into folder.
+Dumped scans can be loaded later using the same methodology.
+To do this, specify <cite>blosc</cite>-format when performing <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.load" title="radio.CTImagesBatch.load"><code class="xref py py-meth docutils literal"><span class="pre">load()</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Both <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.dump" title="radio.CTImagesBatch.dump"><code class="xref py py-meth docutils literal"><span class="pre">dump()</span></code></a> and <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.load" title="radio.CTImagesBatch.load"><code class="xref py py-meth docutils literal"><span class="pre">load()</span></code></a> from <cite>blosc</cite> can work component-wise:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline_dump</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span><span class="p">])</span> <span class="c1"># dump spacing, origin components</span>
+    <span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">dst</span><span class="o">=</span><span class="s1">&#39;path/to/preprocessed/&#39;</span><span class="p">,</span> <span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">components</span><span class="o">=</span><span class="s1">&#39;images&#39;</span><span class="p">)</span> <span class="c1"># dumps scans itself</span>
+<span class="p">)</span>
+
+<span class="n">pipeline_load</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">()</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">,</span> <span class="n">components</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;spacing&#39;</span><span class="p">,</span> <span class="s1">&#39;origin&#39;</span><span class="p">,</span> <span class="s1">&#39;images&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="resize-and-unify-spacing">
+<span id="resizeuspac"></span><h2>Resize and unify spacing<a class="headerlink" href="#resize-and-unify-spacing" title="Permalink to this headline">¶</a></h2>
+<p>Another step of preprocessing is <strong>resize</strong> of scans to a specific shape.
+<code class="docutils literal"><span class="pre">preprocessing</span></code>-module has <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.resize" title="radio.CTImagesBatch.resize"><code class="xref py py-meth docutils literal"><span class="pre">resize()</span></code></a>-action, specifying desired
+output shape in z, y, x order:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Currently module supports two different resize-engines:
+<a class="reference external" href="https://docs.scipy.org/doc/scipy/reference/interpolate.html#module-scipy.interpolate" title="(in SciPy v1.0.0)"><code class="xref py py-mod docutils literal"><span class="pre">scipy.interpolate</span></code></a> and <code class="docutils literal"><span class="pre">PIL-simd</span></code>. While the second engine
+is more robust and works faster on systems with small number
+of cores, the first allows greater degree of parallelization
+and can be more precise in some cases. One can choose engine
+in a following way:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;scipy&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Sometimes, it may be useful to convert scans to the same real-world scale,
+rather than simply reshape to same size.
+This can be achieved through <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.unify_spacing" title="radio.CTImagesBatch.unify_spacing"><code class="xref py py-meth docutils literal"><span class="pre">unify_spacing()</span></code></a>-action:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="n">spacing</span><span class="o">=</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>To control real-world world scale of scans, you can specify <code class="docutils literal"><span class="pre">spacing</span></code>,
+that represents distances in millimeters between adjacent voxels along three axes.
+The action works in two steps. The first step stands for spacing
+unification by means of resize, while the second one crops/pads
+resized scan so that it fits in the supplied shape. You can specify
+resize parameters and padding mode:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">unify_spacing</span><span class="p">(</span><span class="n">spacing</span><span class="o">=</span><span class="p">(</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">),</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span>
+                            <span class="n">padding</span><span class="o">=</span><span class="s1">&#39;reflect&#39;</span><span class="p">,</span> <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;pil-simd&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>So far it was all about <code class="docutils literal"><span class="pre">images</span></code>-components, that can be viewed as
+an <strong>X</strong>-input of a neural network. What about network’s target, <strong>Y</strong>-input?</p>
+</div>
+<div class="section" id="create-masks-with-ctimagesmaskedbatch">
+<h2>Create masks with <code class="docutils literal"><span class="pre">CTImagesMaskedBatch</span></code><a class="headerlink" href="#create-masks-with-ctimagesmaskedbatch" title="Permalink to this headline">¶</a></h2>
+<p>Preparing target for network revolves around class <code class="docutils literal"><span class="pre">CTImagesMaskedBatch</span></code>.
+It naturally has one new component - <code class="docutils literal"><span class="pre">masks</span></code>. <code class="docutils literal"><span class="pre">Masks</span></code> have the same
+shape as <code class="docutils literal"><span class="pre">images</span></code> and store cancer-masks of different items
+in a binary format, where value of each voxel is either <strong>0</strong> (non-cancerous voxel) or
+<strong>1</strong> (cancerous voxel). <code class="docutils literal"><span class="pre">masks</span></code> can be made in two steps.
+First, load info about cancerous nodules in a batch with <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info"><code class="xref py py-meth docutils literal"><span class="pre">fetch_nodules_info()</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+     <span class="o">.</span><span class="n">fetch_nodules_info</span><span class="p">(</span><span class="n">nodules</span><span class="o">=</span><span class="n">nodules</span><span class="p">)</span> <span class="c1"># nodules is a Pandas.DataFrame</span>
+                                          <span class="c1"># containing info about nodules</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Then you can fill the <code class="docutils literal"><span class="pre">masks</span></code>-component using the loaded info and action <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.create_mask" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.create_mask"><code class="xref py py-meth docutils literal"><span class="pre">create_mask()</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">create_mask</span><span class="p">()</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="sample-crops-from-scan">
+<span id="id1"></span><h2>Sample crops from scan<a class="headerlink" href="#sample-crops-from-scan" title="Permalink to this headline">¶</a></h2>
+<p>RadIO has <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules"><code class="xref py py-meth docutils literal"><span class="pre">sample_nodules()</span></code></a> that allows to generate batches of small crops, balancing cancerous
+and non-cancerous examples.
+Let’s start preprocessing with <a class="reference internal" href="#resizeuspac"><span class="std std-ref">resize</span></a> of scans:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">))</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Now all scans have the same shape <strong>(256, 512, 512)</strong>, it is
+possible to put them into a neural network. However, it may fail for two main reasons:</p>
+<ul class="simple">
+<li>only small number of scans (say, 3) of such size can be put into a memory of a GPU</li>
+<li>typically, there are not so many scans available for training (888 for Luna-dataset). As a result, making only one training example out of a scan is rather wasteful.</li>
+</ul>
+<p>A more efficient approach is to crop out interesting parts of scans using <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules"><code class="xref py py-meth docutils literal"><span class="pre">sample_nodules()</span></code></a>.
+E.g., this piece of code</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">sample_nodules</span><span class="p">(</span><span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
+                    <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>will generate batches of size <strong>20</strong>, that will contain <strong>10</strong> cancerous and <strong>10</strong>
+noncancerous crops of shape <strong>(32, 64, 64)</strong>. Or, alternatively this code</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">sample_nodules</span><span class="p">(</span><span class="n">nodule_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">),</span>
+                    <span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">share</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span>
+                    <span class="n">variance</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>
+                    <span class="n">histo</span><span class="o">=</span><span class="n">some_3d_histogram</span><span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>will generate batches of size <strong>20</strong> with <strong>12</strong> cancerous crops. Pay attention to
+parameters <code class="docutils literal"><span class="pre">variance</span></code> and <code class="docutils literal"><span class="pre">histo</span></code> of <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.sample_nodules"><code class="xref py py-meth docutils literal"><span class="pre">sample_nodules()</span></code></a>:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">variance</span></code> introduces variability in the location of cancerous nodule inside the crop. E.g., if set to <strong>(100, 200, 200)</strong>, the location of cancerous nodule will be sampled from normal distribution with zero-mean and variances <strong>(100, 200, 200)</strong> along three axes.</li>
+<li><code class="docutils literal"><span class="pre">histo</span></code> allows you to control the positions of noncancerous crops. If <code class="docutils literal"><span class="pre">histo</span></code> set to <code class="docutils literal"><span class="pre">None</span></code>, noncancerous crops will be sampled uniformly from scan-boxes of shape <strong>(256, 512, 512)</strong>. Sometimes, though, you may want to sample noncancerous crops from specific regions of lungs - say, the interior of the left lung. In this case you can generate a 3d-histogram (see <a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.histogram.html#numpy.histogram" title="(in NumPy v1.14)"><code class="xref py py-func docutils literal"><span class="pre">numpy.histogram()</span></code></a>) concentrated in this region and supply it into <code class="docutils literal"><span class="pre">sample_nodules</span></code>-action.</li>
+</ul>
+</div>
+<div class="section" id="augment-data-on-the-fly">
+<h2>Augment data on-the-fly<a class="headerlink" href="#augment-data-on-the-fly" title="Permalink to this headline">¶</a></h2>
+<p>Medical datasets are often small and require additional augmentation to avoid overfitting. For this purpose, it is possible to combine
+<a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch.rotate" title="radio.CTImagesBatch.rotate"><code class="xref py py-meth docutils literal"><span class="pre">rotate()</span></code></a> and <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.central_crop"><code class="xref py py-meth docutils literal"><span class="pre">central_crop()</span></code></a>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">pipeline</span>
+    <span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">512</span><span class="p">,</span> <span class="mi">512</span><span class="p">))</span>
+    <span class="o">.</span><span class="n">rotate</span><span class="p">(</span><span class="n">angle</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">random</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+    <span class="o">.</span><span class="n">central_crop</span><span class="p">(</span><span class="n">crop_size</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">64</span><span class="p">))</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>This pipeline first resizes all images to same shape and then samples rotated crops of shape <strong>[32, 64, 64]</strong>;
+rotation angle is random, from 0 to 90 degrees. Rotation is performed about <strong>z</strong>-axis.
+Crops are padded by zeroes after rotation, if needed.</p>
+</div>
+<div class="section" id="accessing-batch-components">
+<h2>Accessing Batch components<a class="headerlink" href="#accessing-batch-components" title="Permalink to this headline">¶</a></h2>
+<p>You may want to access <code class="docutils literal"><span class="pre">CTImagesBatch</span></code> or <code class="docutils literal"><span class="pre">CTImagesMaskedBatch</span></code>-data directly. E.g., if you decide to write your own <a class="reference external" href="https://analysiscenter.github.io/dataset/api/dataset.decorators.html#dataset.action" title="(in Dataset v0.3)"><code class="xref py py-func docutils literal"><span class="pre">actions</span></code></a>.
+Batch-classes has such functionality: 3d-scan for an item indexed by <code class="docutils literal"><span class="pre">ix</span></code>
+from a <code class="docutils literal"><span class="pre">batch</span></code> can be accessed in the following way:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">image_3d_ix</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ix</span><span class="p">,</span> <span class="s1">&#39;images&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The same goes for other components of item <code class="docutils literal"><span class="pre">ix</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">spacing_ix</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ix</span><span class="p">,</span> <span class="s1">&#39;spacing&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Or, alternatively</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">image_3d_ix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="n">ix</span><span class="p">],</span> <span class="s1">&#39;images&#39;</span><span class="p">)</span>
+<span class="n">spacing_ix</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="n">ix</span><span class="p">]</span><span class="o">.</span><span class="n">spacing</span>
+</pre></div>
+</div>
+<p>It is sometimes useful to print indices of all items from a <code class="docutils literal"><span class="pre">batch</span></code>:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">indices</span><span class="p">)</span> <span class="c1"># batch.indices is a list of indices of all items</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="writing-your-own-actions">
+<h2>Writing your own actions<a class="headerlink" href="#writing-your-own-actions" title="Permalink to this headline">¶</a></h2>
+<p>Now that you know how to work with components of <a class="reference internal" href="../api/ct_batch.html#radio.CTImagesBatch" title="radio.CTImagesBatch"><code class="xref py py-class docutils literal"><span class="pre">CTImagesBatch</span></code></a>, you can write your own action. E.g., you need an
+action, that subtracts mean-values of voxel densities from each scan. You can easily inherit one of
+batch classes of <strong>RadIO</strong> (we suggest to use <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch"><code class="xref py py-class docutils literal"><span class="pre">CTImagesMaskedBatch</span></code></a>) add make your action <code class="docutils literal"><span class="pre">center</span></code> a method of this
+class, just like that:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">RadIO.dataset</span> <span class="kn">import</span> <span class="n">action</span>
+<span class="kn">from</span> <span class="nn">RadIO</span> <span class="kn">import</span> <span class="n">CTImagesMaskedBatch</span>
+
+<span class="k">class</span> <span class="nc">CTImagesCustomBatch</span><span class="p">(</span><span class="n">CTImagesMaskedBatch</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Ct-scans batch class with your own action &quot;&quot;&quot;</span>
+
+    <span class="nd">@action</span>  <span class="c1"># action-decorator allows you to chain your method with other actions in pipelines</span>
+    <span class="k">def</span> <span class="nf">center</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Center values of pixels in each scan from batch &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">ix</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indices</span><span class="p">:</span>
+            <span class="n">mean_ix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ix</span><span class="p">,</span> <span class="s1">&#39;images&#39;</span><span class="p">))</span>
+            <span class="n">images_ix</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">ix</span><span class="p">],</span> <span class="s1">&#39;images&#39;</span><span class="p">)</span>
+            <span class="n">images_ix</span><span class="p">[:]</span> <span class="o">-=</span> <span class="n">mean_ix</span>
+
+        <span class="k">return</span> <span class="bp">self</span>  <span class="c1"># action must always return a batch-object</span>
+</pre></div>
+</div>
+<p>You can then chain your action <code class="docutils literal"><span class="pre">center</span></code> with other actions of <a class="reference internal" href="../api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch" title="radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch"><code class="xref py py-class docutils literal"><span class="pre">CTImagesMaskedBatch</span></code></a>
+to form custom preprocessing pipelines:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">pipeline</span> <span class="o">=</span> <span class="p">(</span><span class="n">Pipeline</span><span class="p">()</span>
+            <span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;blosc&#39;</span><span class="p">)</span>  <span class="c1"># load data</span>
+            <span class="o">.</span><span class="n">center</span><span class="p">()</span>  <span class="c1"># mean-normalize scans</span>
+            <span class="o">.</span><span class="n">sample_nodules</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="mi">20</span><span class="p">))</span>  <span class="c1"># sample cancerous and noncancerous crops</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Preprocessing</a><ul>
+<li><a class="reference internal" href="#load-and-dump">Load and dump</a></li>
+<li><a class="reference internal" href="#resize-and-unify-spacing">Resize and unify spacing</a></li>
+<li><a class="reference internal" href="#create-masks-with-ctimagesmaskedbatch">Create masks with <code class="docutils literal"><span class="pre">CTImagesMaskedBatch</span></code></a></li>
+<li><a class="reference internal" href="#sample-crops-from-scan">Sample crops from scan</a></li>
+<li><a class="reference internal" href="#augment-data-on-the-fly">Augment data on-the-fly</a></li>
+<li><a class="reference internal" href="#accessing-batch-components">Accessing Batch components</a></li>
+<li><a class="reference internal" href="#writing-your-own-actions">Writing your own actions</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="../index.html"
+                        title="previous chapter">Welcome to RadIO’s documentation!</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="pipelines.html"
+                        title="next chapter">Pipelines</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/intro/preprocessing.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="pipelines.html" title="Pipelines"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="../index.html" title="Welcome to RadIO’s documentation!"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

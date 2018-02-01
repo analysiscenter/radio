@@ -1,0 +1,262 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Unpack methods for network’s target creation &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Loss functions" href="loss_functions.html" />
+    <link rel="prev" title="KerasNoduleVGG" href="keras_nodule_vgg.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="loss_functions.html" title="Loss functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="keras_nodule_vgg.html" title="KerasNoduleVGG"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" accesskey="U">API</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="unpack-methods-for-network-s-target-creation">
+<h1>Unpack methods for network’s target creation<a class="headerlink" href="#unpack-methods-for-network-s-target-creation" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><dl class="method">
+<dt>
+<code class="descclassname">CTImagesMaskedBatch.</code><code class="descname">unpack</code><span class="sig-paren">(</span><em>component='images'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.unpack"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Basic way for unpacking components from batch.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>component</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – component to unpack, can be ‘images’ or ‘masks’.</li>
+<li><strong>data_format</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – can be ‘channels_last’ or ‘channels_first’. Reflects where to put
+channels dimension: right after batch dimension or after all spatial axes.</li>
+<li><strong>kwargs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.6)"><em>dict</em></a>) – key-word arguments that will be passed in callable if
+component argument reffers to method of batch class.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">ndarray(batch_size, ..) or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.6)">None</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt>
+<em class="property">static </em><code class="descclassname">CTImagesMaskedBatch.</code><code class="descname">make_data_tf</code><span class="sig-paren">(</span><em>batch</em>, <em>model=None</em>, <em>mode='segmentation'</em>, <em>is_training=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.make_data_tf"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Prepare data in batch for training neural network implemented in tensorflow.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – mode can be one of following ‘classification’, ‘regression’
+or ‘segmentation’. Default is ‘segmentation’.</li>
+<li><strong>data_format</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – data format batch data. Can be ‘channels_last’
+or ‘channels_first’. Default is ‘channels_last’.</li>
+<li><strong>is_training</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – whether model is in training or prediction mode. Default is True.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – threshold value of ‘1’ pixels in masks to consider it cancerous.
+Default is 10.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">feed dict and fetches for training neural network.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.6)">dict</a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.6)">None</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="staticmethod">
+<dt>
+<em class="property">static </em><code class="descclassname">CTImagesMaskedBatch.</code><code class="descname">make_data_keras</code><span class="sig-paren">(</span><em>batch</em>, <em>model=None</em>, <em>mode='segmentation'</em>, <em>is_training=True</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.make_data_keras"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Prepare data in batch for training neural network implemented in keras.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mode</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – mode can be one of following ‘classification’, ‘regression’
+or ‘segmentation’. Default is ‘segmentation’.</li>
+<li><strong>data_format</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – data format batch data. Can be ‘channels_last’
+or ‘channels_first’. Default is ‘channels_last’.</li>
+<li><strong>is_training</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – whether model is in training or prediction mode. Default is True.</li>
+<li><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – threshold value of ‘1’ pixels in masks to consider it cancerous.
+Default is 10.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">kwargs for keras model train method:
+{‘x’: ndarray(…), ‘y’: ndarrray(…)} for training neural network.</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.6)">dict</a> or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.6)">None</a></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">CTImagesMaskedBatch.</code><code class="descname">classification_targets</code><span class="sig-paren">(</span><em>threshold=10</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.classification_targets"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Unpack data from batch in format suitable for classification task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – minimum number of ‘1’ pixels in mask to consider it cancerous.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">targets for classification task: labels corresponding to cancerous
+nodules (‘1’) and non-cancerous nodules (‘0’).</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray(batch_size, 1)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">CTImagesMaskedBatch.</code><code class="descname">regression_targets</code><span class="sig-paren">(</span><em>threshold=10</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.regression_targets"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Unpack data from batch in format suitable for regression task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>threshold</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – minimum number of ‘1’ pixels in mask to consider it cancerous.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">targets for regression task: cancer center, size
+and label(1 for cancerous and 0 for non-cancerous). Note that in case
+of non-cancerous crop first 6 column of output array will be set to zero.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray(batch_size, 7)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descclassname">CTImagesMaskedBatch.</code><code class="descname">segmentation_targets</code><span class="sig-paren">(</span><em>data_format='channels_last'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/preprocessing/ct_masked_batch.html#CTImagesMaskedBatch.segmentation_targets"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Unpack data from batch in format suitable for regression task.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>data_format</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – data_format shows where to put new axis for channels dimension:
+can be ‘channels_last’ or ‘channels_first’.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">batch array with masks.</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">ndarray(batch_size, ..)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div></blockquote>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="keras_nodule_vgg.html"
+                        title="previous chapter">KerasNoduleVGG</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="loss_functions.html"
+                        title="next chapter">Loss functions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/unpackers.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="loss_functions.html" title="Loss functions"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="keras_nodule_vgg.html" title="KerasNoduleVGG"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

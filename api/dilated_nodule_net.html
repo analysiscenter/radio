@@ -1,0 +1,325 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>DilatedNoduleNet &#8212; RadIO 0.1.0 documentation</title>
+    <link rel="stylesheet" href="../_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Keras Models" href="keras_models.html" />
+    <link rel="prev" title="ResNodule3DNet50" href="res_nodule_net.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="keras_models.html" title="Keras Models"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="res_nodule_net.html" title="ResNodule3DNet50"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="models.html" >Models</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="tf_models.html" accesskey="U">Tensorflow Models</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="dilatednodulenet">
+<h1>DilatedNoduleNet<a class="headerlink" href="#dilatednodulenet" title="Permalink to this headline">¶</a></h1>
+<p>Architercture with dilated convolutions for 3D images segmentation
+implemented on tensorflow.</p>
+<dl class="class">
+<dt id="radio.models.DilatedNoduleNet">
+<em class="property">class </em><code class="descclassname">radio.models.</code><code class="descname">DilatedNoduleNet</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">radio.dataset.dataset.models.tf.base.TFModel</span></code></p>
+<p>Implementation of custom encoder-decoder architecture with dilated convolutions.</p>
+<p>Architecture is inspired by VNet (Milletari et al., <a class="reference external" href="https://arxiv.org/abs/1606.04797">https://arxiv.org/abs/1606.04797</a>).</p>
+<p><strong>Configuration</strong></p>
+<dl class="docutils">
+<dt>inputs <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd>dict with keys ‘images’ and ‘masks’ (see <code class="xref py py-meth docutils literal"><span class="pre">_make_inputs()</span></code>)</dd>
+<dt>body <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><dl class="first last docutils">
+<dt>num_blocks <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>number of encoder/decoder blocks (default=4)</dd>
+<dt>filters <span class="classifier-delimiter">:</span> <span class="classifier">list of int</span></dt>
+<dd>number of filters in each block (default=[128, 256, 512, 1024])</dd>
+</dl>
+</dd>
+<dt>head <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
+<dd><dl class="first last docutils">
+<dt>num_classes <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
+<dd>number of semantic classes</dd>
+</dl>
+</dd>
+</dl>
+<dl class="classmethod">
+<dt id="radio.models.DilatedNoduleNet.body">
+<em class="property">classmethod </em><code class="descname">body</code><span class="sig-paren">(</span><em>inputs</em>, <em>name='body'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.body"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.body" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base layers.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tf.Tensor</em>) – input tensor</li>
+<li><strong>filters</strong> (<em>tuple of int</em>) – number of filters in encoder_block</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – scope name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="radio.models.DilatedNoduleNet.build_config">
+<code class="descname">build_config</code><span class="sig-paren">(</span><em>names=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.build_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.build_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build config.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="radio.models.DilatedNoduleNet.central_block">
+<em class="property">classmethod </em><code class="descname">central_block</code><span class="sig-paren">(</span><em>inputs</em>, <em>filters</em>, <em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.central_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.central_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Block that situated between encoder and decoder branches.</p>
+<p>Block consists of 1x1x1 followed by 3x3x3. Note that 3x3x3 convolution
+can contain several branches with different dilation rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tf.Tensor</em>) – input tensor</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of output filters</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – scope name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="radio.models.DilatedNoduleNet.decoder_block">
+<em class="property">classmethod </em><code class="descname">decoder_block</code><span class="sig-paren">(</span><em>inputs</em>, <em>filters</em>, <em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.decoder_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.decoder_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>3x3 convolution and 2x2 transposed convolution or upsampling</p>
+<p>Each of two 3x3x3 convolutions contains several branches with
+different dilation rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)"><em>tuple</em></a><em>(</em><em>tf.Tensor</em><em>, </em><em>tf.Tensor</em><em>)</em>) – two input tensors</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of output filters</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – scope name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="radio.models.DilatedNoduleNet.default_config">
+<em class="property">classmethod </em><code class="descname">default_config</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.default_config"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.default_config" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default config.</p>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="radio.models.DilatedNoduleNet.dilated_branches">
+<em class="property">classmethod </em><code class="descname">dilated_branches</code><span class="sig-paren">(</span><em>inputs</em>, <em>filters</em>, <em>kernel_size</em>, <em>dilation_rate</em>, <em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.dilated_branches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.dilated_branches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convolutional block with parallel branches having different dilation rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tf.Tensor</em>) – input tensor</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a><em>, </em><em>..</em><em>)</em>) – number of filters corresponding to branches with different dilation rate.</li>
+<li><strong>kernel_size</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a><em>, </em><em>..</em><em>)</em>) – size of convolutional kernel corresponding to branches
+with different dilation rate. Kernel size is considered
+to be the same along [zyx] dimensions.</li>
+<li><strong>dilation_rate</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.6)"><em>tuple</em></a><em>(</em><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a><em>, </em><em>..</em><em>)</em>) – dilation rate for convolutional branches. Dilation rate is considered
+to be the same along [zyx] dimensions.</li>
+<li><strong>activation</strong> (<em>tensorflow activation function</em>) – </li>
+<li><strong>padding</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – padding to use in convolution operation. Can be ‘same’ or ‘valid’.</li>
+<li><strong>is_training</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a><em> or </em><em>bool tensor</em>) – indicator of training or prediction mode.</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – name of the block that will be used as argument of tf.variable_scope.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="radio.models.DilatedNoduleNet.encoder_block">
+<em class="property">classmethod </em><code class="descname">encoder_block</code><span class="sig-paren">(</span><em>inputs</em>, <em>filters</em>, <em>name</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.encoder_block"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.encoder_block" title="Permalink to this definition">¶</a></dt>
+<dd><p>Two 3x3x3 convolutions and 2x2x2 max pooling with stride 2.</p>
+<p>Each of two 3x3x3 convolutions contains several branches with
+different dilation rate.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tf.Tensor</em>) – input tensor</li>
+<li><strong>filters</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of output filters</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – scope name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="radio.models.DilatedNoduleNet.head">
+<em class="property">classmethod </em><code class="descname">head</code><span class="sig-paren">(</span><em>inputs</em>, <em>num_classes</em>, <em>name='head'</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/radio/models/tf/dilated_nodule_net.html#DilatedNoduleNet.head"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#radio.models.DilatedNoduleNet.head" title="Permalink to this definition">¶</a></dt>
+<dd><p>Conv block followed by 1x1 convolution.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>inputs</strong> (<em>tf.Tensor</em>) – input tensor</li>
+<li><strong>num_classes</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.6)"><em>int</em></a>) – number of classes (and number of filters in the last 1x1 convolution)</li>
+<li><strong>name</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a>) – scope name</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">tf.Tensor</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="res_nodule_net.html"
+                        title="previous chapter">ResNodule3DNet50</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="keras_models.html"
+                        title="next chapter">Keras Models</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api/dilated_nodule_net.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="keras_models.html" title="Keras Models"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="res_nodule_net.html" title="ResNodule3DNet50"
+             >previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">RadIO 0.1.0 documentation</a> &#187;</li>
+          <li class="nav-item nav-item-1"><a href="api.html" >API</a> &#187;</li>
+          <li class="nav-item nav-item-2"><a href="models.html" >Models</a> &#187;</li>
+          <li class="nav-item nav-item-3"><a href="tf_models.html" >Tensorflow Models</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, analysiscenter.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>
