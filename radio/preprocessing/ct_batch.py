@@ -499,8 +499,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def _post_read_blosc(self, list_of_arrs, **kwargs):
         self._reraise_worker_exceptions(list_of_arrs)
-        return dict(zip(self.indices, list_of_arrs))    
-    
+        return dict(zip(self.indices, list_of_arrs))
+
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads', update=False)
     def _debyte_blosc(self, ix, byted, **kwargs):
@@ -508,17 +508,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             # set correct extension for each component and choose a tool
             # for debyting and (possibly) decoding it
             if source in ['spacing', 'origin']:
-                ext = 'pkl'
                 unpacker = pickle.loads
             else:
-                ext = 'blk'
                 def unpacker(byted):
                     """ Debyte and decode an ndarray
                     """
                     debyted = blosc.unpack_array(byted)
 
                     # read the decoder and apply it
-                    decod_path = os.path.join(self.index.get_fullpath(ix), source, 'data.decoder')
+                    decod_path = os.path.join(self.index.get_fullpath(ix), source, 'data.decoder') # pylint: disable=cell-var-from-loop
 
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
