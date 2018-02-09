@@ -56,7 +56,8 @@ def get_nodules_numba(data, positions, size):
     ndarray
         3d ndarray with nodules
     """
-    out_arr = np.zeros((np.int(positions.shape[0]), size[0], size[1], size[2]))
+    size = size.astype(np.int64)
+    out_arr = np.zeros((positions.shape[0], size[0], size[1], size[2]))
 
     n_positions = positions.shape[0]
     for i in range(n_positions):
@@ -65,6 +66,25 @@ def get_nodules_numba(data, positions, size):
                                    positions[i, 2]: positions[i, 2] + size[2]]
 
     return out_arr.reshape(n_positions * size[0], size[1], size[2])
+
+@njit
+def mix_images_numba(images, masks, bounds, permutation, p):
+    bounds = bounds.astype(np.int64)
+    bounds = np.concatenate((np.zeros(1), bounds))
+
+    images_to_add = np.zeros_like(images)
+    masks_to_add = np.zeros_like(images)
+
+    for i in range(len(bounds)-1):
+        old_slice = slice(bounds[i], bounds[i+1])
+        new_slice = slice(bounds[permutation[i]], bounds[permutation[i]+1])
+        images_to_add[old_slice, :, :] = images[new_slice, :, :]
+        masks_to_add[old_slice, :, :] = masks[new_slice, :, :]
+
+    images = images * p + images_to_add * (1 - p)
+    masks = np.maximum(masks, masks_to_add)
+
+    return images, masks # bounds, np.arange(len(images_to_add))[old_slice]
 
 
 class CTImagesMaskedBatch(CTImagesBatch):
@@ -1265,3 +1285,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
             raise ValueError("Argument 'mode' must have one of values: "
                              + "'segmentation', 'classification' or 'regression'")
         return dict(x=inputs, y=labels) if is_training else dict(x=inputs)
+
+    @action
+    def mix_images(self, p=0.8):
+        permutation = np.random.permutation(len(self.upper_bounds))
+        print(permutation)
+        new_images, new_masks = mix_images_numba(self.images, self.masks, self.upper_bounds, permutation, p)
+        setattr(self, 'images', new_images)
+        setattr(self, 'masks', new_masks)
+        return self

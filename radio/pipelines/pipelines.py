@@ -143,7 +143,7 @@ def split_dump(cancer_path, non_cancer_path, nodules, histo=None, fmt='raw',
                                batch_size=NON_CANCER_BATCH_SIZE, share=0.0)
 
     # define pipeline. Two separate tasks are performed at once, in one run:
-    # 1) sampling and dumping of cancerous crops in wrapper-action sample_sump_cancerous
+    # 1) sampling and dumping of cancerous crops in wrapper-action sample_dump
     # 2) sampling and dumping of non-cancerous crops in separate actions
     pipeline = (Pipeline()
                 .load(fmt=fmt)
