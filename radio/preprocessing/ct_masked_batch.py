@@ -69,6 +69,24 @@ def get_nodules_numba(data, positions, size):
 
 @njit
 def mix_images_numba(images, masks, bounds, permutation, p):
+    """ Mix images and corresponding masks.
+    Parameters
+    ----------
+    images : np.array
+        images as skyscrapper
+    masks : np.array
+        masks as skyscrapper
+    bounds : np.array
+        upper bounds in skyscrappers
+    permutation : np.array
+        permutation of images to mix
+    p : float in (0, 1)
+        weight of the initial image
+
+    Returns
+    -------
+    images, masks : np.arrays
+    """
     bounds = bounds.astype(np.int64)
     bounds = np.concatenate((np.zeros(1), bounds))
 
@@ -84,7 +102,7 @@ def mix_images_numba(images, masks, bounds, permutation, p):
     images = images * p + images_to_add * (1 - p)
     masks = np.maximum(masks, masks_to_add)
 
-    return images, masks # bounds, np.arange(len(images_to_add))[old_slice]
+    return images, masks
 
 
 class CTImagesMaskedBatch(CTImagesBatch):
@@ -1288,8 +1306,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def mix_images(self, p=0.8):
+        """ Mix images and masks.
+        Parameters
+        ----------
+        p : float in (0, 1)
+            weight of the initial image
+        """
         permutation = np.random.permutation(len(self.upper_bounds))
-        print(permutation)
         new_images, new_masks = mix_images_numba(self.images, self.masks, self.upper_bounds, permutation, p)
         setattr(self, 'images', new_images)
         setattr(self, 'masks', new_masks)
