@@ -1322,13 +1322,17 @@ class CTImagesMaskedBatch(CTImagesBatch):
         p : float in (0, 1)
             weight of the initial image
         """
-        permutation = np.random.permutation(len(self.upper_bounds))
+
         if mode == 'max':
             mode = 0
         elif mode == 'sum':
             mode = 1
+        elif mode == 'none':
+            return self
         else:
-            mode = 2
+            raise ValueError('mode must be sum, max or none but {} was given'.format(mode))
+
+        permutation = np.random.permutation(len(self.upper_bounds))
         new_images, new_masks = mix_images_numba(self.images, self.masks,
                                                  self.upper_bounds, permutation, p, mode, mix_masks)
         setattr(self, 'images', new_images)
