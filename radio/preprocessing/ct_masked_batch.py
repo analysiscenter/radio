@@ -1315,7 +1315,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return dict(x=inputs, y=labels) if is_training else dict(x=inputs)
 
     @action
-    def mix_images(self, p=0.8, mode='sum'):
+    def mix_images(self, p=0.8, mode='sum', mix_masks=True):
         """ Mix images and masks.
         Parameters
         ----------
@@ -1329,7 +1329,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             mode = 1
         else:
             mode = 2
-        new_images, new_masks = mix_images_numba(self.images, self.masks, self.upper_bounds, permutation, p, mode)
+        new_images, new_masks = mix_images_numba(self.images, self.masks, self.upper_bounds, permutation, p, mode, mix_masks)
         setattr(self, 'images', new_images)
         setattr(self, 'masks', new_masks)
         return self
