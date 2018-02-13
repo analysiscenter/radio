@@ -1,3 +1,5 @@
+""" Skyscrapper class. """
+
 import numpy as np
 
 class Skyscraper:
@@ -38,7 +40,7 @@ class Skyscraper:
 
     def __getitem__(self, ix):
         if isinstance(ix, slice):
-            return Skyscrapper([self[i] for i in np.arange(len(self))[ix]])
+            return Skyscraper([self[i] for i in np.arange(len(self))[ix]])
         else:
             ix = self._get_index(ix)
             return self.data[self.bounds[ix]: self.bounds[ix+1], ...]
