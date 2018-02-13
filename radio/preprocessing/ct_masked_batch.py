@@ -1330,7 +1330,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             mode = 2
         new_images, new_masks = mix_images_numba(self.images, self.masks,
-            self.upper_bounds, permutation, p, mode, mix_masks)
+                                                 self.upper_bounds, permutation, p, mode, mix_masks)
         setattr(self, 'images', new_images)
         setattr(self, 'masks', new_masks)
         return self
