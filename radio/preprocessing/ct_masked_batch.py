@@ -68,7 +68,7 @@ def get_nodules_numba(data, positions, size):
     return out_arr.reshape(n_positions * size[0], size[1], size[2])
 
 @njit
-def mix_images_numba(images, masks, bounds, permutation, p, mode):
+def mix_images_numba(images, masks, bounds, permutation, p, mode, masks):
     """ Mix images and corresponding masks.
     Parameters
     ----------
@@ -82,6 +82,11 @@ def mix_images_numba(images, masks, bounds, permutation, p, mode):
         permutation of images to mix
     p : float in (0, 1)
         weight of the initial image
+    mode : int
+        if 0 images will be mixed by max value
+        if 1 images will be mixed as linear combination
+    masks : int
+        see mode
 
     Returns
     -------
@@ -97,17 +102,18 @@ def mix_images_numba(images, masks, bounds, permutation, p, mode):
         old_slice = slice(bounds[i], bounds[i+1])
         new_slice = slice(bounds[permutation[i]], bounds[permutation[i]+1])
         images_to_add[old_slice, :, :] = images[new_slice, :, :]
-        # masks_to_add[old_slice, :, :] = masks[new_slice, :, :]
+        masks_to_add[old_slice, :, :] = masks[new_slice, :, :]
 
     if mode == 0:
         images = np.maximum(images * p, images_to_add * (1 - p)) / np.maximum(p, 1-p)
     elif mode == 1:
         images = images * p + images_to_add * (1 - p)
-    else:
-        return None
-    
-    # masks = np.maximum(masks, masks_to_add)
-    
+
+    if masks == 0:
+        masks = np.maximum(masks * p, masks_to_add * (1 - p)) / np.maximum(p, 1-p)
+    elif mode == 1:
+        masks = masks * p + masks_to_add * (1 - p)
+
     return images, masks
 
 
