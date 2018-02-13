@@ -68,7 +68,7 @@ def get_nodules_numba(data, positions, size):
     return out_arr.reshape(n_positions * size[0], size[1], size[2])
 
 @njit
-def mix_images_numba(images, masks, bounds, permutation, p):
+def mix_images_numba(images, masks, bounds, permutation, p, mode):
     """ Mix images and corresponding masks.
     Parameters
     ----------
@@ -91,17 +91,23 @@ def mix_images_numba(images, masks, bounds, permutation, p):
     bounds = np.concatenate((np.zeros(1), bounds))
 
     images_to_add = np.zeros_like(images)
-    masks_to_add = np.zeros_like(images)
+    # masks_to_add = np.zeros_like(images)
 
     for i in range(len(bounds)-1):
         old_slice = slice(bounds[i], bounds[i+1])
         new_slice = slice(bounds[permutation[i]], bounds[permutation[i]+1])
         images_to_add[old_slice, :, :] = images[new_slice, :, :]
-        masks_to_add[old_slice, :, :] = masks[new_slice, :, :]
+        # masks_to_add[old_slice, :, :] = masks[new_slice, :, :]
 
-    images = images * p + images_to_add * (1 - p)
-    masks = np.maximum(masks, masks_to_add)
-
+    if mode == 0:
+        images = np.maximum(images * p, images_to_add * (1 - p)) / np.maximum(p, 1-p)
+    elif mode == 1:
+        images = images * p + images_to_add * (1 - p)
+    else:
+        return None
+    
+    # masks = np.maximum(masks, masks_to_add)
+    
     return images, masks
 
 
@@ -1305,7 +1311,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return dict(x=inputs, y=labels) if is_training else dict(x=inputs)
 
     @action
-    def mix_images(self, p=0.8):
+    def mix_images(self, p=0.8, mode='sum'):
         """ Mix images and masks.
         Parameters
         ----------
@@ -1313,7 +1319,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
             weight of the initial image
         """
         permutation = np.random.permutation(len(self.upper_bounds))
-        new_images, new_masks = mix_images_numba(self.images, self.masks, self.upper_bounds, permutation, p)
+        if mode == 'max':
+            mode = 0
+        elif mode == 'sum':
+            mode = 1
+        else:
+            mode = 2
+        new_images, new_masks = mix_images_numba(self.images, self.masks, self.upper_bounds, permutation, p, mode)
         setattr(self, 'images', new_images)
         setattr(self, 'masks', new_masks)
         return self
