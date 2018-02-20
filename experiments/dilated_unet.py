@@ -15,7 +15,7 @@ from ..radio.dataset.research import Grid, Option, Research
 from .utils import get_train_pipeline, get_test_pipeline
 
 
-def get_unet_research(train_pipeline, test_pipeline)
+def get_unet_research(train_pipeline, test_pipeline):
 
     base_model_config = dict(
         inputs=dict(
