@@ -27,8 +27,8 @@ def get_unet_research(train_pipeline, test_pipeline):
         loss=tversky_loss,
         optimizer='Adam'
     )
-    config['input_block/inputs'] = 'images'
-    config['head/num_classes'] = 1
+    base_model_config['input_block/inputs'] = 'images'
+    base_model_config['head/num_classes'] = 1
 
     dilation_rates = Option('body/dilation_rates', values=[
         [None, None, None, None, None],
