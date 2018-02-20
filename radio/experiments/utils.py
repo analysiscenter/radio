@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 
-from ..radio import CTImagesMaskedBatch as CTIMB
+from .. import CTImagesMaskedBatch as CTIMB
 from ..pipelines import combine_crops
 from ..models.utils import overlap_nodules
 from ..models.tf import DilatedNoduleNet
