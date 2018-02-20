@@ -77,7 +77,7 @@ def run_experiment(cancer_path, ncancer_path, scans_dir, nodules_path,
     cancer_set = ds.Dataset(cancerix, batch_class=CTIMB)
     ncancer_set = ds.Dataset(ncancerix, batch_class=CTIMB)
 
-    luna_test_index = ds.FilesIndex(path=args.scans_dir, no_ext=True)
+    luna_test_index = ds.FilesIndex(path=scans_dir, no_ext=True)
     luna_test_set = ds.Dataset(luna_test_index, batch_class=CTIMB)
 
     # Reading nodules' annotation dataframe
