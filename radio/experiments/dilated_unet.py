@@ -68,7 +68,7 @@ def get_unet_research(train_pipeline, test_pipeline):
 
 
 def run_experiment(cancer_path, ncancer_path, scans_dir, nodules_path,
-                   batch_size=4, shuffle=True, n_reps=5, n_iters=20000, n_jobs=1):
+                   batch_size=4, shuffle=True, n_reps=5, n_iters=20000, n_jobs=1, name='research'):
 
     # Create indices and datasets with train cancerous and non cancerous crops
     cancerix = ds.FilesIndex(path=cancer_path, dirs=True)
