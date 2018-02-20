@@ -84,7 +84,7 @@ def run_experiment(cancer_path, ncancer_path, scans_dir, nodules_path,
     nodules = pd.read_csv(nodules_path)
 
     # Get train pipeline
-    train_pipeline = get_train_pipeline(cancer_set, ncancer_set, DilatedNoduleNet, shuffle,
+    train_pipeline = get_train_pipeline(cancer_set, ncancer_set, DilatedNoduleNet, shuffle=shuffle,
                                         batch_sizes=(batch_size // 2, batch_size - batch_size // 2))
 
     # Get test pipeline that computes metrics on test scans
