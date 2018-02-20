@@ -6,6 +6,8 @@ import argparse
 import numpy as np
 import pandas as pd
 
+from .. import CTImagesMaskedBatch as CTIMB
+
 from ..models.tf import DilatedNoduleNet
 from ..models.tf.losses import tversky_loss
 from .. import dataset as ds
