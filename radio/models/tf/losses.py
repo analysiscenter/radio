@@ -108,6 +108,14 @@ def tversky_loss_with_logits(labels, predictions, alpha=0.3, beta=0.7, smooth=1e
 
     return -(truepos + smooth) / (truepos + smooth + fp_and_fn)
 
+def bce_with_logits(labels, predictions):
+    predictions = tf.sigmoid(predictions)
+    n = tf.cast(tf.shape(labels)[0] * tf.shape(labels)[1] * tf.shape(labels)[2] * tf.shape(labels)[3], dtype=tf.float32)
+    return tf.losses.log_loss(labels, predictions) / n
+
+def bce(labels, predictions):
+    n = tf.cast(tf.shape(labels)[0] * tf.shape(labels)[1] * tf.shape(labels)[2] * tf.shape(labels)[3], dtype=tf.float32)
+    return tf.losses.log_loss(labels, predictions) / n
 
 def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tversky loss function.
