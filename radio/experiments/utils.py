@@ -35,8 +35,9 @@ def compute_test_metrics(batch, nodules, threshold=0.35):
         result = overlap_nodules(batch, batch.nodules, batch_pred.nodules)
     except Exception as e:
         result = {'true_stats': e, 'pred_stats': e}
-    batch.pipeline.get_variable('true_stats').append(result['true_stats'])
-    batch.pipeline.get_variable('pred_stats').append(result['pred_stats'])
+    return result
+    #batch.pipeline.get_variable('true_stats').append(result['true_stats'])
+    #batch.pipeline.get_variable('pred_stats').append(result['pred_stats'])
     # LOGGER.info('Processed scans: {} / {}'.format((i + 1) * len(batch), len(batch.pipeline.dataset)))
 
 
@@ -57,11 +58,15 @@ def get_train_pipeline(cancer_set, ncancer_set, model_class, preprocessing, batc
 
 
 def get_test_pipeline(nodules, test_set, config=None, batch_size=4):
+    def partial_compute(batch):
+        return compute_test_metrics(batch, nodules=nodules)
+
     test_pipeline = test_set >> (
         ds.Pipeline(config=config)
         .import_model('model', C('train_pipeline'))
-        .init_variable('true_stats', init_on_each_run=list)
-        .init_variable('pred_stats', init_on_each_run=list)
+        #.init_variable('true_stats', init_on_each_run=list)
+        #.init_variable('pred_stats', init_on_each_run=list)
+        .init_variable('stats', init_on_each_run=list)
         .load(fmt='raw')
         .unify_spacing(spacing=(1.7, 1.0, 1.0),
                        shape=(400, 512, 512),
@@ -73,8 +78,9 @@ def get_test_pipeline(nodules, test_set, config=None, batch_size=4):
                          strides=(32, 64, 64),
                          crop_shape=(32, 64, 64),
                          batch_size=batch_size,
-                         show_progress=False)
-        .call(lambda batch: partial(compute_test_metrics, nodules=nodules))
+                         show_progress=True)
+        .update_variable('stats', F(partial_compute), mode='a')
+        #.call(lambda batch: partial(compute_test_metrics, nodules=nodules))
         .run(lazy=True, batch_size=2)
     )
     return test_pipeline
