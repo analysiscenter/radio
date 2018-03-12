@@ -40,6 +40,7 @@ def compute_test_metrics(batch, nodules, threshold=0.35):
 def get_train_pipeline(cancer_set, ncancer_set, model_class, batch_sizes=(2, 2), shuffle=True):
     train_pipeline = (
         combine_crops(cancer_set, ncancer_set, batch_sizes=batch_sizes, shuffle=shuffle)
+        .print(F(lambda batch: batch.indices))
         .init_variable('loss', init_on_each_run=list)
         .init_model('dynamic', model_class, 'model', config=C('model_config'))
         .train_model('model', fetches='loss', save_to=V('loss'), mode='a',
