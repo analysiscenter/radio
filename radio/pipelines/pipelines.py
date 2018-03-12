@@ -2,7 +2,7 @@
 
 from copy import copy
 import PIL
-from ..dataset import Pipeline  # pylint: disable=no-name-in-module
+from ..dataset import Pipeline, F  # pylint: disable=no-name-in-module
 
 # global constants defining args of some actions in pipeline
 SPACING = (1.7, 1.0, 1.0)  # spacing of scans after spacing unification
@@ -230,7 +230,7 @@ def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-10
     ppl_cancer = (cancer_set.p
                   .load(fmt='blosc')
                   .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
-                  .run(lazy=True, batch_size=batch_sizes[0], shuffle=shuffle)
+                  .run(lazy=True, batch_size=batch_sizes[0], shuffle=shuffle, drop_last=True)
                  )
 
     # pipeline generating non-cancerous crops merged with first pipeline
@@ -238,7 +238,7 @@ def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-10
                 .load(fmt='blosc')
                 .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
                 .merge(ppl_cancer)
-                .run(lazy=True, batch_size=batch_sizes[1], shuffle=shuffle)
+                .run(lazy=True, batch_size=batch_sizes[1], shuffle=shuffle, drop_last=True)
                )
 
     return pipeline

@@ -114,7 +114,7 @@ def sym_dice(y_true, y_pred, alpha, epsilon=10e-7):
     float
         symetrized by '0-1' class labels dice coefficient.
     """
-    return (1 - alpha) * dice(y_pred, y_true, epsilon) + alpha * dice(1 - y_pred, 1 - y_true, epsilon)
+    return (1 - alpha) * dice(y_true, y_pred, epsilon) + alpha * dice(1 - y_pred, 1 - y_true, epsilon)
 
 
 def tp(y_true, y_pred, threshold=0.5):
@@ -216,8 +216,8 @@ def tpr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     float
         true positive rate value;
     """
-    tp_value = tp(y_pred, y_true, threshold)
-    fn_value = fn(y_pred, y_true, threshold)
+    tp_value = tp(y_true, y_pred, threshold)
+    fn_value = fn(y_true, y_pred, threshold)
     return tp_value / (tp_value + fn_value + epsilon)
 
 
@@ -240,8 +240,8 @@ def tnr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     float
         true negative rate value.
     """
-    tn_value = tn(y_pred, y_true, threshold)
-    fp_value = fp(y_pred, y_true, threshold)
+    tn_value = tn(y_true, y_pred, threshold)
+    fp_value = fp(y_true, y_pred, threshold)
     return tn_value / (tn_value + fp_value + epsilon)
 
 
@@ -264,7 +264,7 @@ def fpr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     float
         false positive rate value.
     """
-    return 1. - tpr(y_pred, y_true, threshold, epsilon)
+    return 1. - tpr(y_true, y_pred, threshold, epsilon)
 
 
 def fnr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
@@ -286,7 +286,7 @@ def fnr(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     float
         false negative rate value.
     """
-    return 1. - tnr(y_pred, y_true, threshold, epsilon)
+    return 1. - tnr(y_true, y_pred, threshold, epsilon)
 
 
 def precision(y_true, y_pred, threshold=0.5, epsilon=10e-7):
@@ -308,8 +308,8 @@ def precision(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     float
         precision metric value.
     """
-    tp_value = tp(y_pred, y_true, threshold)
-    fp_value = fp(y_pred, y_true, threshold)
+    tp_value = tp(y_true, y_pred, threshold)
+    fp_value = fp(y_true, y_pred, threshold)
     return tp_value / (tp_value + fp_value + epsilon)
 
 
@@ -332,7 +332,7 @@ def recall(y_true, y_pred, threshold=0.5, epsilon=10e-7):
     float
         recall metric value.
     """
-    return tpr(y_pred, y_true, threshold=threshold, epsilon=epsilon)
+    return tpr(y_true, y_pred, threshold=threshold, epsilon=epsilon)
 
 
 def accuracy(y_true, y_pred, threshold=0.5):

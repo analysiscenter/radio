@@ -107,11 +107,13 @@ def mix_images_numba(images, masks, bounds, permutation, p, mode, mix_masks):
     if mode == 0:
         images = np.maximum(images * p, images_to_add * (1 - p)) / np.maximum(p, 1-p)
         if mix_masks:
-            masks = np.maximum(masks * p, masks_to_add * (1 - p)) / np.maximum(p, 1-p)
+            #masks = np.maximum(masks * p, masks_to_add * (1 - p)) / np.maximum(p, 1-p)
+            masks = np.maximum(masks, masks_to_add)
     elif mode == 1:
         images = images * p + images_to_add * (1 - p)
         if mix_masks:
-            masks = masks * p + masks_to_add * (1 - p)
+            #masks = masks * p + masks_to_add * (1 - p)
+            masks = np.maximum(masks, masks_to_add)
     return images, masks
 
 
@@ -1057,7 +1059,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
                         batch_size=4, targets_mode='segmentation', data_format='channels_last',
-                        show_progress=True, model_type='tf'):
+                        show_progress=True, model_type='tf', store_to='masks'):
         """ Get predictions of the model on data contained in batch.
 
         Transforms scan data into patches of shape CROP_SHAPE and then feed
@@ -1128,7 +1130,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         patches_mask = np.squeeze(patches_mask)
         self.load_from_patches(patches_mask, stride=strides,
                                scan_shape=tuple(self.images_shape[0, :]),
-                               data_attr='masks')
+                               data_attr=store_to)
         return self
 
     def unpack(self, component='images', **kwargs):
