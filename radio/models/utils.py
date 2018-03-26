@@ -115,13 +115,13 @@ def overlap_nodules(batch, nodules_true, nodules_pred):
     true_df = (
         batch
         .nodules_to_df(nodules_true)
-        .assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+        .assign(diam=lambda df: np.max(df[['diamZ', 'diamY', 'diamX']], axis=1))
     )
 
     pred_df = (
         batch
         .nodules_to_df(nodules_pred)
-        .assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+        .assign(diam=lambda df: np.max(df[['diamZ', 'diamY', 'diamX']], axis=1))
     )
 
     true_out, pred_out = [], []
@@ -149,7 +149,11 @@ def overlap_nodules(batch, nodules_true, nodules_pred):
         nods_true = nods_true.set_index('nodule_id').loc[:, ['diam', 'locZ', 'locY', 'locX', 'confidence']]
         nods_pred = nods_pred.set_index('nodule_id').loc[:, ['diam', 'locZ', 'locY', 'locX', 'confidence']]
 
+<<<<<<< HEAD
         overlap_matrix = nodules_sets_overlap_jit(nods_true.values[:,:-1], nods_pred.values[:,:-1])
+=======
+        overlap_matrix = nodules_sets_overlap_jit(nods_true[:,:-1].values, nods_pred[:,:-1].values)
+>>>>>>> cc2d2d3b42dae1c41b2d562a27a2c8dc120c67d8
 
         ov_mask_true, ov_ind_true = _create_overlap_index(overlap_matrix)
         ov_mask_pred, ov_ind_pred = _create_overlap_index(overlap_matrix.T)
