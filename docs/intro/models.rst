@@ -17,6 +17,7 @@ In **RadIO** models can be distinguished by tasks that they perform:
 Each of these categories has notable architectures, loss functions
 and target forms.
 
+
 Architectures
 ---------------
 
@@ -38,6 +39,7 @@ Full list of models contained in RadIO.models submodule:
 | DenseNoduleNet      |        \+      |      \+     |       \-     |
 +---------------------+----------------+-------------+--------------+
 
+
 Loss functions
 ---------------
 
@@ -45,6 +47,7 @@ Description of implemented loss functions:
 
 - :doc:`tensorflow losses <../api/tf_loss>`
 - :doc:`keras losses <../api/keras_loss>`
+
 
 Network's targets
 -----------------

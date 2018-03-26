@@ -1,40 +1,36 @@
-.. RadIO documentation master file, created by
-   sphinx-quickstart on Mon Nov  6 23:59:27 2017.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to RadIO's documentation!
 =================================
 
-**RadIO** is a framework for batch-processing of computed
-tomography (CT)-scans for deep learning experiments.
+**RadIO** is a framework for data science research of computed tomography (CT) imaging.
 
 Main features:
 
-* Asynchronously load files from **DICOM** or **MetaImage** (mhd/raw)
-* Dump files to `blosc <http://blosc.org/>`_ to reduce size of datasets and accelerate load
-* Resize CT-scans in parallel using PIL or Scipy for faster preprocessing
-* Set up workflows with minimum code with :func:`actions <dataset.action>` or use ready-made :doc:`pipelines <intro/pipelines>` for preprocessing or training models
-* Train with ease a zoo of 18 high-performing neural networks for classification or segmentation
-* Sample crops of any size from CT-scans for training, predict `on the whole scan <https://analysiscenter.github.io/lung_cancer//api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan>`_
-* Customize distribution of crop locations for improving training
+- Asynchronously load **DICOM** and **MetaImage** (mhd/raw) files
+- Dump files to `blosc <http://blosc.org/>`_ to compress datasets and thus accelerate loading
+- Transform and augment CT-scans in parallel for faster preprocessing
+- Create concise chainable workflows with ``actions`` or use tailored :doc:`pipelines <intro/pipelines>` for preprocessing or model training
+- Train with ease a zoo of state-of-the-art neural networks for classification or semantic segmentation
+- Sample crops of any size from CT-scans for comprehensive training
+- Customize :ref:`distribution of crop locations <sample_crops_from_scan>` for improved training
+- Predict :meth:`on the whole scan <.CTImagesMaskedBatch.predict_on_scan>`.
 
-This documentation is made to provide a comprehensive review of RadIO's capabilities. Nevertheless,
-we advise you to take a look at the `tutorials-section <https://github.com/analysiscenter/radio/tree/master/tutorials>`_ on
-our `repo <https://github.com/analysiscenter/radio>`_.
+
+`The documentation <#contents>`_ contains a comprehensive review of RadIO's capabilities. While `tutorials <https://github.com/analysiscenter/radio/tree/master/tutorials>`_ provide ready-to-use code blocks and a practical demonstration of the most important RadIO features.
+
 
 Tutorials
-=========
+---------
 
-In all, there are four tutorials:
+There are four tutorials available:
 
-* In the `first <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.I.ipynb>`_ one you can learn how to set up a dataset of CT-scans and set up a basic preprocessing workflow.
-* In the `second tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.II.ipynb>`_ we discuss in depth preprocessing and augmenting capabilities of RadIO.
-* The `third tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.III.ipynb>`_ aims to explain how RadIO can help you to generate batches of crops, that can be used for training a segmenting net on task of cancer segmentation.
-* Lastly, in the `fourth tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.IV.ipynb>`_ you will train a set of segmenting neural networks (including `V-Net <https://arxiv.org/abs/1606.04797>`_) from RadIO's zoo of models.
+* In the `first <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.I.ipynb>`_ one you can learn how to set up a dataset of CT-scans and define a basic preprocessing workflow.
+* The `second tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.II.ipynb>`_ contains in-depth discussion of preprocessing and augmentation actions.
+* The `third tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.III.ipynb>`_ explains how to generate batches to train a neural network.
+* The `fourth tutorial <https://github.com/analysiscenter/radio/tree/master/tutorials/RadIO.IV.ipynb>`_ will help you configure and train a neural network to detect cancer.
 
-Contents
-========
+
+Documentation
+-------------
 .. toctree::
    :maxdepth: 2
 
@@ -44,110 +40,95 @@ Contents
    api/api
 
 
-Preprocess scans using implemented actions
-------------------------------------------
+Preprocess scans with chained actions
+-------------------------------------
 
-Preprocessing-module contains a set of :func:`actions <dataset.action>`,
-that allow to efficiently prepare a dataset of CT-scans for training neural nets.
-Say, you have a bunch of scans in **DICOM** format with varying shapes.
-First, you index the scans using the :mod:`dataset <http://analysiscenter.github.io/dataset/>`.
+Preprocessing module contains a set of :doc:`actions <intro/preprocessing>`
+to efficiently prepare a dataset of CT-scans for neural networks training.
 
-.. code-block:: python
+Say, you have a bunch of **DICOM** scans with varying shapes.
+First, you create an index and define a dataset::
 
     from radio import CTImagesBatch
     from dataset import FilesIndex, Dataset
 
-    dicomix = FilesIndex(path='path/to/dicom/*', no_ext=True) # set up the index
-    dicomset = Dataset(index=dicomix, batch_class=CTImagesBatch) # init the dataset of dicom files
+    dicom_ix = FilesIndex(path='path/to/dicom/*', no_ext=True)         # set up the index
+    dicom_dataset = Dataset(index=dicom_ix, batch_class=CTImagesBatch) # init the dataset of dicom files
 
 You may want to resize the scans to equal shape **[128, 256, 256]**,
 normalize voxel densities to range **[0, 255]** and dump transformed
-scans. Preprocessing like this can be easily done with the following
-:class:`pipeline <dataset.Pipeline>`, just like that:
+scans. This preprocessing can be easily performed with the following
+:class:`pipeline <dataset.Pipeline>`::
 
-.. code-block:: python
-
-    prep_ppl = (
-        dicomset
-        .pipeline()
+    pipeline = (
+        dicom_dataset.p
         .load(fmt='dicom')
         .resize(shape=(128, 256, 256))
         .normalize_hu()
         .dump('/path/to/preprocessed/scans/')
     )
-    prep_ppl.run(batch_size=20)
+    pipeline.run(batch_size=20)
 
 See the :doc:`documentation <intro/preprocessing>` for the description of
 preprocessing actions implemented in the module.
 
-Preprocess scans using a workflow from the box
-----------------------------------------------
 
-Pipelines-module contains ready-to-use workflows for most frequent tasks.
-E.g. if you want to preprocess dataset of scans named ``ctset`` and
-prepare data for training a net, you can simply execute the following
-pipeline-creator (without spending time on thinking how to chain actions in
-a workflow):
+Preprocess scans using a pre-defined workflow
+---------------------------------------------
 
-.. code-block:: python
+Pipelines module contains ready-to-use workflows for most frequent tasks.
+For instance, if you want to preprocess a dataset of scans named ``dicom_dataset`` and
+prepare data for training a neural network, you can simply execute the following
+pipeline creator (without spending much time on thinking what actions to choose for
+a workflow)::
 
     from radio.pipelines import get_crops
 
-    pipe = get_crops(fmt='raw', shape=(128, 256, 256),
-                     nodules_df=nodules, batch_size=20,
-                     share=0.6, nodule_shape=(32, 64, 64))
+    nodata_pipeline = get_crops(fmt='raw', shape=(128, 256, 256),
+                                nodules=nodules, batch_size=20,
+                                share=0.6, nodule_shape=(32, 64, 64))
 
-    (ctset >> pipe).gen_batch(batch_size=12, shuffle=True)
+    dicom_pipeline = dicom_dataset >> nodata_pipeline
 
-    for batch in gen_batches:
+    for batch in dicom_pipeline.gen_batch(batch_size=12, shuffle=True):
         # ...
-        # perform net training here
+        # train a model here
 
 See the :doc:`documentation <intro/pipelines>` for more information about
 ready-made workflows.
 
-Adding a neural-net model to a workflow
----------------------------------------
 
-Contains neural nets' architectures for task of classification,
-segmentation and detection. E.g., ``DenseNoduleNet``, an architecutre,
-inspired by `DenseNet <https://arxiv.org/abs/1608.06993>`_, but suited for 3D scans.
+Adding a neural network to a workflow
+-------------------------------------
 
-.. code-block:: python
-
-    from radio.models import DenseNoduleNet
-
-Using the architectures from Models, one can train deep learning systems
-for cancer detection. E.g., initialization and training of a new DenseNoduleNet
-on scan crops of shape **[32, 64, 64]** can be implemented as follows:
-
-.. code-block:: python
+``RadIO`` contains proven architectures for classification, segmentation and detection, including neural networks designed specifically
+for cancer detection (e.g. ``DenseNoduleNet`` inspired by the state-of-the-art DenseNet, but well suited for 3D CT scans)::
 
     from radio.preprocessing import CTImagesMaskedBatch as CTIMB
-    from dataset import F
+    from radio.models import DenseNoduleNet
+    from radio.dataset import F
 
-    training_flow = (
-        ctset
-        .pipeline()
-        .load(fmt='raw')
-        .fetch_nodules_info(nodules_df)
-        .create_mask()
-        .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
-        .init_model(mode='static', model_class=DenseNoduleNet, model_name='dnod_net')
-        .train_model('dnod_net', feed_dict={
-            'images': F(CTIMB.unpack, component='images'),
-            'labels': F(CTIMB.unpack, component='classification_targets')
-        })
+    training_pipeline = (
+        dicom_dataset.p
+          .load(fmt='raw')
+          .fetch_nodules_info(nodules_df)
+          .create_mask()
+          .sample_nodules(nodule_size=(32, 64, 64), batch_size=20)
+          .init_model('static', DenseNoduleNet, 'net')
+          .train_model('net', feed_dict={
+              'images': F(CTIMB.unpack, component='images'),
+              'labels': F(CTIMB.unpack, component='classification_targets')
+          })
     )
 
-    training_flow.run(batch_size=10)
+    training_pipeline.run(batch_size=10, shuffle=True)
 
-
-The :doc:`documentation <intro/models>` contains more information about implemented
+The :doc:`models documentation <intro/models>` contains more information about implemented
 architectures and their application to cancer detection.
 
+
 Installation
-============
+------------
 
 With `pipenv <https://docs.pipenv.org/>`_::
 
@@ -173,7 +154,23 @@ After that just import `RadIO`::
 
 
 Citing RadIO
-==============
-Please cite RadIO in your publications if it helps your research.::
+------------
+
+Please cite RadIO in your publications if it helps your research.
+
+.. image:: https://zenodo.org/badge/DOI/10.5281/zenodo.1156363.svg
+   :target: https://doi.org/10.5281/zenodo.1156363
+
+::
 
     Khudorozhkov R., Emelyanov K., Koryagin A. RadIO library for data science research of CT images. 2017.
+
+::
+
+    @misc{radio_2017_1156363,
+      author = {Khudorozhkov R., Emelyanov K., Koryagin A.},
+      title  = {RadIO library for data science research of CT images},
+      year   = 2017,
+      doi    = {10.5281/zenodo.1156363},
+      url    = {https://doi.org/10.5281/zenodo.1156363}
+    }
