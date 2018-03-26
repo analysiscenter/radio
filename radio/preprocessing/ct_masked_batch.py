@@ -113,7 +113,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                               ('nodule_center', np.float, (3,)),
                               ('nodule_size', np.float, (3,)),
                               ('spacing', np.float, (3,)),
-                              ('origin', np.float, (3,))])
+                              ('origin', np.float, (3,)),
+                              ('confidence', np.float, (1,))])
 
     components = "images", "masks", "spacing", "origin"
 
@@ -361,7 +362,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         for pos in range(len(self)):
             mask = self.get(pos, 'masks')
             mask_labels = measure.label(mask, background=0)
-            for props in measure.regionprops(np.int16(mask_labels)):
+            for props in measure.regionprops(np.int16(mask_labels), intensity_image=mask):
                 center = np.asarray((props.centroid[0],
                                      props.centroid[1],
                                      props.centroid[2]), dtype=np.float)
@@ -370,9 +371,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 diameter = np.asarray(
                     [props.equivalent_diameter] * 3, dtype=np.float)
                 diameter = diameter * self.spacing[pos]
+                confidence = props.mean_intensity
                 nodules_list.append({'patient_pos': pos,
                                      'nodule_center': center,
-                                     'nodule_size': diameter})
+                                     'nodule_size': diameter,
+                                     'confidence': confidence})
 
         num_nodules = len(nodules_list)
         self.nodules = np.rec.array(
@@ -381,6 +384,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.patient_pos[i] = nodule['patient_pos']
             self.nodules.nodule_center[i, :] = nodule['nodule_center']
             self.nodules.nodule_size[i, :] = nodule['nodule_size']
+            self.nodules.confidence[i] = nodule['confidence']
+
         self._refresh_nodules_info(images_loaded)
         return self
 
