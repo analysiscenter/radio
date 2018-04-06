@@ -383,7 +383,7 @@ def get_nodules_groups(nodules, proba=0.8):
     return new_nodules
 
 
-def read_nodules(path, include_annotators=False, drop_no_cancer=False):
+def read_nodules(paths, include_annotators=False, drop_no_cancer=False):
     """ Read annotation from file and transform it to dataframe with nodules.
 
     Parameters
@@ -400,23 +400,28 @@ def read_nodules(path, include_annotators=False, drop_no_cancer=False):
     pandas DataFrame
         dataframe that contains information about nodules location, type and etc.
     """
-    annotation = parse_annotation(path)
-    annotators_info = (
-        annotation
-        .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-        .query("AccessionNumber != ''")
-        .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
-        .notna()
-        .astype('int')
-        .pipe(lambda df: df.rename(columns={doctor_id: 'doctor_' + str(doctor_id)
-                                            for doctor_id in df.columns}))
-    )
-    nodules = annotation_to_nodules(annotation)
+    if type(paths) is str: paths = [paths]
+    out_nods = []
+    for path in paths:
+        annotation = parse_annotation(path)
+        annotators_info = (
+            annotation
+            .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
+            .query("AccessionNumber != ''")
+            .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
+            .notna()
+            .astype('int')
+            .pipe(lambda df: df.rename(columns={doctor_id: 'doctor_' + str(doctor_id)
+                                                for doctor_id in df.columns}))
+        )
+        nodules = annotation_to_nodules(annotation)
 
-    if include_annotators:
-        nodules = pd.merge(annotation_to_nodules(annotation), annotators_info,
-                           left_on='AccessionNumber', right_index=True,
-                           how='inner' if drop_no_cancer else 'right')
+        if include_annotators:
+            nodules = pd.merge(annotation_to_nodules(annotation), annotators_info,
+                               left_on='AccessionNumber', right_index=True,
+                               how='inner' if drop_no_cancer else 'right')
+        out_nods += [nodules]
+    nodules = pd.concat(out_nods)
     return nodules
 
 
