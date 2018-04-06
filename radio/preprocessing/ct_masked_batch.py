@@ -434,7 +434,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return (start_pix + self.nodules.offset).astype(np.int)
 
     @action
-    def create_mask(self):
+    def create_mask(self, mode='ellipsoid'):
         """ Create `masks` component from `nodules` component.
 
         Notes
@@ -443,6 +443,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         see :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info`
         for more details.
         """
+        _mode = 0 if mode == 'cuboid' else 1
         if self.nodules is None:
             logger.warning("Info about nodules location must " +
                            "be loaded before calling this method. " +
@@ -456,7 +457,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         start_pix = np.rint(start_pix).astype(np.int)
         make_mask_numba(self.masks, self.nodules.offset,
                         self.nodules.img_size + self.nodules.offset, start_pix,
-                        np.rint(self.nodules.nodule_size / self.nodules.spacing))
+                        np.rint(self.nodules.nodule_size / self.nodules.spacing), mode=_mode)
 
         return self
 

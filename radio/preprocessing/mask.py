@@ -1,5 +1,5 @@
 """ Auxiliary functions for mask-creation """
-
+import math
 import numpy as np
 from numba import njit
 
@@ -90,9 +90,36 @@ def insert_cropped(where, what, origin):
                                             st_what[1]: end_what[1],
                                             st_what[2]: end_what[2]]
 
+@njit
+def draw_ellipsoid_numba(a, b, c):
+    """ Draw ellipsoid with given sizes of axes.
+
+    Parameters
+    ----------
+    a : int
+        size along z axis.
+    b : int
+        size along y axis.
+    c : int
+        size along x axis.
+
+    Returns
+    -------
+    ndarray(2a, 2b, 2c)
+    """
+    volume = np.zeros(shape=(2 * a, 2 * b, 2 * c))
+    for iz in range(-a, a):
+        y_lim = math.ceil(b * np.sqrt(1 - (iz / a) ** 2))
+        for iy in range(-y_lim, y_lim):
+            x_lim = math.ceil(c * np.sqrt(1 - (iz / a) ** 2 - (iy / b) ** 2))
+            for ix in range(-x_lim, x_lim):
+                if (iz / a) ** 2 + (iy / b) ** 2 + (ix / c) ** 2 <= 1:
+                    volume[iz + a, iy + b, ix + c] = 1
+    return volume
+
 
 @njit(nogil=True)
-def make_mask_numba(batch_mask, start, end, nodules_start, nodules_size):
+def make_mask_numba(batch_mask, start, end, nodules_start, nodules_size, mode=0):
     """ Make mask using information about nodules location and sizes.
 
     Takes batch_masks already filled with zeros,
@@ -119,9 +146,14 @@ def make_mask_numba(batch_mask, start, end, nodules_start, nodules_size):
     for i in range(nodules_start.shape[0]):
         nodule_size = nodules_size[i, :]
 
-        nodule = np.ones((int(nodule_size[0]),
-                          int(nodule_size[1]),
-                          int(nodule_size[2])))
+        if mode == 0:
+            nodule = np.ones((int(nodule_size[0]),
+                              int(nodule_size[1]),
+                              int(nodule_size[2])))
+        elif mode == 1:
+            nodule = draw_ellipsoid_numba(math.ceil(nodule_size[0] / 2),
+                                          math.ceil(nodule_size[1] / 2),
+                                          math.ceil(nodule_size[2] / 2))
 
         patient_mask = batch_mask[start[i, 0]: end[i, 0],
                                   start[i, 1]: end[i, 1],
