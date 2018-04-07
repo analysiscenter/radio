@@ -11,10 +11,11 @@ import dill as pickle
 import numpy as np
 import aiofiles
 import blosc
-try:	
-    import pydicom as dicom # pydicom library was renamed in v1.0	
-except ImportError:	
-    import dicomimport SimpleITK as sitk
+try:
+    import pydicom as dicom # pydicom library was renamed in v1.0
+except ImportError:
+    import dicom
+import SimpleITK as sitk
 from scipy.ndimage import grey_closing, grey_opening, grey_dilation, grey_dilation, grey_erosion
 from scipy.ndimage import maximum_filter, minimum_filter, median_filter, sobel, center_of_mass, percentile_filter, gaussian_filter
 from scipy.fftpack import fftn, ifftn
