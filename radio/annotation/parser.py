@@ -72,7 +72,6 @@ def get_dicom_info(paths, index_col=None):
         pandas DataFrame with scans' meta information.
     """
     meta_info = []
-    indices = []
     for path in paths:
         first_slice = dicom.read_file(os.path.join(path, os.listdir(path)[0]))
 
