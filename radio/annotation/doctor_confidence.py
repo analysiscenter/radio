@@ -64,9 +64,11 @@ def create_table(nodules):
 
     for i in range(N_DOCTORS):
         for j in range(i+1, N_DOCTORS):
-            accession_numbers = (nodules
+            accession_numbers = (
+                nodules
                 .groupby('AccessionNumber')
-                .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values))
+                .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values)
+            )
             accession_numbers = accession_numbers[accession_numbers].index
             table_meetings[i, j] = len(accession_numbers)
             table_meetings[j, i] = len(accession_numbers)
@@ -109,9 +111,11 @@ def update_confidence(nodules, doctor, confidences, probabilities, n_consiliums=
                                          replace=False)
     res = []
     for accession_number in accession_numbers:
-        consilium = (nodules[nodules.AccessionNumber == accession_number][['annotator_1', 'annotator_2', 'annotator_3']]
+        consilium = (
+            nodules[nodules.AccessionNumber == accession_number][['annotator_1', 'annotator_2', 'annotator_3']]
             .astype(int)
-            .iloc[0])
+            .iloc[0]
+        )
         consilium = np.array(consilium)
         consilium = np.delete(consilium, np.argwhere(consilium == doctor))
         mask = create_mask(nodules, accession_number, factor=factor)
