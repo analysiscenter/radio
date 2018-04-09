@@ -133,7 +133,7 @@ def compute_group_coords_and_diameter(nodules, proba=0.8):
     confidence_array = np.zeros(num_nodules, dtype=np.float64)
     mean_array = np.zeros((num_nodules, 3), dtype=np.float64)
     variance_array = np.zeros(num_nodules, dtype=np.float64)
-    for i, (nodule_id, row) in enumerate(nodules.iterrows()):
+    for i, (_, row) in enumerate(nodules.iterrows()):
         mean_array[i, :] = np.array((row['coordZ'], row['coordY'], row['coordX']))
         variance_array[i] = get_sigma_by_diameter(row['diameter_mm'], proba=proba) ** 2
         confidence_array[i] = row['confidence']
