@@ -4,7 +4,6 @@ from binascii import hexlify
 from collections import OrderedDict
 import glob
 import numpy as np
-import scipy.stats as stats
 import pandas as pd
 import dicom
 
