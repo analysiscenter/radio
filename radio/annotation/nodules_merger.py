@@ -3,6 +3,7 @@
 import numpy as np
 import pandas as pd
 from .parser import generate_index
+from ..models.utils import sphere_overlap
 
 
 def assign_nodules_group_index(nodules):
