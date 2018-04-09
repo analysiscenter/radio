@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from scipy import stats
 from .parser import generate_index
 from ..models.utils import sphere_overlap
 
