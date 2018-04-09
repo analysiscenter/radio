@@ -40,17 +40,17 @@ def normalize_nodule_type(nodules):
     nodule_type = nodule_type.str.strip()
     nodule_type = nodule_type.str.lower()
 
-    nodule_type = nodule_type.str.replace('каверна', 'c')
-    nodule_type = nodule_type.str.replace('nan', 'c')
+    nodule_type = nodule_type.str.replace(r'каверна', 'c')
+    nodule_type = nodule_type.str.replace(r'nan', 'c')
 
-    nodule_type = nodule_type.str.replace('g|ч|x', 'п')
-    nodule_type = nodule_type.str.replace('а|a|k|к|‘', 'с')
-    nodule_type = nodule_type.str.replace('v', 'м')
-    nodule_type = nodule_type.str.replace('^$', 'c')
+    nodule_type = nodule_type.str.replace(r'g|ч|x', 'п')
+    nodule_type = nodule_type.str.replace(r'а|a|k|к|‘', 'с')
+    nodule_type = nodule_type.str.replace(r'v', 'м')
+    nodule_type = nodule_type.str.replace(r'^$', 'c')
 
-    nodule_type = nodule_type.str.replace('(?:n|п)(?:c|с)?', 'semi_solid')
-    nodule_type = nodule_type.str.replace('м', 'ground_glass')
-    nodule_type = nodule_type.str.replace('(?:c|с)(\d|\s.+)?', 'solid')
+    nodule_type = nodule_type.str.replace(r'(?:n|п)(?:c|с)?', 'semi_solid')
+    nodule_type = nodule_type.str.replace(r'м', 'ground_glass')
+    nodule_type = nodule_type.str.replace(r'(?:c|с)(\d|\s.+)?', 'solid')
 
     return nodules.assign(NoduleType=nodule_type)
 
