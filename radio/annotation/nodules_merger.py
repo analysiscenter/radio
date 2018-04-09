@@ -59,7 +59,7 @@ def get_diameter_by_sigma(sigma, proba):
     float
         equivalent diameter.
     """
-    return 2 * sigma * stats.norm.ppf((1 + proba) / 2)
+    return 2 * sigma * stats.norm.ppf((1 + proba) / 2)  # pylint: disable=no-member
 
 
 def get_sigma_by_diameter(diameter, proba):
@@ -77,7 +77,7 @@ def get_sigma_by_diameter(diameter, proba):
     float
         equivalent normal distribution's sigma parameter.
     """
-    return diameter / (2 * stats.norm.ppf((1 + proba) / 2))
+    return diameter / (2 * stats.norm.ppf((1 + proba) / 2))  # pylint: disable=no-member
 
 
 def approximate_gaussians(confidence_array, mean_array, variance_array):
