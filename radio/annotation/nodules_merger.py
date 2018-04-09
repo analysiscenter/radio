@@ -20,7 +20,7 @@ def assign_nodules_group_index(nodules):
     pandas DataFrame
     """
     overlap_groups = {}
-    for nodule_l, row_l in nodules.iterrows():
+    for _, row_l in nodules.iterrows():
         overlap_indices = []
         for nodule_r, row_r in nodules.iterrows():
             al = row_l.loc[['diameter_mm', 'coordZ', 'coordY', 'coordX']].values.astype(np.float)
