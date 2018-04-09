@@ -84,7 +84,7 @@ def approximate_gaussians(confidence_array, mean_array, variance_array):
     """ Approximate gaussians with given parameters with one gaussian.
 
     Approximation is performed via minimization of Kullback-Leibler
-    divergence KL(\sum_{j} w_j N_{\mu_j, \sigma_j} || N_{\mu, \sigma}).
+    divergence KL(sum_{j} w_j N_{mu_j, sigma_j} || N_{mu, sigma}).
 
     Parameters
     ----------
