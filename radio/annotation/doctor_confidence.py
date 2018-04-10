@@ -42,7 +42,6 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
     confidences_history = [confidences]
     for _ in range(n_iters):
         confidences = update_confidences(nodules, confidences, probabilities, n_consiliums, factor)
-        print(confidences)
         confidences_history.append(confidences)
     return confidences_history if history else confidences
 
