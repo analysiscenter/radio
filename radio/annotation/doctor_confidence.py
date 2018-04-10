@@ -45,7 +45,7 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
         confidences = update_confidences(nodules, confidences, probabilities, n_consiliums, factor)
         confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
                                                  'confidence': confidences, 'iteration': i}))
-    return pd.concat(confidences_history, axis=0) if history else confidence_history[-1].drop(columns=['iteration'])
+    return pd.concat(confidences_history, axis=0) if history else confidences_history[-1].drop(columns=['iteration'])
 
 def update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
     nodules = (
