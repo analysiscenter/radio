@@ -5,7 +5,8 @@
 
 from numba import autojit, prange
 import numpy as np
-from tqdm import tqdm
+import pandas as pd
+from tqdm import tqdm_notebook
 
 N_DOCTORS = 15
 
@@ -40,11 +41,11 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
     elif confidences == 'uniform':
         confidences = np.ones(N_DOCTORS) / N_DOCTORS
     confidences_history = [confidences]
-    for _ in range(n_iters):
+    for i in tqdm_notebook(range(n_iters)):
         confidences = update_confidences(nodules, confidences, probabilities, n_consiliums, factor)
-        print(confidences)
-        confidences_history.append(confidences)
-    return confidences_history if history else confidences
+        confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
+                                                 'confidence': confidences, 'iteration': i}))
+    return pd.concat(confidences_history, axis=0) if history else confidence_history[-1].drop(columns=['iteration'])
 
 def update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
     nodules = (
@@ -77,14 +78,14 @@ def update_confidences(nodules, confidences, probabilities, n_consiliums=10, fac
                 }
                 consilium_nodules.DoctorID = consilium_nodules.DoctorID.map(mapping)
                 mask = create_mask(consilium_nodules, factor=factor)
-                
+
                 proba = probabilities[sample_annotators]
                 proba = proba / np.sum(proba)
                 proba = np.prod(proba)
-                
+
                 consilium_confidences = confidences[sample_annotators]
                 consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
-                
+
                 res.append(proba * consilium_dice(mask, consilium_confidences))
 
         new_confidences.append(np.mean(res))
@@ -164,12 +165,12 @@ def create_mask(consilium_nodules, factor):
     mask_size = list(_compute_mask_size(nodules))
 
     mask = _create_empty_mask(mask_size, 3)
-    
+
     coords = np.array(nodules[['coordX', 'coordY', 'coordZ']], dtype=np.int32)
     diameters = np.array(nodules.diameter_mm, dtype=np.int32)
     values = np.array(nodules.DoctorID, dtype=np.int32)
 
-    return _create_mask_numba(mask, coords, diameters, values)    
+    return _create_mask_numba(mask, coords, diameters, values)
 
 @autojit
 def _create_mask_numba(mask, coords, diameters, values):
