@@ -238,7 +238,7 @@ def read_nodules(path, include_annotators=False, drop_no_cancer=False):
         nodules = pd.merge(annotation_to_nodules(annotation), annotators_info,
                            left_on='AccessionNumber', right_index=True,
                            how='inner' if drop_no_cancer else 'right')
-    return nodules, annotators_info
+    return nodules
 
 
 def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False):
