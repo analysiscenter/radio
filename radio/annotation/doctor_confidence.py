@@ -45,6 +45,52 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
         confidences_history.append(confidences)
     return confidences_history if history else confidences
 
+def update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
+    nodules = (
+        nodules
+        .assign(n_annotators=lambda df: df.filter(regex='doctor_\d{3}', axis=1).sum(axis=1))
+        .query('n_annotators >= 3')
+        .drop('n_annotators', axis=1)
+    )
+
+    new_confidences = []
+    for doctor in range(N_DOCTORS):
+        doctor_nodules = nodules.query("doctor_{:03d} == 1".format(doctor))
+        accession_numbers = doctor_nodules.AccessionNumber.unique()
+        sample_accesion_numbers = np.random.choice(accession_numbers, min(n_consiliums, len(accession_numbers)),
+                                                 replace=False)
+        res = []
+        for accession_number in accession_numbers:
+            image_nodules = doctor_nodules[doctor_nodules.AccessionNumber == accession_number]
+            if image_nodules.DoctorID.isna().iloc[0]:
+                res.append(1)
+            else:
+                annotators = image_nodules.filter(regex='doctor_\d{3}', axis=1).sum()
+                annotators = list(map(lambda x: int(x[-3:]), annotators[annotators != 0].keys()))
+                annotators.remove(doctor)
+                sample_annotators = np.random.choice(annotators, 2, replace=False)
+                consilium_nodules = image_nodules[image_nodules.DoctorID.astype(int).isin([doctor]+list(sample_annotators))]
+                mapping = {
+                    **{'{:03d}'.format(doctor): 0},
+                    **{'{:03d}'.format(value): i+1 for i, value in enumerate(sample_annotators)}
+                }
+                consilium_nodules.DoctorID = consilium_nodules.DoctorID.map(mapping)
+                mask = create_mask(consilium_nodules, factor=factor)
+                
+                proba = probabilities[sample_annotators]
+                proba = proba / np.sum(proba)
+                proba = np.prod(proba)
+                
+                consilium_confidences = confidences[sample_annotators]
+                consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
+                
+                res.append(proba * consilium_dice(mask, consilium_confidences))
+
+        new_confidences.append(np.mean(res))
+    new_confidences = np.array(new_confidences) / np.sum(new_confidences)
+    confidences = confidences * alpha + np.array(new_confidences) * (1 - alpha)
+    return confidences / np.sum(confidences)
+
 def create_table(nodules):
     """ Create tables.
 
@@ -83,98 +129,22 @@ def create_table(nodules):
 
     return table, table_meetings
 
-def update_confidence(nodules, doctor, confidences, probabilities, n_consiliums=3, factor=0.3):
-    """ Update doctor confidence
-
-    Parameters
-    ----------
-    nodules : pd.DataFrame
-
-    doctor : int
-
-    confidences : np.ndarray
-        initial confidences to update
-    probabilities : np.ndarray
-        frequences of doctors in studies
-    n_consiliums : int
-        number of consiliums for each doctor
-    factor : float
-        ratio for mask creation
-
-    Returns
-    -------
-    new_confidence : int
-    """
-    accession_numbers = nodules[nodules.DoctorID.astype(int) == doctor].AccessionNumber.unique()
-    accession_numbers = np.random.choice(accession_numbers,
-                                         min(n_consiliums, len(accession_numbers)),
-                                         replace=False)
-    res = []
-    for accession_number in accession_numbers:
-        consilium = (
-            nodules[nodules.AccessionNumber == accession_number][['annotator_1', 'annotator_2', 'annotator_3']]
-            .astype(int)
-            .iloc[0]
-        )
-        consilium = np.array(consilium)
-        consilium = np.delete(consilium, np.argwhere(consilium == doctor))
-        mask = create_mask(nodules, accession_number, factor=factor)
-        # mask = load_mask(accession_number, 8)
-        proba = np.prod(probabilities[consilium])
-        proba = proba / np.sum(proba)
-        res.append(proba * consilium_dice(mask, doctor, consilium, confidences))
-    return np.mean(res)
-
-def update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3):
-    """ Update all confidences
-
-    Parameters
-    ----------
-    nodules : pd.DataFrame
-
-    doctor : int
-
-    confidences : np.ndarray
-        initial confidences to update
-    probabilities : np.ndarray
-        frequences of doctors in studies
-    n_consiliums : int
-        number of consiliums for each doctor
-    factor : float
-        ratio for mask creation
-
-    Returns
-    -------
-    new_confidences : np.ndarray
-    """
-    alpha = 0.7
-    new_confidences = [
-        update_confidence(nodules, i, confidences, probabilities, n_consiliums, factor)
-        for i in np.arange(N_DOCTORS)
-    ]
-    new_confidences = np.array(new_confidences) / np.sum(new_confidences)
-    confidences = confidences * alpha + np.array(new_confidences) * (1 - alpha)
-    return confidences / np.sum(confidences)
 
 def _compute_mask_size(nodules):
     return np.ceil(((nodules.coordX + nodules.diameter_mm + 10).max(),
                     (nodules.coordY + nodules.diameter_mm + 10).max(),
                     (nodules.coordZ + nodules.diameter_mm + 10).max())).astype(np.int32)
 
-def _create_empty_mask(mask_size, doctors, n_doctors):
+def _create_empty_mask(mask_size, n_doctors):
     mask_size = list(mask_size) + [n_doctors]
-    mask = np.ones(mask_size) * (-1)
-    mask[:, :, :, doctors] = 0
-    return mask
+    return np.zeros(mask_size)
 
-def create_mask(nodules, accession_number, factor=1.):
+def create_mask(consilium_nodules, factor):
     """ Create nodules mask.
 
     Parameters
     ----------
     nodules : pd.DataFrame
-
-    accession_number : str
 
     factor : float
         ratio mm / pixels
@@ -183,57 +153,22 @@ def create_mask(nodules, accession_number, factor=1.):
     -------
     mask : np.ndarray
     """
-    n_doctors = len(nodules.DoctorID.unique())
-
-    nodules = nodules.copy()
+    nodules = consilium_nodules.copy()
 
     nodules.diameter_mm *= factor
     nodules.coordX *= factor
     nodules.coordY *= factor
     nodules.coordZ *= factor
 
-    image_nodules = nodules[nodules.AccessionNumber == accession_number]
-    mask_size = list(_compute_mask_size(image_nodules))
-    values = np.array(image_nodules.DoctorID.astype(int), dtype=np.int32)
+    mask_size = list(_compute_mask_size(nodules))
 
-    doctors = np.array(image_nodules[['annotator_1', 'annotator_2', 'annotator_3']].astype(int).iloc[0])
+    mask = _create_empty_mask(mask_size, 3)
+    
+    coords = np.array(nodules[['coordX', 'coordY', 'coordZ']], dtype=np.int32)
+    diameters = np.array(nodules.diameter_mm, dtype=np.int32)
+    values = np.array(nodules.DoctorID, dtype=np.int32)
 
-    mask = _create_empty_mask(mask_size, doctors, n_doctors)
-    coords = np.array(image_nodules[['coordX', 'coordY', 'coordZ']], dtype=np.int32)
-    diameters = np.array(image_nodules.diameter_mm, dtype=np.int32)
-
-    return _create_mask_numba(mask, coords, diameters, values)
-
-def save_masks(nodules, folder='masks', factor=1.):
-    """ Save all masks
-
-    Parameters
-    ----------
-    nodules : pd.DataFrame
-
-    folder : str
-        path to save masks
-    factor : float
-        ratio mm / pixels
-    """
-    for accession_number in tqdm(nodules.AccessionNumber.unique()):
-        mask = create_mask(nodules, accession_number, factor)
-        with open('{}/{}'.format(folder, accession_number), 'wb') as file:
-            np.save(file, mask)
-
-def load_mask(accession_number, folder='masks'):
-    """ Load mask
-
-    Parameters
-    ----------
-    accession_number : str
-
-    folder : str
-        path where masks were saved
-    """
-    with open('{}/{}'.format(folder, accession_number), 'rb') as file:
-        mask = np.load(file)
-    return mask
+    return _create_mask_numba(mask, coords, diameters, values)    
 
 @autojit
 def _create_mask_numba(mask, coords, diameters, values):
@@ -256,7 +191,7 @@ def _create_mask_numba(mask, coords, diameters, values):
                         mask[x, y, z, value] = 1
     return mask
 
-def consilium_dice(mask, doctor, consilium, confidences):
+def consilium_dice(mask, consilium_confidences):
     """ Compute consilium dice for current doctor.
 
     Parameters
@@ -276,10 +211,8 @@ def consilium_dice(mask, doctor, consilium, confidences):
         dice which is computed as dice of binary doctor mask and weighted mask of doctors by their confidences
     """
     e = 1e-6
-    doctor_mask = mask[..., doctor]
-    consilium_mask = mask[..., consilium]
-    consilium_confidences = confidences[consilium]
-    consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
+    doctor_mask = mask[..., 0]
+    consilium_mask = mask[..., 1:]
     ground_truth = np.sum(consilium_mask * consilium_confidences, axis=-1)
     # ground_truth = np.sum(consilium_mask, axis=-1) / len(consilium)
 
@@ -305,8 +238,10 @@ def get_probabilities(nodules):
     """ Get list of doctors frequencies. """
     probabilities = (
         nodules
-        .groupby('AccessionNumber')
-        .apply(lambda x: np.array([i in x.DoctorID.unique().astype(int) for i in range(N_DOCTORS)], dtype=np.int32))
-        .sum()
+        .drop_duplicates(subset=['AccessionNumber'])
+        .set_index('AccessionNumber')
+        .filter(regex='doctor_\d{3}', axis=1)
+        .sum(axis=0)
+        .transform(lambda s: s / s.sum())
     )
-    return probabilities / np.sum(probabilities)
+    return probabilities
