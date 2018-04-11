@@ -263,7 +263,9 @@ def read_annotators_info(path, annotator_prefix=None):
         .astype('int')
     )
     if annotator_prefix:
-        annotators_indices_mapping = {index: (annotator_prefix + index) for index in df.columns}
+        annotators_indices_mapping = {index: (annotator_prefix + index)
+                                      for index in annotators_info.columns}
+        
         annotators_info = annotators_info.pipe(lambda df: df.rename(columns=annotators_indices_mapping))
     return annotators_info
 
