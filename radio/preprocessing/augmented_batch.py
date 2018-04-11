@@ -4,7 +4,7 @@ import numpy as np
 
 from .ct_masked_batch import CTIMagesMaskedBatch
 from ..dataset import action, Sampler
-
+from .mask import insert_cropped
 
 class CTImagesAugmentedBatch(CTIMagesMaskedBatch):
     """ Masked ct-batch with augmenting actions.
