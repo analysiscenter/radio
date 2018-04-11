@@ -204,17 +204,23 @@ def annotation_to_nodules(annotation_df):
     return normalize_nodule_type(result_df)
 
 
-def read_nodules(path, include_annotators=False, drop_no_cancer=False):
-    """ Read annotation from file and transform it to dataframe with nodules.
+def read_nodules(path):
+    """ Read annotation from file and transform it to DataFrame with nodules.
+
+    Output DataFrame contains following columns:
+    'AccessionNumber' - accession number of CT scan that corresponding to nodule.
+    'DoctorID' - id of annotator.
+    'coordZ', 'coordY', 'coordX' - coordinates of nodule's center.
+    'diameter_mm' - diameter of nodule.
+    'NoduleType' - type of nodule. Can be one of ['solid', 'semi_solid', 'ground_glass'].
+
+    Unique id of nodule generated each time function called and is used as index
+    of the output DataFrame.
 
     Parameters
     ----------
     path : str
         path to file with annotation.
-    include_annotators : bool
-        whether to include binary columns about annotators.
-    drop_no_cancer : bool
-        whether to drop rows without nodules.
 
     Returns
     -------
@@ -222,23 +228,44 @@ def read_nodules(path, include_annotators=False, drop_no_cancer=False):
         dataframe that contains information about nodules location, type and etc.
     """
     annotation = parse_annotation(path)
+    nodules = annotation_to_nodules(annotation)
+    return nodules.set_index('NoduleID')
+
+
+def read_annotators_info(path, annotator_prefix=None):
+    """ Read information about annotators from file with annotation.
+
+    This method reads information about annotators and scans into pandas DataFrame.
+    Output DataFrame contains accession numbers as index and columns names
+    corresponding to ids of annotators with prefix added with values filled
+    with '1' if corresponding annotator was annotating scan with given
+    accession number and '0' otherwise.
+
+    Parameters
+    ----------
+    path : str
+        path to file with annotation.
+    annotator_prefix : str or None
+        prefix of annotators indices in the output DataFrame.
+
+    Returns
+    -------
+    pandas DataFrame
+        table with of shape (num_scans, num_annotators) filled with '1'
+        if annotator annotated given scan or '0' otherwise.
+    """
     annotators_info = (
-        annotation
+        parse_annotation
         .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
         .query("AccessionNumber != ''")
         .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
         .notna()
         .astype('int')
-        .pipe(lambda df: df.rename(columns={doctor_id: 'doctor_' + str(doctor_id)
-                                            for doctor_id in df.columns}))
     )
-    nodules = annotation_to_nodules(annotation)
-
-    if include_annotators:
-        nodules = pd.merge(annotation_to_nodules(annotation), annotators_info,
-                           left_on='AccessionNumber', right_index=True,
-                           how='inner' if drop_no_cancer else 'right')
-    return nodules
+    if annotator_prefix:
+        annotators_indices_mapping = {index: (annotator_prefix + index) for index in df.columns}
+        annotators_info = annotators_info.pipe(lambda df: df.rename(columns=annotators_indices_mapping))
+    return annotators_info
 
 
 def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False):
