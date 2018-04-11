@@ -78,7 +78,7 @@ def compute_nodule_confidence(annotations, r=20, alpha=None, weight_by_doctor=Tr
         annotations-dataframe with added 'NoduleConfidence'-column.
     """
     # matrix of distances between nodules from the same scan
-    cleaned = annotations.loc[:, ['coordZ', 'coordY', 'coordX', 'AccessionNumber', 'NoduleID']]
+    cleaned = annotations.loc[:, ['coordZ', 'coordY', 'coordX', 'AccessionNumber', 'DoctorID', 'NoduleID']]
 
     pairwise = pd.merge(cleaned, cleaned, how='inner', left_on='AccessionNumber',
                         right_on='AccessionNumber', suffixes=('', '_other'))
