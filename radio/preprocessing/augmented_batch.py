@@ -3,7 +3,7 @@
 import numpy as np
 
 from .ct_masked_batch import CTImagesMaskedBatch
-from ..dataset import action, Sampler  # pylint: disable=no-name-in-module
+from ..dataset.dataset import action, Sampler  # pylint: disable=no-name-in-module
 from .mask import insert_cropped
 
 class CTImagesAugmentedBatch(CTImagesMaskedBatch):
