@@ -2,8 +2,6 @@
 
 import pandas as pd
 import numpy as np
-from numba import njit
-
 
 
 def ep(u):
