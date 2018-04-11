@@ -3,6 +3,7 @@
 import pandas as pd
 import numpy as np
 
+
 def ep(u):
     """ Vectorized Epanechnikov kernel.
 
@@ -17,6 +18,7 @@ def ep(u):
         array of ep(input array-items).
     """
     return 0.75 * (1 - u**2) * (np.abs(u) <= 1).astype(np.float)
+
 
 def compute_nodule_confidence(annotations, r=20, alpha=None, weight_by_doctor=True):
     """ Compute nodule confidence using annotations-df; put confidences into a new column
