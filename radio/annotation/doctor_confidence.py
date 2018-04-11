@@ -38,7 +38,7 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
 
     Returns
     -------
-    new_confidences : np.ndarray
+    new_confidences : pd.DataFrame
     """
     probabilities = get_probabilities(nodules)
     if confidences == 'random':
@@ -274,7 +274,7 @@ def get_common_annotation(indices, data_path, annotation_path):
             read_nodules(
                 os.path.join(annotation_path, '{}_annotation.txt'.format(i)),
                 include_annotators=True,
-                drop_no_cancer=True)
+                drop_no_cancer=False)
             .set_index('AccessionNumber')
             .assign(coordZ=lambda df: df.loc[:, 'coordZ'] * dataset_info.loc[df.index, 'SpacingZ'],
                     coordY=lambda df: df.loc[:, 'coordY'] * dataset_info.loc[df.index, 'SpacingY'],
