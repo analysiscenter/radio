@@ -236,10 +236,10 @@ def read_nodules(path):
 def read_annotators_info(path, annotator_prefix=None):
     """ Read information about annotators from file with annotation.
 
-    This method reads information about annotators and scans into pandas DataFrame,
+    This method reads information about annotators and scans into pandas DataFrame
     that contains accession numbers as indices and columns names
     corresponding to ids of annotators with prefix added (if provided). Each cell
-    of output table is filled with '1' if corresponding annotator
+    of the output table is filled with '1' if corresponding annotator
     was annotating scan with given accession number and '0' otherwise.
 
     Parameters
