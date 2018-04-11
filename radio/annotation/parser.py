@@ -255,7 +255,7 @@ def read_annotators_info(path, annotator_prefix=None):
         if annotator annotated given scan or '0' otherwise.
     """
     annotators_info = (
-        parse_annotation
+        parse_annotation(path)
         .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
         .query("AccessionNumber != ''")
         .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
