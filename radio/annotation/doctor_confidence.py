@@ -53,7 +53,7 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
 def update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
     nodules = (
         nodules
-        .assign(n_annotators=lambda df: df.filter(regex='doctor_\d{3}', axis=1).sum(axis=1))
+        .assign(n_annotators=lambda df: df.filter(regex=r'doctor_\d{3}', axis=1).sum(axis=1))
         .query('n_annotators >= 3')
         .drop('n_annotators', axis=1)
     )
@@ -70,7 +70,7 @@ def update_confidences(nodules, confidences, probabilities, n_consiliums=10, fac
             if image_nodules.DoctorID.isna().iloc[0]:
                 res.append(1)
             else:
-                annotators = image_nodules.filter(regex='doctor_\d{3}', axis=1).sum()
+                annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
                 annotators = list(map(lambda x: int(x[-3:]), annotators[annotators != 0].keys()))
                 annotators.remove(doctor)
                 sample_annotators = np.random.choice(annotators, 2, replace=False)
@@ -146,6 +146,7 @@ def _create_empty_mask(mask_size, n_doctors):
     mask_size = list(mask_size) + [n_doctors]
     return np.zeros(mask_size)
 
+
 def create_mask(consilium_nodules, factor):
     """ Create nodules mask.
 
@@ -177,6 +178,7 @@ def create_mask(consilium_nodules, factor):
 
     return _create_mask_numba(mask, coords, diameters, values)
 
+
 @autojit
 def _create_mask_numba(mask, coords, diameters, values):
     for i, center in enumerate(coords):
@@ -197,6 +199,7 @@ def _create_mask_numba(mask, coords, diameters, values):
                     if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < diameter ** 2:
                         mask[x, y, z, value] = 1
     return mask
+
 
 def consilium_dice(mask, consilium_confidences):
     """ Compute consilium dice for current doctor.
@@ -228,6 +231,7 @@ def consilium_dice(mask, consilium_confidences):
 
     return tp / den
 
+
 def dice(mask1, mask2):
     """ Simple dice. """
     e = 1e-6
@@ -237,9 +241,11 @@ def dice(mask1, mask2):
 
     return tp / den
 
+
 def get_rating(confidences):
     """ Get list of doctors ordered by confidence. """
     return np.array([item[0] for item in sorted(enumerate(confidences), key=lambda x: -x[1])])
+
 
 def get_probabilities(nodules):
     """ Get list of doctors frequencies. """
@@ -247,7 +253,7 @@ def get_probabilities(nodules):
         nodules
         .drop_duplicates(subset=['AccessionNumber'])
         .set_index('AccessionNumber')
-        .filter(regex='doctor_\d{3}', axis=1)
+        .filter(regex=r'doctor_\d{3}', axis=1)
         .sum(axis=0)
         .transform(lambda s: s / s.sum())
     )
