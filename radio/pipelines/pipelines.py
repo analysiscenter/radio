@@ -22,6 +22,20 @@ N_ITERS = 100  # N_ITERS * (num_luna_nodules=1149) ~ 115000
 RUN_BATCH_SIZE = 8
 NON_CANCER_BATCH_SIZE = 1030  # NON_CANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
 
+def set_dataset_mode(dataset='luna'):
+    """ Set constants for generation of balanced dataset of crops.
+
+    Parameters
+    ----------
+    dataset : str
+        Dataset of scans to be used for crop-generation. Can be 'luna' or 'npcmr'.
+    """
+    if dataset == 'npcmr':
+        NON_CANCER_BATCH_SIZE = 480  # this will give about 300000 of non-cancerous crops
+        N_ITERS = 15  # for generating 300000 of cancerous crops
+    else:
+        NON_CANCER_BATCH_SIZE = 1030
+        N_ITERS = 100
 
 def get_crops(nodules, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, share=0.5, histo=None,
               variance=(36, 144, 144), hu_lims=(-1000, 400), **kwargs):
