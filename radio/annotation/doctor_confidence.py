@@ -271,8 +271,8 @@ def get_common_annotation(indices, data_path, annotation_path):
 
         subset_nodules = (
             read_nodules(
-                os.path.join(annotation_path, '{}_annotation.txt'.format(i)), 
-                include_annotators=True, 
+                os.path.join(annotation_path, '{}_annotation.txt'.format(i)),
+                include_annotators=True,
                 drop_no_cancer=True)
             .set_index('AccessionNumber')
             .assign(coordZ=lambda df: df.loc[:, 'coordZ'] * dataset_info.loc[df.index, 'SpacingZ'],
