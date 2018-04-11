@@ -8,7 +8,9 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm_notebook
 
+
 N_DOCTORS = 15
+
 
 def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10, factor=0.3, history=False):
     """ Conpute confidences for doctors
@@ -46,6 +48,7 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
         confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
                                                  'confidence': confidences, 'iteration': i}))
     return pd.concat(confidences_history, axis=0) if history else confidences_history[-1].drop(columns=['iteration'])
+
 
 def update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
     nodules = (
@@ -93,6 +96,7 @@ def update_confidences(nodules, confidences, probabilities, n_consiliums=10, fac
     confidences = confidences * alpha + np.array(new_confidences) * (1 - alpha)
     return confidences / np.sum(confidences)
 
+
 def create_table(nodules):
     """ Create tables.
 
@@ -136,6 +140,7 @@ def _compute_mask_size(nodules):
     return np.ceil(((nodules.coordX + nodules.diameter_mm + 10).max(),
                     (nodules.coordY + nodules.diameter_mm + 10).max(),
                     (nodules.coordZ + nodules.diameter_mm + 10).max())).astype(np.int32)
+
 
 def _create_empty_mask(mask_size, n_doctors):
     mask_size = list(mask_size) + [n_doctors]
