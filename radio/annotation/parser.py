@@ -209,6 +209,7 @@ def read_nodules(path):
     """ Read annotation from file and transform it to DataFrame with nodules.
 
     Output DataFrame contains following columns:
+    'NoduleID' unique id of nodule.
     'AccessionNumber' - accession number of CT scan that corresponding to nodule.
     'DoctorID' - id of annotator.
     'coordZ', 'coordY', 'coordX' - coordinates of nodule's center.
@@ -230,7 +231,7 @@ def read_nodules(path):
     """
     annotation = parse_annotation(path)
     nodules = annotation_to_nodules(annotation)
-    return nodules.set_index('NoduleID')
+    return nodules
 
 
 def read_annotators_info(path, annotator_prefix=None):
