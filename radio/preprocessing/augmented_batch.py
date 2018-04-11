@@ -2,11 +2,11 @@
 
 import numpy as np
 
-from .ct_masked_batch import CTIMagesMaskedBatch
+from .ct_masked_batch import CTImagesMaskedBatch
 from ..dataset import action, Sampler
 from .mask import insert_cropped
 
-class CTImagesAugmentedBatch(CTIMagesMaskedBatch):
+class CTImagesAugmentedBatch(CTImagesMaskedBatch):
     """ Masked ct-batch with augmenting actions.
 
     Adds cutout, additive/multiplicative noise - augmentations.
