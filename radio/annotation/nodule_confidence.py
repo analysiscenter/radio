@@ -1,3 +1,5 @@
+"""  Functions form nodules' confidences computation. """
+
 import pandas as pd
 import numpy as np
 
@@ -41,16 +43,19 @@ def compute_nodule_confidence(annotations, r=20, alpha=None, weight_by_doctor=Tr
                                               'diameter_mm', 'NoduleType'], axis=1)
     pairwise = pd.merge(cleaned, cleaned, how='inner', left_on='AccessionNumber',
                         right_on='AccessionNumber', suffixes=('', '_other'))
-    pairwise['Distance'] = np.sqrt((pairwise.coordX - pairwise.coordX_other)**2 + (pairwise.coordY - pairwise.coordY_other)**2 +
-                                   (pairwise.coordZ - pairwise.coordZ_other)**2)
-    pairwise = pairwise.drop(labels=(['coord' + capital for capital in ['X', 'Y', 'Z']] +
-                                     ['coord' + capital + '_other' for capital in ['X', 'Y', 'Z']]), axis=1)
+
+    pairwise['Distance'] = np.sqrt((pairwise.coordX - pairwise.coordX_other) ** 2
+                                   + (pairwise.coordY - pairwise.coordY_other)** 2
+                                   + (pairwise.coordZ - pairwise.coordZ_other) ** 2)
+
+    pairwise = pairwise.drop(labels=['coordZ', 'coordY', 'coordX', 'coordZ_other',
+                                     'coordY_other', 'coordX_other'], axis=1)
 
     # compute kernel-weights of nodules
     pairwise = pairwise[pairwise.Distance <= r]
     pairwise['weights'] = ep(pairwise.Distance / r)
-    pairwise['weights'] *= np.maximum(pairwise.DoctorID_other!=pairwise.DoctorID,
-                                      pairwise.NoduleID_other==pairwise.NoduleID)
+    pairwise['weights'] *= np.maximum(pairwise.DoctorID_other != pairwise.DoctorID,
+                                      pairwise.NoduleID_other == pairwise.NoduleID)
 
     # compute confidences
     pairwise['weighted_confs'] = (pairwise['weights'] * pairwise['DoctorConfidence_other'])
@@ -62,8 +67,8 @@ def compute_nodule_confidence(annotations, r=20, alpha=None, weight_by_doctor=Tr
     # add correction for alpha-confidences if needed
     if alpha is not None:
         # get rid of kernel weights before target-nodules and weight by alpha, 1 - alpha
-        pairwise.loc[pairwise.NoduleID_other==pairwise.NoduleID, 'weighted_confs'] *= alpha / ep(0)
-        pairwise.loc[pairwise.NoduleID_other!=pairwise.NoduleID, 'weighted_confs'] *= 1 - alpha
+        pairwise.loc[pairwise.NoduleID_other == pairwise.NoduleID, 'weighted_confs'] *= alpha / ep(0)
+        pairwise.loc[pairwise.NoduleID_other != pairwise.NoduleID, 'weighted_confs'] *= 1 - alpha
 
     confs = pairwise.groupby('NoduleID').weighted_confs.sum()
     confs = pd.DataFrame(confs)
