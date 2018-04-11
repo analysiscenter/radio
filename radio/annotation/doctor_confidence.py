@@ -1,6 +1,7 @@
 #pylint:disable=not-an-iterable
 #pylint:disable=cell-var-from-loop
 #pylint:disable=consider-using-enumerate
+#pylint:disable=redefined-variable-type
 
 """ Functions to compute doctors' confidences from annotation. """
 
