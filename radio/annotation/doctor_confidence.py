@@ -1,16 +1,16 @@
 #pylint:disable=not-an-iterable
 #pylint:disable=cell-var-from-loop
+#pylint:disable=consider-using-enumerate
 
 """ Functions to compute doctors' confidences from annotation. """
 
 import os
-from numba import jit, prange, njit
+import multiprocessing as mp
+from numba import njit
 import numpy as np
 import pandas as pd
-from tqdm import tqdm_notebook, tqdm
-import multiprocessing as mp
+from tqdm import tqdm
 from . import read_nodules, read_dataset_info
-
 
 N_DOCTORS = 15
 
@@ -48,13 +48,13 @@ def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=
     confidences_history = [pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
                                          'confidence': confidences, 'iteration': 0})]
     for i in tqdm(range(n_iters)):
-        confidences = update_confidences(nodules, confidences, probabilities, n_consiliums, factor)
+        confidences = _update_confidences(nodules, confidences, probabilities, n_consiliums, factor)
         confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
                                                  'confidence': confidences, 'iteration': i+1}))
     return pd.concat(confidences_history, axis=0) if history else confidences_history[-1].drop(columns=['iteration'])
 
 
-def update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
+def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
     nodules = (
         nodules
         .assign(n_annotators=lambda df: df.filter(regex=r'doctor_\d{3}', axis=1).sum(axis=1))
@@ -68,38 +68,37 @@ def update_confidences(nodules, confidences, probabilities, n_consiliums=10, fac
         accession_numbers = nodules.query("doctor_{:03d} == 1".format(doctor)).AccessionNumber.unique()
         n_consiliums_for_doctor[doctor] = min(n_consiliums, len(accession_numbers))
         sample_accesion_numbers = np.random.choice(accession_numbers, n_consiliums_for_doctor[doctor],
-                                                 replace=False)
-        
+                                                   replace=False)
+
         tasks.extend([(doctor, accesion_number) for accesion_number in sample_accesion_numbers])
-    
+
     args = [
         (nodules[nodules.AccessionNumber == accession_number], doctor, factor, probabilities, confidences)
         for doctor, accession_number in tasks
     ]
-    
+
 
     pool = mp.Pool()
-    results = pool.map(consilium_results, args)
+    results = pool.map(_consilium_results, args)
     pool.close()
-    # results = map(consilium_results, args)
-    
+
     new_confidences = np.zeros(N_DOCTORS)
-    
-    for doctor, dice in results:
-        new_confidences[doctor] += dice
+
+    for doctor, score in results:
+        new_confidences[doctor] += score
     new_confidences = new_confidences / n_consiliums_for_doctor
 
     confidences = confidences * alpha + new_confidences * (1 - alpha)
     return confidences / np.sum(confidences)
-    
 
-def consilium_results(args):
+
+def _consilium_results(args):
     image_nodules, doctor, factor, probabilities, confidences = args
     if image_nodules.DoctorID.isna().iloc[0]:
         return doctor, 1
     else:
-        annotators = image_nodules.filter(regex='doctor_\d{3}', axis=1).sum()
-        annotators = list(map(lambda x: int(x[-3:]), annotators[annotators != 0].keys()))
+        annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
+        annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
         annotators.remove(doctor)
         sample_annotators = np.random.choice(annotators, 2, replace=False)
         consilium_nodules = image_nodules[image_nodules.DoctorID.astype(int).isin([doctor]+list(sample_annotators))]
@@ -109,7 +108,7 @@ def consilium_results(args):
         }
         consilium_nodules.DoctorID = consilium_nodules.DoctorID.map(mapping)
         mask = create_mask(consilium_nodules, factor=factor)
-            
+
         proba = 1 / probabilities[sample_annotators]
         proba = proba / np.sum(proba)
         proba = np.prod(proba)
@@ -155,13 +154,13 @@ def create_mask(consilium_nodules, factor):
     nodules.coordZ *= factor
 
     mask_size = list(_compute_mask_size(nodules))
-    
+
     mask = _create_empty_mask(mask_size, 3)
 
     coords = np.array(nodules[['coordX', 'coordY', 'coordZ']], dtype=np.int32)
     diameters = np.array(nodules.diameter_mm, dtype=np.int32)
     values = np.array(nodules.DoctorID, dtype=np.int32)
-    
+
     return _create_mask_numba(mask, coords, diameters, values)
 
 @njit
@@ -245,7 +244,22 @@ def get_probabilities(nodules):
     )
     return probabilities
 
-def get_common_annotation(indices, data_path='/notebooks/data/CT/npcmr', annotation_path='/notebooks/data/CT/npcmr/ct_annotation'):
+def get_common_annotation(indices, data_path, annotation_path):
+    """ Get annotations with all coordinates in mm
+
+    Parameters
+    ----------
+    indices : list
+        indices od subsets to load
+    data_path : str
+        path to folder with data
+    annotation_path : str
+        path to folder with annotations
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     nodules = []
 
     for i in ['{:02d}'.format(j) for j in indices]:
@@ -268,9 +282,8 @@ def get_common_annotation(indices, data_path='/notebooks/data/CT/npcmr', annotat
 
         subset_nodules.index = i + '_' + subset_nodules.index
         nodules.append(subset_nodules)
-    
+
     nodules = pd.concat(nodules)
     nodules = nodules[nodules.diameter_mm < 90]
     nodules.index.name = 'AccessionNumber'
     return nodules.reset_index()
-    
