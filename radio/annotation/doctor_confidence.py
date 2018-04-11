@@ -62,10 +62,11 @@ def update_confidences(nodules, confidences, probabilities, n_consiliums=10, fac
     for doctor in range(N_DOCTORS):
         doctor_nodules = nodules.query("doctor_{:03d} == 1".format(doctor))
         accession_numbers = doctor_nodules.AccessionNumber.unique()
-        sample_accesion_numbers = np.random.choice(accession_numbers, min(n_consiliums, len(accession_numbers)),
-                                                 replace=False)
+        sample_accession_numbers = np.random.choice(accession_numbers,
+                                                    min(n_consiliums, len(accession_numbers)),
+                                                    replace=False)
         res = []
-        for accession_number in accession_numbers:
+        for accession_number in sample_accession_numbers:
             image_nodules = doctor_nodules[doctor_nodules.AccessionNumber == accession_number]
             if image_nodules.DoctorID.isna().iloc[0]:
                 res.append(1)
@@ -74,7 +75,8 @@ def update_confidences(nodules, confidences, probabilities, n_consiliums=10, fac
                 annotators = list(map(lambda x: int(x[-3:]), annotators[annotators != 0].keys()))
                 annotators.remove(doctor)
                 sample_annotators = np.random.choice(annotators, 2, replace=False)
-                consilium_nodules = image_nodules[image_nodules.DoctorID.astype(int).isin([doctor]+list(sample_annotators))]
+                consilium_nodules = image_nodules[image_nodules.DoctorID.astype(int).isin([doctor]
+                                                                                          +list(sample_annotators))]
                 mapping = {
                     **{'{:03d}'.format(doctor): 0},
                     **{'{:03d}'.format(value): i+1 for i, value in enumerate(sample_annotators)}
