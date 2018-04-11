@@ -235,11 +235,11 @@ def read_nodules(path):
 def read_annotators_info(path, annotator_prefix=None):
     """ Read information about annotators from file with annotation.
 
-    This method reads information about annotators and scans into pandas DataFrame.
-    Output DataFrame contains accession numbers as index and columns names
-    corresponding to ids of annotators with prefix added with values filled
-    with '1' if corresponding annotator was annotating scan with given
-    accession number and '0' otherwise.
+    This method reads information about annotators and scans into pandas DataFrame,
+    that contains accession numbers as indices and columns names
+    corresponding to ids of annotators with prefix added (if provided). Each cell
+    of output table is filled with '1' if corresponding annotator
+    was annotating scan with given accession number and '0' otherwise.
 
     Parameters
     ----------
@@ -265,7 +265,7 @@ def read_annotators_info(path, annotator_prefix=None):
     if annotator_prefix:
         annotators_indices_mapping = {index: (annotator_prefix + index)
                                       for index in annotators_info.columns}
-        
+
         annotators_info = annotators_info.pipe(lambda df: df.rename(columns=annotators_indices_mapping))
     return annotators_info
 
