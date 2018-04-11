@@ -160,6 +160,7 @@ def parse_annotation(path, max_nodules=40):
 
     return pd.DataFrame(nodules_list)
 
+
 def annotation_to_nodules(annotation_df):
     """ Transform dataframe with annotation to dataframe with information about nodules.
 
