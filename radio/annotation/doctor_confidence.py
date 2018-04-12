@@ -133,7 +133,7 @@ def create_mask(image_nodules, doctor, annotators, factor):
     Parameters
     ----------
     image_nodules : pd.DataFrame
-    
+
     doctor : int
         doctor to estimate
     annotators : list or np.array
@@ -155,13 +155,13 @@ def create_mask(image_nodules, doctor, annotators, factor):
     mask_size = list(_compute_mask_size(nodules))
 
     mask = _create_empty_mask(mask_size, len(annotators)+1)
-    
+
     for i, annotator in enumerate([doctor] + list(annotators)):
         annotator_nodules = nodules[nodules.DoctorID.astype(int) == annotator]
         coords = np.array(annotator_nodules[['coordX', 'coordY', 'coordZ']], dtype=np.int32)
         diameters = np.array(annotator_nodules.diameter_mm, dtype=np.int32)
         mask[..., i] = _create_mask_numba(mask[..., i], coords, diameters)
-    
+
     return mask
 
 @njit
@@ -260,7 +260,7 @@ def get_common_annotation(indices, data_path, annotation_path):
     for i in tqdm(['{:02d}'.format(j) for j in indices]):
         annotation = os.path.join(annotation_path, '{}_annotation.txt'.format(i))
         annotators = read_annotators_info(annotation, annotator_prefix='doctor_')
-        
+
         dataset_info = (
             read_dataset_info(os.path.join(data_path, '{}/*/*/*/*/*'.format(i)), index_col=None)
             .drop_duplicates(subset=['AccessionNumber'])
@@ -300,27 +300,27 @@ def get_table(nodules, factor=0.3):
     table_meetings = np.zeros((N_DOCTORS, N_DOCTORS))
 
     for i, j in tqdm(list(zip(*np.triu_indices(N_DOCTORS, k=1)))):
-            accession_numbers = (
-                nodules
-                .groupby('AccessionNumber')
-                .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values)
-            )
-            accession_numbers = accession_numbers[accession_numbers].index
-            table_meetings[i, j] = len(accession_numbers)
-            table_meetings[j, i] = len(accession_numbers)
-            dices = []
-            for accession_number in accession_numbers:
-                if len(nodules[nodules.AccessionNumber == accession_number]) != 0:
-                    try:
-                        mask = create_mask(nodules[nodules.AccessionNumber == accession_number], i, [j], factor)
-                    except:
-                        raise Exception(nodules[nodules.AccessionNumber == accession_number], i, j)
-                    mask1 = mask[..., 0]
-                    mask2 = mask[..., 1]
-                    dices.append(dice(mask1, mask2))
-                else:
-                    dices.append(1)
-            table[i, j] = np.mean(dices)
-            table[j, i] = np.mean(dices)
+        accession_numbers = (
+            nodules
+            .groupby('AccessionNumber')
+            .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values)
+        )
+        accession_numbers = accession_numbers[accession_numbers].index
+        table_meetings[i, j] = len(accession_numbers)
+        table_meetings[j, i] = len(accession_numbers)
+        dices = []
+        for accession_number in accession_numbers:
+            if len(nodules[nodules.AccessionNumber == accession_number]) != 0:
+                try:
+                    mask = create_mask(nodules[nodules.AccessionNumber == accession_number], i, [j], factor)
+                except:
+                    raise Exception(nodules[nodules.AccessionNumber == accession_number], i, j)
+                mask1 = mask[..., 0]
+                mask2 = mask[..., 1]
+                dices.append(dice(mask1, mask2))
+            else:
+                dices.append(1)
+        table[i, j] = np.mean(dices)
+        table[j, i] = np.mean(dices)
 
     return table, table_meetings
