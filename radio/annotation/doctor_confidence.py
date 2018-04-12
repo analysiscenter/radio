@@ -102,12 +102,6 @@ def _consilium_results(args):
         annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
         annotators.remove(doctor)
         sample_annotators = np.random.choice(annotators, 2, replace=False)
-        #consilium_nodules = image_nodules[image_nodules.DoctorID.astype(int).isin([doctor]+list(sample_annotators))]
-        #mapping = {
-        #    **{'{:03d}'.format(doctor): 0},
-        #    **{'{:03d}'.format(value): i+1 for i, value in enumerate(sample_annotators)}
-        #}
-        #consilium_nodules.DoctorID = consilium_nodules.DoctorID.map(mapping)
         mask = create_mask(image_nodules, doctor, sample_annotators, factor=factor)
 
         proba = 1 / probabilities[sample_annotators]
@@ -138,8 +132,12 @@ def create_mask(image_nodules, doctor, annotators, factor):
 
     Parameters
     ----------
-    nodules : pd.DataFrame
-
+    image_nodules : pd.DataFrame
+    
+    doctor : int
+        doctor to estimate
+    annotators : list or np.array
+        doctors in consilium
     factor : float
         ratio mm / pixels
 
@@ -195,12 +193,7 @@ def consilium_dice(mask, consilium_confidences):
     ----------
     mask : np.ndarray
 
-    doctor : int
-
-    consilium : list of int
-        names (indices) of doctors in consilium
-    confidences : np.ndarray
-        confidences of all doctors
+    consilium_confidences : np.ndarray
 
     Returns
     -------
