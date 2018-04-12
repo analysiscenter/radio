@@ -64,9 +64,14 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
             res = (
                 pd
                 .concat(confidences_history, axis=0)
-                .pivot(index='DoctorID', columns='iteration', values='confidence')
+                .pivot(index='iteration', columns='DoctorID', values='confidence')
             )
-            res = pd.DataFrame(pd.rolling_mean(res, smooth).iloc[-1]).reset_index()
+            res = (
+                nodules
+                .set_index('DoctorID')
+                .assign(DoctorConfidence=res.rolling(smooth).mean().iloc[-1, :])
+                .reset_index()
+            )
     return res
 
 
