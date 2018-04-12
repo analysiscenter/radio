@@ -16,7 +16,8 @@ from . import read_nodules, read_dataset_info, read_annotators_info
 N_DOCTORS = 15
 
 
-def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10, factor=0.3, history=False):
+def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10,
+                            factor=0.3, alpha=0.7, history=False, smooth=None):
     """ Conpute confidences for doctors
 
     Parameters
@@ -33,6 +34,8 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
         number of consiliums for each doctor
     factor : float
         ratio for mask creation
+    alpha : float
+        smoothing parameter of confidence update
     history : bool
         if False, the function returns final confidences, if True, all history of updating confidences
 
@@ -49,10 +52,22 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
     confidences_history = [pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
                                          'confidence': confidences, 'iteration': 0})]
     for i in tqdm(range(n_iters)):
-        confidences = _update_confidences(nodules, confidences, probabilities, n_consiliums, factor)
+        confidences = _update_confidences(nodules, confidences, probabilities, n_consiliums, factor, alpha)
         confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
                                                  'confidence': confidences, 'iteration': i+1}))
-    return pd.concat(confidences_history, axis=0) if history else confidences_history[-1].drop(columns=['iteration'])
+    if history:
+        res = pd.concat(confidences_history, axis=0)
+    else:
+        if smooth is None:
+            res = confidences_history[-1].drop(columns=['iteration'])
+        else:
+            res = (
+                pd
+                .concat(confidences_history, axis=0)
+                .pivot(index='DoctorID', columns='iteration', values='confidence')
+            )
+            res = pd.DataFrame(pd.rolling_mean(res, smooth).iloc[-1]).reset_index()
+    return res
 
 
 def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
@@ -63,18 +78,16 @@ def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, fa
         .drop('n_annotators', axis=1)
     )
 
-    n_consiliums_for_doctor = np.zeros(N_DOCTORS, dtype=np.int32)
     tasks = []
     for doctor in range(N_DOCTORS):
         accession_numbers = nodules.query("doctor_{:03d} == 1".format(doctor)).AccessionNumber.unique()
-        n_consiliums_for_doctor[doctor] = min(n_consiliums, len(accession_numbers))
-        sample_accesion_numbers = np.random.choice(accession_numbers, n_consiliums_for_doctor[doctor],
+        sample_accesion_numbers = np.random.choice(accession_numbers, min(n_consiliums, len(accession_numbers)),
                                                    replace=False)
 
         tasks.extend([(doctor, accesion_number) for accesion_number in sample_accesion_numbers])
 
     args = [
-        (nodules[nodules.AccessionNumber == accession_number], doctor, factor, probabilities, confidences)
+        (nodules[nodules.AccessionNumber == accession_number], doctor, factor, confidences)
         for doctor, accession_number in tasks
     ]
 
@@ -84,17 +97,20 @@ def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, fa
     pool.close()
 
     new_confidences = np.zeros(N_DOCTORS)
+    sum_weights = np.zeros(N_DOCTORS)
 
-    for doctor, score in results:
-        new_confidences[doctor] += score
-    new_confidences = new_confidences / n_consiliums_for_doctor
+    for doctor, annotators, score in results:
+        weight = np.prod(1 / probabilities[annotators]) / probabilities[doctor]
+        new_confidences[doctor] += weight * score
+        sum_weights[doctor] += weight
+    new_confidences = new_confidences / sum_weights
 
     confidences = confidences * alpha + new_confidences * (1 - alpha)
     return confidences / np.sum(confidences)
 
 
 def _consilium_results(args):
-    image_nodules, doctor, factor, probabilities, confidences = args
+    image_nodules, doctor, factor, confidences = args
     if image_nodules.DoctorID.isna().iloc[0]:
         return doctor, 1
     else:
@@ -104,15 +120,10 @@ def _consilium_results(args):
         sample_annotators = np.random.choice(annotators, 2, replace=False)
         mask = create_mask(image_nodules, doctor, sample_annotators, factor=factor)
 
-        proba = 1 / probabilities[sample_annotators]
-        proba = proba / np.sum(proba)
-        proba = np.prod(proba)
-
         consilium_confidences = confidences[sample_annotators]
         consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
 
-        res = proba * consilium_dice(mask, consilium_confidences)
-        return doctor, res
+        return doctor, annotators, consilium_dice(mask, consilium_confidences)
 
 
 def _compute_mask_size(nodules):
