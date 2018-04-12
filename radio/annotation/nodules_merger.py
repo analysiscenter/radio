@@ -136,12 +136,12 @@ def compute_group_coords_and_diameter(nodules, proba=0.8):
     for i, (_, row) in enumerate(nodules.iterrows()):
         mean_array[i, :] = np.array((row['coordZ'], row['coordY'], row['coordX']))
         variance_array[i] = get_sigma_by_diameter(row['diameter_mm'], proba=proba) ** 2
-        confidence_array[i] = row['confidence']
+        confidence_array[i] = row['NoduleConfidence']
 
     variance_array = np.tile(variance_array[:, np.newaxis], (1, 3))
     approx_mean, approx_sigma = approximate_gaussians(confidence_array, mean_array, variance_array)
     return  pd.Series({'coordZ': approx_mean[0], 'coordY': approx_mean[1],
-                       'coordX': approx_mean[2], 'confidence': confidence_array.max(),
+                       'coordX': approx_mean[2], 'NoduleConfidence': confidence_array.max(),
                        'AccessionNumber': nodules.AccessionNumber.iloc[0],
                        'diameter_mm': get_diameter_by_sigma(approx_sigma, proba=proba)[0]})
 
