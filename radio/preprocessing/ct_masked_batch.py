@@ -2,6 +2,7 @@
 # pylint: disable=too-many-public-methods
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-branches
 
 """ Batch class CTImagesMaskedBatch for storing CT-scans with masks. """
 
