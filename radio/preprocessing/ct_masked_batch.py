@@ -2,6 +2,7 @@
 # pylint: disable=too-many-public-methods
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-branches
 
 """ Batch class CTImagesMaskedBatch for storing CT-scans with masks. """
 
@@ -1041,7 +1042,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         -------
         CTImagesMaskedBatch.
         """
-        if not (model_type in ('tf', 'keras', 'callable')):
+        if model_type not in ('tf', 'keras', 'callable'):
             raise ValueError("Argument 'model_type' must be one of ['tf', 'keras', 'callable']")
 
         if model_type in ('keras', 'tf') and isinstance(model, str):
