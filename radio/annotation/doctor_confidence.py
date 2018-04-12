@@ -11,12 +11,12 @@ from numba import njit
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from . import read_nodules, read_dataset_info
+from . import read_nodules, read_dataset_info, read_annotators_info
 
 N_DOCTORS = 15
 
 
-def compute_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10, factor=0.3, history=False):
+def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10, factor=0.3, history=False):
     """ Conpute confidences for doctors
 
     Parameters
@@ -102,13 +102,13 @@ def _consilium_results(args):
         annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
         annotators.remove(doctor)
         sample_annotators = np.random.choice(annotators, 2, replace=False)
-        consilium_nodules = image_nodules[image_nodules.DoctorID.astype(int).isin([doctor]+list(sample_annotators))]
-        mapping = {
-            **{'{:03d}'.format(doctor): 0},
-            **{'{:03d}'.format(value): i+1 for i, value in enumerate(sample_annotators)}
-        }
-        consilium_nodules.DoctorID = consilium_nodules.DoctorID.map(mapping)
-        mask = create_mask(consilium_nodules, factor=factor)
+        #consilium_nodules = image_nodules[image_nodules.DoctorID.astype(int).isin([doctor]+list(sample_annotators))]
+        #mapping = {
+        #    **{'{:03d}'.format(doctor): 0},
+        #    **{'{:03d}'.format(value): i+1 for i, value in enumerate(sample_annotators)}
+        #}
+        #consilium_nodules.DoctorID = consilium_nodules.DoctorID.map(mapping)
+        mask = create_mask(image_nodules, doctor, sample_annotators, factor=factor)
 
         proba = 1 / probabilities[sample_annotators]
         proba = proba / np.sum(proba)
@@ -117,7 +117,7 @@ def _consilium_results(args):
         consilium_confidences = confidences[sample_annotators]
         consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
 
-        res = consilium_dice(mask, consilium_confidences)
+        res = proba * consilium_dice(mask, consilium_confidences)
         return doctor, res
 
 
@@ -133,7 +133,7 @@ def _create_empty_mask(mask_size, n_doctors):
     return res
 
 
-def create_mask(consilium_nodules, factor):
+def create_mask(image_nodules, doctor, annotators, factor):
     """ Create nodules mask.
 
     Parameters
@@ -147,7 +147,7 @@ def create_mask(consilium_nodules, factor):
     -------
     mask : np.ndarray
     """
-    nodules = consilium_nodules.copy()
+    nodules = image_nodules.copy()
 
     nodules.diameter_mm *= factor
     nodules.coordX *= factor
@@ -156,20 +156,21 @@ def create_mask(consilium_nodules, factor):
 
     mask_size = list(_compute_mask_size(nodules))
 
-    mask = _create_empty_mask(mask_size, 3)
-
-    coords = np.array(nodules[['coordX', 'coordY', 'coordZ']], dtype=np.int32)
-    diameters = np.array(nodules.diameter_mm, dtype=np.int32)
-    values = np.array(nodules.DoctorID, dtype=np.int32)
-
-    return _create_mask_numba(mask, coords, diameters, values)
+    mask = _create_empty_mask(mask_size, len(annotators)+1)
+    
+    for i, annotator in enumerate([doctor] + list(annotators)):
+        annotator_nodules = nodules[nodules.DoctorID.astype(int) == annotator]
+        coords = np.array(annotator_nodules[['coordX', 'coordY', 'coordZ']], dtype=np.int32)
+        diameters = np.array(annotator_nodules.diameter_mm, dtype=np.int32)
+        mask[..., i] = _create_mask_numba(mask[..., i], coords, diameters)
+    
+    return mask
 
 @njit
-def _create_mask_numba(mask, coords, diameters, values):
+def _create_mask_numba(mask, coords, diameters):
     for i in range(len(coords)):
         center = coords[i]
         diameter = diameters[i]
-        value = values[i]
 
         begin_x = np.maximum(0, center[0]-diameter)
         begin_y = np.maximum(0, center[1]-diameter)
@@ -183,7 +184,7 @@ def _create_mask_numba(mask, coords, diameters, values):
             for y in range(begin_y, end_y):
                 for z in range(begin_z, end_z):
                     if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < diameter ** 2:
-                        mask[x, y, z, value] = 1
+                        mask[x, y, z] = 1
     return mask
 
 
@@ -263,7 +264,10 @@ def get_common_annotation(indices, data_path, annotation_path):
     """
     nodules = []
 
-    for i in ['{:02d}'.format(j) for j in indices]:
+    for i in tqdm(['{:02d}'.format(j) for j in indices]):
+        annotation = os.path.join(annotation_path, '{}_annotation.txt'.format(i))
+        annotators = read_annotators_info(annotation, annotator_prefix='doctor_')
+        
         dataset_info = (
             read_dataset_info(os.path.join(data_path, '{}/*/*/*/*/*'.format(i)), index_col=None)
             .drop_duplicates(subset=['AccessionNumber'])
@@ -271,14 +275,12 @@ def get_common_annotation(indices, data_path, annotation_path):
         )
 
         subset_nodules = (
-            read_nodules(
-                os.path.join(annotation_path, '{}_annotation.txt'.format(i)),
-                include_annotators=True,
-                drop_no_cancer=False)
+            read_nodules(annotation)
             .set_index('AccessionNumber')
             .assign(coordZ=lambda df: df.loc[:, 'coordZ'] * dataset_info.loc[df.index, 'SpacingZ'],
                     coordY=lambda df: df.loc[:, 'coordY'] * dataset_info.loc[df.index, 'SpacingY'],
                     coordX=lambda df: df.loc[:, 'coordX'] * dataset_info.loc[df.index, 'SpacingX'])
+            .merge(annotators, left_index=True, right_index=True)
         )
 
         subset_nodules.index = i + '_' + subset_nodules.index
@@ -288,3 +290,44 @@ def get_common_annotation(indices, data_path, annotation_path):
     nodules = nodules[nodules.diameter_mm < 90]
     nodules.index.name = 'AccessionNumber'
     return nodules.reset_index()
+
+def get_table(nodules, factor=0.3):
+    """ Create tables.
+    Parameters
+    ----------
+    nodules : pd.DataFrame
+    Returns
+    -------
+    table : np.ndarray
+        table of the mean dice between two doctors
+    table : np.ndarray
+        table of the number of meetings between two doctors
+    """
+    table = np.zeros((N_DOCTORS, N_DOCTORS))
+    table_meetings = np.zeros((N_DOCTORS, N_DOCTORS))
+
+    for i, j in tqdm(list(zip(*np.triu_indices(N_DOCTORS, k=1)))):
+            accession_numbers = (
+                nodules
+                .groupby('AccessionNumber')
+                .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values)
+            )
+            accession_numbers = accession_numbers[accession_numbers].index
+            table_meetings[i, j] = len(accession_numbers)
+            table_meetings[j, i] = len(accession_numbers)
+            dices = []
+            for accession_number in accession_numbers:
+                if len(nodules[nodules.AccessionNumber == accession_number]) != 0:
+                    try:
+                        mask = create_mask(nodules[nodules.AccessionNumber == accession_number], i, [j], factor)
+                    except:
+                        raise Exception(nodules[nodules.AccessionNumber == accession_number], i, j)
+                    mask1 = mask[..., 0]
+                    mask2 = mask[..., 1]
+                    dices.append(dice(mask1, mask2))
+                else:
+                    dices.append(1)
+            table[i, j] = np.mean(dices)
+            table[j, i] = np.mean(dices)
+
+    return table, table_meetings
