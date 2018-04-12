@@ -1041,7 +1041,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         -------
         CTImagesMaskedBatch.
         """
-        if not (model_type in ('tf', 'keras', 'callable')):
+        if model_type not in ('tf', 'keras', 'callable'):
             raise ValueError("Argument 'model_type' must be one of ['tf', 'keras', 'callable']")
 
         if model_type in ('keras', 'tf') and isinstance(model, str):
