@@ -3,11 +3,107 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
+from numba import njit
 from .parser import generate_index
 from ..models.utils import sphere_overlap
 
 
-def assign_nodules_group_index(nodules):
+@njit
+def compute_overlap_distance_matrix(coords, diameters):
+    """ Compute pairwise overlap matrix.
+
+    Parameters
+    ----------
+    coords : ndarray(num_nodules, 3)
+        cooordinates of nodules' centers.
+    diameters : ndarray(num_nodules)
+        diameters of nodules.
+
+    Returns
+    -------
+    ndarray(num_nodules, num_nodules)
+        overlap distance matrix required by clustering algorithm.
+    """
+    num_nodules = coords.shape[0]
+    overlap_matrix = np.zeros(shape=(num_nodules, num_nodules))
+    buffer = np.zeros((2, 4))
+    for i in range(num_nodules):
+        for j in range(num_nodules):
+            buffer[0, 1:], buffer[1, 1:] = coords[i, :], coords[j, :]
+            buffer[0, 0], buffer[1, 0] = diameters[i], diameters[j]
+            overlap_matrix[i, j] = sphere_overlap(buffer[0, :], buffer[1, :])
+    return overlap_matrix
+
+
+@njit
+def compute_reachable_vertices_numba(distance_matrix, vertex, threshold):
+    """ Get vertices that can be reached from given vertex using distance matrix.
+
+    Parameters
+    ----------
+    distance_matrix : ndarray(num_nodules, num_nodules)
+        overlap distance matrix for all nodules pairs.
+    vertex : int
+        input vertex.
+    threshold : float
+        threshold for volumetric intersection over union for pairs of nodules
+        to consider them overlapping.
+
+    Returns
+    -------
+    ndarray(num_vertices)
+        vertices that can be reached from given vertex.
+    """
+    num_vertices = distance_matrix.shape[0]
+
+    all_vertices = np.arange(num_vertices)
+    reachable = np.zeros(num_vertices)
+    unprocessed = np.zeros(num_vertices)
+    reachable = (reachable == 1)
+    unprocessed = (unprocessed == 1)
+    unprocessed[vertex] = True
+    while np.any(unprocessed):
+        u = all_vertices[unprocessed][0]
+        vertices = (distance_matrix[u, :] > threshold)
+
+        unprocessed[np.logical_and(vertices, ~reachable)] = True
+
+        reachable[u] = True
+        unprocessed[u] = False
+    return all_vertices[reachable]
+
+
+@njit
+def compute_clusters_numba(coords, diameters, threshold):
+    """ Compute clusters for nodules represented by coordinates of centers and diameters.
+
+    Parameters
+    ----------
+    coords : ndarray(num_nodules, 3)
+        cooordinates of nodules' centers.
+    diameters : ndarray(num_nodules)
+        diameters of nodules.
+
+    Returns
+    -------
+    ndarray(num_nodules)
+        cluster number for each nodule.
+    """
+    distance_matrix = compute_overlap_distance_matrix(coords, diameters)
+    num_elements = distance_matrix.shape[0]
+    all_vertices = np.arange(num_elements)
+    clusters = -np.ones(num_elements)
+    current_cluster = 0
+    while len(clusters[clusters == -1]) > 0:
+        v = np.random.choice(all_vertices[clusters == -1], 1)
+        cluster_vertices = compute_reachable_vertices_numba(distance_matrix, v, threshold)
+        clusters[cluster_vertices] = current_cluster
+        current_cluster += 1
+    return clusters
+
+
+
+def assign_nodules_group_index(nodules, threshold=0.1):
     """ Add column with name 'GroupNoduleID' containing index of group of overlapping nodules.
 
     Parameters
@@ -15,30 +111,19 @@ def assign_nodules_group_index(nodules):
     nodules : pandas DataFrame
         dataframe with information about nodules locations and centers.
 
+    threshold : float
+        float from [0, 1] interval representing volumentric intersection over union.
+
     Returns
     -------
     pandas DataFrame
     """
-    overlap_groups = {}
-    for _, row_l in nodules.iterrows():
-        overlap_indices = []
-        for nodule_r, row_r in nodules.iterrows():
-            al = row_l.loc[['diameter_mm', 'coordZ', 'coordY', 'coordX']].values.astype(np.float)
-            ar = row_r.loc[['diameter_mm', 'coordZ', 'coordY', 'coordX']].values.astype(np.float)
-
-            if sphere_overlap(al, ar) > 0:
-                overlap_indices.append(nodule_r)
-
-        if not any(nodule_id in overlap_groups for nodule_id in overlap_indices):
-            index = generate_index()
-        else:
-            nodules_list = [nodule_id for nodule_id in overlap_indices if nodule_id in overlap_groups]
-            index = overlap_groups[nodules_list[0]]
-
-        for nodule_id in overlap_indices:
-            overlap_groups[nodule_id] = index
-
-    return nodules.assign(GroupNoduleID=pd.Series(overlap_groups))
+    coords = nodules.loc[:, ['coordZ', 'coordY', 'coordX']].values
+    diameters = nodules.loc[:, 'diameter_mm'].values
+    clusters = np.array(compute_clusters_numba(coords, diameters, threshold), dtype=np.int)
+    clusters_names = np.array([generate_index() for cluster_num in np.sort(np.unique(clusters))])
+    group_nodule_id = pd.Series(clusters_names[clusters], index=nodules.index)
+    return nodules.assign(GroupNoduleID=group_nodule_id)
 
 
 def get_diameter_by_sigma(sigma, proba):
