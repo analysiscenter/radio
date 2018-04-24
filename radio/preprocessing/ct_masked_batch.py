@@ -1112,7 +1112,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
             else:
                 value = np.stack([self.get(i, component) for i in range(len(self))])
 
-            if data_format == 'channels_last':
+            if data_format is None:
+                pass
+            elif data_format == 'channels_last':
                 value = value[..., np.newaxis]
             elif data_format == 'channels_first':
                 value = value[:, np.newaxis, ...]
