@@ -156,16 +156,16 @@ def make_ellipse_mask_numba(batch_mask, start, end, centers, radiuses):
         center = centers[i]
         radius = radiuses[i]
 
-        begin_x = np.maximum(0, center[0]-radius)
-        begin_y = np.maximum(0, center[1]-radius)
-        begin_z = np.maximum(0, center[2]-radius)
+        begin_x = np.maximum(0, center[0]-radius[0])
+        begin_y = np.maximum(0, center[1]-radius[1])
+        begin_z = np.maximum(0, center[2]-radius[2])
 
-        end_x = np.minimum(end[0]-start[0], center[0]+radius+1)
-        end_y = np.minimum(end[1]-start[1], center[1]+radius+1)
-        end_z = np.minimum(end[2]-start[2], center[2]+radius+1)
+        end_x = np.minimum(end[i][0]-start[i][0], center[0]+radius[0]+1)
+        end_y = np.minimum(end[i][1]-start[i][1], center[1]+radius[1]+1)
+        end_z = np.minimum(end[i][2]-start[i][2], center[2]+radius[2]+1)
 
         for x in range(begin_x, end_x):
             for y in range(begin_y, end_y):
                 for z in range(begin_z, end_z):
-                    if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < radius ** 2:
-                        batch_mask[x+start[0], y+start[1], z+start[2]] = 1
+                    if ((x - center[0])/radius[0]) ** 2 + ((y - center[1])/radius[1]) ** 2 + ((z - center[2])/radius[2]) ** 2 < 1:
+                        batch_mask[x+start[i][0], y+start[i][1], z+start[i][2]] = 1

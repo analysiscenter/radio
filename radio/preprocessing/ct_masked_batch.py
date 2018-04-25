@@ -501,6 +501,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         center_pix = np.abs(self.nodules.nodule_center -
                             self.nodules.origin) / self.nodules.spacing
         radius_pix = np.rint(self.nodules.nodule_size / self.nodules.spacing / 2)
+        
+        center_pix = np.rint(center_pix).astype(np.int)
+        radius_pix = np.rint(radius_pix).astype(np.int)
         if mode == 'rectangle':
             start_pix = (center_pix - radius_pix)
             start_pix = np.rint(start_pix).astype(np.int)
@@ -508,9 +511,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
                             self.nodules.img_size + self.nodules.offset, start_pix,
                             np.rint(self.nodules.nodule_size / self.nodules.spacing))
         elif mode == 'ellipse':
-            make_ellipse_mask_numba(self.masks, self.nodules.offset,
+            make_ellipse_mask_numba(self.masks, self.nodules.offset.astype(np.int32),
                                    self.nodules.img_size + self.nodules.offset,
-                                   np.rint(center_pix).astype(np.int), np.rint(radius_pix).astype(np.int))
+                                   center_pix, radius_pix)
 
         return self
 
