@@ -575,7 +575,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                                    self.nodules.spacing)).astype(np.int)
         # put nodules into mask
         make_rect_mask_numba(mask, offset_scaled, img_size_scaled + offset_scaled,
-                        start_scaled, nod_size_scaled)
+                             start_scaled, nod_size_scaled)
         # return ndarray-mask
         return mask
 
