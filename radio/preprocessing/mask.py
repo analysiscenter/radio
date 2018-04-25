@@ -129,7 +129,7 @@ def make_mask_numba(batch_mask, start, end, nodules_start, nodules_size):
         insert_cropped(patient_mask, nodule, nodules_start[i, :])
 
 @njit(nogil=True)
-def make_ellips_mask_numba(batch_mask, start, end, centers, radiuses):
+def make_ellipse_mask_numba(batch_mask, start, end, centers, radiuses):
     """ Make mask with ellipses using information about nodules location and sizes.
 
     Takes batch_masks already filled with zeros,

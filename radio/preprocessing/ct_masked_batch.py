@@ -18,7 +18,7 @@ except ImportError:
     tqdm_notebook = lambda x: x
 
 from .ct_batch import CTImagesBatch
-from .mask import make_mask_numba, create_mask_reg
+from .mask import make_mask_numba, make_ellipse_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
 from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
@@ -508,7 +508,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                             self.nodules.img_size + self.nodules.offset, start_pix,
                             np.rint(self.nodules.nodule_size / self.nodules.spacing))
         elif mode == 'ellipse':
-            make_ellips_mask_numba(self.masks, self.nodules.offset,
+            make_ellipse_mask_numba(self.masks, self.nodules.offset,
                                    self.nodules.img_size + self.nodules.offset,
                                    center_pix, radius_pix)
 
