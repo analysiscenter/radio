@@ -92,7 +92,7 @@ def insert_cropped(where, what, origin):
 
 
 @njit(nogil=True)
-def make_mask_numba(batch_mask, start, end, nodules_start, nodules_size):
+def make_rect_mask_numba(batch_mask, start, end, nodules_start, nodules_size):
     """ Make mask using information about nodules location and sizes.
 
     Takes batch_masks already filled with zeros,
@@ -152,7 +152,7 @@ def make_ellipse_mask_numba(batch_mask, start, end, centers, radiuses):
         radiuses of nodules
 
     """
-    for i in range(len(centers)):
+    for i in range(len(centers)): # pylint: disable=consider-using-enumerate
         center = centers[i]
         radius = radiuses[i]
 
@@ -167,5 +167,7 @@ def make_ellipse_mask_numba(batch_mask, start, end, centers, radiuses):
         for x in range(begin_x, end_x):
             for y in range(begin_y, end_y):
                 for z in range(begin_z, end_z):
-                    if ((x - center[0])/radius[0]) ** 2 + ((y - center[1])/radius[1]) ** 2 + ((z - center[2])/radius[2]) ** 2 < 1:
+                    if ((x - center[0])/radius[0]) ** 2 +
+                       ((y - center[1])/radius[1]) ** 2 +
+                       ((z - center[2])/radius[2]) ** 2 < 1:
                         batch_mask[x+start[i][0], y+start[i][1], z+start[i][2]] = 1
