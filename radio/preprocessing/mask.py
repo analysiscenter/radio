@@ -127,3 +127,45 @@ def make_mask_numba(batch_mask, start, end, nodules_start, nodules_size):
                                   start[i, 1]: end[i, 1],
                                   start[i, 2]: end[i, 2]]
         insert_cropped(patient_mask, nodule, nodules_start[i, :])
+
+@njit(nogil=True)
+def make_ellips_mask_numba(batch_mask, start, end, centers, radiuses):
+    """ Make mask with ellipses using information about nodules location and sizes.
+
+    Takes batch_masks already filled with zeros,
+    `img` and `img` positions of coresponding patient's data array in batch_mask,
+
+    Parameters
+    ----------
+    batch_mask : ndarray
+        `masks` from batch, just initialised (filled with zeroes).
+    start : ndarray
+        for each nodule, start position of patient in `skyscraper` is given
+        by (nodule_index, z_start, y_start, x_start)
+    end : ndarray
+        for each nodule, end position of patient in `skyscraper` is given
+        by (nodule_index, z_start, y_start, x_start)
+    centers : ndarray(4,)
+        array, first dim is nodule index, others (z,y,x)
+        are nodule centers
+    radiuses : tuple, list or ndarray
+        radiuses of nodules
+
+    """
+    for i in range(len(centers)):
+        center = centers[i]
+        radius = radiuses[i]
+
+        begin_x = np.maximum(0, center[0]-radius)
+        begin_y = np.maximum(0, center[1]-radius)
+        begin_z = np.maximum(0, center[2]-radius)
+
+        end_x = np.minimum(end[0]-start[0], center[0]+radius+1)
+        end_y = np.minimum(end[1]-start[1], center[1]+radius+1)
+        end_z = np.minimum(end[2]-start[2], center[2]+radius+1)
+
+        for x in range(begin_x, end_x):
+            for y in range(begin_y, end_y):
+                for z in range(begin_z, end_z):
+                    if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < radius ** 2:
+                        batch_mask[x+start[0], y+start[1], z+start[2]] = 1

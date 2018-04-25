@@ -478,8 +478,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return (start_pix + self.nodules.offset).astype(np.int)
 
     @action
-    def create_mask(self):
+    def create_mask(self, mode='rectangle'):
         """ Create `masks` component from `nodules` component.
+
+        Parameters
+        ----------
+        model : 'rectangle' or 'ellipse'
+            form of the nodule in mask
 
         Notes
         -----
@@ -495,12 +500,17 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         center_pix = np.abs(self.nodules.nodule_center -
                             self.nodules.origin) / self.nodules.spacing
-        start_pix = (center_pix - np.rint(self.nodules.nodule_size /
-                                          self.nodules.spacing / 2))
-        start_pix = np.rint(start_pix).astype(np.int)
-        make_mask_numba(self.masks, self.nodules.offset,
-                        self.nodules.img_size + self.nodules.offset, start_pix,
-                        np.rint(self.nodules.nodule_size / self.nodules.spacing))
+        radius_pix = np.rint(self.nodules.nodule_size / self.nodules.spacing / 2)
+        if mode == 'rectangle':
+            start_pix = (center_pix - radius_pix)
+            start_pix = np.rint(start_pix).astype(np.int)
+            make_mask_numba(self.masks, self.nodules.offset,
+                            self.nodules.img_size + self.nodules.offset, start_pix,
+                            np.rint(self.nodules.nodule_size / self.nodules.spacing))
+        elif mode == 'ellipse':
+            make_ellips_mask_numba(self.masks, self.nodules.offset,
+                                   self.nodules.img_size + self.nodules.offset,
+                                   center_pix, radius_pix)
 
         return self
 
