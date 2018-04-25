@@ -510,7 +510,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         elif mode == 'ellipse':
             make_ellipse_mask_numba(self.masks, self.nodules.offset,
                                    self.nodules.img_size + self.nodules.offset,
-                                   center_pix, radius_pix)
+                                   np.rint(center_pix).astype(np.int), np.rint(radius_pix).astype(np.int))
 
         return self
 
