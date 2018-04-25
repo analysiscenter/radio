@@ -520,7 +520,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def truncate_mask(self, threshold=0.2, min_val=0, max_val=255):
         """ Truncate mask by images.
-        
+
         Parameters
         ----------
         threshold : float
@@ -574,7 +574,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nod_size_scaled = (np.rint(scale_factor * self.nodules.nodule_size /
                                    self.nodules.spacing)).astype(np.int)
         # put nodules into mask
-        make_mask_numba(mask, offset_scaled, img_size_scaled + offset_scaled,
+        make_rect_mask_numba(mask, offset_scaled, img_size_scaled + offset_scaled,
                         start_scaled, nod_size_scaled)
         # return ndarray-mask
         return mask

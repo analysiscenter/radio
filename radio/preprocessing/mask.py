@@ -168,6 +168,6 @@ def make_ellipse_mask_numba(batch_mask, start, end, centers, radiuses):
             for y in range(begin_y, end_y):
                 for z in range(begin_z, end_z):
                     if (((x - center[0])/radius[0]) ** 2 +
-                        ((y - center[1])/radius[1]) ** 2 +
-                        ((z - center[2])/radius[2]) ** 2 < 1):
+                            ((y - center[1])/radius[1]) ** 2 +
+                                 ((z - center[2])/radius[2]) ** 2 < 1):
                         batch_mask[x+start[i][0], y+start[i][1], z+start[i][2]] = 1
