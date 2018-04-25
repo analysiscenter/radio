@@ -18,7 +18,7 @@ except ImportError:
     tqdm_notebook = lambda x: x
 
 from .ct_batch import CTImagesBatch
-from .mask import make_mask_numba, make_ellipse_mask_numba, create_mask_reg
+from .mask import make_rect_mask_numba, make_ellipse_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
 from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
@@ -508,13 +508,29 @@ class CTImagesMaskedBatch(CTImagesBatch):
             start_pix = (center_pix - radius_pix)
             start_pix = np.rint(start_pix).astype(np.int)
             make_rect_mask_numba(self.masks, self.nodules.offset,
-                            self.nodules.img_size + self.nodules.offset, start_pix,
-                            np.rint(self.nodules.nodule_size / self.nodules.spacing))
+                                 self.nodules.img_size + self.nodules.offset, start_pix,
+                                 np.rint(self.nodules.nodule_size / self.nodules.spacing))
         elif mode == 'ellipse':
             make_ellipse_mask_numba(self.masks, self.nodules.offset.astype(np.int32),
                                     self.nodules.img_size + self.nodules.offset,
                                     center_pix, radius_pix)
 
+        return self
+
+    @action
+    def truncate_mask(self, threshold=0.2, min_val=0, max_val=255):
+        """ Truncate mask by images.
+        
+        Parameters
+        ----------
+        threshold : float
+            binarizing thresholg for initial image
+        min_val : float
+            minimum value of image
+        max_val : float
+            maximum value of image
+        """
+        self.masks = np.array(self.masks * self.images > threshold * (max_val - min_val), dtype=np.int32)
         return self
 
     def fetch_mask(self, shape):

@@ -5,7 +5,6 @@ import tensorflow as tf
 
 def reg_l2_loss(labels, predictions, lambda_coords=0.75):
     """ L2 loss for prediction of cancer tumor's centers, sizes joined with binary classification task.
-
     Parameters
     ----------
     labels : tf.Tensor
@@ -14,13 +13,11 @@ def reg_l2_loss(labels, predictions, lambda_coords=0.75):
     predictions : tf.Tensor
         tensor containing predicted values for sizes of nodules, their centers
         and probability of cancer in given crop.
-
     Returns
     -------
     tf.Tensor
         l2 loss for regression of cancer tumor center's coordinates,
         sizes joined with binary classification task.
-
     Notes
     -----
     labels and predictions tensors must have [None, 7] shapes;
@@ -44,7 +41,6 @@ def reg_l2_loss(labels, predictions, lambda_coords=0.75):
 
 def iou_3d(labels, predictions, epsilon=10e-7):
     """ Compute intersection over union in 3D case for input tensors.
-
     Parameters
     ----------
     labels : tf.Tensor
@@ -53,7 +49,6 @@ def iou_3d(labels, predictions, epsilon=10e-7):
         tensor containing predicted values for sizes of nodules and their centers.
     epsilon : float
         small real value used for avoiding division by zero error.
-
     Returns
     -------
     tf.Tensor
@@ -78,48 +73,9 @@ def iou_3d(labels, predictions, epsilon=10e-7):
                          + tf.reduce_prod(s_pred, axis=1) + tf_epsilon))
     return iou_tensor
 
-def tversky_loss_with_logits(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
-    """ Tversky loss function.
-
-    Parameters
-    ----------
-    labels : tf.Tensor
-        tensor containing target mask.
-    predictions : tf.Tensor
-        tensor containing predicted mask.
-    alpha : float
-        real value, weight of '0' class.
-    beta : float
-        real value, weight of '1' class.
-    smooth : float
-        small real value used for avoiding division by zero error.
-
-    Returns
-    -------
-    tf.Tensor
-        tensor containing tversky loss.
-    """
-    labels = tf.contrib.layers.flatten(labels)
-    predictions = tf.contrib.layers.flatten(predictions)
-    predictions = tf.sigmoid(predictions)
-    truepos = tf.reduce_sum(labels * predictions)
-    fp_and_fn = (alpha * tf.reduce_sum(predictions * (1 - labels))
-                 + beta * tf.reduce_sum((1 - predictions) * labels))
-
-    return -(truepos + smooth) / (truepos + smooth + fp_and_fn)
-
-def bce_with_logits(labels, predictions):
-    predictions = tf.sigmoid(predictions)
-    n = tf.cast(tf.shape(labels)[0] * tf.shape(labels)[1] * tf.shape(labels)[2] * tf.shape(labels)[3], dtype=tf.float32)
-    return tf.losses.log_loss(labels, predictions) / n
-
-def bce(labels, predictions):
-    n = tf.cast(tf.shape(labels)[0] * tf.shape(labels)[1] * tf.shape(labels)[2] * tf.shape(labels)[3], dtype=tf.float32)
-    return tf.losses.log_loss(labels, predictions) / n
 
 def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tversky loss function.
-
     Parameters
     ----------
     labels : tf.Tensor
@@ -132,7 +88,6 @@ def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
         real value, weight of '1' class.
     smooth : float
         small real value used for avoiding division by zero error.
-
     Returns
     -------
     tf.Tensor
@@ -149,7 +104,6 @@ def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
 
 def dice_loss(labels, predictions, smooth=1e-6):
     """ Loss function base on dice coefficient.
-
     Parameters
     ----------
     labels : tf.Tensor
@@ -158,7 +112,6 @@ def dice_loss(labels, predictions, smooth=1e-6):
         tensor containing predicted mask.
     smooth : float
         small real value used for avoiding division by zero error.
-
     Returns
     -------
     tf.Tensor
@@ -174,7 +127,6 @@ def dice_loss(labels, predictions, smooth=1e-6):
 
 def jaccard_coef_logloss(labels, predictions, smooth=1e-10):
     """ Loss function based on jaccard coefficient.
-
     Parameters
     ----------
     labels : tf.Tensor
@@ -183,7 +135,6 @@ def jaccard_coef_logloss(labels, predictions, smooth=1e-10):
         tensor containing predicted mask.
     smooth : float
         small real value used for avoiding division by zero error.
-
     Returns
     -------
     tf.Tensor
