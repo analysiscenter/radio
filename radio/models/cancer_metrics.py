@@ -140,7 +140,7 @@ def specificity(target, prediction, threshold=.5, **kwargs):
     Returns
     -------
         The value of true negative rate
-        """
+    """
     target, prediction = binarization([target, prediction], threshold)
     total = np.sum((1 - target) * (1 - prediction)) / np.sum(1 - target)
     return total
