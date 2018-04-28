@@ -1,6 +1,5 @@
 """cancer metrics"""
 import numpy as np
-import matplotlib.pyplot as plt
 from tqdm import tqdm_notebook as tqn
 from scipy.ndimage.measurements import label
 
@@ -42,8 +41,8 @@ def get_connected_ixs(array):
     ixs = [np.concatenate(np.where(connected_array[0] == i)).reshape(4, -1) for i in range(1, connected_array[1]+1)]
     return ixs
 
-def sensitivity(target, prediction, threshold=.5, iot=.5, **kwargs):
-    """ True positive rate. Сalculates the percentage of correctly predicted values.
+def sensitivity_number(target, prediction, threshold=.5, iot=.5, **kwargs):
+    """ True positive rate. Сalculates the percentage of correctly predicted values by number of nodules.
 
     Parameters
     ----------
@@ -81,6 +80,41 @@ def sensitivity(target, prediction, threshold=.5, iot=.5, **kwargs):
             right += 1
     total = right / len(connected_target)
     return total
+
+def sensitivity_volume(target, prediction, threshold=.5, iot=.5, **kwargs):
+    """ True positive rate. Сalculates the percentage of correctly predicted values by volume of nodules.
+
+    Parameters
+    ----------
+    target : Pandas DataFrame
+        DataFrame with target parameters of noudles.
+    prediction : Pandas DataFrame
+        DataFrame with predicted parameters of noudles.
+    threshold : float
+        The threshold of binarization
+    iot : float
+        Percentage of intersection between the prediction and the target,
+        at which the prediction is interpreted as correct
+
+    Returns
+    -------
+        Percentage of correctly predicted values
+    """
+    predicted_nodules = 0
+    for ix in target.iterrows():
+        true_diam, true_x, true_y, true_z = ix[1][target.columns[:4]]
+        try:
+            pred_diam, pred_x, pred_y, pred_z = prediction.loc[ix[1]['overlap_index']][:4]
+        except TypeError:
+            pass
+        dist = (np.abs(pred_x - true_x)**2 + np.abs(pred_y - true_y) + np.abs(pred_z - true_z)**2)**.5
+        r = pred_diam / 2
+        R = true_diam / 2
+        V = (np.pi * (R + r - dist)**2 * (dist**2 + 2*dist*r - 3*r*r + 2*dist*R + 6*r*R - 3*R*2)) / (12*dist)
+        V_true = 4/3 * np.pi * R**3
+        if V/V_true > iot:
+            predicted_nodules += 1
+    return predicted_nodules/len(target)
 
 def false_positive_number(target, prediction, threshold=.5, iot=.5, **kwargs):
     """ Calculate the number of falsely predicted values.
@@ -166,7 +200,7 @@ def false_discovery_rate(target, prediction, threshold=.5, **kwargs):
     rate = np.sum((1 - target) * prediction) / np.sum(prediction)
     return rate
 
-def positive_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs):
+def positive_likelihood_ratio(target, prediction, threshold=.5, iot=.5, sens_type='n', **kwargs):
     """ Positive likelihood ratio. Calculate according to the formula:
             rato = (sensitivity) / (1 - specificity)
 
@@ -181,17 +215,19 @@ def positive_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs
     iot : float
         Percentage of intersection between the prediction and the target,
         at which the prediction is interpreted as correct
-
+    sens_type : char
+        if 'n' sesitivity_number will be used. If 'v' sesitivity_values will be used instead.
     Returns
     -------
         The value of positive likelihood ratio.
     """
+    sensitivity = sensitivity_number if sens_type == 'n' else sensitivity_volume
     sens = sensitivity(target, prediction, threshold, iot)
     spec = specificity(target, prediction, threshold)
     ratio = (sens) / ((1 - spec) + 1e-9)
     return ratio
 
-def negative_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs):
+def negative_likelihood_ratio(target, prediction, threshold=.5, iot=.5, sens_type='n', **kwargs):
     """ Negative likelihood ratio. Calculate according to the formula:
             rato = (specificity) / (1 - sensitivity)
 
@@ -206,17 +242,19 @@ def negative_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs
     iot : float
         Percentage of intersection between the prediction and the target,
         at which the prediction is interpreted as correct
-
+    sens_type : char
+        if 'n' sesitivity_number will be used. If 'v' sesitivity_values will be used instead.
     Returns
     -------
         The value of negative likelihood ratio
     """
+    sensitivity = sensitivity_number if sens_type == 'n' else sensitivity_volume
     sens = sensitivity(target, prediction, threshold, iot)
     spec = specificity(target, prediction, threshold)
     ratio = (spec) / ((1 - sens) + 1e-9)
     return ratio
 
-def froc(target, prediction, threshold=.5, iot=.5, **kwargs):
+def froc(target, prediction, threshold=.5, iot=.5, n_points=50, sens_type='n', **kwargs):
     """ Draws a graph of the dependence of specificity and the number of false positive values
     from the threshold.
 
@@ -231,18 +269,27 @@ def froc(target, prediction, threshold=.5, iot=.5, **kwargs):
     iot : float
         Percentage of intersection between the prediction and the target,
         at which the prediction is interpreted as correct
+    n_points : int
+        The number of points on the curve.
+    sens_type : char
+        if 'n' sesitivity_number will be used. If 'v' sesitivity_values will be used instead.
+
+    Returns
+    -------
+    Array with len of 2: [sensitivity, number of false positive values]
     """
     target, prediction = binarization([target, prediction], threshold)
     sens = []
     false_pos = []
-    for thr in tqn(np.linspace(0, 1)):
+    sensitivity = sensitivity_number if sens_type == 'n' else sensitivity_volume
+    for thr in tqn(np.linspace(0, 1, n_points)):
         sens.append(sensitivity(target, prediction, threshold=thr, iot=iot))
         false_pos.append(false_positive_number(target, prediction, threshold=thr, iot=iot))
-    plt.plot(false_pos, sens)
-    plt.show()
+    return [sens, false_pos]
 
 METRICS = {
-    'sensitivity': sensitivity,
+    'sensitivity_volume': sensitivity_volume,
+    'sensitivity_number': sensitivity_number,
     'false_positive_number': false_positive_number,
     'specificity': specificity,
     'false_discovery_rate': false_discovery_rate,
