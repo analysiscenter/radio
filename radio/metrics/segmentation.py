@@ -254,7 +254,7 @@ def negative_likelihood_ratio(target, prediction, threshold=.5, **kwargs):
         Negative likelihood ratio
     """
     e = 1e-15
-    sens = sensitivity(target, prediction, threshold, iot)
+    sens = sensitivity(target, prediction, threshold)
     spec = specificity(target, prediction, threshold)
     if sens is not None and spec is not None:
         ratio = (1 - sens) / (spec + e)
