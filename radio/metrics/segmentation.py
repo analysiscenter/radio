@@ -196,7 +196,7 @@ def false_discovery_rate(target, prediction, threshold=.5, **kwargs):
     """
     target, prediction = binarize([target, prediction], threshold)
     total_prediction = np.sum(prediction)
-    if total_prediction > 0
+    if total_prediction > 0:
         rate = np.sum((1 - target) * prediction) / total_prediction
     else:
         rate = 0.

@@ -1,4 +1,6 @@
-from .segmentation import sensitivity, sensitivity_nodules, false_positive_nodules, specificity,
+""" Contain metrics and metric calculation routines """
+
+from .segmentation import sensitivity, sensitivity_nodules, false_positive_nodules, specificity, \
                           false_discovery_rate, positive_likelihood_ratio, negative_likelihood_ratio, froc
 
 

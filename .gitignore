@@ -2,5 +2,5 @@
 .cache/*
 pycache/
 .ipynb_checkpoints
-build/
+_build/
 debug.log
