@@ -57,7 +57,7 @@ def sensitivity(target, prediction, threshold=.5, **kwargs):
     prediction : np.array
         Predicted mask
     threshold : float
-        The binarize threshold
+        Binarization threshold
 
     Returns
     -------
@@ -84,7 +84,7 @@ def sensitivity_nodules(target, prediction, threshold=.5, iot=.5, **kwargs):
     prediction : np.array
         Predicted mask
     threshold : float
-        The binarize threshold
+        Binarization threshold
     iot : float
         The percentage of intersection between the predicted and the target nodules,
         at which the prediction is counted as correct
@@ -123,7 +123,7 @@ def false_positive_nodules(target, prediction, threshold=.5, iot=.5, **kwargs):
     prediction : np.array
         Predicted mask
     threshold : float
-        The binarize threshold
+        Binarization threshold
     iot : float
         The percentage of intersection between the predicted and the target nodules,
         at which the prediction is counted as correct
@@ -160,7 +160,7 @@ def specificity(target, prediction, threshold=.5, **kwargs):
     prediction : np.array
         Predicted mask
     threshold : float
-        The binarize threshold
+        Binarization threshold
 
     Returns
     -------
@@ -187,7 +187,7 @@ def false_discovery_rate(target, prediction, threshold=.5, **kwargs):
     prediction : np.array
         Predicted mask
     threshold : float
-        The binarize threshold
+        Binarization threshold
 
     Returns
     -------
@@ -203,7 +203,7 @@ def false_discovery_rate(target, prediction, threshold=.5, **kwargs):
     return rate
 
 
-def positive_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs):
+def positive_likelihood_ratio(target, prediction, threshold=.5, **kwargs):
     """ Positive likelihood ratio.
 
     Parameters
@@ -213,7 +213,7 @@ def positive_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs
     prediction : np.array
         Predicted mask
     threshold : float
-        The binarize threshold
+        Binarization threshold
     iot : float
         Percentage of intersection between the prediction and the target,
         at which the prediction is interpreted as correct
@@ -224,7 +224,7 @@ def positive_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs
         Positive likelihood ratio.
     """
     e = 1e-15
-    sens = sensitivity(target, prediction, threshold, iot)
+    sens = sensitivity(target, prediction, threshold)
     spec = specificity(target, prediction, threshold)
     if sens is not None and spec is not None:
         ratio = sens / (1 - spec + e)
@@ -233,7 +233,7 @@ def positive_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs
     return ratio
 
 
-def negative_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs):
+def negative_likelihood_ratio(target, prediction, threshold=.5, **kwargs):
     """ Negative likelihood ratio.
 
     Parameters
@@ -243,7 +243,7 @@ def negative_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs
     prediction : np.array
         Predicted mask
     threshold : float
-        The binarize threshold
+        Binarization threshold
     iot : float
         Percentage of intersection between the prediction and the target,
         at which the prediction is interpreted as correct
@@ -259,7 +259,7 @@ def negative_likelihood_ratio(target, prediction, threshold=.5, iot=.5, **kwargs
     if sens is not None and spec is not None:
         ratio = (1 - sens) / (spec + e)
     else:
-        ratio is None
+        ratio = None
     return ratio
 
 
@@ -275,7 +275,7 @@ def froc(target, prediction, n_points=50, threshold=.5, iot=.5, **kwargs):
     n_points : int
         The number of points on the curve
     threshold : float
-        The binarize threshold
+        Binarization threshold
     iot : float
         Percentage of intersection between the prediction and the target,
         at which the prediction is interpreted as correct
@@ -288,7 +288,7 @@ def froc(target, prediction, n_points=50, threshold=.5, iot=.5, **kwargs):
     target, prediction = binarize([target, prediction], threshold)
     sens = []
     false_pos = []
-    for threshold in (np.linspace(0, 1, n_points)):
+    for threshold in np.linspace(0, 1, n_points):
         sens.append(sensitivity(target, prediction, threshold=threshold, iot=iot))
-        false_pos.append(false_positive_number(target, prediction, threshold=threshold, iot=iot))
+        false_pos.append(false_positive_nodules(target, prediction, threshold=threshold, iot=iot))
     return sens, false_pos
