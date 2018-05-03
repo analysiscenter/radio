@@ -118,7 +118,7 @@ def numba_xip(image, depth, mode, step, start=0):
         image after xip operation transform.
     """
     size = (image.shape[0] - depth - start) // step + 1
-    out_data = np.empty(shape=(size,) + image.shape[1:]), dtype=image.dtype)
+    out_data = np.empty(shape=(size,) + image.shape[1:], dtype=image.dtype)
     for i in range(size):
         ix = i * step + start
         if mode == 0:
