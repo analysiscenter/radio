@@ -45,7 +45,36 @@ def _calculate_metrics(target, prediction, metrics, **kwargs):
     return calculated_metrics
 
 
-def calculate_metrics(targets, predictions, metrics=None, threshold=.5, iot=.5):
+def aggregate_metrics(metrics, method='mean'):
+    """ Calculate accumulated metrics from item metrics.
+
+    Parameters
+    ----------
+    metrics : list of dict
+        A collection of metrics for individual items
+    method : 'mean' or callable
+        A function to aggregate individual metrics
+
+    Returns
+    -------
+    dict
+        Metric names as keys and calculated metrics as values.
+    """
+    if method == 'mean':
+        method = np.mean
+
+        all_metrics = {}
+        for name in metrics:
+            all_metrics[name] = method(metrics[name])
+    elif callable(method):
+        all_metrics = method(metrics)
+    else:
+        raise ValueError("An aggregation method should be 'mean' or a callable.", method)
+
+    return all_metrics
+
+
+def calculate_metrics(targets, predictions, threshold=.5, iot=.5, metrics=None, agg=None):
     """ Evaluate metrics for all targets / predictions
 
     Parameters
@@ -61,43 +90,29 @@ def calculate_metrics(targets, predictions, metrics=None, threshold=.5, iot=.5):
         at which the prediction is interpreted as correct
     metrics : list of str
         Names of metrics to calculate
+    agg : 'mean' or callable
+        An aggregation method.
+        If None, returns a list of metrics dicts - one for each predicted item.
 
     Returns
     -------
-    dict
-        Dict with metric names as keys and values as a result of calculating metrics.
+    dict or list of dict
+        Metrics names as keys and calculated metrics as values.
     """
     if metrics is None:
         metrics = list(METRICS.keys())
 
-    all_metrics = {name: list() for name in metrics}
-    for i in len(targets):
+    _metrics = []
+    for i in range(len(targets)):
         metrics_one = _calculate_metrics(targets[i], predictions[i], metrics=metrics,
                                          threshold=threshold, iot=iot)
-        for name, value in metrics_one.items():
-            all_metrics[name].append(value)
-    return all_metrics
+        _metrics.append(metrics_one)
 
-
-def aggregate_metrics(metrics, method='mean'):
-    """ Calculate accumulated metrics from item metrics.
-
-    Parameters
-    ----------
-    metrics : dict
-        Dict with metrics names as keys and single item metrics arrays as values
-    method : 'mean' or callable
-        A function to aggregate individual metrics
-    """
-    if method == 'mean':
-        method = np.mean
-
-        all_metrics = {}
-        for name in metrics:
-            all_metrics[name] = method(metrics[name])
-    elif callable(method):
-        all_metrics = method(metrics)
+    if agg is None:
+        all_metrics = _metrics
     else:
-        raise ValueError("An aggregation method should be 'mean' or a callable.", method)
+        all_metrics = aggregate_metrics(_metrics, method=agg)
 
     return all_metrics
+
+
