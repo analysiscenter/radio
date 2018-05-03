@@ -95,7 +95,7 @@ def median_filter1d(data, out):
 
 
 @jit(nogil=True, nopython=True)
-def numba_xip(image, depth, mode, step):
+def numba_xip(image, depth, mode, step, start=0):
     """ Apply xip operation to scan of one patient.
 
     Parameters
@@ -109,16 +109,18 @@ def numba_xip(image, depth, mode, step):
         'maximum', 'minimum', 'mean' and 'median' projections.
     stride : int
         stride-step along zero axis.
+    start : int
+        an initial slice to start from
 
     Returns
     -------
     ndarray(m, k, l)
         image after xip operation transform.
     """
-    size = (image.shape[0] - 2 * math.floor(depth / 2)) // step
-    out_data = np.empty(shape=(size, image.shape[1], image.shape[2]), dtype=image.dtype)
-    for i in range(0, size):
-        ix = i * step
+    size = (image.shape[0] - depth - start) // step + 1
+    out_data = np.empty(shape=(size,) + image.shape[1:]), dtype=image.dtype)
+    for i in range(size):
+        ix = i * step + start
         if mode == 0:
             maximum_filter1d(image[ix: ix + depth, ...], out_data[i, ...])
         elif mode == 1:
