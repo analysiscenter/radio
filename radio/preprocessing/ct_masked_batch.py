@@ -1090,9 +1090,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         ----------
         component : str
             component to unpack, can be 'images' or 'masks'.
-        data_format : str
-            can be 'channels_last' or 'channels_first'. Reflects where to put
-            channels dimension: right after batch dimension or after all spatial axes.
+        data_format : 'channels_last' or 'channels_first' or None
+            Reflects where to put channels dimension: right after batch dimension or after all spatial axes
+            or do not put it all if None.
         kwargs : dict
             key-word arguments that will be passed in callable if
             component argument reffers to method of batch class.
