@@ -1,13 +1,13 @@
 """ Contains metrics """
 import numpy as np
 
-from .core import binarize
+from .core import binarize, get_nodules
 
 
 class MetricsByVolume:
     """ Contains evaluation metrics calculated by pixel volume involved """
-    @staticmethod
-    def sensitivity(target, prediction, threshold=.5, **kwargs):
+    @classmethod
+    def sensitivity(cls, target, prediction, threshold=.5, **kwargs):
         """ True positive rate
 
         Сalculates the percentage of correctly predicted masked pixels.
@@ -35,8 +35,8 @@ class MetricsByVolume:
             total = None
         return total
 
-    @staticmethod
-    def specificity(target, prediction, threshold=.5, **kwargs):
+    @classmethod
+    def specificity(cls, target, prediction, threshold=.5, **kwargs):
         """ True negative rate
 
         Parameters
@@ -62,8 +62,8 @@ class MetricsByVolume:
             total = None
         return total
 
-    @staticmethod
-    def false_discovery_rate(target, prediction, threshold=.5, **kwargs):
+    @classmethod
+    def false_discovery_rate(cls, target, prediction, threshold=.5, **kwargs):
         """ False discovery rate
 
         Parameters
@@ -88,8 +88,8 @@ class MetricsByVolume:
             rate = 0.
         return rate
 
-    @staticmethod
-    def false_positive_rate(target, prediction, threshold=.5, **kwargs):
+    @classmethod
+    def false_positive_rate(cls, target, prediction, threshold=.5, **kwargs):
         """ False positive rate
 
         Parameters
@@ -117,8 +117,8 @@ class MetricsByVolume:
 
 class MetricsByNodules:
     """ Contains evaluation metrics calculated by the nuber of nodules involved """
-    @staticmethod
-    def sensitivity(target, prediction, threshold=.5, iot=.5, **kwargs):
+    @classmethod
+    def sensitivity(cls, target, prediction, threshold=.5, iot=.5, **kwargs):
         """ True positive rate
 
         Parameters
@@ -139,7 +139,7 @@ class MetricsByNodules:
             The percentage of correctly predicted nodules
             None if there is nothing to predict (target contains zeros).
         """
-        target = binarize(target, threshold)
+        target = binarize(cls, target, threshold)
 
         if np.sum(target) == 0:
             total = None
@@ -156,8 +156,8 @@ class MetricsByNodules:
 
         return total
 
-    @staticmethod
-    def false_positive(target, prediction, threshold=.5, iot=.5, **kwargs):
+    @classmethod
+    def false_positive(cls, target, prediction, threshold=.5, iot=.5, **kwargs):
         """ Calculate the number of falsely predicted nodules.
 
         Parameters
@@ -183,7 +183,7 @@ class MetricsByNodules:
             total = 0
         else:
             predicted_nodules = get_nodules(prediction)
-            target = binarize(target, threshold)
+            target = binarize(cls, target, threshold)
 
             total = 0
             for coord in predicted_nodules:
@@ -193,8 +193,8 @@ class MetricsByNodules:
 
         return total
 
-    @staticmethod
-    def false_positive_rate(target, prediction, threshold=.5, iot=.5, **kwargs):
+    @classmethod
+    def false_positive_rate(cls, target, prediction, threshold=.5, iot=.5, **kwargs):
         """ Calculate the ratio of falsely predicted nodules to all true nodules.
 
         Parameters
@@ -214,13 +214,13 @@ class MetricsByNodules:
         float
             The share of falsely predicted nodules
         """
-        false = false_positive_nodules(target, prediction, threshold=threshold, iot=iot)
+        false = cls.false_positive(cls, target, prediction, threshold=threshold, iot=iot)
         target_nodules = get_nodules(target)
         return false / len(target_nodules)
 
 
-    @staticmethod
-    def false_discovery_rate(target, prediction, threshold=.5, iot=.5, **kwargs):
+    @classmethod
+    def false_discovery_rate(cls, target, prediction, threshold=.5, iot=.5, **kwargs):
         """ Calculate the ratio of falsely predicted nodules to all predicted nodules.
 
         Parameters
@@ -240,6 +240,6 @@ class MetricsByNodules:
         float
             The share of falsely predicted nodules
         """
-        false = false_positive_nodules(target, prediction, threshold=threshold, iot=iot)
+        false = cls.false_positive(cls, target, prediction, threshold=threshold, iot=iot)
         predicted_nodules = get_nodules(prediction)
         return false / len(predicted_nodules)
