@@ -6,7 +6,7 @@ from .core import binarize
 
 class MetricsByVolume:
     """ Contains evaluation metrics calculated by pixel volume involved """
-    @static
+    @staticmethood
     def sensitivity(target, prediction, threshold=.5, **kwargs):
         """ True positive rate
 
@@ -35,7 +35,7 @@ class MetricsByVolume:
             total = None
         return total
 
-    @static
+    @staticmethood
     def specificity(target, prediction, threshold=.5, **kwargs):
         """ True negative rate
 
@@ -62,7 +62,7 @@ class MetricsByVolume:
             total = None
         return total
 
-    @static
+    @staticmethood
     def false_discovery_rate(target, prediction, threshold=.5, **kwargs):
         """ False discovery rate
 
@@ -88,7 +88,7 @@ class MetricsByVolume:
             rate = 0.
         return rate
 
-    @static
+    @staticmethood
     def false_positive_rate(target, prediction, threshold=.5, **kwargs):
         """ False positive rate
 
@@ -117,7 +117,7 @@ class MetricsByVolume:
 
 class MetricsByNodules:
     """ Contains evaluation metrics calculated by the nuber of nodules involved """
-    @static
+    @staticmethood
     def sensitivity(target, prediction, threshold=.5, iot=.5, **kwargs):
         """ True positive rate
 
@@ -156,7 +156,7 @@ class MetricsByNodules:
 
         return total
 
-    @static
+    @staticmethood
     def false_positive(target, prediction, threshold=.5, iot=.5, **kwargs):
         """ Calculate the number of falsely predicted nodules.
 
@@ -193,7 +193,7 @@ class MetricsByNodules:
 
         return total
 
-    @static
+    @staticmethood
     def false_positive_rate(target, prediction, threshold=.5, iot=.5, **kwargs):
         """ Calculate the ratio of falsely predicted nodules to all true nodules.
 
@@ -219,7 +219,7 @@ class MetricsByNodules:
         return false / len(target_nodules)
 
 
-    @static
+    @staticmethood
     def false_discovery_rate(target, prediction, threshold=.5, iot=.5, **kwargs):
         """ Calculate the ratio of falsely predicted nodules to all predicted nodules.
 

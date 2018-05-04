@@ -3,8 +3,8 @@ import numpy as np
 
 from .core import binarize, get_nodules
 from .mask import MetricsByNodules, MetricsByVolume
-from .roc import *
-from .ratio import *
+from .roc import froc
+from .ratio import negative_likelihood_ratio, positive_likelihood_ratio
 
 
 def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwargs):
@@ -39,9 +39,9 @@ def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwa
         kwargs['iot'] = 1e-6
     target, prediction = binarize([target, prediction], kwargs['threshold'])
 
-    metrics_fn = []
-    for m in metrics:
-        _m = m.replace(" ", "")
+    metrics_fn = {}
+    for name in metrics:
+        _m = name.replace(" ", "")
         if '/nodules' in _m:
             src = MetricsByNodules
         elif '/volume' in _m:
@@ -51,7 +51,7 @@ def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwa
 
         name = _m.split('/')[0]
         if hasattr(src, name):
-            metrics_fn.append(getattr(src, name))
+            metrics_fn[m] = getattr(src, name)
         else:
             raise ValueError("Metrics has not been found", m)
 
@@ -59,8 +59,8 @@ def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwa
         target, prediction = binarize([target, prediction], kwargs['threshold'])
 
     calculated_metrics = {}
-    for m in _metrics_fn:
-        calculated_metrics[metric] = m(target, prediction, **kwargs)
+    for name, method in metrics_fn.items():
+        calculated_metrics[name] = method(target, prediction, **kwargs)
     return calculated_metrics
 
 
