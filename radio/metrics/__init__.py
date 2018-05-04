@@ -109,14 +109,14 @@ def calculate_metrics(targets, predictions, threshold=.5, iot=.5, metrics=None, 
         metrics = list(METRICS.keys())
 
     _metrics = []
-    for i in range(len(targets)):
+    for i, _ in enumerate(targets):
         metrics_one = _calculate_metrics(targets[i], predictions[i], metrics=metrics,
                                          threshold=threshold, iot=iot)
         _metrics.append(metrics_one)
 
     if agg is None:
-        all_metrics = _metrics
-    else:
-        all_metrics = aggregate_metrics(_metrics, method=agg)
+        return _metrics
+
+    all_metrics = aggregate_metrics(_metrics, method=agg)
 
     return all_metrics
