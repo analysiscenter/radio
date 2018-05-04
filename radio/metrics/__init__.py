@@ -47,13 +47,13 @@ def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwa
         elif '/volume' in _m:
             src = MetricsByVolume
         else:
-            raise ValueError("Unknown metrics", m)
+            raise ValueError("Unknown metrics", name)
 
         name = _m.split('/')[0]
         if hasattr(src, name):
-            metrics_fn[m] = getattr(src, name)
+            metrics_fn[name] = getattr(src, name)
         else:
-            raise ValueError("Metrics has not been found", m)
+            raise ValueError("Metrics has not been found", name)
 
     if bin:
         target, prediction = binarize([target, prediction], kwargs['threshold'])
