@@ -18,7 +18,7 @@ from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Datase
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
-from .mip import make_xip_numba
+from .mip import make_xip_numba, numba_xips
 from .flip import flip_patient_numba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
@@ -1204,6 +1204,41 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                                       projection=projection, padding=padding)
         output_batch.spacing = self.rescale(output_batch.images_shape)
         return output_batch
+
+    def xip_component(self, component, mode, depth, stride, start=0, channels=None, squeeze=False):
+        """ Make channelled intensity projection from a component.
+        """
+        # parse arguments
+        _modes = {'max': 0, 'min': 1, 'mean': 2, 'median': 3}
+        mode = mode if isinstance(mode, (list, tuple)) else (mode, )
+        mode = [m if isinstance(m, int) else _modes[m] for m in mode]
+        channels = 1 if channels is None else channels
+
+        # loop over batch-items and modes
+        items = []
+        for ix in self.indices:
+            image = self.get(ix, component)
+            xips = []
+            for m in mode:
+                xip = numba_xip(image, depth, m, stride, start)
+                if channels == 1:
+                    xip = np.expand_dims(xip, axis=-1)
+                else:
+                    # split xip into channels
+                    rem = len(image) % channels
+                    if rem > 0:
+                        xip = xip[:-rem]
+
+                    xip = xip.reshape((-1, channels) + xip.shape[1:])
+                    xip = np.transpose(xip, (0, 2, 3, 1))
+                    xip = np.max(xip, axis=-1, keepdims=True) if squeeze else xip
+                xips.append(xip)
+
+            item = np.concatenate(xips, axis=-1)
+            items.append(item)
+
+        return np.concatenate(items, axis=0)
+
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
     def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use
