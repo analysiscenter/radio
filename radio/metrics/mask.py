@@ -139,7 +139,7 @@ class MetricsByNodules:
             The percentage of correctly predicted nodules
             None if there is nothing to predict (target contains zeros).
         """
-        target = binarize(cls, target, threshold)
+        target = binarize(target, threshold)
 
         if np.sum(target) == 0:
             total = None
@@ -183,7 +183,7 @@ class MetricsByNodules:
             total = 0
         else:
             predicted_nodules = get_nodules(prediction)
-            target = binarize(cls, target, threshold)
+            target = binarize(target, threshold)
 
             total = 0
             for coord in predicted_nodules:
@@ -214,7 +214,7 @@ class MetricsByNodules:
         float
             The share of falsely predicted nodules
         """
-        false = cls.false_positive(cls, target, prediction, threshold=threshold, iot=iot)
+        false = cls.false_positive(target, prediction, threshold=threshold, iot=iot)
         target_nodules = get_nodules(target)
         return false / len(target_nodules)
 
@@ -240,6 +240,6 @@ class MetricsByNodules:
         float
             The share of falsely predicted nodules
         """
-        false = cls.false_positive(cls, target, prediction, threshold=threshold, iot=iot)
+        false = cls.false_positive(target, prediction, threshold=threshold, iot=iot)
         predicted_nodules = get_nodules(prediction)
         return false / len(predicted_nodules)
