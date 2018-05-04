@@ -44,7 +44,7 @@ def get_nodules(mask):
     for i in range(1, num_components + 1):
         coords = [slice(np.min(c), np.max(c) + 1) for c in np.where(connected_array == i)]
         nodules.append(coords)
-    return np.array(nodules)
+    return nodules
 
 
 
