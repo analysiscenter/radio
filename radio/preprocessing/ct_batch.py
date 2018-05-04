@@ -1225,7 +1225,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     xip = np.expand_dims(xip, axis=-1)
                 else:
                     # split xip into channels
-                    rem = len(image) % channels
+                    rem = len(xip) % channels
                     if rem > 0:
                         xip = xip[:-rem]
 
