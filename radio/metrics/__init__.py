@@ -7,7 +7,7 @@ from .roc import froc
 from .ratio import negative_likelihood_ratio, positive_likelihood_ratio
 
 
-def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwargs):
+def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwargs):  # pylint: disable=redefined-builtin
     """ Calculated metrics for one item
 
     Parameters
