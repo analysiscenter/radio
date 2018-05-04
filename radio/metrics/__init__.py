@@ -64,8 +64,14 @@ def aggregate_metrics(metrics, method='mean'):
         method = np.mean
 
         all_metrics = {}
-        for name in metrics:
-            all_metrics[name] = method(metrics[name])
+        for item in metrics:
+            for name, value in item.items():
+                if name not in all_metrics:
+                    all_metrics[name] = list()
+                if value is not None:
+                    all_metrics[name].append(value)
+        for name, value in all_metrics.items():
+            all_metrics[name] = method(value)
     elif callable(method):
         all_metrics = method(metrics)
     else:
@@ -114,5 +120,3 @@ def calculate_metrics(targets, predictions, threshold=.5, iot=.5, metrics=None, 
         all_metrics = aggregate_metrics(_metrics, method=agg)
 
     return all_metrics
-
-
