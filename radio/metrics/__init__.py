@@ -1,23 +1,13 @@
 """ Contain metrics and metric calculation routines """
 import numpy as np
 
-from .segmentation import sensitivity, sensitivity_nodules, false_positive_nodules, specificity, \
-                          false_discovery_rate, positive_likelihood_ratio, negative_likelihood_ratio, froc
+from .core import binarize, get_nodules
+from .mask import MetricsByNodules, MetricsByVolume
+from .roc import *
+from .ratio import *
 
 
-METRICS = {
-    'sensitivity': sensitivity,
-    'sensitivity_nodules': sensitivity_nodules,
-    'false_positive_nodules': false_positive_nodules,
-    'specificity': specificity,
-    'false_discovery_rate': false_discovery_rate,
-    'positive_likelihood_ratio': positive_likelihood_ratio,
-    'negative_likelihood_ratio': negative_likelihood_ratio,
-    'froc': froc
-}
-
-
-def _calculate_metrics(target, prediction, metrics, **kwargs):
+def _calculate_metrics(target, prediction, *args, metrics=None, bin=False, **kwargs):
     """ Calculated metrics for one item
 
     Parameters
@@ -26,22 +16,51 @@ def _calculate_metrics(target, prediction, metrics, **kwargs):
         Target mask
     prediction : np.array
         Predicted mask
-    threshold : float
-        Binarization threshold
-    iot : float
-        Percentage of intersection between the prediction and the target,
-        at which the prediction is interpreted as correct
     metrics : list of str
         Names of metrics to calculate
+    bin : bool
+        Whether to binarize arrays before metrics calculation
+    threshold : float
+        Binarization threshold (default=0.5)
+    iot : float
+        Percentage of intersection between the prediction and the target,
+        at which the prediction is interpreted as correct (default=1e-6)
 
     Returns
     -------
     dict
         Dict with metric names as keys and values as a result of calculating metrics.
     """
+    if metrics is None:
+        raise ValueError('Explicitly specify a list of metrics to calculate', metrics)
+    if 'threshold' not in kwargs:
+        kwargs['threshold'] = .5
+    if 'iot' not in kwargs:
+        kwargs['iot'] = 1e-6
+    target, prediction = binarize([target, prediction], kwargs['threshold'])
+
+    metrics_fn = []
+    for m in metrics:
+        _m = m.replace(" ", "")
+        if '/nodules' in _m:
+            src = MetricsByNodules
+        elif '/volume' in _m:
+            src = MetricsByVolume
+        else:
+            raise ValueError("Unknown metrics", m)
+
+        name = _m.split('/')[0]
+        if hasattr(src, name):
+            metrics_fn.append(getattr(src, name))
+        else:
+            raise ValueError("Metrics has not been found", m)
+
+    if bin:
+        target, prediction = binarize([target, prediction], kwargs['threshold'])
+
     calculated_metrics = {}
-    for metric in metrics:
-        calculated_metrics[metric] = METRICS[metric](target, prediction, **kwargs)
+    for m in _metrics_fn:
+        calculated_metrics[metric] = m(target, prediction, **kwargs)
     return calculated_metrics
 
 
@@ -80,7 +99,7 @@ def aggregate_metrics(metrics, method='mean'):
     return all_metrics
 
 
-def calculate_metrics(targets, predictions, threshold=.5, iot=.5, metrics=None, agg=None):
+def calculate_metrics(targets, predictions, metrics=None, agg=None, **kwargs):
     """ Evaluate metrics for all targets / predictions
 
     Parameters
@@ -89,11 +108,6 @@ def calculate_metrics(targets, predictions, threshold=.5, iot=.5, metrics=None, 
         An array of target masks
     prediction : np.array
         An array of predicted masks
-    threshold : float
-        Binarization threshold
-    iot : float
-        Percentage of intersection between the prediction and the target,
-        at which the prediction is interpreted as correct
     metrics : list of str
         Names of metrics to calculate
     agg : 'mean' or callable
@@ -106,12 +120,11 @@ def calculate_metrics(targets, predictions, threshold=.5, iot=.5, metrics=None, 
         Metrics names as keys and calculated metrics as values.
     """
     if metrics is None:
-        metrics = list(METRICS.keys())
+        raise ValueError('Explicitly specify a list of metrics to calculate', metrics)
 
     _metrics = []
     for i, _ in enumerate(targets):
-        metrics_one = _calculate_metrics(targets[i], predictions[i], metrics=metrics,
-                                         threshold=threshold, iot=iot)
+        metrics_one = _calculate_metrics(targets[i], predictions[i], metrics=metrics, **kwargs)
         _metrics.append(metrics_one)
 
     if agg is None:
