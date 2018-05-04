@@ -18,7 +18,7 @@ from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Datase
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
-from .mip import make_xip_numba, numba_xips
+from .mip import make_xip_numba, numba_xip
 from .flip import flip_patient_numba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
