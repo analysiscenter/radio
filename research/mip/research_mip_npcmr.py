@@ -12,13 +12,14 @@ import tensorflow as tf
 
 sys.path.append('./../lung_cancer')
 from radio.preprocessing import CTImagesMaskedBatch as CTIMB
-from radio.dataset import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, Research, Option, KV
+from radio.dataset import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, Research, Option, KV, L
 from radio.dataset.models.tf import UNet, VNet, GCN
 from radio.dataset.models.tf.losses import dice_batch, dice, dice2, dice_batch, dice_batch2
 
 # npcmr in blosc
-PATH_NPCMR = '/notebooks/ct/npcmr_blosc/*'
-index = FilesIndex(path=PATH, dirs=True, no_ext=False)
+PATH_NPCMR_SCANS = '/notebooks/ct/npcmr_blosc/*'
+PATH_NPCMR_ANNOTS = '/notebooks/ct/annotations/merged_nodules.pkl'
+index = FilesIndex(path=PATH_NPCMR_SCANS, dirs=True, no_ext=False)
 dataset = Dataset(index=index, batch_class=CTIMB)
 dataset.cv_split(0.9, shuffle=120)
 dataset.indices.shape
@@ -42,6 +43,8 @@ def train(batch, model='net', minibatch_size=8, mode='max', depth=6, stride=2, s
         })
         predictions.append(preds)
     predictions = np.concatenate(predictions, axis=0)
+
+    # put predictions into the pipeline
     batch.pipeline.set_variable('predictions', predictions[order])
     batch.pipeline.set_variable('loss', loss)
 
@@ -56,24 +59,32 @@ def logloss(labels, predictions, coeff=10, e=1e-15):
     return loss
 
 
-# Model saving
-def save_model(batch, pipeline):
-    model = pipeline.get_model_by_name('net')
+# function for saving model
+def save_model(batch, pipeline, model='net'):
+    model = pipeline.get_model_by_name(model)
     #name = pipeline.config['model_config/loss'].__name__
     name = model.__class__.__name__
     model.save('MIP_e_6_3c/models/' + name)
     print('Model', name, 'saved')
 
+# read df with confidenced nodules info
+with open(PATH_NPCMR_ANNOTS, 'rb') as file:
+    confidenced = pkl.load(file)
 
-# # Pipelines
+# nodules filtering function
+def filter_nodules(confidenced, threshold=0.02):
+    return confidenced[confidenced.confidence > threshold]
 
+# root, train, test pipelines
 root_pipeline = (
     Pipeline()
-      .load(fmt='blosc')
-      .call(make_data, channels=3)
+      .load(fmt='blosc', components=['images', 'spacing', 'origin'])
+      .init_variable('filtered')
+      .set_variable('filtered', L(filter_nodules, confidenced=confidenced))
+      .fetch_nodules_info(nodules=V('filtered'))
+      .create_mask()
       .run(batch_size=4, shuffle=True, n_epochs=None, prefetch=3, lazy=True)
 )
-
 
 train_pipeline = (
     Pipeline()
