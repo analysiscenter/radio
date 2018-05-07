@@ -107,7 +107,7 @@ test_pipeline = (
 
 
 # # List available GPUs
-gpus = [dict(model_config=dict(device='/device:GPU:'+str(i))) for i in range(2)]
+gpus = [dict(model_config=dict(device='/device:GPU:' + str(i))) for i in range(2)]
 
 # # Define research plan
 
@@ -121,7 +121,7 @@ model_config = dict(
     body=dict(filters=[8, 16, 32, 64]),
     output=dict(ops='sigmoid'),
     loss=logloss,
-    optimizer=dict(use_locking=True),
+    optimizer='Adam',
     session=dict(config=tf.ConfigProto(allow_soft_placement=True)),
 )
 
@@ -143,7 +143,8 @@ op = Option(p1, [UNet, VNet]) #, GCN])
 
 mr = Research()
 mr.add_pipeline(root_pipeline << dataset.train, train_pipeline, variables=['loss'], name='train')
-mr.add_pipeline(root_pipeline << dataset.test, test_pipeline, variables=['loss'], name='test', train_pipeline='train', execute_for=1000)
+mr.add_pipeline(root_pipeline << dataset.test, test_pipeline, variables=['loss'], name='test',
+                train_pipeline='train', execute_for=1000)
 mr.add_grid_config(op)
 
 
