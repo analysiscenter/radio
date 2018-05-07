@@ -139,6 +139,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         else:
             raise TypeError("Right operand must be instance of Pipeline class.")
 
+    @action
     def apply(self, callback, *args, **kwargs):
         return callback(self, *args, **kwargs)
 
