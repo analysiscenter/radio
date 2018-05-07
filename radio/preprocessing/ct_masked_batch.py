@@ -1001,6 +1001,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
+    def threshold_mask(self, threshold=0.35):
+        """ Filter masks values by given threshold.
+
+        Parameters
+        ----------
+        threshold : float
+            threshold for masks values.
+
+        """
+        self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
+        return self
+
+    @action
     def binarize_mask(self, threshold=0.35):
         """ Binarize masks by threshold.
 
@@ -1010,7 +1023,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             threshold for masks binarization.
 
         """
-        self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
+        self.masks = np.asarray(self.masks > threshold, dtype=np.int)
         return self
 
     @action
