@@ -1176,7 +1176,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         """
         _components = np.asarray(components).reshape(-1)
-        _angle = angle * np.random.rand() if random else angle
+        _angle = angle * (2 * np.random.rand() - 1) if random else angle
         for comp in _components:
             data = self.get(index, comp)
             rotate_3D(data, _angle, axes)
