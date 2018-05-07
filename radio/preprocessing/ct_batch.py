@@ -20,7 +20,7 @@ from scipy.ndimage import grey_closing, grey_opening, grey_dilation, grey_dilati
 from scipy.ndimage import maximum_filter, minimum_filter, median_filter, sobel, center_of_mass, percentile_filter, gaussian_filter
 from scipy.fftpack import fftn, ifftn
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Pipeline, DatasetIndex  # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
@@ -132,6 +132,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = bounds if bounds is not None else self._bounds
         for comp_name, comp_data in kwargs.items():
             setattr(self, comp_name, comp_data)
+
+    def __rshift__(self, other):
+        if isinstance(other, Pipeline):
+            return other._exec_all_actions(self)
+        else:
+            raise TypeError("Right operand must be instance of Pipeline class.")
 
     @classmethod
     def split(cls, batch, batch_size):
