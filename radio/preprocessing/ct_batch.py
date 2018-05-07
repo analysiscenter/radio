@@ -1278,30 +1278,29 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     @action
-    def central_crop(self, crop_size, **kwargs):
-        """ Make crop of crop_size from center of images.
+    def central_crop(self, size, **kwargs):
+        """ Make crop of given size from center of images.
 
         Parameters
         ----------
-        crop_size : tuple, list or ndarray of int
-            (z,y,x)-shape of crop.
+        size : tuple, list or ndarray of int (z,y,x)-shape of crop.
 
         Returns
         -------
         batch
         """
-        crop_size = np.asarray(crop_size).reshape(-1)
-        crop_halfsize = np.rint(crop_size / 2)
+        size = np.asarray(size).reshape(-1)
+        crop_halfsize = np.rint(size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
-        if any(np.any(shape < crop_size) for shape in img_shapes):
+        if any(np.any(shape < size) for shape in img_shapes):
             raise ValueError("Crop size must be smaller than size of inner 3D images")
 
         cropped_images = []
         for i in range(len(self)):
             image = self.get(i, 'images')
-            cropped_images.append(make_central_crop(image, crop_size))
+            cropped_images.append(make_central_crop(image, size))
 
-        self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
+        self._bounds = np.cumsum([0] + [size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
         self.origin = self.origin + self.spacing * crop_halfsize
         return self
