@@ -940,12 +940,12 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def central_crop(self, crop_size, crop_mask=False, **kwargs):
-        """ Make crop of crop_size from center of images.
+    def central_crop(self, size, crop_mask=False, **kwargs):
+        """ Make crop of given size from center of images or masks.
 
         Parameters
         ----------
-        crop_size : tuple, list or ndarray of int
+        size : tuple, list or ndarray of int
             (z,y,x)-shape of central crop along three axes(z,y,x order is used).
         crop_mask : bool
             if True, crop the mask in the same way.
@@ -954,11 +954,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
         -------
         batch
         """
-        crop_size = np.asarray(crop_size).reshape(-1)
-        crop_halfsize = np.rint(crop_size / 2)
+        size = np.asarray(size).reshape(-1)
+        crop_halfsize = np.rint(size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape)
                       for i in range(len(self))]
-        if any(np.any(shape < crop_size) for shape in img_shapes):
+        if any(np.any(shape < size) for shape in img_shapes):
             raise ValueError(
                 "Crop size must be smaller than size of inner 3D images")
 
@@ -966,13 +966,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         cropped_masks = []
         for i in range(len(self)):
             image = self.get(i, 'images')
-            cropped_images.append(make_central_crop(image, crop_size))
+            cropped_images.append(make_central_crop(image, size))
 
             if crop_mask and self.masks is not None:
                 mask = self.get(i, 'masks')
-                cropped_masks.append(make_central_crop(mask, crop_size))
+                cropped_masks.append(make_central_crop(mask, size))
 
-        self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
+        self._bounds = np.cumsum([0] + [size[0]] * len(self))
         self.images = np.concatenate(cropped_images, axis=0)
         if crop_mask and self.masks is not None:
             self.masks = np.concatenate(cropped_masks, axis=0)
