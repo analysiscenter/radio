@@ -1288,12 +1288,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     @action
-    def central_crop(self, size, **kwargs):
+    def central_crop(self, size, inplace=True, **kwargs):
         """ Make crop of given size from center of images.
 
         Parameters
         ----------
         size : tuple, list or ndarray of int (z,y,x)-shape of crop.
+        inplace : bool
+            whether to perform cropping inplace or create new batch.
 
         Returns
         -------
@@ -1310,10 +1312,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             image = self.get(i, 'images')
             cropped_images.append(make_central_crop(image, size))
 
-        self._bounds = np.cumsum([0] + [size[0]] * len(self))
-        self.images = np.concatenate(cropped_images, axis=0)
-        self.origin = self.origin + self.spacing * crop_halfsize
-        return self
+        if inplace:
+            batch = self
+        else:
+            batch = type(self)(self.index)
+        batch._bounds = np.cumsum([0] + [size[0]] * len(self))
+        batch.images = np.concatenate(cropped_images, axis=0)
+        batch.origin = batch.origin + batch.spacing * crop_halfsize
+        return batch
 
     def get_patches(self, patch_shape, stride, padding='edge', data_attr='images'):
         """ Extract patches of patch_shape with specified stride.
