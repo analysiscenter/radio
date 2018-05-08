@@ -27,5 +27,4 @@ def rotate_3D(image, angle, axes=(1, 2)):
     Zero-padding automatically added after rotation.
     """
     rotated_image = scipy.ndimage.interpolation.rotate(image, angle, axes, reshape=False)
-    image[...] = rotated_image[...]
-    return None
+    return rotated_image
