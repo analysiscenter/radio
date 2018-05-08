@@ -1574,7 +1574,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
     def additive_gaussian_noise(self, index, loc=0.0, scale=0.1, component='images', **kwargs):
         out_data = self.get(index, component)
-        out_data = out_dat + np.random.normal(loc, scale, size=out_data.shape)
+        out_data = out_data + np.random.normal(loc, scale, size=out_data.shape)
         return {component: out_data}
 
     @action
