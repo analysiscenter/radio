@@ -868,8 +868,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._reraise_worker_exceptions(list_of_dicts)
         if new_batch:
             batch = type(self)(self.index)
-            batch = batch._init_data(self._bounds, **{component: getattr(self, component)
-                                                      for component in self.components})
+            batch._init_data(self._bounds, **{component: getattr(self, component)
+                                              for component in self.components})
         else:
             batch = self
         # if images is in dict, update bounds
