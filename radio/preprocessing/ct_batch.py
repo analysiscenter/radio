@@ -852,7 +852,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 self._init_data(**params)
         return res
 
-    def _post_components(self, list_of_dicts, **kwargs):
+    def _post_components(self, list_of_dicts, new_batch=True, **kwargs):
         """ Gather outputs of different workers, update many components.
 
         Parameters
@@ -866,7 +866,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             changes self's components
         """
         self._reraise_worker_exceptions(list_of_dicts)
-
+        if new_batch:
+            batch = type(self)(self.index)
+        else:
+            batch = self
         # if images is in dict, update bounds
         if 'images' in list_of_dicts[0]:
             list_of_images = [worker_res['images'] for worker_res in list_of_dicts]
@@ -874,7 +877,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             new_data = np.concatenate(list_of_images, axis=0)
             params = dict(images=new_data, bounds=new_bounds,
                           origin=self.origin, spacing=self.spacing)
-            self._init_data(**params)
+            batch._init_data(**params)
 
         # loop over other components that we need to update
         for component in list_of_dicts[0]:
@@ -884,9 +887,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 # concatenate comps-outputs for different scans and update self
                 list_of_component = [worker_res[component] for worker_res in list_of_dicts]
                 new_comp = np.concatenate(list_of_component, axis=0)
-                setattr(self, component, new_comp)
+                setattr(batch, component, new_comp)
 
-        return self
+        return batch
 
     def _init_images(self, **kwargs):
         """ Fetch args for loading `images` using inbatch_parallel.
