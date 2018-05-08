@@ -878,7 +878,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_images]))
             new_data = np.concatenate(list_of_images, axis=0)
             params = dict(images=new_data, bounds=new_bounds,
-                          origin=self.origin, spacing=self.spacing)
+                          origin=batch.origin, spacing=batch.spacing)
             batch._init_data(**params)
 
         # loop over other components that we need to update
