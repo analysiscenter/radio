@@ -940,7 +940,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def central_crop(self, size, crop_mask=False, **kwargs):
+    def central_crop(self, size, crop_mask=False, inplace=True, **kwargs):
         """ Make crop of given size from center of images or masks.
 
         Parameters
@@ -949,6 +949,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             (z,y,x)-shape of central crop along three axes(z,y,x order is used).
         crop_mask : bool
             if True, crop the mask in the same way.
+        inplace : bool
+            whether to perform cropping inplace or create new batch.
 
         Returns
         -------
@@ -972,18 +974,23 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 mask = self.get(i, 'masks')
                 cropped_masks.append(make_central_crop(mask, size))
 
-        self._bounds = np.cumsum([0] + [size[0]] * len(self))
-        self.images = np.concatenate(cropped_images, axis=0)
+        if inplace:
+            batch = self
+        else:
+            batch = type(self)(self.index)
+
+        batch._bounds = np.cumsum([0] + [size[0]] * len(self))
+        batch.images = np.concatenate(cropped_images, axis=0)
         if crop_mask and self.masks is not None:
-            self.masks = np.concatenate(cropped_masks, axis=0)
+            batch.masks = np.concatenate(cropped_masks, axis=0)
 
         # recalculate origin, refresh nodules_info, leave only relevant nodules
-        self.origin = self.origin + self.spacing * crop_halfsize
-        if self.nodules is not None:
-            self._refresh_nodules_info()
-            self._filter_nodules_info()
-
-        return self
+        batch.origin = self.origin + self.spacing * crop_halfsize
+        batch.nodules = self.nodules
+        if batch.nodules is not None:
+            batch._refresh_nodules_info()
+            batch._filter_nodules_info()
+        return batch
 
     def flip(self):  # pylint: disable=arguments-differ
         """ Invert the order of slices for each patient
