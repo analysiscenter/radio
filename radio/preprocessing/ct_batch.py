@@ -1148,7 +1148,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return resize_pil(**args_resize)
 
     @action
-    @inbatch_parallel(init='indices', post='_post_default', update=False, target='threads')
+    @inbatch_parallel(init='indices', post='_post_components', new_batch=True, target='threads')
     def rotate(self, index, angle, components='images', axes=(1, 2), random=True, **kwargs):
         """ Rotate 3D images in batch on specific angle in plane.
 
@@ -1187,9 +1187,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         _components = np.asarray(components).reshape(-1)
         _angle = angle * (2 * np.random.rand() - 1) if random else angle
+        out_dict = {}
         for comp in _components:
             data = self.get(index, comp)
-            rotate_3D(data, _angle, axes)
+            out_dict[comp] = rotate_3D(data, _angle, axes)
+        return out_dict
 
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
     def _make_xip(self, image, depth, stride=2, mode='max',
