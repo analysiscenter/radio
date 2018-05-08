@@ -10,9 +10,10 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 
-sys.path.append('./../lung_cancer')
-from radio.preprocessing import CTImagesMaskedBatch as CTIMB
-from radio.dataset import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, Research, Option, KV, L
+sys.path.append('../../')
+from radio import CTImagesMaskedBatch as CTIMB
+from radio.dataset import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, L
+from radio.dataset.research import Research, Option, KV
 from radio.dataset.models.tf import UNet, VNet, GCN
 from radio.dataset.models.tf.losses import dice_batch, dice, dice2, dice_batch, dice_batch2
 
@@ -21,7 +22,7 @@ PATH_NPCMR_SCANS = '/notebooks/ct/npcmr_blosc/*'
 PATH_NPCMR_ANNOTS = '/notebooks/ct/annotations/merged_nodules.pkl'
 index = FilesIndex(path=PATH_NPCMR_SCANS, dirs=True, no_ext=False)
 dataset = Dataset(index=index, batch_class=CTIMB)
-dataset.cv_split(0.9, shuffle=120)
+dataset.split(0.9, shuffle=120)
 dataset.indices.shape
 
 # custom train method
@@ -80,7 +81,7 @@ root_pipeline = (
     Pipeline()
       .load(fmt='blosc', components=['images', 'spacing', 'origin'])
       .init_variable('filtered')
-      .set_variable('filtered', L(filter_nodules, confidenced=confidenced))
+      .update_variable('filtered', L(filter_nodules, confidenced=confidenced))
       .fetch_nodules_info(nodules=V('filtered'))
       .create_mask()
       .run(batch_size=4, shuffle=True, n_epochs=None, prefetch=3, lazy=True)
