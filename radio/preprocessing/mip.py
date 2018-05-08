@@ -172,3 +172,23 @@ def make_xip_numba(image, depth, stride=1, mode='max', projection='axial', paddi
 
     result = numba_xip(image_tr, step=stride, depth=depth, mode=MODES[mode])
     return result.transpose(REVERSE_PROJECTIONS[projection])
+
+@jit(nogil=True, nopython=True)
+def unfold_xip(xip, shape, depth, stride, start, channels, squeezed=True):
+    """ Unfold xip into a 3d-image.
+    """
+    # tile if needed
+    if squeezed:
+        xip_tiled = np.zeros(shape=xip.shape[:3] + (channels, ), dtype=np.float64)
+        for i in range(channels):
+            xip_tiled[..., i] = xip[..., 0]
+        xip = xip_tiled
+
+    image = np.zeros(shape=shape, dtype=np.float64)
+    ctr = 0
+    for i in range(xip.shape[0]):
+        for j in range(channels):
+            image[start + ctr * stride:start + ctr * stride + depth, ...] += xip[i, ..., j]
+            ctr += 1
+
+    return image
