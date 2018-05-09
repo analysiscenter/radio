@@ -18,7 +18,7 @@ from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Datase
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
-from .mip import make_xip_numba, numba_xip
+from .mip import make_xip_numba, numba_xip, unfold_xip
 from .flip import flip_patient_numba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
@@ -1239,6 +1239,16 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return np.concatenate(items, axis=0)
 
+    def unxip_predictions(self, predictions, component, depth, stride, start=0, channels=None, squezeed=True):
+        num_item_slices = len(xip) / len(self)
+        component_data = np.zeros_like(getattr(self, 'images'))
+        for i in range(len(self)):
+            shape = self.get('images', i).shape
+            slc = self.get_pos(None, 'images', i)
+            component_data[slc] = unfold_xip(predictions[i * num_item_slices:(i + 1) * num_item_slices, ...], shape,
+                                             depth, stride, start, channels, squeezed)
+
+        setattr(self, component, component_data)
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
     def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use
