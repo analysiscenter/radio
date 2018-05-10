@@ -1241,7 +1241,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return np.concatenate(items, axis=0)
 
     def unxip_predictions(self, predictions, component, depth, stride, start=0, threshold=0.95, channels=None,
-                          squeezed=True, adjust_nodule_size=True):
+                          squeeze=True, adjust_nodule_size=True):
         """ Unfold xip-predictions into full-sized masks.
         """
         # binarize predictions if needed
@@ -1265,7 +1265,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 props = regionprops(labels)
                 component_data[slc] = 0
                 for i in range(num_nodules):
-                    lb = i + 1
                     bbox = np.reshape(props[i].bbox, (2, -1))
                     size = bbox[1, :] - bbox[0, :]
 
