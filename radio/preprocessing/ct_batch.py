@@ -11,7 +11,7 @@ import dill as pickle
 import numpy as np
 import aiofiles
 import blosc
-import dicom
+import pydicom as dicom
 import SimpleITK as sitk
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
@@ -1239,18 +1239,18 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return np.concatenate(items, axis=0)
 
-def unxip_predictions(self, predictions, component, depth, stride, start=0, channels=None, squeezed=True):
-    """ Unfold xip-predictions into full-sized masks.
-    """
-    num_item_slices = int(len(predictions) / len(self))
-    component_data = np.zeros_like(getattr(self, 'images'))
-    for i in range(len(self)):
-        shape = self.get(i, 'images').shape
-        slc = self.get_pos(None, 'images', i)
-        component_data[slc] = unfold_xip(predictions[i * num_item_slices:(i + 1) * num_item_slices, ...], shape,
-                                         depth, stride, start, channels, squeezed)
+    def unxip_predictions(self, predictions, component, depth, stride, start=0, channels=None, squeezed=True):
+        """ Unfold xip-predictions into full-sized masks.
+        """
+        num_item_slices = int(len(predictions) / len(self))
+        component_data = np.zeros_like(getattr(self, 'images'))
+        for i in range(len(self)):
+            shape = self.get(i, 'images').shape
+            slc = self.get_pos(None, 'images', i)
+            component_data[slc] = unfold_xip(predictions[i * num_item_slices:(i + 1) * num_item_slices, ...], shape,
+                                             depth, stride, start, channels, squeezed)
 
-    setattr(self, component, component_data)
+        setattr(self, component, component_data)
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
     def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use
