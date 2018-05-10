@@ -13,6 +13,7 @@ import aiofiles
 import blosc
 import pydicom as dicom
 import SimpleITK as sitk
+from skimage.measure import label, regionprops
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
 
@@ -1239,9 +1240,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return np.concatenate(items, axis=0)
 
-    def unxip_predictions(self, predictions, component, depth, stride, start=0, channels=None, squeezed=True):
+    def unxip_predictions(self, predictions, component, depth, stride, start=0, threshold=0.95, channels=None,
+                          squeezed=True, adjust_nodule_size=True):
         """ Unfold xip-predictions into full-sized masks.
         """
+        # binarize predictions if needed
+        if threshold is not None:
+            predictions = np.where(predictions < threshold, 0, 1)
+
+        # unfold xip
         num_item_slices = int(len(predictions) / len(self))
         component_data = np.zeros_like(getattr(self, 'images'))
         for i in range(len(self)):
@@ -1250,7 +1257,29 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             component_data[slc] = unfold_xip(predictions[i * num_item_slices:(i + 1) * num_item_slices, ...], shape,
                                              depth, stride, start, channels, squeezed)
 
+        # perform adjustment of nodule-sizes if needed
+        if adjust_nodule_size:
+            for ix in self.indices:
+                slc = self.get_pos(None, 'images', i)
+                labels, num_nodules = measure(np.where(component_data[slc] < 1, 0, 1), return_num=True)
+                props = regionprops(labels)
+                component_data[slc] = 0
+                for i in range(num_nodules):
+                    lb = i + 1
+                    bbox = np.reshape(props[i].bbox, (2, -1))
+                    size = bbox[1, :] - bbox[0, :]
+
+                    # adjust z-diameter and bounding box of a nodule
+                    size[0] = (size[1] + size[2]) / 2
+                    bbox[:, 0] = int(props[i].centroid[0] - size[0] / 2), int(props[i].centroid[0] + size[0] / 2)
+                    bbox = bbox.astype(np.int)
+
+                    # put adjusted nodule into the component
+                    nodule_slice = (slice(bbox[0, i]:bbox[1, i]) for i in range(3))
+                    component_data[slc][nodule_slice] = 1
+
         setattr(self, component, component_data)
+
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
     def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use
