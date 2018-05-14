@@ -1255,7 +1255,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             shape = self.get(i, 'images').shape
             slc = self.get_pos(None, 'images', i)
             component_data[slc] = unfold_xip(predictions[i * num_item_slices:(i + 1) * num_item_slices, ...], shape,
-                                             depth, stride, start, channels, squeezed)
+                                             depth, stride, start, channels, squeeze)
 
         # perform adjustment of nodule-sizes if needed
         if adjust_nodule_size:
