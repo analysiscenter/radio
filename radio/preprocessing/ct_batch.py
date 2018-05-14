@@ -1241,7 +1241,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return np.concatenate(items, axis=0)
 
     def unxip_predictions(self, predictions, component, depth, stride, start=0, threshold=0.95, channels=None,
-                          squeeze=True, adjust_nodule_size=True):
+                          squeeze=True, adjust_nodule_size=True, **kwargs):
         """ Unfold xip-predictions into full-sized masks.
         """
         # binarize predictions if needed
@@ -1261,7 +1261,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if adjust_nodule_size:
             for ix in self.indices:
                 slc = self.get_pos(None, 'images', i)
-                labels, num_nodules = measure(np.where(component_data[slc] < 1, 0, 1), return_num=True)
+                labels, num_nodules = label(np.where(component_data[slc] < 1, 0, 1), return_num=True)
                 props = regionprops(labels)
                 component_data[slc] = 0
                 for i in range(num_nodules):
@@ -1274,7 +1274,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     bbox = bbox.astype(np.int)
 
                     # put adjusted nodule into the component
-                    nodule_slice = (slice(bbox[0, i]:bbox[1, i]) for i in range(3))
+                    nodule_slice = [slice(bbox[0, i], bbox[1, i]) for i in range(3)]
                     component_data[slc][nodule_slice] = 1
 
         setattr(self, component, component_data)
