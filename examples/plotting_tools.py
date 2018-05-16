@@ -42,3 +42,29 @@ def blend_mask_to_scan(scan, mask, alpha=0.5):
     scan_masked += mask
     scan_masked = trim_cast_uint8(scan_masked, (0, 255))
     return Image.blend(Image.fromarray(scan, 'RGB'), Image.fromarray(scan_masked, 'RGB'), alpha)
+
+def apply_masks(scan_3d, masks_3d, height, supress=(False, False, False), alpha=0.5,
+                shape=(384, 384)):
+    """
+    scan, masks: 3d-arrays casted to uint8
+    height: float, 0 <= height <= 1
+    """
+    depth = scan_3d.shape[0]
+    n_slice = int(depth * height)
+
+    # pick slices
+    masks = [m[n_slice] if m is not None else None for m in masks_3d]
+    scan = scan_3d[n_slice]
+
+    sup = []
+    for s, m in zip(supress, masks):
+        sup.append(s or (m is None))
+
+    combined = combine_in_rgb(masks, sup)
+
+    scan_rgb = np.array(Image.fromarray(scan, 'L').convert('RGB'))
+    img = blend_mask_to_scan(scan_rgb, combined, alpha)
+    if shape is not None:
+        return img.resize(shape, Image.BILINEAR)
+    else:
+        return img
