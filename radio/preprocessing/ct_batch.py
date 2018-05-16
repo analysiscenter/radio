@@ -406,12 +406,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def _load_blosc(self, **kwargs):
         """ Read scans from blosc and put them into batch components
+
         Parameters
         ----------
         **kwargs
             components : tuple
                 tuple of strings with names of components of data
                 that should be loaded into self
+
         Notes
         -----
         NO conversion to HU is done for blosc

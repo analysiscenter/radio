@@ -70,6 +70,7 @@ def get_nodules_numba(data, positions, size):
 @njit
 def mix_images_numba(images, masks, bounds, permutation, p, mode, mix_masks):
     """ Mix images and corresponding masks.
+
     Parameters
     ----------
     images : np.array
@@ -107,12 +108,10 @@ def mix_images_numba(images, masks, bounds, permutation, p, mode, mix_masks):
     if mode == 0:
         images = np.maximum(images * p, images_to_add * (1 - p)) / np.maximum(p, 1-p)
         if mix_masks:
-            #masks = np.maximum(masks * p, masks_to_add * (1 - p)) / np.maximum(p, 1-p)
             masks = np.maximum(masks, masks_to_add)
     elif mode == 1:
         images = images * p + images_to_add * (1 - p)
         if mix_masks:
-            #masks = masks * p + masks_to_add * (1 - p)
             masks = np.maximum(masks, masks_to_add)
     return images, masks
 
@@ -483,7 +482,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Parameters
         ----------
-        model : 'rectangle' or 'ellipse'
+        mode : 'rectangle' or 'ellipse'
             form of the nodule in mask
 
         Notes

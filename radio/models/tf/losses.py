@@ -5,6 +5,7 @@ import tensorflow as tf
 
 def reg_l2_loss(labels, predictions, lambda_coords=0.75):
     """ L2 loss for prediction of cancer tumor's centers, sizes joined with binary classification task.
+
     Parameters
     ----------
     labels : tf.Tensor
@@ -13,11 +14,13 @@ def reg_l2_loss(labels, predictions, lambda_coords=0.75):
     predictions : tf.Tensor
         tensor containing predicted values for sizes of nodules, their centers
         and probability of cancer in given crop.
+
     Returns
     -------
     tf.Tensor
         l2 loss for regression of cancer tumor center's coordinates,
         sizes joined with binary classification task.
+
     Notes
     -----
     labels and predictions tensors must have [None, 7] shapes;
@@ -41,6 +44,7 @@ def reg_l2_loss(labels, predictions, lambda_coords=0.75):
 
 def iou_3d(labels, predictions, epsilon=10e-7):
     """ Compute intersection over union in 3D case for input tensors.
+
     Parameters
     ----------
     labels : tf.Tensor
@@ -49,6 +53,7 @@ def iou_3d(labels, predictions, epsilon=10e-7):
         tensor containing predicted values for sizes of nodules and their centers.
     epsilon : float
         small real value used for avoiding division by zero error.
+
     Returns
     -------
     tf.Tensor
@@ -76,6 +81,7 @@ def iou_3d(labels, predictions, epsilon=10e-7):
 
 def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
     """ Tversky loss function.
+
     Parameters
     ----------
     labels : tf.Tensor
@@ -88,6 +94,7 @@ def tversky_loss(labels, predictions, alpha=0.3, beta=0.7, smooth=1e-10):
         real value, weight of '1' class.
     smooth : float
         small real value used for avoiding division by zero error.
+
     Returns
     -------
     tf.Tensor
