@@ -8,6 +8,7 @@ import pandas as pd
 import dicom
 import tqdm
 from multiprocessing.dummy import Pool as ThreadPool
+import pickle
 
 def generate_index(size=20):
     """ Generate random string index of givne size.
@@ -113,6 +114,43 @@ def get_dicom_info(paths, index_col=None, progress=True):
         }
         meta_info.append(info_dict)
     return pd.DataFrame(meta_info) if index_col is None else pd.DataFrame(meta_info).set_index(index_col)
+
+def get_blosc_info(paths, index_col=None, progress=True):
+    """ Accumulates scans meta information from dicom dataset in pandas DataFrame.
+
+    Parameters
+    ----------
+    paths : list, tuple or ndarray of strings
+        paths to directories with dicom files.
+    index_col : str or None
+        name of column that will be used as index of output DataFrame.
+
+    Returns
+    -------
+    DataFrame
+        pandas DataFrame with scans' meta information.
+    """
+    meta_info = []
+    progress = tqdm.tqdm if progress else lambda x: x
+    for path in progress(paths):
+        results = []
+        for component in ['spacing', 'origin']:
+            with open(os.path.join(path, component, 'data.pkl'), 'rb') as f:
+                res.append(pickle.load(f))
+        spacing, origin = results
+        info_dict = {
+            'SpacingZ': spacing[0],
+            'SpacingY': spacing[1],
+            'SpacingX': spacing[2],
+            'OriginZ': origin[0],
+            'OriginY': origin[1],
+            'OriginX': origin[2],
+            'AccessionNumber': path.split('/')[-1],
+            'ScanPath': path,
+            'ScanID': os.path.basename(path)
+        }
+        meta_info.append(info_dict)
+    return pd.DataFrame(meta_info) if index_col is None else pd.DataFrame(meta_info).set_index(index_col)    
 
 
 def filter_dicom_info_by_best_spacing(info_df):
@@ -295,7 +333,7 @@ def read_annotators_info(path, annotator_prefix=None):
     return annotators_info
 
 
-def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False):
+def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False, fmt='dicom'):
     """ Build index and mapping to paths for given dicom dataset.
 
     Parameters
@@ -318,19 +356,22 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
     if (path is None and paths is None) or (path is not None and paths is not None):
         raise ValueError("Only one of 'path' or 'paths' arguments must be provided")
 
-    dataset_info = get_dicom_info(glob.glob(path) if path is not None else paths)
-    if filter_by_min_spacing:
-        output_indices = (
-            dataset_info
-            .groupby('AccessionNumber')
-            .agg({'SpacingZ': 'idxmin'})
-        )
-        index_df = dataset_info.loc[output_indices.loc[:, 'SpacingZ'], :]
-    else:
-        index_df = dataset_info
+    if fmt == 'dicom':   
+        dataset_info = get_dicom_info(glob.glob(path) if path is not None else paths)
+        if filter_by_min_spacing:
+            output_indices = (
+                dataset_info
+                .groupby('AccessionNumber')
+                .agg({'SpacingZ': 'idxmin'})
+            )
+            index_df = dataset_info.loc[output_indices.loc[:, 'SpacingZ'], :]
+        else:
+            index_df = dataset_info
+    if fmt == 'blosc':
+        index_df = get_blosc_info(glob.glob(path) if path is not None else paths)
     return index_df if index_col is None else index_df.set_index(index_col)
 
-def transform_annotation(path_to_annotation, path_to_data):
+def transform_annotation(path_to_annotation, path_to_data, fmt='dicom'):
     """ Transform annotation file to LUNA format with coordinates and diamters in mm
 
     Parameters
@@ -340,10 +381,12 @@ def transform_annotation(path_to_annotation, path_to_data):
     path_to_data : str
         mask for folders with dicom files
     """
-    dataset_info = filter_dicom_info_by_best_spacing(read_dataset_info(path_to_data))
     nodules = read_nodules(path_to_annotation)
+    paths = glob.glob(path_to_data)
+
+    dataset_info = read_dataset_info(path_to_data, filter_by_min_spacing=True, fmt=fmt)
     spacing_info = dataset_info[['AccessionNumber', 'SpacingX', 'SpacingY', 'SpacingZ',
-                                 'OriginX, OriginY, OriginZ']].set_index('AccessionNumber')
+                                 'OriginX', 'OriginY', 'OriginZ']].set_index('AccessionNumber')
     nodules = nodules.join(spacing_info, on='AccessionNumber', how='left')
 
     for name in ['X', 'Y', 'Z']:
