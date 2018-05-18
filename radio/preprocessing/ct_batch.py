@@ -1215,9 +1215,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         mode = [m if isinstance(m, int) else _modes[m] for m in mode]
         channels = 1 if channels is None else channels
 
-        # loop over batch-items and modes
-        items = []
-        for ix in self.indices:
+        # set up init, post, worker
+        _init = self.indices
+        _post = lambda outputs, **kwargs: np.concatenate(outputs, axis=0)
+
+        def _worker(self, ix, component, mode, depth, stride, start, channels, squeeze, **kwargs):
             image = self.get(ix, component)
             xips = []
             for m in mode:
@@ -1235,10 +1237,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     xip = np.max(xip, axis=-1, keepdims=True) if squeeze else xip
                 xips.append(xip)
 
-            item = np.concatenate(xips, axis=-1)
-            items.append(item)
+            return np.concatenate(xips, axis=-1)
 
-        return np.concatenate(items, axis=0)
+        # decorate the worker and compute the result
+        wrapped = inbatch_parallel(_init, _post, 't')(_worker)
+        return wrapped(self, component=component, mode=mode, depth=depth, stride=stride,
+                       start=start, channels=channels, squeeze=squeeze)
 
     def unxip_predictions(self, predictions, component, depth, stride, start=0, threshold=0.95, channels=None,
                           squeeze=True, adjust_nodule_size=True, **kwargs):
