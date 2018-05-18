@@ -20,7 +20,7 @@ class CTImagesAugmentedBatch(CTImagesMaskedBatch):
         return self
 
     @action
-    def cutout(self, positions, sizes, fill_with=0):
+    def cutout(self, positions, sizes, fill_with=0, component='images'):
         """ Fill a box from each scan with some density-value.
 
         Parameters:
@@ -36,7 +36,7 @@ class CTImagesAugmentedBatch(CTImagesMaskedBatch):
         """
         for i in range(len(self)):
             size, position = sizes[i].astype(np.int64), positions[i].astype(np.int64)
-            item = self.get(i, 'images')
+            item = self.get(i, component)
 
             # parse filling scheme
             fill_with = getattr(np, fill_with)(item) if isinstance(fill_with, str) else fill_with
