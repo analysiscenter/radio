@@ -6,7 +6,8 @@ import glob
 import numpy as np
 import pandas as pd
 import dicom
-
+import tqdm
+from multiprocessing.dummy import Pool as ThreadPool
 
 def generate_index(size=20):
     """ Generate random string index of givne size.
@@ -54,8 +55,26 @@ def normalize_nodule_type(nodules):
 
     return nodules.assign(NoduleType=nodule_type)
 
+def get_origin(path):
+    """ Get origin for dicom from path """
+    def read_dicom(x):
+        return dicom.read_file(os.path.join(path, x))
+    pool = ThreadPool()
+    results = pool.map(read_dicom, os.listdir(path))
+    pool.close()
+    pool.join()
+    list_of_dicoms = list(results)
 
-def get_dicom_info(paths, index_col=None):
+    list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
+
+    dicom_slice = list_of_dicoms[0]
+    origin = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
+                         float(dicom_slice.ImagePositionPatient[0]),
+                         float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
+    return origin
+
+
+def get_dicom_info(paths, index_col=None, progress=True):
     """ Accumulates scans meta information from dicom dataset in pandas DataFrame.
 
     Parameters
@@ -71,9 +90,10 @@ def get_dicom_info(paths, index_col=None):
         pandas DataFrame with scans' meta information.
     """
     meta_info = []
-    for path in paths:
+    progress = tqdm.tqdm if progress else lambda x: x
+    for path in progress(paths):
         first_slice = dicom.read_file(os.path.join(path, os.listdir(path)[0]))
-
+        origins = get_origin(path)
         info_dict = {
             'SpacingZ': float(first_slice.SliceThickness),
             'SpacingY': float(first_slice.PixelSpacing[0]),
@@ -86,7 +106,10 @@ def get_dicom_info(paths, index_col=None):
             'NumSlices': len(os.listdir(path)),
             'ScanID': os.path.basename(path),
             'Index': str(first_slice.AccessionNumber) + '_' + os.path.basename(path),
-            'ScanPath': path
+            'ScanPath': path,
+            'OriginZ': origins[0],
+            'OriginY': origins[1],
+            'OriginX': origins[2]
         }
         meta_info.append(info_dict)
     return pd.DataFrame(meta_info) if index_col is None else pd.DataFrame(meta_info).set_index(index_col)
@@ -306,3 +329,27 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
     else:
         index_df = dataset_info
     return index_df if index_col is None else index_df.set_index(index_col)
+
+def transform_annotation(path_to_annotation, path_to_data):
+    """ Transform annotation file to LUNA format with coordinates and diamters in mm
+
+    Parameters
+    ----------
+    path_to_annotation : str
+        path to txt file with annotation
+    path_to_data : str
+        mask for folders with dicom files
+    """
+    dataset_info = filter_dicom_info_by_best_spacing(read_dataset_info(path_to_data))
+    nodules = read_nodules(path_to_annotation)
+    spacing_info = dataset_info[['AccessionNumber', 'SpacingX', 'SpacingY', 'SpacingZ',
+                                 'OriginX, OriginY, OriginZ']].set_index('AccessionNumber')
+    nodules = nodules.join(spacing_info, on='AccessionNumber', how='left')
+
+    for name in ['X', 'Y', 'Z']:
+        nodules['coord'+name] = nodules['coord'+name] * nodules['Spacing'+name] + nodules['Origin'+name]
+        del nodules['Spacing'+name]
+        del nodules['Origin'+name]
+    nodules.columns = ['seriesid'] + list(nodules.columns[1:])
+    
+    return nodules
