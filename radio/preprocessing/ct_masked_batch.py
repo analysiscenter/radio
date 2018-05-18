@@ -1347,6 +1347,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def mix_images(self, p=0.8, mode='sum', mix_masks=True):
         """ Mix images and masks.
+
         Parameters
         ----------
         p : float in (0, 1)
