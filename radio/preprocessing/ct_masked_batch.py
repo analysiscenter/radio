@@ -18,7 +18,7 @@ except ImportError:
     tqdm_notebook = lambda x: x
 
 from .ct_batch import CTImagesBatch
-from .mask import make_mask_numba, create_mask_reg
+from .mask import make_rect_mask_numba, make_ellipse_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
 from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
@@ -56,7 +56,8 @@ def get_nodules_numba(data, positions, size):
     ndarray
         3d ndarray with nodules
     """
-    out_arr = np.zeros((np.int(positions.shape[0]), size[0], size[1], size[2]))
+    size = size.astype(np.int64)
+    out_arr = np.zeros((positions.shape[0], size[0], size[1], size[2]))
 
     n_positions = positions.shape[0]
     for i in range(n_positions):
@@ -65,6 +66,54 @@ def get_nodules_numba(data, positions, size):
                                    positions[i, 2]: positions[i, 2] + size[2]]
 
     return out_arr.reshape(n_positions * size[0], size[1], size[2])
+
+@njit
+def mix_images_numba(images, masks, bounds, permutation, p, mode, mix_masks):
+    """ Mix images and corresponding masks.
+
+    Parameters
+    ----------
+    images : np.array
+        images as skyscrapper
+    masks : np.array
+        masks as skyscrapper
+    bounds : np.array
+        upper bounds in skyscrappers
+    permutation : np.array
+        permutation of images to mix
+    p : float in (0, 1)
+        weight of the initial image
+    mode : int
+        if 0 images will be mixed by max value
+        if 1 images will be mixed as linear combination
+    mix_masks : bool
+        if False initial mask will be used
+
+    Returns
+    -------
+    images, masks : np.arrays
+    """
+    bounds = bounds.astype(np.int64)
+    bounds = np.concatenate((np.zeros(1), bounds))
+
+    images_to_add = np.zeros_like(images)
+    masks_to_add = np.zeros_like(images)
+
+    for i in range(len(bounds)-1):
+        old_slice = slice(bounds[i], bounds[i+1])
+        new_slice = slice(bounds[permutation[i]], bounds[permutation[i]+1])
+        images_to_add[old_slice, :, :] = images[new_slice, :, :]
+        masks_to_add[old_slice, :, :] = masks[new_slice, :, :]
+
+    if mode == 0:
+        images = np.maximum(images * p, images_to_add * (1 - p)) / np.maximum(p, 1-p)
+        if mix_masks:
+            masks = np.maximum(masks, masks_to_add)
+    elif mode == 1:
+        images = images * p + images_to_add * (1 - p)
+        if mix_masks:
+            masks = np.maximum(masks, masks_to_add)
+    return images, masks
 
 
 class CTImagesMaskedBatch(CTImagesBatch):
@@ -428,8 +477,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return (start_pix + self.nodules.offset).astype(np.int)
 
     @action
-    def create_mask(self):
+    def create_mask(self, mode='rectangle'):
         """ Create `masks` component from `nodules` component.
+
+        Parameters
+        ----------
+        mode : 'rectangle' or 'ellipse'
+            form of the nodule in mask
 
         Notes
         -----
@@ -445,13 +499,37 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         center_pix = np.abs(self.nodules.nodule_center -
                             self.nodules.origin) / self.nodules.spacing
-        start_pix = (center_pix - np.rint(self.nodules.nodule_size /
-                                          self.nodules.spacing / 2))
-        start_pix = np.rint(start_pix).astype(np.int)
-        make_mask_numba(self.masks, self.nodules.offset,
-                        self.nodules.img_size + self.nodules.offset, start_pix,
-                        np.rint(self.nodules.nodule_size / self.nodules.spacing))
+        radius_pix = np.rint(self.nodules.nodule_size / self.nodules.spacing / 2)
 
+        center_pix = np.rint(center_pix).astype(np.int)
+        radius_pix = np.rint(radius_pix).astype(np.int)
+        if mode == 'rectangle':
+            start_pix = (center_pix - radius_pix)
+            start_pix = np.rint(start_pix).astype(np.int)
+            make_rect_mask_numba(self.masks, self.nodules.offset,
+                                 self.nodules.img_size + self.nodules.offset, start_pix,
+                                 np.rint(self.nodules.nodule_size / self.nodules.spacing))
+        elif mode == 'ellipse':
+            make_ellipse_mask_numba(self.masks, self.nodules.offset.astype(np.int32),
+                                    self.nodules.img_size + self.nodules.offset,
+                                    center_pix, radius_pix)
+
+        return self
+
+    @action
+    def truncate_mask(self, threshold=0.2, min_val=0, max_val=255):
+        """ Truncate mask by images.
+
+        Parameters
+        ----------
+        threshold : float
+            binarizing thresholg for initial image
+        min_val : float
+            minimum value of image
+        max_val : float
+            maximum value of image
+        """
+        self.masks = np.array(self.masks * self.images > threshold * (max_val - min_val), dtype=np.int32)
         return self
 
     def fetch_mask(self, shape):
@@ -495,8 +573,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nod_size_scaled = (np.rint(scale_factor * self.nodules.nodule_size /
                                    self.nodules.spacing)).astype(np.int)
         # put nodules into mask
-        make_mask_numba(mask, offset_scaled, img_size_scaled + offset_scaled,
-                        start_scaled, nod_size_scaled)
+        make_rect_mask_numba(mask, offset_scaled, img_size_scaled + offset_scaled,
+                             start_scaled, nod_size_scaled)
         # return ndarray-mask
         return mask
 
@@ -1265,3 +1343,29 @@ class CTImagesMaskedBatch(CTImagesBatch):
             raise ValueError("Argument 'mode' must have one of values: "
                              + "'segmentation', 'classification' or 'regression'")
         return dict(x=inputs, y=labels) if is_training else dict(x=inputs)
+
+    @action
+    def mix_images(self, p=0.8, mode='sum', mix_masks=True):
+        """ Mix images and masks.
+
+        Parameters
+        ----------
+        p : float in (0, 1)
+            weight of the initial image
+        """
+
+        if mode == 'max':
+            mode = 0
+        elif mode == 'sum':
+            mode = 1
+        elif mode == 'none':
+            return self
+        else:
+            raise ValueError('mode must be sum, max or none but {} was given'.format(mode))
+
+        permutation = np.random.permutation(len(self.upper_bounds))
+        new_images, new_masks = mix_images_numba(self.images, self.masks,
+                                                 self.upper_bounds, permutation, p, mode, mix_masks)
+        setattr(self, 'images', new_images)
+        setattr(self, 'masks', new_masks)
+        return self
