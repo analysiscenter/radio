@@ -360,6 +360,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             self._load_blosc(components=components)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
+        elif fmt == 'nii':
+            self._load_nii()
         else:
             raise TypeError("Incorrect type of batch source")
         return self
@@ -421,6 +423,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         byted = self._read_blosc(**kwargs)
         self._debyte_blosc(byted=byted, **kwargs)
+
+    @inbatch_parallel(init='indices', post='_post_default', target='for')
+    def _load_nii(self, patient_id, **kwargs):
+        """ Read .nii file 
+        """
+        n_img = nib.load(self.index.get_fullpath(patient_id))
+        return n_img.get_data()
 
     def _prealloc_skyscraper_components(self, components, fmt='blosc'):
         """ Read shapes of skyscraper-components dumped with blosc,
