@@ -1244,30 +1244,34 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return wrapped(self, component=component, mode=mode, depth=depth, stride=stride,
                        start=start, channels=channels, squeeze=squeeze)
 
+
     def unxip_predictions(self, predictions, component, depth, stride, start=0, threshold=0.95, channels=None,
                           squeeze=True, adjust_nodule_size=True, **kwargs):
         """ Unfold xip-predictions into full-sized masks.
         """
+        channels = 1 if channels is None else channels
+
         # binarize predictions if needed
         if threshold is not None:
             predictions = np.where(predictions < threshold, 0, 1)
 
-        # unfold xip
-        num_item_slices = int(len(predictions) / len(self))
-        component_data = np.zeros_like(getattr(self, 'images'))
-        for i in range(len(self)):
-            shape = self.get(i, 'images').shape
-            slc = self.get_pos(None, 'images', i)
-            component_data[slc] = unfold_xip(predictions[i * num_item_slices:(i + 1) * num_item_slices, ...], shape,
-                                             depth, stride, start, channels, squeeze)
+        new_data = np.zeros_like(getattr(self, 'images'))
 
-        # perform adjustment of nodule-sizes if needed
-        if adjust_nodule_size:
-            for ix in self.indices:
-                slc = self.get_pos(None, 'images', i)
-                labels, num_nodules = label(np.where(component_data[slc] < 1, 0, 1), return_num=True)
+        # unfold xip
+        _init = range(len(self))
+        def _worker(self, ix, predictions, new_data, depth, stride, start, squeeze, channels, adjust=True, **kwargs):
+            num_item_slices = len(predictions) // len(self)
+            shape = self.get(ix, 'images').shape
+            slc = self.get_pos(None, 'images', ix)
+            new_data[slc] = unfold_xip(predictions[ix * num_item_slices:(ix + 1) * num_item_slices, ...], shape,
+                                       depth, stride, start, channels, squeeze)
+
+            # perform adjustment of nodule-sizes if needed
+            if adjust:
+                slc = self.get_pos(None, 'images', ix)
+                labels, num_nodules = label(np.where(new_data[slc] < 1, 0, 1), return_num=True)
                 props = regionprops(labels)
-                component_data[slc] = 0
+                new_data[slc] = 0
                 for i in range(num_nodules):
                     bbox = np.reshape(props[i].bbox, (2, -1))
                     size = bbox[1, :] - bbox[0, :]
@@ -1279,9 +1283,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
                     # put adjusted nodule into the component
                     nodule_slice = [slice(bbox[0, i], bbox[1, i]) for i in range(3)]
-                    component_data[slc][nodule_slice] = 1
+                    new_data[slc][nodule_slice] = 1
 
-        setattr(self, component, component_data)
+        # execute in parallel
+        wrapped = inbatch_parallel(_init, None, 't')(_worker)
+        wrapped(self, predictions=predictions, new_data=new_data, depth=depth, stride=stride,
+                start=start, squeeze=squeeze, channels=channels, adjust=adjust_nodule_size)
+
+        # set the component
+        setattr(self, component, new_data)
 
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)

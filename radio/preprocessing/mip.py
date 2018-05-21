@@ -178,10 +178,13 @@ def unfold_xip(xip, shape, depth, stride, start, channels, squeezed=True):
     """ Unfold xip into a 3d-image.
     """
     # tile if needed
-    if squeezed:
-        xip_tiled = np.zeros(shape=xip.shape[:3] + (channels, ), dtype=np.float64)
-        for i in range(channels):
+    channels = channels if squeezed else xip.shape[-1]
+    xip_tiled = np.zeros(shape=xip.shape[:3] + (channels, ), dtype=np.float64)
+    for i in range(channels):
+        if squeezed:
             xip_tiled[..., i] = xip[..., 0]
+        else:
+            xip_tiled[..., i] = xip[..., i]
 
     image = np.zeros(shape=shape, dtype=np.float64)
     ctr = 0
