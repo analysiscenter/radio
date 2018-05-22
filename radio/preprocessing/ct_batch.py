@@ -1261,10 +1261,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # unfold xip
         _init = range(len(self))
-        def _worker(self, ix, predictions, new_data, depth, stride, start, squeeze, channels, adjust=True,
+        def _worker(self, ix, predictions, new_data, depth, stride, start, squeeze, channels, adjust,
                     projection, **kwargs):
             num_item_slices = len(predictions) // len(self)
-            shape = self.get(ix, 'images').shape
+            shape = np.array(self.get(ix, 'images').shape)[PROJECTIONS[projection]]
+            shape = tuple(shape.astype(np.int32))
             slc = self.get_pos(None, 'images', ix)
             unfolded = unfold_xip(predictions[ix * num_item_slices:(ix + 1) * num_item_slices, ...],
                                   shape, depth, stride, start, channels, squeeze)

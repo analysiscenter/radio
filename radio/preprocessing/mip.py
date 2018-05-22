@@ -186,7 +186,7 @@ def unfold_xip(xip, shape, depth, stride, start, channels, squeezed=True):
         else:
             xip_tiled[..., i] = xip[..., i]
 
-    image = np.zeros(shape=shape, dtype=np.float64)
+    image = np.zeros(shape=shape[:], dtype=np.float64)
     ctr = 0
     for i in range(xip.shape[0]):
         for j in range(channels):
