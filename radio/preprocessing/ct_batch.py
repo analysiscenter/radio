@@ -19,7 +19,7 @@ from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Datase
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
-from .mip import make_xip_numba, numba_xip, unfold_xip
+from .mip import make_xip_numba, numba_xip, unfold_xip, PROJECTIONS, REVERSE_PROJECTIONS
 from .flip import flip_patient_numba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
@@ -1206,7 +1206,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         output_batch.spacing = self.rescale(output_batch.images_shape)
         return output_batch
 
-    def xip_component(self, component, mode, depth, stride, start=0, channels=None, squeeze=False):
+    def xip_component(self, component, mode, depth, stride, start=0, channels=None, squeeze=False,
+                      projection='axial'):
         """ Make channelled intensity projection from a component.
         """
         # parse arguments
@@ -1219,8 +1220,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         _init = self.indices
         _post = lambda outputs, **kwargs: np.concatenate(outputs, axis=0)
 
-        def _worker(self, ix, component, mode, depth, stride, start, channels, squeeze, **kwargs):
+        def _worker(self, ix, component, mode, depth, stride, start, channels, squeeze, projection, **kwargs):
             image = self.get(ix, component)
+            image = np.transpose(image, PROJECTIONS[projection])
             xips = []
             for m in mode:
                 xip = numba_xip(image, depth, m, stride, start)
@@ -1242,11 +1244,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # decorate the worker and compute the result
         wrapped = inbatch_parallel(_init, _post, 't')(_worker)
         return wrapped(self, component=component, mode=mode, depth=depth, stride=stride,
-                       start=start, channels=channels, squeeze=squeeze)
+                       start=start, channels=channels, squeeze=squeeze, projection=projection)
 
 
     def unxip_predictions(self, predictions, component, depth, stride, start=0, threshold=0.95, channels=None,
-                          squeeze=True, adjust_nodule_size=True, **kwargs):
+                          squeeze=True, adjust_nodule_size=True, projection='axial', **kwargs):
         """ Unfold xip-predictions into full-sized masks.
         """
         channels = 1 if channels is None else channels
@@ -1259,12 +1261,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # unfold xip
         _init = range(len(self))
-        def _worker(self, ix, predictions, new_data, depth, stride, start, squeeze, channels, adjust=True, **kwargs):
+        def _worker(self, ix, predictions, new_data, depth, stride, start, squeeze, channels, adjust=True,
+                    projection, **kwargs):
             num_item_slices = len(predictions) // len(self)
             shape = self.get(ix, 'images').shape
             slc = self.get_pos(None, 'images', ix)
-            new_data[slc] = unfold_xip(predictions[ix * num_item_slices:(ix + 1) * num_item_slices, ...], shape,
-                                       depth, stride, start, channels, squeeze)
+            unfolded = unfold_xip(predictions[ix * num_item_slices:(ix + 1) * num_item_slices, ...],
+                                  shape, depth, stride, start, channels, squeeze)
+            new_data[slc] = np.transpose(unfolded, REVERSE_PROJECTIONS[projection])
 
             # perform adjustment of nodule-sizes if needed
             if adjust:
@@ -1287,8 +1291,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # execute in parallel
         wrapped = inbatch_parallel(_init, None, 't')(_worker)
-        wrapped(self, predictions=predictions, new_data=new_data, depth=depth, stride=stride,
-                start=start, squeeze=squeeze, channels=channels, adjust=adjust_nodule_size)
+        wrapped(self, predictions=predictions, new_data=new_data, depth=depth, stride=stride, start=start,
+                squeeze=squeeze, channels=channels, adjust=adjust_nodule_size, projection=projection)
 
         # set the component
         setattr(self, component, new_data)
