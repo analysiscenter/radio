@@ -6,17 +6,15 @@
 """ Functions to compute doctors' confidences from annotation. """
 
 import os
-import multiprocessing as mp
+import multiprocess as mp
 from numba import njit
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from . import read_nodules, read_dataset_info, read_annotators_info
 
-N_DOCTORS = 15
 
-
-def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10,
+def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10, n_doctors=15,
                             factor=0.3, alpha=0.7, history=False, smooth=None):
     """ Conpute confidences for doctors
 
@@ -24,7 +22,7 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
     ----------
     nodules : pd.DataFrame
 
-    confidences : str or list of len N_DOCTORS
+    confidences : str or list of len n_doctors
         if 'random', initial confidences will be sampled
         if 'uniform', initial confidences is a uniform distribution
         if list, confidences of doctors
@@ -32,28 +30,52 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
         number of iterations of updating algorithm
     n_consiliums : int
         number of consiliums for each doctor
+    n_doctors : int
+        number of doctors
     factor : float
         ratio for mask creation
     alpha : float
         smoothing parameter of confidence update
     history : bool
         if False, the function returns final confidences, if True, all history of updating confidences
+    smooth : int or None
+         if int, final confidence is a smoothed confidence by last `smooth` iterations
 
     Returns
     -------
     new_confidences : pd.DataFrame
     """
+    # nodules = nodules[nodules.diameter_mm < 90]
+
+    annotators_info = (
+        nodules
+        .drop_duplicates(['seriesid', 'DoctorID'])
+        .assign(DoctorID=lambda df: ['doctor_'+str(doctor).zfill(3) for doctor in df.DoctorID])
+        .pivot('seriesid', 'DoctorID', 'DoctorID')
+        .notna()
+        .astype('int')
+    )
+
+    nodules = (
+        nodules
+        .join(annotators_info, on='seriesid', how='left')
+        .assign(n_annotators=lambda df: df.filter(regex=r'doctor_\d{3}', axis=1).sum(axis=1))
+        .query('n_annotators >= 3')
+        .drop('n_annotators', axis=1)
+        .dropna()
+    )
+
     probabilities = get_probabilities(nodules)
     if confidences == 'random':
-        confidences = np.ones(N_DOCTORS) + np.random.uniform(0, 0.1, N_DOCTORS)
+        confidences = np.ones(n_doctors) + np.random.uniform(0, 0.1, n_doctors)
         confidences = confidences / np.sum(confidences)
     elif confidences == 'uniform':
-        confidences = np.ones(N_DOCTORS) / N_DOCTORS
-    confidences_history = [pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
+        confidences = np.ones(n_doctors) / n_doctors
+    confidences_history = [pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(n_doctors)],
                                          'confidence': confidences, 'iteration': 0})]
     for i in tqdm(range(n_iters)):
-        confidences = _update_confidences(nodules, confidences, probabilities, n_consiliums, factor, alpha)
-        confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(N_DOCTORS)],
+        confidences = _update_confidences(nodules, confidences, probabilities, n_consiliums, n_doctors, factor, alpha)
+        confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(n_doctors)],
                                                  'confidence': confidences, 'iteration': i+1}))
     if history:
         res = pd.concat(confidences_history, axis=0)
@@ -75,34 +97,26 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
     return res
 
 
-def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, factor=0.3, alpha=0.7):
-    nodules = (
-        nodules
-        .assign(n_annotators=lambda df: df.filter(regex=r'doctor_\d{3}', axis=1).sum(axis=1))
-        .query('n_annotators >= 3')
-        .drop('n_annotators', axis=1)
-    )
-
+def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, n_doctors=15, factor=0.3, alpha=0.7):
     tasks = []
-    for doctor in range(N_DOCTORS):
-        accession_numbers = nodules.query("doctor_{:03d} == 1".format(doctor)).AccessionNumber.unique()
+    for doctor in range(n_doctors):
+        accession_numbers = nodules.query("doctor_{:03d} == 1".format(doctor)).seriesid.unique()
         sample_accesion_numbers = np.random.choice(accession_numbers, min(n_consiliums, len(accession_numbers)),
                                                    replace=False)
 
         tasks.extend([(doctor, accesion_number) for accesion_number in sample_accesion_numbers])
 
     args = [
-        (nodules[nodules.AccessionNumber == accession_number], doctor, factor, confidences)
+        (nodules[nodules.seriesid == accession_number], doctor, factor, confidences)
         for doctor, accession_number in tasks
     ]
-
 
     pool = mp.Pool()
     results = pool.map(_consilium_results, args)
     pool.close()
 
-    new_confidences = np.zeros(N_DOCTORS)
-    sum_weights = np.zeros(N_DOCTORS)
+    new_confidences = np.zeros(n_doctors)
+    sum_weights = np.zeros(n_doctors)
 
     for doctor, annotators, score in results:
         weight = np.prod(1 / probabilities[annotators]) / probabilities[doctor]
@@ -119,7 +133,7 @@ def _consilium_results(args):
     if image_nodules.DoctorID.isna().iloc[0]:
         return doctor, 1
     else:
-        annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
+        annotators = image_nodules.filter(regex=r'\d{3}', axis=1).sum()
         annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
         annotators.remove(doctor)
         sample_annotators = np.random.choice(annotators, 2, replace=False)
@@ -132,6 +146,7 @@ def _consilium_results(args):
 
 
 def _compute_mask_size(nodules):
+    print(nodules.coordX, nodules.coordY, nodules.coordZ, nodules.diameter_mm)
     return np.ceil(((nodules.coordX + nodules.diameter_mm + 10).max(),
                     (nodules.coordY + nodules.diameter_mm + 10).max(),
                     (nodules.coordZ + nodules.diameter_mm + 10).max())).astype(np.int32)
@@ -168,6 +183,10 @@ def create_mask(image_nodules, doctor, annotators, factor):
     nodules.coordY *= factor
     nodules.coordZ *= factor
 
+    nodules.coordX -= nodules.coordX.min() - nodules.diameter_mm.max()
+    nodules.coordY -= nodules.coordY.min() - nodules.diameter_mm.max()
+    nodules.coordZ -= nodules.coordZ.min() - nodules.diameter_mm.max()
+
     mask_size = list(_compute_mask_size(nodules))
 
     mask = _create_empty_mask(mask_size, len(annotators)+1)
@@ -197,7 +216,7 @@ def _create_mask_numba(mask, coords, diameters):
         for x in range(begin_x, end_x):
             for y in range(begin_y, end_y):
                 for z in range(begin_z, end_z):
-                    if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < diameter ** 2:
+                    if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < (diameter / 2) ** 2:
                         mask[x, y, z] = 1
     return mask
 
@@ -220,12 +239,8 @@ def consilium_dice(mask, consilium_confidences):
     doctor_mask = mask[..., 0]
     consilium_mask = mask[..., 1:]
     ground_truth = np.sum(consilium_mask * consilium_confidences, axis=-1)
-    # ground_truth = np.sum(consilium_mask, axis=-1) / len(consilium)
 
-    tp = np.sum(2 * doctor_mask * ground_truth) + e
-    den = np.sum(doctor_mask + ground_truth) + e
-
-    return tp / den
+    return dice(doctor_mask, ground_truth)
 
 
 def dice(mask1, mask2):
@@ -247,8 +262,8 @@ def get_probabilities(nodules):
     """ Get list of doctors frequencies. """
     probabilities = (
         nodules
-        .drop_duplicates(subset=['AccessionNumber'])
-        .set_index('AccessionNumber')
+        .drop_duplicates(subset=['seriesid'])
+        .set_index('seriesid')
         .filter(regex=r'doctor_\d{3}', axis=1)
         .sum(axis=0)
         .transform(lambda s: s / s.sum())
@@ -263,7 +278,7 @@ def get_common_annotation(indices, data_path, annotation_path):
     indices : list
         indices od subsets to load
     data_path : str
-        path to folder with data
+        path to folder with images
     annotation_path : str
         path to folder with annotations
 
@@ -279,13 +294,13 @@ def get_common_annotation(indices, data_path, annotation_path):
 
         dataset_info = (
             read_dataset_info(os.path.join(data_path, '{}/*/*/*/*/*'.format(i)), index_col=None)
-            .drop_duplicates(subset=['AccessionNumber'])
-            .set_index('AccessionNumber')
+            .drop_duplicates(subset=['seriesid'])
+            .set_index('seriesid')
         )
 
         subset_nodules = (
             read_nodules(annotation)
-            .set_index('AccessionNumber')
+            .set_index('seriesid')
             .assign(coordZ=lambda df: df.loc[:, 'coordZ'] * dataset_info.loc[df.index, 'SpacingZ'],
                     coordY=lambda df: df.loc[:, 'coordY'] * dataset_info.loc[df.index, 'SpacingY'],
                     coordX=lambda df: df.loc[:, 'coordX'] * dataset_info.loc[df.index, 'SpacingX'])
@@ -297,28 +312,35 @@ def get_common_annotation(indices, data_path, annotation_path):
 
     nodules = pd.concat(nodules)
     nodules = nodules[nodules.diameter_mm < 90]
-    nodules.index.name = 'AccessionNumber'
+    nodules.index.name = 'seriesid'
     return nodules.reset_index()
 
-def get_table(nodules, factor=0.3):
+def get_table(nodules, n_doctors=15, factor=0.3):
     """ Create tables.
+
     Parameters
     ----------
     nodules : pd.DataFrame
+
+    n_doctors : int
+        number of doctors
+    factor : float
+        ratio for mask creation
+
     Returns
     -------
-    table : np.ndarray
+    np.ndarray
         table of the mean dice between two doctors
-    table : np.ndarray
+    np.ndarray
         table of the number of meetings between two doctors
     """
-    table = np.zeros((N_DOCTORS, N_DOCTORS))
-    table_meetings = np.zeros((N_DOCTORS, N_DOCTORS))
+    table = np.zeros((n_doctors, n_doctors))
+    table_meetings = np.zeros((n_doctors, n_doctors))
 
-    for i, j in tqdm(list(zip(*np.triu_indices(N_DOCTORS, k=1)))):
+    for i, j in tqdm(list(zip(*np.triu_indices(n_doctors, k=1)))):
         accession_numbers = (
             nodules
-            .groupby('AccessionNumber')
+            .groupby('seriesid')
             .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values)
         )
         accession_numbers = accession_numbers[accession_numbers].index
@@ -326,17 +348,16 @@ def get_table(nodules, factor=0.3):
         table_meetings[j, i] = len(accession_numbers)
         dices = []
         for accession_number in accession_numbers:
-            if len(nodules[nodules.AccessionNumber == accession_number]) != 0:
+            if len(nodules[nodules.seriesid == accession_number]) != 0:
                 try:
-                    mask = create_mask(nodules[nodules.AccessionNumber == accession_number], i, [j], factor)
+                    mask = create_mask(nodules[nodules.seriesid == accession_number], i, [j], factor)
                 except:
-                    raise Exception(nodules[nodules.AccessionNumber == accession_number], i, j)
+                    raise Exception(nodules[nodules.seriesid == accession_number], i, j)
                 mask1 = mask[..., 0]
                 mask2 = mask[..., 1]
                 dices.append(dice(mask1, mask2))
             else:
                 dices.append(1)
-        table[i, j] = np.mean(dices)
-        table[j, i] = np.mean(dices)
+        table[i, j] = table[j, i] = np.mean(dices)
 
     return table, table_meetings

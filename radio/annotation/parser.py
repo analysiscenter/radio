@@ -76,7 +76,7 @@ def get_dicom_origin(path):
     return origin
 
 
-def get_dicom_info(paths, index_col=None, progress=True):
+def get_dicom_info(paths, index_col=None, progress=False):
     """ Accumulates scans meta information from dicom dataset in pandas DataFrame.
 
     Parameters
