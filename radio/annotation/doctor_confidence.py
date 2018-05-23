@@ -67,10 +67,11 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
 
     probabilities = get_probabilities(nodules)
     if confidences == 'random':
-        confidences = np.ones(n_doctors) + np.random.uniform(0, 0.1, n_doctors)
-        confidences = confidences / np.sum(confidences)
+        confidences = np.ones(n_doctors) / 2 + np.random.uniform(0, 0.1, n_doctors)
+        # confidences = confidences / np.sum(confidences)
     elif confidences == 'uniform':
-        confidences = np.ones(n_doctors) / n_doctors
+        confidences = np.ones(n_doctors) / 2
+
     confidences_history = [pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(n_doctors)],
                                          'confidence': confidences, 'iteration': 0})]
     for i in tqdm(range(n_iters)):
@@ -125,7 +126,7 @@ def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, n_
     new_confidences = new_confidences / sum_weights
 
     confidences = confidences * alpha + new_confidences * (1 - alpha)
-    return confidences / np.sum(confidences)
+    return confidences # / np.sum(confidences)
 
 
 def _consilium_results(args):
@@ -146,7 +147,6 @@ def _consilium_results(args):
 
 
 def _compute_mask_size(nodules):
-    print(nodules.coordX, nodules.coordY, nodules.coordZ, nodules.diameter_mm)
     return np.ceil(((nodules.coordX + nodules.diameter_mm + 10).max(),
                     (nodules.coordY + nodules.diameter_mm + 10).max(),
                     (nodules.coordZ + nodules.diameter_mm + 10).max())).astype(np.int32)
@@ -216,7 +216,7 @@ def _create_mask_numba(mask, coords, diameters):
         for x in range(begin_x, end_x):
             for y in range(begin_y, end_y):
                 for z in range(begin_z, end_z):
-                    if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < (diameter / 2) ** 2:
+                    if (x - center[0]) ** 2 + (y - center[1]) ** 2 + (z - center[2]) ** 2 < (diameter) ** 2:
                         mask[x, y, z] = 1
     return mask
 
@@ -349,10 +349,7 @@ def get_table(nodules, n_doctors=15, factor=0.3):
         dices = []
         for accession_number in accession_numbers:
             if len(nodules[nodules.seriesid == accession_number]) != 0:
-                try:
-                    mask = create_mask(nodules[nodules.seriesid == accession_number], i, [j], factor)
-                except:
-                    raise Exception(nodules[nodules.seriesid == accession_number], i, j)
+                mask = create_mask(nodules[nodules.seriesid == accession_number].dropna(), i, [j], factor)
                 mask1 = mask[..., 0]
                 mask2 = mask[..., 1]
                 dices.append(dice(mask1, mask2))
