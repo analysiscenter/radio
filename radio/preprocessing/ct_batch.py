@@ -1206,9 +1206,35 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         output_batch.spacing = self.rescale(output_batch.images_shape)
         return output_batch
 
-    def xip_component(self, component, mode, depth, stride, start=0, channels=None, squeeze=False,
-                      projection='axial'):
-        """ Make channelled intensity projection from a component.
+    def xip(self, component, mode, depth, stride, start=0, projection='axial', squeeze=False, channels=None):
+        """ Make channelled intensity projection (xip) from a component.
+
+        Parameters
+        ----------
+        component : str
+            component to pass through xip-procedure.
+        mode : str
+            mode of intensity projection. Can be either 'max', 'min', 'mean' or 'median'.
+        depth : int
+            size of xip-window.
+        stride : int
+            stride of xip.
+        start : int
+            the number of starting slice.
+        projection : str
+            can be either 'axial', 'coronal' or 'sagital'.
+        squeeze : bool
+            if True, squeezes channels into one. The parameter is used for convenient
+            preparation of training data.
+        channels : int, None
+            if supplied, makes xip with several channels. The overall number
+            of xip-slices stays the same.
+
+        Returns
+        -------
+        ndarray
+            4d-array of shape (len(self) * n_xips_in_item, slice_shape[0], slice_shape[1], channels)
+            containing intensity projections.
         """
         # parse arguments
         _modes = {'max': 0, 'min': 1, 'mean': 2, 'median': 3}
@@ -1246,36 +1272,57 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return wrapped(self, component=component, mode=mode, depth=depth, stride=stride,
                        start=start, channels=channels, squeeze=squeeze, projection=projection)
 
+    def unxip(self, xip, component, depth, stride, start=0, projection='axial', squeeze=True,
+              channels=None, adjust_nodule_size=True, threshold=0.95, **kwargs):
+        """ Unfold xipped array into a full-sized component.
 
-    def unxip_predictions(self, predictions, component, depth, stride, start=0, threshold=0.95, channels=None,
-                          squeeze=True, adjust_nodule_size=True, projection='axial', **kwargs):
-        """ Unfold xip-predictions into full-sized masks.
+        Parameters
+        ----------
+        xip : ndarray
+            4d-array containing channelled intensity projection.
+        component : str
+            component into which the unfolded image should be put.
+        depth : int
+            size of xip-window.
+        stride : int
+            stride of xip.
+        start : int
+            the number of starting slice.
+        projection : str
+            can be either 'axial', 'coronal' or 'sagital'.
+        squeeze : bool
+            If True, assumes the channels in xip are squeezed into one.
+        channels : int, None
+            The number of channels in xip. Needed only if squeeze is True.
+        adjust_nodule_size : bool
+            if the adustment of sizes of detected nodules is needed.
+        threshold : float
+            threshold for binarization of xip. Needed only if adjusting of nodule sizes
+            is performed.
         """
         channels = 1 if channels is None else channels
 
         # binarize predictions if needed
-        if threshold is not None:
-            predictions = np.where(predictions < threshold, 0, 1)
+        if threshold is not None and adjust_nodule_size:
+            xip = np.where(xip < threshold, 0, 1)
 
         new_data = np.zeros_like(getattr(self, 'images'))
 
         # unfold xip
         _init = range(len(self))
-        def _worker(self, ix, predictions, new_data, depth, stride, start, squeeze, channels, adjust,
+        def _worker(self, ix, xip, new_data, depth, stride, start, squeeze, channels, adjust,
                     projection, **kwargs):
-            num_item_slices = len(predictions) // len(self)
+            num_item_slices = len(xip) // len(self)
             shape = np.array(self.get(ix, 'images').shape)[PROJECTIONS[projection]]
             slc = self.get_pos(None, 'images', ix)
-            unfolded = unfold_xip(predictions[ix * num_item_slices:(ix + 1) * num_item_slices, ...],
+            unfolded = unfold_xip(xip[ix * num_item_slices:(ix + 1) * num_item_slices, ...],
                                   shape, depth, stride, start, channels, squeeze)
-            new_data[slc] = np.transpose(unfolded, REVERSE_PROJECTIONS[projection])
 
             # perform adjustment of nodule-sizes if needed
             if adjust:
-                slc = self.get_pos(None, 'images', ix)
-                labels, num_nodules = label(np.where(new_data[slc] < 1, 0, 1), return_num=True)
+                labels, num_nodules = label(np.where(unfolded < 1, 0, 1), return_num=True)
                 props = regionprops(labels)
-                new_data[slc] = 0
+                unfolded[:] = 0
                 for i in range(num_nodules):
                     bbox = np.reshape(props[i].bbox, (2, -1))
                     size = bbox[1, :] - bbox[0, :]
@@ -1287,11 +1334,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
                     # put adjusted nodule into the component
                     nodule_slice = [slice(bbox[0, i], bbox[1, i]) for i in range(3)]
-                    new_data[slc][nodule_slice] = 1
+                    unfolded[nodule_slice] = 1
+
+            new_data[slc] = np.transpose(unfolded, REVERSE_PROJECTIONS[projection])
 
         # execute in parallel
         wrapped = inbatch_parallel(_init, None, 't')(_worker)
-        wrapped(self, predictions=predictions, new_data=new_data, depth=depth, stride=stride, start=start,
+        wrapped(self, xip=xip, new_data=new_data, depth=depth, stride=stride, start=start,
                 squeeze=squeeze, channels=channels, adjust=adjust_nodule_size, projection=projection)
 
         # set the component
