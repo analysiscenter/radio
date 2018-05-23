@@ -409,6 +409,24 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         patient_data += np.int16(intercept_pat)
         return patient_data
 
+    def _load_blosc(self, **kwargs):
+        """ Read scans from blosc and put them into batch components
+
+        Parameters
+        ----------
+        **kwargs
+            components : tuple
+                tuple of strings with names of components of data
+                that should be loaded into self
+
+        Notes
+        -----
+        NO conversion to HU is done for blosc
+        (because usually it's done before).
+        """
+        byted = self._read_blosc(**kwargs)
+        self._debyte_blosc(byted=byted, **kwargs)
+
     def _prealloc_skyscraper_components(self, components, fmt='blosc'):
         """ Read shapes of skyscraper-components dumped with blosc,
         allocate memory for them, update self._bounds.
@@ -469,38 +487,43 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return self.indices
 
-    @inbatch_parallel(init='_init_load_blosc', post='_post_default', target='async', update=False)
-    async def _load_blosc(self, ix, *args, **kwargs):
-        """ Read scans from blosc and put them into batch components
+    @inbatch_parallel(init='_init_load_blosc', post='_post_read_blosc', target='async', update=False)
+    async def _read_blosc(self, ix, *args, **kwargs):
+        byted = dict()
+        for source in kwargs['components']:
+            if source in ['spacing', 'origin']:
+                ext = 'pkl'
+            else:
+                ext = 'blk'
+            comp_path = os.path.join(self.index.get_fullpath(ix), source, 'data' + '.' + ext)
+            if not os.path.exists(comp_path):
+                raise OSError("File with component {} doesn't exist".format(source))
 
-        Parameters
-        ----------
-        **kwargs
-            components : tuple
-                tuple of strings with names of components of data
-                that should be loaded into self
+            # read the component
+            async with aiofiles.open(comp_path, mode='rb') as file:
+                byted[source] = await file.read()
+        return byted
 
-        Notes
-        -----
-        NO conversion to HU is done for blosc
-        (because usually it's done before).
-        """
+    def _post_read_blosc(self, list_of_arrs, **kwargs):
+        self._reraise_worker_exceptions(list_of_arrs)
+        return dict(zip(self.indices, list_of_arrs))
 
+
+    @inbatch_parallel(init='indices', post='_post_default', target='threads', update=False)
+    def _debyte_blosc(self, ix, byted, **kwargs):
         for source in kwargs['components']:
             # set correct extension for each component and choose a tool
             # for debyting and (possibly) decoding it
             if source in ['spacing', 'origin']:
-                ext = 'pkl'
                 unpacker = pickle.loads
             else:
-                ext = 'blk'
                 def unpacker(byted):
                     """ Debyte and decode an ndarray
                     """
                     debyted = blosc.unpack_array(byted)
 
                     # read the decoder and apply it
-                    decod_path = os.path.join(self.index.get_fullpath(ix), source, 'data.decoder')
+                    decod_path = os.path.join(self.index.get_fullpath(ix), source, 'data.decoder') # pylint: disable=cell-var-from-loop
 
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
@@ -510,23 +533,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                         decoder = lambda x: x
 
                     return decoder(debyted)
-
-            comp_path = os.path.join(self.index.get_fullpath(ix), source, 'data' + '.' + ext)
-            if not os.path.exists(comp_path):
-                raise OSError("File with component {} doesn't exist".format(source))
-
-            # read the component
-            async with aiofiles.open(comp_path, mode='rb') as file:
-                byted = await file.read()
-
-            # de-byte it with the chosen tool
-            component = unpacker(byted)
-
+            component = unpacker(byted[ix][source])
             # update needed slice(s) of component
             comp_pos = self.get_pos(None, source, ix)
             getattr(self, source)[comp_pos] = component
-
-        return None
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw images (with meta in .mhd)
@@ -660,7 +670,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Returns
         -------
-        int
+        int or slice
             Position of item
 
         Notes
