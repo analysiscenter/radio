@@ -134,7 +134,7 @@ def _consilium_results(args):
     if image_nodules.DoctorID.isna().iloc[0]:
         return doctor, 1
     else:
-        annotators = image_nodules.filter(regex=r'\d{3}', axis=1).sum()
+        annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
         annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
         annotators.remove(doctor)
         sample_annotators = np.random.choice(annotators, 2, replace=False)
