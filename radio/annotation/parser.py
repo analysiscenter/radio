@@ -20,6 +20,7 @@ def generate_index(size=20):
 
     Returns
     -------
+    str
         string index of given size.
     """
     return hexlify(np.random.rand(100))[:size].decode()
@@ -56,7 +57,7 @@ def normalize_nodule_type(nodules):
 
     return nodules.assign(NoduleType=nodule_type)
 
-def get_origin(path):
+def get_dicom_origin(path):
     """ Get origin for dicom from path """
     def read_dicom(x):
         return dicom.read_file(os.path.join(path, x))
@@ -84,17 +85,19 @@ def get_dicom_info(paths, index_col=None, progress=True):
         paths to directories with dicom files.
     index_col : str or None
         name of column that will be used as index of output DataFrame.
+    progress : bool
+        show progress bar or not
 
     Returns
     -------
-    DataFrame
+    pandas.DataFrame
         pandas DataFrame with scans' meta information.
     """
     meta_info = []
     progress = tqdm.tqdm if progress else lambda x: x
     for path in progress(paths):
         first_slice = dicom.read_file(os.path.join(path, os.listdir(path)[0]))
-        origins = get_origin(path)
+        origins = get_dicom_origin(path)
         info_dict = {
             'SpacingZ': float(first_slice.SliceThickness),
             'SpacingY': float(first_slice.PixelSpacing[0]),
@@ -115,7 +118,7 @@ def get_dicom_info(paths, index_col=None, progress=True):
         meta_info.append(info_dict)
     return pd.DataFrame(meta_info) if index_col is None else pd.DataFrame(meta_info).set_index(index_col)
 
-def get_blosc_info(paths, index_col=None, progress=True):
+def get_blosc_info(paths, index_col=None, progress=False):
     """ Accumulates scans meta information from dicom dataset in pandas DataFrame.
 
     Parameters
@@ -124,6 +127,8 @@ def get_blosc_info(paths, index_col=None, progress=True):
         paths to directories with dicom files.
     index_col : str or None
         name of column that will be used as index of output DataFrame.
+    progress : bool
+        show progress bar or not
 
     Returns
     -------
@@ -136,15 +141,15 @@ def get_blosc_info(paths, index_col=None, progress=True):
         results = []
         for component in ['spacing', 'origin']:
             with open(os.path.join(path, component, 'data.pkl'), 'rb') as f:
-                res.append(pickle.load(f))
+                results.append(pickle.load(f))
         spacing, origin = results
         info_dict = {
-            'SpacingZ': spacing[0],
-            'SpacingY': spacing[1],
-            'SpacingX': spacing[2],
-            'OriginZ': origin[0],
-            'OriginY': origin[1],
-            'OriginX': origin[2],
+            'SpacingZ': spacing[0][0],
+            'SpacingY': spacing[0][1],
+            'SpacingX': spacing[0][2],
+            'OriginZ': origin[0][0],
+            'OriginY': origin[0][1],
+            'OriginX': origin[0][2],
             'AccessionNumber': path.split('/')[-1],
             'ScanPath': path,
             'ScanID': os.path.basename(path)
@@ -168,7 +173,7 @@ def filter_dicom_info_by_best_spacing(info_df):
 
     Returns
     -------
-        pandas DataFrame
+    pandas.DataFrame
     """
     output_indices = (
         info_df
@@ -191,7 +196,8 @@ def parse_annotation(path, max_nodules=40):
 
     Returns
     -------
-        pandas DataFrame with annotation.
+    pandas.DataFrame
+        annotation.
     """
     base_columns = ['AccessionNumber', 'StudyID', 'DoctorID', 'Comment', 'NumNodules']
     location_columns = ['locX', 'locY', 'locZ', 'diam', 'type']
@@ -266,7 +272,51 @@ def annotation_to_nodules(annotation_df):
     return normalize_nodule_type(result_df)
 
 
-def read_nodules(path):
+def read_annotators_info(annotation, annotator_prefix=None, binary=True):
+    """ Read information about annotators from annotation.
+
+    This method reads information about annotators and scans into pandas DataFrame
+    that contains accession numbers as indices and columns names
+    corresponding to ids of annotators with prefix added (if provided). Each cell
+    of the output table is filled with '1' if corresponding annotator
+    was annotating scan with given accession number and '0' otherwise.
+
+    Parameters
+    ----------
+    annotation : pandas DataFrame
+
+    annotator_prefix : str or None
+        prefix of annotators indices in the output DataFrame.
+
+    Returns
+    -------
+    pandas.DataFrame
+        table with of shape (num_scans, num_annotators) filled with '1'
+        if annotator annotated given scan or '0' otherwise.
+    """
+    if binary:
+        annotators_info = (
+            annotation
+            .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
+            .query("AccessionNumber != ''")
+            .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
+            .notna()
+            .astype('int')
+        )
+        if annotator_prefix:
+            annotators_indices_mapping = {index: (annotator_prefix + index)
+                                          for index in annotators_info.columns}
+
+            annotators_info = annotators_info.pipe(lambda df: df.rename(columns=annotators_indices_mapping))
+    else:
+        annotators_info = (annotation
+                           .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
+                           .query("AccessionNumber != ''"))[['AccessionNumber', 'DoctorID']]
+    return annotators_info
+        
+
+
+def read_nodules(path, include_annotators=False):
     """ Read annotation from file and transform it to DataFrame with nodules.
 
     Output DataFrame contains following columns:
@@ -283,55 +333,23 @@ def read_nodules(path):
     Parameters
     ----------
     path : str
-        path to file with annotation.
+        path to file with annotation
+    include_annotators : bool
+        include or not rows with nan for doctors who annotated image but didn't find
+        nodules
 
     Returns
     -------
-    pandas DataFrame
+    pandas.DataFrame
         dataframe that contains information about nodules location, type and etc.
     """
     annotation = parse_annotation(path)
     nodules = annotation_to_nodules(annotation)
+    if include_annotators:
+        annotators_info = read_annotators_info(annotation, binary=False)
+        nodules = nodules.merge(annotators_info, left_on=['AccessionNumber', 'DoctorID'], 
+                                right_on=['AccessionNumber', 'DoctorID'], how='outer')
     return nodules
-
-
-def read_annotators_info(path, annotator_prefix=None):
-    """ Read information about annotators from file with annotation.
-
-    This method reads information about annotators and scans into pandas DataFrame
-    that contains accession numbers as indices and columns names
-    corresponding to ids of annotators with prefix added (if provided). Each cell
-    of the output table is filled with '1' if corresponding annotator
-    was annotating scan with given accession number and '0' otherwise.
-
-    Parameters
-    ----------
-    path : str
-        path to file with annotation.
-    annotator_prefix : str or None
-        prefix of annotators indices in the output DataFrame.
-
-    Returns
-    -------
-    pandas DataFrame
-        table with of shape (num_scans, num_annotators) filled with '1'
-        if annotator annotated given scan or '0' otherwise.
-    """
-    annotators_info = (
-        parse_annotation(path)
-        .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-        .query("AccessionNumber != ''")
-        .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
-        .notna()
-        .astype('int')
-    )
-    if annotator_prefix:
-        annotators_indices_mapping = {index: (annotator_prefix + index)
-                                      for index in annotators_info.columns}
-
-        annotators_info = annotators_info.pipe(lambda df: df.rename(columns=annotators_indices_mapping))
-    return annotators_info
-
 
 def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False, fmt='dicom'):
     """ Build index and mapping to paths for given dicom dataset.
@@ -347,10 +365,14 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
     index_col : str or None.
         name of column in the output dataframe that will be used as index.
         Default is None.
+    filter_by_min_spacing : bool
+        for each accession number choose study with minimal spacing 
+    fmt : str
+        'dicom' or 'blosc'
 
     Returns
     -------
-    pandas DataFrame
+    pandas.DataFrame
         dataframe containing info about dicom dataset.
     """
     if (path is None and paths is None) or (path is not None and paths is not None):
@@ -367,32 +389,49 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
             index_df = dataset_info.loc[output_indices.loc[:, 'SpacingZ'], :]
         else:
             index_df = dataset_info
-    if fmt == 'blosc':
+    elif fmt == 'blosc':
         index_df = get_blosc_info(glob.glob(path) if path is not None else paths)
+    else:
+        raise ValueError('fmt must be dicom or blosc but {} were given'.format(fmt))
     return index_df if index_col is None else index_df.set_index(index_col)
 
-def transform_annotation(path_to_annotation, path_to_data, fmt='dicom'):
-    """ Transform annotation file to LUNA format with coordinates and diamters in mm
+def transform_annotation(annotation_path, images_path, fmt='dicom', include_annotators=True, drop=True):
+    """ Transform annotation file to LUNA format with coordinates and diamters in mm.
 
     Parameters
     ----------
-    path_to_annotation : str
-        path to txt file with annotation
-    path_to_data : str
+    annotation_path : str
+        mask for txt files with annotation
+    images_path : str
         mask for folders with dicom files
+    fmt : str
+        'dicom' or 'blosc'
+    include_annotators : bool
+        if doctor annotates image but don't find nodules, row with his ID, AccessionNumber
+        (seriesid) and other nans will be added
+    drop : bool
+        if True and file `annotation_path` has annotation for images which don't contain
+        in folder `images_path`, it will be dropped
+    
+    Returns
+    -------
+    pandas.DataFrame
+        dataframe with annotation with columns `[seriesid, DoctorID, NoduleID, coordX, coorY, coordZ, diam]`.
+        Coordinates and diameter in mm.
     """
-    nodules = read_nodules(path_to_annotation)
-    paths = glob.glob(path_to_data)
+    annotations = glob.glob(annotation_path)
+    nodules = pd.concat([read_nodules(annotation, include_annotators).reset_index(drop=True) for annotation in annotations]).reset_index(drop=True)
+    paths = glob.glob(images_path)
 
-    dataset_info = read_dataset_info(path_to_data, filter_by_min_spacing=True, fmt=fmt)
+    dataset_info = read_dataset_info(images_path, filter_by_min_spacing=True, fmt=fmt)
     spacing_info = dataset_info[['AccessionNumber', 'SpacingX', 'SpacingY', 'SpacingZ',
                                  'OriginX', 'OriginY', 'OriginZ']].set_index('AccessionNumber')
-    nodules = nodules.join(spacing_info, on='AccessionNumber', how='left')
+    nodules = nodules.join(spacing_info, on='AccessionNumber', how='inner')
 
     for name in ['X', 'Y', 'Z']:
         nodules['coord'+name] = nodules['coord'+name] * nodules['Spacing'+name] + nodules['Origin'+name]
         del nodules['Spacing'+name]
         del nodules['Origin'+name]
     nodules.columns = ['seriesid'] + list(nodules.columns[1:])
-    
-    return nodules
+
+    return nodules.reset_index(drop=True)
