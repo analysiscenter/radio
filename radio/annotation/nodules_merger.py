@@ -5,7 +5,46 @@ import pandas as pd
 from scipy import stats
 from numba import njit
 from .parser import generate_index
-from ..models.utils import sphere_overlap
+
+
+@njit(cache=True)
+def sphere_overlap(nodule_true, nodule_pred):
+    """ Two nodules overlap volume normalized by total volume of second one.
+
+    Parameters
+    ----------
+    nodule_true : ndarray
+        numpy array with information about true nodule:
+        nodule_true[1:] - [z,y,x] coordinates of true nodule's center,
+        nodule_true[0] - diameter of true nodule.
+    nodule_pred : ndarray
+        numpy array with information about predicted nodule:
+        nodule_pred[1:] - [z,y,x] coordinates of predicted nodule's center,
+        nodule_pred[0] - diameter of predicted nodule.
+
+    Returns
+    -------
+    float
+        overlap volume divided by sum of input nodules' volumes.
+    """
+    r1, r2 = nodule_true[0] / 2, nodule_pred[0] / 2
+    pos1, pos2 = nodule_true[1:], nodule_pred[1:]
+
+    pos1_area = 4. / 3. * np.pi * r1 ** 3
+    pos2_area = 4. / 3. * np.pi * r2 ** 3
+
+    d = np.sum((pos1 - pos2) ** 2) ** 0.5
+
+    if d >= r1 + r2:
+        return 0
+    elif r1 >= d + r2 or r2 >= d + r1:
+        return 1.0
+
+    volume = (np.pi * (r1 + r2 - d) ** 2
+              * (d ** 2 + r1 * (2 * d - 3 * r1)
+                 + r2 * (2 * d - 3 * r2)
+                 + 6 * r1 * r2)) / (12 * d + 10e-7)
+    return 2 * volume / (pos2_area + pos1_area + 10e-7)
 
 
 @njit
@@ -58,7 +97,7 @@ def compute_reachable_vertices_numba(distance_matrix, vertex, threshold):
 
     all_vertices = np.arange(num_vertices)
     reachable = np.zeros(num_vertices)
-    unprocessed = np.ones(num_vertices)
+    unprocessed = np.zeros(num_vertices)
     reachable = (reachable == 1)
     unprocessed = (unprocessed == 1)
     unprocessed[vertex] = True
@@ -120,6 +159,8 @@ def assign_nodules_group_index(nodules, threshold=0.1):
     """
     coords = nodules.loc[:, ['coordZ', 'coordY', 'coordX']].values
     diameters = nodules.loc[:, 'diameter_mm'].values
+    if coords.shape[0] == 1 and diameters.shape[0]:
+        return nodules.assign(GroupNoduleID=generate_index())
     clusters = np.array(compute_clusters_numba(coords, diameters, threshold), dtype=np.int)
     clusters_names = np.array([generate_index() for cluster_num in np.sort(np.unique(clusters))])
     group_nodule_id = pd.Series(clusters_names[clusters], index=nodules.index)
