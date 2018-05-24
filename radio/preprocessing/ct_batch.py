@@ -814,7 +814,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         new_batch : bool
             if False, empty batch is created,
             if True, data is gathered, loaded and put into batch.images.
-        
+
         Returns
         -------
         batch
