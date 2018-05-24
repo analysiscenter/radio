@@ -134,19 +134,20 @@ def _consiliums_for_doctor(nodules, doctor, n_doctors):
 def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliums_probabilities, n_doctors=15, factor=0.3, alpha=0.7):
     args = []
     for doctor, doctor_consiliums in enumerate(consiliums):
-        if n_consiliums is None:
-            sample = doctor_consiliums
-        else:
-            sample_indices = np.random.choice(len(doctor_consiliums), size=min(n_consiliums, len(doctor_consiliums)), replace=False)
-            sample = [doctor_consiliums[i] for i in sample_indices]
-        for seriesid, consilium in sample:
-            args.append((nodules[nodules.seriesid == seriesid], doctor, consilium, factor, confidences))
+        if len(doctor_consiliums) != 0:
+            if n_consiliums is None:
+                sample = doctor_consiliums
+            else:
+                sample_indices = np.random.choice(len(doctor_consiliums), size=min(n_consiliums, len(doctor_consiliums)), replace=False)
+                sample = [doctor_consiliums[i] for i in sample_indices]
+            for seriesid, consilium in sample:
+                args.append((nodules[nodules.seriesid == seriesid], doctor, consilium, factor, confidences))
 
     pool = mp.Pool()
     results = pool.map(_consilium_results, args)
     pool.close()
 
-    new_confidences = np.zeros(n_doctors)
+    new_confidences = confidences.copy()
     sum_weights = np.zeros(n_doctors)
 
     for doctor, consilium, score in results:
