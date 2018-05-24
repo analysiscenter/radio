@@ -1272,6 +1272,48 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return wrapped(self, component=component, mode=mode, depth=depth, stride=stride,
                        start=start, channels=channels, squeeze=squeeze, projection=projection)
 
+    @action
+    def sample_xip(self, depth, stride, mode='max', start=0, squeeze=(False, True), projection='axial', channels=3,
+                   batch_size=20, share=0.5, src=('images', 'masks'), dst=('xip_images', 'xip_masks')):
+        """ Create xips for a pair of components for training neural networks. Put xips them into `dst`-components.
+
+        Parameters
+        ----------
+        depth : int
+            size of xip-window.
+        stride : int
+            stride of xip.
+        mode : str
+            mode of intensity projection. Can be either 'max', 'min', 'mean' or 'median'.
+        start : int
+            the number of starting slice.
+        squeeze : tuple
+            tuple of bools. If (False, True), the first xip has all three channels, while channels of the
+            second xip are squezeed into one.
+        projection : str
+            plane of intensity projection.
+        channels : int
+            number of channels in xips.
+        batch_size : int or None
+            needed number of generated projections.
+        share : float
+            share of cancerous projections.
+        src : tuple
+            pair of components to pass through the xip-procedure.
+        dst : tuple
+            components to put the resulting xips into.
+        """
+        xip_args = dict(depth=depth, mode=mode, stride=stride, start=start, projection=projection, channels=channels)
+        xips = []
+        for i in range(2):
+            xip_args.update(component=src[i], squeeze=squeeze[i])
+            xip = self.xip(**xip_args)
+            xips.append(xip)
+
+        cancer_filter = np.greater(np.sum(xips[1], axis=(1, 2, 3)), 0)
+        cancer_ixs = np.argwhere(cancer_filter)
+        return self
+
     def unxip(self, xip, component, depth, stride, start=0, projection='axial', squeeze=True,
               channels=None, adjust_nodule_size=True, threshold=0.95, **kwargs):
         """ Unfold xipped array into a full-sized component.
@@ -1291,7 +1333,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         projection : str
             can be either 'axial', 'coronal' or 'sagital'.
         squeeze : bool
-            If True, assumes the channels in xip are squeezed into one.
+            If True, assumes the channels in xip should be squeezed into one.
         channels : int, None
             The number of channels in xip. Needed only if squeeze is True.
         adjust_nodule_size : bool
