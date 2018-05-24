@@ -1,14 +1,13 @@
 """ Contains functions that can be helpful for initial CT-dataset manipulations. """
+
 import os
-from binascii import hexlify
 from collections import OrderedDict
+from binascii import hexlify
 import glob
-from multiprocessing.dummy import Pool as ThreadPool
 import pickle
-import numpy as np
-import pandas as pd
-import dicom
 import tqdm
+from multiprocessing.dummy import Pool as ThreadPool
+import dicom
 
 def generate_index(size=20):
     """ Generate random string index of givne size.
@@ -411,7 +410,8 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
     Returns
     -------
     pandas.DataFrame
-        dataframe with annotation with columns `[seriesid, DoctorID, NoduleID, coordX, coorY, coordZ, diam]`.
+        dataframe with annotation with columns
+        `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID']`.
         Coordinates and diameter in mm.
     """
     annotations = glob.glob(annotation_path)

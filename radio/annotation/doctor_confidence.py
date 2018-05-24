@@ -1,12 +1,11 @@
 """ Functions to compute doctors' confidences from annotation. """
 
 import itertools
-import multiprocess as mp
-from numba import njit
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
+from numba import njit
+import multiprocess as mp
 
 def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_iters=25, n_doctors=15,
                             factor=0.3, alpha=0.7, history=False, smooth=None):
@@ -15,7 +14,8 @@ def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_it
     Parameters
     ----------
     nodules : pd.DataFrame
-
+        DataFrame with columns
+        `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID']`
     confidences : str or list of len n_doctors
         if 'random', initial confidences will be sampled
         if 'uniform', initial confidences is a uniform distribution
@@ -166,7 +166,7 @@ def _consilium_results(args):
         mask = create_mask(image_nodules, doctor, consilium, factor=factor)
         consilium_confidences = confidences[list(consilium)]
         consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
-
+        print(consilium_confidences)
         return doctor, consilium, consilium_dice(mask, consilium_confidences)
 
 
@@ -261,6 +261,7 @@ def consilium_dice(mask, consilium_confidences):
     """
     doctor_mask = mask[..., 0]
     consilium_mask = mask[..., 1:]
+    consilium_confidences = np.array([0.5, 0.5])
     ground_truth = np.sum(consilium_mask * consilium_confidences, axis=-1)
 
     return dice(doctor_mask, ground_truth)
