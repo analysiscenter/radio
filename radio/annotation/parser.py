@@ -271,7 +271,7 @@ def annotation_to_nodules(annotation_df):
     result_df = result_df.assign(DoctorID=lambda df: df.loc[:, 'DoctorID'].str.replace("'", ""))
     return normalize_nodule_type(result_df)
 
-def read_annotators_info(path, annotator_prefix=None, binary=True):
+def read_annotators_info(path, annotator_prefix=None):
     """ Read information about annotators from annotation.
     This method reads information about annotators and scans into pandas DataFrame
     that contains accession numbers as indices and columns names
@@ -294,9 +294,9 @@ def read_annotators_info(path, annotator_prefix=None, binary=True):
     annotators_info = (
         parse_annotation(path)
         .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-        .query("AccessionNumber != ''")
+        .query("seriesid != ''")
         .drop_duplicates()
-        .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
+        .pivot('seriesid', 'DoctorID', 'DoctorID')
         .notna()
         .astype('int')
     )
@@ -341,7 +341,7 @@ def read_nodules(path, include_annotators=False):
     if include_annotators:
         annotators_info = (annotation
                            .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-                           .query("AccessionNumber != ''"))[['AccessionNumber', 'DoctorID']]
+                           .query("seriesid != ''"))[['seriesid', 'DoctorID']]
         nodules = nodules.merge(annotators_info, left_on=['seriesid', 'DoctorID'],
                                 right_on=['seriesid', 'DoctorID'], how='outer')
     return nodules
