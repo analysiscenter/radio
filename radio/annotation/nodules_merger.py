@@ -58,7 +58,7 @@ def compute_reachable_vertices_numba(distance_matrix, vertex, threshold):
 
     all_vertices = np.arange(num_vertices)
     reachable = np.zeros(num_vertices)
-    unprocessed = np.zeros(num_vertices)
+    unprocessed = np.ones(num_vertices)
     reachable = (reachable == 1)
     unprocessed = (unprocessed == 1)
     unprocessed[vertex] = True
