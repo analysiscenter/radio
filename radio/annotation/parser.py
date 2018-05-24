@@ -3,12 +3,12 @@ import os
 from binascii import hexlify
 from collections import OrderedDict
 import glob
+from multiprocessing.dummy import Pool as ThreadPool
+import pickle
 import numpy as np
 import pandas as pd
 import dicom
 import tqdm
-from multiprocessing.dummy import Pool as ThreadPool
-import pickle
 
 def generate_index(size=20):
     """ Generate random string index of givne size.
@@ -59,10 +59,10 @@ def normalize_nodule_type(nodules):
 
 def get_dicom_origin(path):
     """ Get origin for dicom from path """
-    def read_dicom(x):
+    def _read_dicom(x):
         return dicom.read_file(os.path.join(path, x))
     pool = ThreadPool()
-    results = pool.map(read_dicom, os.listdir(path))
+    results = pool.map(_read_dicom, os.listdir(path))
     pool.close()
     pool.join()
     list_of_dicoms = list(results)
@@ -132,8 +132,8 @@ def get_blosc_info(paths, index_col=None, progress=False):
 
     Returns
     -------
-    DataFrame
-        pandas DataFrame with scans' meta information.
+    pandas.DataFrame
+        DataFrame with scans' meta information.
     """
     meta_info = []
     progress = tqdm.tqdm if progress else lambda x: x
@@ -142,7 +142,7 @@ def get_blosc_info(paths, index_col=None, progress=False):
         for component in ['spacing', 'origin']:
             with open(os.path.join(path, component, 'data.pkl'), 'rb') as f:
                 results.append(pickle.load(f))
-        spacing, origin = results
+        spacing, origin = results #pylint:disable=unbalanced-tuple-unpacking
         info_dict = {
             'SpacingZ': spacing[0][0],
             'SpacingY': spacing[0][1],
@@ -155,7 +155,7 @@ def get_blosc_info(paths, index_col=None, progress=False):
             'ScanID': os.path.basename(path)
         }
         meta_info.append(info_dict)
-    return pd.DataFrame(meta_info) if index_col is None else pd.DataFrame(meta_info).set_index(index_col)    
+    return pd.DataFrame(meta_info) if index_col is None else pd.DataFrame(meta_info).set_index(index_col)
 
 
 def filter_dicom_info_by_best_spacing(info_df):
@@ -241,7 +241,7 @@ def annotation_to_nodules(annotation_df):
 
     Returns
     -------
-    pandas DataFrame
+    pandas.DataFrame
     """
     data_list = []
     for group in annotation_df.groupby(['seriesid', 'DoctorID']):
@@ -272,7 +272,7 @@ def annotation_to_nodules(annotation_df):
     return normalize_nodule_type(result_df)
 
 
-def read_annotators_info(path, annotator_prefix=None, binary=True):
+def read_annotators_info(path, annotator_prefix=None):
     """ Read information about annotators from annotation.
 
     This method reads information about annotators and scans into pandas DataFrame
@@ -294,27 +294,22 @@ def read_annotators_info(path, annotator_prefix=None, binary=True):
         table with of shape (num_scans, num_annotators) filled with '1'
         if annotator annotated given scan or '0' otherwise.
     """
-    if binary:
-        annotators_info = (
-            parse_annotation(path)
-            .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-            .query("seriesid != ''")
-            .drop_duplicates()
-            .pivot('seriesid', 'DoctorID', 'DoctorID')
-            .notna()
-            .astype('int')
-        )
-        if annotator_prefix:
-            annotators_indices_mapping = {index: (annotator_prefix + index)
-                                          for index in annotators_info.columns}
+    annotators_info = (
+        parse_annotation(path)
+        .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
+        .query("seriesid != ''")
+        .drop_duplicates()
+        .pivot('seriesid', 'DoctorID', 'DoctorID')
+        .notna()
+        .astype('int')
+    )
+    if annotator_prefix:
+        annotators_indices_mapping = {index: (annotator_prefix + index)
+                                      for index in annotators_info.columns}
 
-            annotators_info = annotators_info.pipe(lambda df: df.rename(columns=annotators_indices_mapping))
-    else:
-        annotators_info = (annotation
-                           .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-                           .query("seriesid != ''"))[['seriesid', 'DoctorID']]
+        annotators_info = annotators_info.pipe(lambda df: df.rename(columns=annotators_indices_mapping))
     return annotators_info
-        
+
 
 
 def read_nodules(path, include_annotators=False):
@@ -348,7 +343,7 @@ def read_nodules(path, include_annotators=False):
     nodules = annotation_to_nodules(annotation)
     if include_annotators:
         annotators_info = read_annotators_info(annotation, binary=False)
-        nodules = nodules.merge(annotators_info, left_on=['seriesid', 'DoctorID'], 
+        nodules = nodules.merge(annotators_info, left_on=['seriesid', 'DoctorID'],
                                 right_on=['seriesid', 'DoctorID'], how='outer')
     return nodules
 
@@ -367,7 +362,7 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
         name of column in the output dataframe that will be used as index.
         Default is None.
     filter_by_min_spacing : bool
-        for each accession number choose study with minimal spacing 
+        for each accession number choose study with minimal spacing
     fmt : str
         'dicom' or 'blosc'
 
@@ -379,7 +374,7 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
     if (path is None and paths is None) or (path is not None and paths is not None):
         raise ValueError("Only one of 'path' or 'paths' arguments must be provided")
 
-    if fmt == 'dicom':   
+    if fmt == 'dicom':
         dataset_info = get_dicom_info(glob.glob(path) if path is not None else paths)
         if filter_by_min_spacing:
             output_indices = (
@@ -413,7 +408,7 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
     drop : bool
         if True and file `annotation_path` has annotation for images which don't contain
         in folder `images_path`, it will be dropped
-    
+
     Returns
     -------
     pandas.DataFrame
@@ -421,8 +416,8 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
         Coordinates and diameter in mm.
     """
     annotations = glob.glob(annotation_path)
-    nodules = pd.concat([read_nodules(annotation, include_annotators).reset_index(drop=True) for annotation in annotations]).reset_index(drop=True)
-    paths = glob.glob(images_path)
+    nodules = (pd.concat([read_nodules(annotation, include_annotators).reset_index(drop=True) for annotation in annotations])
+                 .reset_index(drop=True))
 
     dataset_info = read_dataset_info(images_path, filter_by_min_spacing=True, fmt=fmt)
     spacing_info = dataset_info[['seriesid', 'SpacingX', 'SpacingY', 'SpacingZ',

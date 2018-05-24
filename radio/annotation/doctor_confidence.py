@@ -1,18 +1,11 @@
-#pylint:disable=not-an-iterable
-#pylint:disable=cell-var-from-loop
-#pylint:disable=consider-using-enumerate
-#pylint:disable=redefined-variable-type
-
 """ Functions to compute doctors' confidences from annotation. """
 
-import os
+import itertools
 import multiprocess as mp
 from numba import njit
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from . import read_nodules, read_dataset_info
-import itertools
 
 
 def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_iters=25, n_doctors=15,
@@ -27,10 +20,10 @@ def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_it
         if 'random', initial confidences will be sampled
         if 'uniform', initial confidences is a uniform distribution
         if list, confidences of doctors
+    n_consiliums : int or None
+        number of consiliums for each doctor. If None, all possible consiliums will be used
     n_iters : int
         number of iterations of updating algorithm
-    n_consiliums : int
-        number of consiliums for each doctor
     n_doctors : int
         number of doctors
     factor : float
@@ -46,8 +39,6 @@ def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_it
     -------
     new_confidences : pd.DataFrame
     """
-    # nodules = nodules[nodules.diameter_mm < 90]
-
     annotators_info = (
         nodules
         .drop_duplicates(['seriesid', 'DoctorID'])
@@ -131,17 +122,23 @@ def _consiliums_for_doctor(nodules, doctor, n_doctors):
         id_and_consiliums.extend(list(itertools.product([seriesid], consiliums)))
     return id_and_consiliums
 
-def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliums_probabilities, n_doctors=15, factor=0.3, alpha=0.7):
+def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliums_probabilities,
+                        n_doctors=15, factor=0.3, alpha=0.7):
     args = []
     for doctor, doctor_consiliums in enumerate(consiliums):
         if len(doctor_consiliums) != 0:
             if n_consiliums is None:
                 sample = doctor_consiliums
             else:
-                sample_indices = np.random.choice(len(doctor_consiliums), size=min(n_consiliums, len(doctor_consiliums)), replace=False)
+                sample_indices = np.random.choice(
+                    len(doctor_consiliums),
+                    size=min(n_consiliums, len(doctor_consiliums)),
+                    replace=False
+                )
                 sample = [doctor_consiliums[i] for i in sample_indices]
             for seriesid, consilium in sample:
-                args.append((nodules[nodules.seriesid == seriesid], doctor, consilium, factor, confidences))
+                args.append((nodules[nodules.seriesid == seriesid], doctor,
+                             consilium, factor, confidences))
 
     pool = mp.Pool()
     results = pool.map(_consilium_results, args)
@@ -157,7 +154,7 @@ def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliu
     new_confidences = new_confidences / sum_weights
 
     confidences = confidences * alpha + new_confidences * (1 - alpha)
-    return confidences # / np.sum(confidences)
+    return confidences
 
 
 def _consilium_results(args):
@@ -165,10 +162,6 @@ def _consilium_results(args):
     if image_nodules.DoctorID.isna().iloc[0]:
         return doctor, 1
     else:
-        # annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
-        # annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
-        # annotators.remove(doctor)
-        # sample_annotators = np.random.choice(annotators, 2, replace=False)
         mask = create_mask(image_nodules, doctor, consilium, factor=factor)
         consilium_confidences = confidences[list(consilium)]
         consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
@@ -265,7 +258,6 @@ def consilium_dice(mask, consilium_confidences):
     dice : float
         dice which is computed as dice of binary doctor mask and weighted mask of doctors by their confidences
     """
-    e = 1e-6
     doctor_mask = mask[..., 0]
     consilium_mask = mask[..., 1:]
     ground_truth = np.sum(consilium_mask * consilium_confidences, axis=-1)
