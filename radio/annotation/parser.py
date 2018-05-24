@@ -272,7 +272,7 @@ def annotation_to_nodules(annotation_df):
     return normalize_nodule_type(result_df)
 
 
-def read_annotators_info(annotation, annotator_prefix=None, binary=True):
+def read_annotators_info(path, annotator_prefix=None, binary=True):
     """ Read information about annotators from annotation.
 
     This method reads information about annotators and scans into pandas DataFrame
@@ -296,9 +296,10 @@ def read_annotators_info(annotation, annotator_prefix=None, binary=True):
     """
     if binary:
         annotators_info = (
-            annotation
+            parse_annotation(path)
             .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
             .query("AccessionNumber != ''")
+            .drop_duplicates()
             .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
             .notna()
             .astype('int')

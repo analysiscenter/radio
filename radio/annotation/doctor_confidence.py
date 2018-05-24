@@ -11,7 +11,7 @@ from numba import njit
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-from . import read_nodules, read_dataset_info, read_annotators_info
+from . import read_nodules, read_dataset_info
 import itertools
 
 
@@ -71,7 +71,7 @@ def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_it
             nodules['doctor_{:03d}'.format(i)] = 0
 
     if confidences == 'random':
-        confidences = np.ones(n_doctors) / 2 + np.random.uniform(0, 0.1, n_doctors)
+        confidences = np.ones(n_doctors) / 2 + np.random.uniform(-0.1, 0.1, n_doctors)
     elif confidences == 'uniform':
         confidences = np.ones(n_doctors) / 2
 
@@ -287,63 +287,6 @@ def get_rating(confidences):
     return np.array([item[0] for item in sorted(enumerate(confidences), key=lambda x: -x[1])])
 
 
-def get_probabilities(nodules):
-    """ Get list of doctors frequencies. """
-    probabilities = (
-        nodules
-        .drop_duplicates(subset=['seriesid'])
-        .set_index('seriesid')
-        .filter(regex=r'doctor_\d{3}', axis=1)
-        .sum(axis=0)
-        .transform(lambda s: s / s.sum())
-    )
-    return probabilities
-
-def get_common_annotation(indices, data_path, annotation_path):
-    """ Get annotations with all coordinates in mm
-
-    Parameters
-    ----------
-    indices : list
-        indices od subsets to load
-    data_path : str
-        path to folder with images
-    annotation_path : str
-        path to folder with annotations
-
-    Returns
-    -------
-    pd.DataFrame
-    """
-    nodules = []
-
-    for i in tqdm(['{:02d}'.format(j) for j in indices]):
-        annotation = os.path.join(annotation_path, '{}_annotation.txt'.format(i))
-        annotators = read_annotators_info(annotation, annotator_prefix='doctor_')
-
-        dataset_info = (
-            read_dataset_info(os.path.join(data_path, '{}/*/*/*/*/*'.format(i)), index_col=None)
-            .drop_duplicates(subset=['seriesid'])
-            .set_index('seriesid')
-        )
-
-        subset_nodules = (
-            read_nodules(annotation)
-            .set_index('seriesid')
-            .assign(coordZ=lambda df: df.loc[:, 'coordZ'] * dataset_info.loc[df.index, 'SpacingZ'],
-                    coordY=lambda df: df.loc[:, 'coordY'] * dataset_info.loc[df.index, 'SpacingY'],
-                    coordX=lambda df: df.loc[:, 'coordX'] * dataset_info.loc[df.index, 'SpacingX'])
-            .merge(annotators, left_index=True, right_index=True)
-        )
-
-        subset_nodules.index = i + '_' + subset_nodules.index
-        nodules.append(subset_nodules)
-
-    nodules = pd.concat(nodules)
-    nodules = nodules[nodules.diameter_mm < 90]
-    nodules.index.name = 'seriesid'
-    return nodules.reset_index()
-
 def get_table(nodules, n_doctors=15, factor=0.3):
     """ Create tables.
 
@@ -377,7 +320,7 @@ def get_table(nodules, n_doctors=15, factor=0.3):
         table_meetings[j, i] = len(accession_numbers)
         dices = []
         for accession_number in accession_numbers:
-            if len(nodules[nodules.seriesid == accession_number]) != 0:
+            if len(nodules[nodules.seriesid == accession_number].dropna()) != 0:
                 mask = create_mask(nodules[nodules.seriesid == accession_number].dropna(), i, [j], factor)
                 mask1 = mask[..., 0]
                 mask2 = mask[..., 1]
