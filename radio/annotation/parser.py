@@ -271,19 +271,16 @@ def annotation_to_nodules(annotation_df):
     result_df = result_df.assign(DoctorID=lambda df: df.loc[:, 'DoctorID'].str.replace("'", ""))
     return normalize_nodule_type(result_df)
 
-
-def read_annotators_info(path, annotator_prefix=None):
+def read_annotators_info(path, annotator_prefix=None, binary=True):
     """ Read information about annotators from annotation.
-
     This method reads information about annotators and scans into pandas DataFrame
     that contains accession numbers as indices and columns names
     corresponding to ids of annotators with prefix added (if provided). Each cell
     of the output table is filled with '1' if corresponding annotator
     was annotating scan with given accession number and '0' otherwise.
-
     Parameters
     ----------
-    annotation : pandas DataFrame
+    path : str
 
     annotator_prefix : str or None
         prefix of annotators indices in the output DataFrame.
@@ -297,9 +294,9 @@ def read_annotators_info(path, annotator_prefix=None):
     annotators_info = (
         parse_annotation(path)
         .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-        .query("seriesid != ''")
+        .query("AccessionNumber != ''")
         .drop_duplicates()
-        .pivot('seriesid', 'DoctorID', 'DoctorID')
+        .pivot('AccessionNumber', 'DoctorID', 'DoctorID')
         .notna()
         .astype('int')
     )
@@ -342,7 +339,9 @@ def read_nodules(path, include_annotators=False):
     annotation = parse_annotation(path)
     nodules = annotation_to_nodules(annotation)
     if include_annotators:
-        annotators_info = read_annotators_info(annotation, binary=False)
+        annotators_info = (annotation
+           .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
+           .query("AccessionNumber != ''"))[['AccessionNumber', 'DoctorID']]
         nodules = nodules.merge(annotators_info, left_on=['seriesid', 'DoctorID'],
                                 right_on=['seriesid', 'DoctorID'], how='outer')
     return nodules
@@ -416,8 +415,10 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
         Coordinates and diameter in mm.
     """
     annotations = glob.glob(annotation_path)
-    nodules = (pd.concat([read_nodules(annotation, include_annotators).reset_index(drop=True) for annotation in annotations])
-                 .reset_index(drop=True))
+    _nodules = []
+    for annotation in annotations:
+        _nodules.append(read_nodules(annotation, include_annotators).reset_index(drop=True))
+    nodules = pd.concat(_nodules).reset_index(drop=True)
 
     dataset_info = read_dataset_info(images_path, filter_by_min_spacing=True, fmt=fmt)
     spacing_info = dataset_info[['seriesid', 'SpacingX', 'SpacingY', 'SpacingZ',

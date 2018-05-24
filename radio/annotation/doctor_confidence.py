@@ -73,7 +73,8 @@ def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_it
     consiliums_probabilities = _consiliums_prob(nodules, n_doctors)
 
     for i in tqdm(range(n_iters)):
-        confidences = _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliums_probabilities, n_doctors, factor, alpha)
+        confidences = _update_confidences(nodules, confidences, consiliums, n_consiliums,
+                                          consiliums_probabilities, n_doctors, factor, alpha)
         confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(n_doctors)],
                                                  'confidence': confidences, 'iteration': i+1}))
     if history:
@@ -99,7 +100,7 @@ def _consiliums_prob(nodules, n_doctors):
     result = np.zeros((n_doctors, n_doctors))
     denom = 0
     for i, j in list(zip(*np.triu_indices(n_doctors, k=1))):
-        doc1, doc2 = ['doctor_{:03d}'.format(doctor) for doctor in [i, j]]
+        doc1, doc2 = ['doctor_{:03d}'.format(doctor) for doctor in [i, j]] #pylint:disable=cell-var-from-loop
         accession_numbers = (
             nodules[['seriesid', doc1, doc2]]
             .assign(together=lambda df: df[doc1] == df[doc2])
