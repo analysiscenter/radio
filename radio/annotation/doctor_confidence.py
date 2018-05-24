@@ -12,9 +12,10 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from . import read_nodules, read_dataset_info, read_annotators_info
+import itertools
 
 
-def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consiliums=10, n_doctors=15,
+def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_iters=25, n_doctors=15,
                             factor=0.3, alpha=0.7, history=False, smooth=None):
     """ Conpute confidences for doctors
 
@@ -65,17 +66,23 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
         .dropna()
     )
 
-    probabilities = get_probabilities(nodules)
+    for i in range(n_doctors):
+        if 'doctor_{:03d}'.format(i) not in nodules.columns:
+            nodules['doctor_{:03d}'.format(i)] = 0
+
     if confidences == 'random':
         confidences = np.ones(n_doctors) / 2 + np.random.uniform(0, 0.1, n_doctors)
-        # confidences = confidences / np.sum(confidences)
     elif confidences == 'uniform':
         confidences = np.ones(n_doctors) / 2
 
     confidences_history = [pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(n_doctors)],
                                          'confidence': confidences, 'iteration': 0})]
+
+    consiliums = [_consiliums_for_doctor(nodules, doctor, n_doctors) for doctor in range(n_doctors)]
+    consiliums_probabilities = _consiliums_prob(nodules, n_doctors)
+
     for i in tqdm(range(n_iters)):
-        confidences = _update_confidences(nodules, confidences, probabilities, n_consiliums, n_doctors, factor, alpha)
+        confidences = _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliums_probabilities, n_doctors, factor, alpha)
         confidences_history.append(pd.DataFrame({'DoctorID': [str(i).zfill(3) for i in range(n_doctors)],
                                                  'confidence': confidences, 'iteration': i+1}))
     if history:
@@ -97,20 +104,43 @@ def get_doctors_confidences(nodules, confidences='random', n_iters=25, n_consili
             )
     return res
 
+def _consiliums_prob(nodules, n_doctors):
+    result = np.zeros((n_doctors, n_doctors))
+    denom = 0
+    for i, j in list(zip(*np.triu_indices(n_doctors, k=1))):
+        doc1, doc2 = ['doctor_{:03d}'.format(doctor) for doctor in [i, j]]
+        accession_numbers = (
+            nodules[['seriesid', doc1, doc2]]
+            .assign(together=lambda df: df[doc1] == df[doc2])
+            .drop_duplicates()
+        )
+        accession_numbers = accession_numbers[accession_numbers[doc1] == 1]
+        accession_numbers = accession_numbers[accession_numbers.together]
+        result[i, j] = result[j, i] = len(accession_numbers)
+        denom += len(accession_numbers)
+    return result / denom
 
-def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, n_doctors=15, factor=0.3, alpha=0.7):
-    tasks = []
-    for doctor in range(n_doctors):
-        accession_numbers = nodules.query("doctor_{:03d} == 1".format(doctor)).seriesid.unique()
-        sample_accesion_numbers = np.random.choice(accession_numbers, min(n_consiliums, len(accession_numbers)),
-                                                   replace=False)
+def _consiliums_for_doctor(nodules, doctor, n_doctors):
+    id_and_consiliums = []
+    for seriesid in nodules.query("doctor_{:03d} == 1".format(doctor)).seriesid.unique():
+        image_nodules = nodules[nodules.seriesid == seriesid]
+        annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
+        annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
+        annotators.remove(doctor)
+        consiliums = itertools.combinations(annotators, 2)
+        id_and_consiliums.extend(list(itertools.product([seriesid], consiliums)))
+    return id_and_consiliums
 
-        tasks.extend([(doctor, accesion_number) for accesion_number in sample_accesion_numbers])
-
-    args = [
-        (nodules[nodules.seriesid == accession_number], doctor, factor, confidences)
-        for doctor, accession_number in tasks
-    ]
+def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliums_probabilities, n_doctors=15, factor=0.3, alpha=0.7):
+    args = []
+    for doctor, doctor_consiliums in enumerate(consiliums):
+        if n_consiliums is None:
+            sample = doctor_consiliums
+        else:
+            sample_indices = np.random.choice(len(doctor_consiliums), size=min(n_consiliums, len(doctor_consiliums)), replace=False)
+            sample = [doctor_consiliums[i] for i in sample_indices]
+        for seriesid, consilium in sample:
+            args.append((nodules[nodules.seriesid == seriesid], doctor, consilium, factor, confidences))
 
     pool = mp.Pool()
     results = pool.map(_consilium_results, args)
@@ -119,8 +149,8 @@ def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, n_
     new_confidences = np.zeros(n_doctors)
     sum_weights = np.zeros(n_doctors)
 
-    for doctor, annotators, score in results:
-        weight = np.prod(1 / probabilities[annotators]) / probabilities[doctor]
+    for doctor, consilium, score in results:
+        weight = 1 / consiliums_probabilities[consilium[0], consilium[1]]
         new_confidences[doctor] += weight * score
         sum_weights[doctor] += weight
     new_confidences = new_confidences / sum_weights
@@ -130,20 +160,19 @@ def _update_confidences(nodules, confidences, probabilities, n_consiliums=10, n_
 
 
 def _consilium_results(args):
-    image_nodules, doctor, factor, confidences = args
+    image_nodules, doctor, consilium, factor, confidences = args
     if image_nodules.DoctorID.isna().iloc[0]:
         return doctor, 1
     else:
-        annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
-        annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
-        annotators.remove(doctor)
-        sample_annotators = np.random.choice(annotators, 2, replace=False)
-        mask = create_mask(image_nodules, doctor, sample_annotators, factor=factor)
-
-        consilium_confidences = confidences[sample_annotators]
+        # annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
+        # annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
+        # annotators.remove(doctor)
+        # sample_annotators = np.random.choice(annotators, 2, replace=False)
+        mask = create_mask(image_nodules, doctor, consilium, factor=factor)
+        consilium_confidences = confidences[list(consilium)]
         consilium_confidences = consilium_confidences / np.sum(consilium_confidences)
 
-        return doctor, annotators, consilium_dice(mask, consilium_confidences)
+        return doctor, consilium, consilium_dice(mask, consilium_confidences)
 
 
 def _compute_mask_size(nodules):
