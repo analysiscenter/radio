@@ -831,10 +831,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
             params = dict(bounds=new_bounds, origin=self.origin,
                           spacing=self.spacing)
-            params[components] = new_data
-            
-            # params = {image_component: new_data, 'bounds': new_bounds,
-            #           'origin': self.origin, 'spacing': self.spacing} 
+            params[components] = new_data            
             if new_batch:
                 batch = type(self)(self.index)
                 batch.load(fmt='ndarray', **params)
