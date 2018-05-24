@@ -13,6 +13,7 @@ import aiofiles
 import blosc
 import dicom
 import SimpleITK as sitk
+import nibabel as nib
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
 
@@ -111,7 +112,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 n_patients is total number of patients in array and `z, y, x`
                 is a shape of each patient 3D array.
                 Note, that each patient should have same and constant
-                `z, y, x` shape.
+                `y, x` shape.
             bounds : ndarray(n_patients, dtype=np.int) or None
                 1d-array of bound-floors for each scan 3D array,
                 has length = number of items in batch + 1, to be put in self._bounds.
@@ -361,10 +362,20 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
         elif fmt == 'nii':
-            self._load_nii()
+            components = 'images' if components is None else components
+            self._load_nii(components=components)
         else:
             raise TypeError("Incorrect type of batch source")
         return self
+
+    @inbatch_parallel(init='indices', post='_post_default', target='threads')
+    def _load_nii(self, patient_id, **kwargs):
+        """ Read .nii file and load image data array into batch component.
+        Parameters
+        ----------
+        """
+        img_nii = nib.load(self.index.get_fullpath(patient_id))
+        return img_nii.get_data()
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
     def _load_dicom(self, patient_id, **kwargs):
@@ -423,13 +434,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         """
         byted = self._read_blosc(**kwargs)
         self._debyte_blosc(byted=byted, **kwargs)
-
-    @inbatch_parallel(init='indices', post='_post_default', target='for')
-    def _load_nii(self, patient_id, **kwargs):
-        """ Read .nii file 
-        """
-        n_img = nib.load(self.index.get_fullpath(patient_id))
-        return n_img.get_data()
 
     def _prealloc_skyscraper_components(self, components, fmt='blosc'):
         """ Read shapes of skyscraper-components dumped with blosc,
@@ -798,7 +802,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             all_errors = self.get_errors(worker_outputs)
             raise RuntimeError("Failed parallelizing. Some of the workers failed with following errors: ", all_errors)
 
-    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
+    def _post_default(self, list_of_arrs, update=True, new_batch=False, components='images', **kwargs):
         """ Gatherer outputs of different workers, update `images` component
 
         Parameters
@@ -810,7 +814,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         new_batch : bool
             if False, empty batch is created,
             if True, data is gathered, loaded and put into batch.images.
-
+        
         Returns
         -------
         batch
@@ -825,8 +829,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if update:
             new_data = np.concatenate(list_of_arrs, axis=0)
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
-            params = dict(images=new_data, bounds=new_bounds,
-                          origin=self.origin, spacing=self.spacing)
+            params = dict(bounds=new_bounds, origin=self.origin,
+                          spacing=self.spacing)
+            params[components] = new_data
+            
+            # params = {image_component: new_data, 'bounds': new_bounds,
+            #           'origin': self.origin, 'spacing': self.spacing} 
             if new_batch:
                 batch = type(self)(self.index)
                 batch.load(fmt='ndarray', **params)
