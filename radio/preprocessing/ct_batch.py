@@ -1303,6 +1303,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         dst : tuple
             components to put the resulting xips into.
         """
+        # obtain xips
         xip_args = dict(depth=depth, mode=mode, stride=stride, start=start, projection=projection, channels=channels)
         xips = []
         for i in range(2):
@@ -1310,8 +1311,27 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             xip = self.xip(**xip_args)
             xips.append(xip)
 
-        cancer_filter = np.greater(np.sum(xips[1], axis=(1, 2, 3)), 0)
-        cancer_ixs = np.argwhere(cancer_filter)
+        # if needed, randomly select cancerous and noncancerous xip-slices
+        if batch_size is not None:
+            cancer_filter = np.greater(np.sum(xips[1], axis=(1, 2, 3)), 0)
+            all_cancer_ixs = np.argwhere(cancer_filter)
+            all_non_cancer_ixs = np.argwhere(~cancer_filter)
+            max_cancer = len(all_cancer_ixs)
+            num_cancer = min(int(batch_size * share), max_cancer)
+            num_non_cancer = batch_size - num_cancer
+
+            # random selection
+            cancer_ixs = np.random.choice(all_cancer_ixs, num_cancer, False)
+            non_cancer_ixs = np.random.choice(all_non_cancer_ixs, num_non_cancer, False)
+            p = np.random.permutation(batch_size)
+            for i in range(2):
+                xips[i] = np.concatenate((xips[i][cancer_ixs], xips[i][non_cancer_ixs]), axis=0)
+                xips[i] = xips[i][p]
+
+        # put xips into the batch
+        for i in range(2):
+            setattr(self, dst[i], xips[i])
+
         return self
 
     def unxip(self, xip, component, depth, stride, start=0, projection='axial', squeeze=True,
