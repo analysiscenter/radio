@@ -103,7 +103,7 @@ def _consiliums_prob(nodules, n_doctors):
         doc1, doc2 = ['doctor_{:03d}'.format(doctor) for doctor in [i, j]] #pylint:disable=cell-var-from-loop
         accession_numbers = (
             nodules[['seriesid', doc1, doc2]]
-            .assign(together=lambda df: df[doc1] == df[doc2])
+            .assign(together=lambda df: df[doc1] == df[doc2]) #pylint:disable=cell-var-from-loop
             .drop_duplicates()
         )
         accession_numbers = accession_numbers[accession_numbers[doc1] == 1]
@@ -141,7 +141,7 @@ def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliu
                 args.append((nodules[nodules.seriesid == seriesid], doctor,
                              consilium, factor, confidences))
 
-    pool = mp.Pool()
+    pool = mp.Pool() #pylint:disable=no-member
     results = pool.map(_consilium_results, args)
     pool.close()
 
@@ -225,7 +225,7 @@ def create_mask(image_nodules, doctor, annotators, factor):
 
 @njit
 def _create_mask_numba(mask, coords, diameters):
-    for i in range(len(coords)):
+    for i in range(len(coords)): #pylint:disable=consider-using-enumerate
         center = coords[i]
         diameter = diameters[i]
 
@@ -307,7 +307,7 @@ def get_table(nodules, n_doctors=15, factor=0.3):
         accession_numbers = (
             nodules
             .groupby('seriesid')
-            .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values)
+            .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values) #pylint:disable=cell-var-from-loop
         )
         accession_numbers = accession_numbers[accession_numbers].index
         table_meetings[i, j] = len(accession_numbers)

@@ -340,8 +340,8 @@ def read_nodules(path, include_annotators=False):
     nodules = annotation_to_nodules(annotation)
     if include_annotators:
         annotators_info = (annotation
-           .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-           .query("AccessionNumber != ''"))[['AccessionNumber', 'DoctorID']]
+                           .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
+                           .query("AccessionNumber != ''"))[['AccessionNumber', 'DoctorID']]
         nodules = nodules.merge(annotators_info, left_on=['seriesid', 'DoctorID'],
                                 right_on=['seriesid', 'DoctorID'], how='outer')
     return nodules
