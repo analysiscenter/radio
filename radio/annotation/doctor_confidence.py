@@ -325,3 +325,72 @@ def get_table(nodules, n_doctors=15, factor=0.3):
         table[i, j] = table[j, i] = np.mean(dices)
 
     return table, table_meetings
+
+def generate_nodule(size=1):
+    """ Generate nodules
+
+    Parameters
+    ----------
+    size : int
+        number of nodules
+
+    Returns
+    -------
+    dict
+        dict of nodules with keys `coordX, coordY, coordZ, diameter_mm`
+    """
+    coordX = np.random.uniform(-230.9075 / 2, 1191.48908 / 2, size)
+    coordY = np.random.uniform(-229.933 / 2, 1356.4289999999999 /2, size)
+    coordZ = np.random.uniform(-1147.5 / 2, 4528.5 / 2, size)
+    diameter_mm = np.random.randint(1, 15, size)
+    return {'coordX': coordX, 'coordY': coordY, 'coordZ': coordZ, 'diameter_mm': diameter_mm}
+
+def generate_annotation(n_images, n_doctors=10, bad_doctors=[0], middle_doctors=[]):
+    """ Generate annotation
+
+    Parameters
+    ----------
+    n_images : int
+
+    n_doctors : int
+
+    bad_doctors : list
+        indices of doctors who select nodules that don't coincide with nodules of other doctors
+    middle_doctors : list
+        indices of doctors who select nodules that don't coincide with nodules of other doctors
+        and also select nodules that coincide with nodules of good doctors.
+        All good doctors always select the same nodules.
+
+    Returns
+    -------
+    pd.DataFrame
+        annotation with columns `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm']`
+    """
+    annotation = pd.DataFrame({'seriesid': [], 'DoctorID': [], 'coordX': [], 'coordY': [], 'coordZ': [], 'diameter_mm': []})
+    for i in range(n_images):
+        doctors = np.random.choice(np.arange(0, n_doctors), size=np.random.randint(3, 5), replace=False)
+        
+        for doctor in bad_doctors + middle_doctors:
+            if doctor in doctors:
+                doctor_find = np.random.randint(0, 4)
+                doctor_nodules = pd.DataFrame({
+                    'seriesid': [str(i)] * doctor_find,
+                    'DoctorID': [str(doctor).zfill(3)] * doctor_find,
+                    **generate_nodule(doctor_find)
+                })
+                annotation = pd.concat([annotation, doctor_nodules], axis=0)
+               
+        consilium_find = np.random.randint(0, 4)
+        nod = generate_nodule(consilium_find)                
+        
+        for d in doctors:
+            if d not in bad_doctors:
+                doctor_nodules = pd.DataFrame({
+                    'seriesid': [str(i)] * consilium_find,
+                    'DoctorID': [str(d).zfill(3)] * consilium_find,
+                    **nod
+                })
+            annotation = pd.concat([annotation, doctor_nodules], axis=0)
+    annotation = annotation.reset_index()
+    del annotation['index']
+    return annotation
