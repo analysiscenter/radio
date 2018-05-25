@@ -5,8 +5,10 @@ from collections import OrderedDict
 from binascii import hexlify
 import glob
 import pickle
-import tqdm
 from multiprocessing.dummy import Pool as ThreadPool
+import numpy as np
+import pandas as pd
+import tqdm
 import dicom
 
 def generate_index(size=20):
