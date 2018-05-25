@@ -79,7 +79,7 @@ def get_dicom_info(paths, index_col=None):
             'SpacingY': float(first_slice.PixelSpacing[0]),
             'SpacingX': float(first_slice.PixelSpacing[1]),
             'StudyID': str(first_slice.StudyID),
-            'ConvolutionalKernel': str(first_slice.ConvolutionalKernel),
+            'ConvolutionKernel': str(first_slice.ConvolutionKernel),
             'FilterType': str(first_slice.FilterType),
             'WindowWidth': str(first_slice.WindowWidth),
             'WindowCenter': str(first_slice.WindowCenter),
