@@ -5,7 +5,10 @@ from collections import OrderedDict
 import glob
 import numpy as np
 import pandas as pd
-import dicom
+try:
+    import pydicom as dicom # pydicom library was renamed in v1.0
+except ImportError:
+    import dicom
 
 
 def generate_index(size=20):
