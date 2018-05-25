@@ -19,8 +19,8 @@ N_ITERS = 100  # N_ITERS * (num_luna_nodules=1149) ~ 115000
 
 # these params ensure that the number of non-cancerous crops will also
 # be around 115000 (when run on the whole luna-dataset)
-RUN_BATCH_SIZE = 8
-NON_CANCER_BATCH_SIZE = 1030  # NON_CANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
+RUN_BATCH_SIZE = 6
+NON_CANCER_BATCH_SIZE = 800  # NON_CANCER_BATCH_SIZE * (len_of_lunaset=888) / RUN_BATCH_SIZE ~ 115000
 
 
 def get_crops(nodules, fmt='raw', nodule_shape=(32, 64, 64), batch_size=20, share=0.5, histo=None,
@@ -230,7 +230,7 @@ def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-10
     ppl_cancer = (cancer_set.p
                   .load(fmt='blosc')
                   .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
-                  .run(lazy=True, batch_size=batch_sizes[0], shuffle=True)
+                  .run(lazy=True, batch_size=batch_sizes[0], shuffle=9)
                  )
 
     # pipeline generating non-cancerous crops merged with first pipeline
@@ -238,7 +238,7 @@ def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-10
                 .load(fmt='blosc')
                 .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
                 .merge(ppl_cancer)
-                .run(lazy=True, batch_size=batch_sizes[1], shuffle=True)
+                .run(lazy=True, batch_size=batch_sizes[1], shuffle=9)
                )
 
     return pipeline

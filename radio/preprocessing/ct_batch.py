@@ -11,15 +11,16 @@ import dill as pickle
 import numpy as np
 import aiofiles
 import blosc
-
 try:
     import pydicom as dicom # pydicom library was renamed in v1.0
 except ImportError:
     import dicom
-
 import SimpleITK as sitk
+from scipy.ndimage import grey_closing, grey_opening, grey_dilation, grey_dilation, grey_erosion
+from scipy.ndimage import maximum_filter, minimum_filter, median_filter, sobel, center_of_mass, percentile_filter, gaussian_filter
+from scipy.fftpack import fftn, ifftn
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Pipeline, DatasetIndex  # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
@@ -131,6 +132,16 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = bounds if bounds is not None else self._bounds
         for comp_name, comp_data in kwargs.items():
             setattr(self, comp_name, comp_data)
+
+    def __rshift__(self, other):
+        if isinstance(other, Pipeline):
+            return other._exec_all_actions(self)
+        else:
+            raise TypeError("Right operand must be instance of Pipeline class.")
+
+    @action
+    def apply(self, callback, *args, **kwargs):
+        return callback(self, *args, **kwargs)
 
     @classmethod
     def split(cls, batch, batch_size):
@@ -352,25 +363,25 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch.load(fmt='ndarray', images=images_array, bounds=bounds)
 
         """
+        components = self.components if components is None else components
+        # convert components_blosc to iterable
+        components = np.asarray(components).reshape(-1)
+
         # if ndarray
         if fmt == 'ndarray':
             self._init_data(bounds=bounds, **kwargs)
         elif fmt == 'dicom':
-            self._load_dicom()              # pylint: disable=no-value-for-parameter
+            self._load_dicom(components=components)              # pylint: disable=no-value-for-parameter
         elif fmt == 'blosc':
-            components = self.components if components is None else components
-            # convert components_blosc to iterable
-            components = np.asarray(components).reshape(-1)
-
             self._load_blosc(components=components)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
-            self._load_raw()                # pylint: disable=no-value-for-parameter
+            self._load_raw(components=components)                # pylint: disable=no-value-for-parameter
         else:
             raise TypeError("Incorrect type of batch source")
         return self
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
-    def _load_dicom(self, patient_id, **kwargs):
+    def _load_dicom(self, patient_id, components=None, **kwargs):
         """ Read dicom file, load 3d-array and convert to Hounsfield Units (HU).
 
         Notes
@@ -378,6 +389,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Conversion to hounsfield unit scale using meta from dicom-scans is performed.
         """
         # put 2d-scans for each patient in a list
+        components = np.intersect1d(components, CTImagesBatch.components)
+        if 'images' not in components:
+            raise ValueError("Components argument must contain 'images'"
+                             + " value if format is 'dicom' or 'raw'")
+
         patient_pos = self.index.get_pos(patient_id)
         patient_folder = self.index.get_fullpath(patient_id)
         list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
@@ -389,13 +405,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         intercept_pat = dicom_slice.RescaleIntercept
         slope_pat = dicom_slice.RescaleSlope
 
-        self.spacing[patient_pos, ...] = np.asarray([float(dicom_slice.SliceThickness),
-                                                     float(dicom_slice.PixelSpacing[0]),
-                                                     float(dicom_slice.PixelSpacing[1])], dtype=np.float)
+        if 'spacing' in components:
+            self.spacing[patient_pos, ...] = np.asarray([float(dicom_slice.SliceThickness),
+                                                         float(dicom_slice.PixelSpacing[0]),
+                                                         float(dicom_slice.PixelSpacing[1])], dtype=np.float)
 
-        self.origin[patient_pos, ...] = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
-                                                    float(dicom_slice.ImagePositionPatient[0]),
-                                                    float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
+        if 'origin' in components:
+            self.origin[patient_pos, ...] = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
+                                                        float(dicom_slice.ImagePositionPatient[0]),
+                                                        float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
 
         patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
 
@@ -528,8 +546,22 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return None
 
-    def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
+    @inbatch_parallel(init='indices', post='_post_default', target='for')
+    def _load_raw(self, patient_id, components, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw images (with meta in .mhd)
+
+        Parameters
+        ----------
+        patient_id : str
+            patient dicom file index from batch, to be loaded.
+
+        components : ndarray
+            ndarray with components to load.
+
+        Returns
+        -------
+        ndarray
+            3d-scan as np.ndarray
 
         Notes
         -----
@@ -537,23 +569,22 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         NO multithreading is used, as SimpleITK (sitk) lib crashes
         in multithreading mode in experiments.
         """
-        list_of_arrs = []
-        for patient_id in self.indices:
-            raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
-            patient_pos = self.index.get_pos(patient_id)
-            list_of_arrs.append(sitk.GetArrayFromImage(raw_data))
+        components = np.intersect1d(components, CTImagesBatch.components)
+        if 'images' not in components:
+            raise ValueError("Components argument must contain 'images'"
+                             + " value if format is 'dicom' or 'raw'")
 
-            # *.mhd files contain information about scans' origin and spacing;
-            # however the order of axes there is inversed:
-            # so, we just need to reverse arrays with spacing and origin.
+        patient_pos = self.index.get_pos(patient_id)
+        # *.mhd files contain information about scans' origin and spacing;
+        # however the order of axes there is inversed:
+        # so, we just need to reverse arrays with spacing and origin.
+        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
+        if 'origin' in components:
             self.origin[patient_pos, :] = np.array(raw_data.GetOrigin())[::-1]
+        if 'spacing' in components:
             self.spacing[patient_pos, :] = np.array(raw_data.GetSpacing())[::-1]
 
-        new_data = np.concatenate(list_of_arrs, axis=0)
-        new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
-        self.images = new_data
-        self._bounds = new_bounds
-        return self
+        return sitk.GetArrayFromImage(raw_data)
 
     @action
     @inbatch_parallel(init='_init_dump', post='_post_default', target='async', update=False)
@@ -821,7 +852,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 self._init_data(**params)
         return res
 
-    def _post_components(self, list_of_dicts, **kwargs):
+    def _post_components(self, list_of_dicts, new_batch=True, **kwargs):
         """ Gather outputs of different workers, update many components.
 
         Parameters
@@ -835,15 +866,20 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             changes self's components
         """
         self._reraise_worker_exceptions(list_of_dicts)
-
+        if new_batch:
+            batch = type(self)(self.index)
+            batch._init_data(self._bounds, **{component: getattr(self, component)
+                                              for component in self.components})
+        else:
+            batch = self
         # if images is in dict, update bounds
         if 'images' in list_of_dicts[0]:
             list_of_images = [worker_res['images'] for worker_res in list_of_dicts]
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_images]))
             new_data = np.concatenate(list_of_images, axis=0)
             params = dict(images=new_data, bounds=new_bounds,
-                          origin=self.origin, spacing=self.spacing)
-            self._init_data(**params)
+                          origin=batch.origin, spacing=batch.spacing)
+            batch._init_data(**params)
 
         # loop over other components that we need to update
         for component in list_of_dicts[0]:
@@ -853,9 +889,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 # concatenate comps-outputs for different scans and update self
                 list_of_component = [worker_res[component] for worker_res in list_of_dicts]
                 new_comp = np.concatenate(list_of_component, axis=0)
-                setattr(self, component, new_comp)
+                setattr(batch, component, new_comp)
 
-        return self
+        return batch
 
     def _init_images(self, **kwargs):
         """ Fetch args for loading `images` using inbatch_parallel.
@@ -1117,7 +1153,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return resize_pil(**args_resize)
 
     @action
-    @inbatch_parallel(init='indices', post='_post_default', update=False, target='threads')
+    @inbatch_parallel(init='indices', post='_post_components', new_batch=True, target='threads')
     def rotate(self, index, angle, components='images', axes=(1, 2), random=True, **kwargs):
         """ Rotate 3D images in batch on specific angle in plane.
 
@@ -1155,10 +1191,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         """
         _components = np.asarray(components).reshape(-1)
-        _angle = angle * np.random.rand() if random else angle
+        _angle = angle * (2 * np.random.rand() - 1) if random else angle
+        out_dict = {}
         for comp in _components:
             data = self.get(index, comp)
-            rotate_3D(data, _angle, axes)
+            out_dict[comp] = rotate_3D(data, _angle, axes)
+        return out_dict
 
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
     def _make_xip(self, image, depth, stride=2, mode='max',
@@ -1257,33 +1295,38 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return self
 
     @action
-    def central_crop(self, crop_size, **kwargs):
-        """ Make crop of crop_size from center of images.
+    def central_crop(self, size, inplace=True, **kwargs):
+        """ Make crop of given size from center of images.
 
         Parameters
         ----------
-        crop_size : tuple, list or ndarray of int
-            (z,y,x)-shape of crop.
+        size : tuple, list or ndarray of int (z,y,x)-shape of crop.
+        inplace : bool
+            whether to perform cropping inplace or create new batch.
 
         Returns
         -------
         batch
         """
-        crop_size = np.asarray(crop_size).reshape(-1)
-        crop_halfsize = np.rint(crop_size / 2)
+        size = np.asarray(size).reshape(-1)
+        crop_halfsize = np.rint(size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape) for i in range(len(self))]
-        if any(np.any(shape < crop_size) for shape in img_shapes):
+        if any(np.any(shape < size) for shape in img_shapes):
             raise ValueError("Crop size must be smaller than size of inner 3D images")
 
         cropped_images = []
         for i in range(len(self)):
             image = self.get(i, 'images')
-            cropped_images.append(make_central_crop(image, crop_size))
+            cropped_images.append(make_central_crop(image, size))
 
-        self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
-        self.images = np.concatenate(cropped_images, axis=0)
-        self.origin = self.origin + self.spacing * crop_halfsize
-        return self
+        if inplace:
+            batch = self
+        else:
+            batch = type(self)(self.index)
+        batch._bounds = np.cumsum([0] + [size[0]] * len(self))
+        batch.images = np.concatenate(cropped_images, axis=0)
+        batch.origin = batch.origin + batch.spacing * crop_halfsize
+        return batch
 
     def get_patches(self, patch_shape, stride, padding='edge', data_attr='images'):
         """ Extract patches of patch_shape with specified stride.
@@ -1462,3 +1505,97 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         margin = int(slice_height * self.get(person_number, 'images').shape[0])
         patch = self.get(person_number, 'images')[margin, :, :]
         return patch
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def erosion(self, index, size=None, component='images', footprint=None, mode='reflect', cval=0.0, num_iter=1, **kwargs):
+        output = self.get(index, component)
+        for i in range(num_iter):
+            output = grey_erosion(output, size=size, footprint=footprint)
+        return {component: output}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def dilation(self, index, size=None, component='images', footprint=None, mode='reflect', cval=0.0, num_iter=1, **kwargs):
+        output = self.get(index, component)
+        for i in range(num_iter):
+            output = grey_dilation(output, size=size, footprint=footprint)
+        return {component: output}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def opening(self, index, size=None, component='images', footprint=None, mode='reflect', cval=0.0, num_iter=1, **kwargs):
+        output = self.get(index, component)
+        for i in range(num_iter):
+            output = grey_opening(output, size=size, footprint=footprint)
+        return {component: output}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def closing(self, index, size=None, component='images', footprint=None, mode='reflect', cval=0.0, num_iter=1, **kwargs):
+        output = self.get(index, component)
+        for i in range(num_iter):
+            output = grey_closing(output, size=size, footprint=footprint)
+        return {component: output}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def maximum_filter(self, index, size=None, component='images', footprint=None, mode='reflect', cval=0.0, **kwargs):
+        out_data = maximum_filter(self.get(index, component), size=size, cval=cval, footprint=footprint, mode=mode)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def minimum_filter(self, index, size=None, component='images', footprint=None, mode='reflect', cval=0.0, **kwargs):
+        out_data = minimum_filter(self.get(index, component), size=size, cval=cval, footprint=footprint, mode=mode)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def median_filter(self, index, size=None, component='images', footprint=None, mode='reflect', cval=0.0, **kwargs):
+        out_data = median_filter(self.get(index, component), size=size, cval=cval, footprint=footprint, mode=mode)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def percentile_filter(self, index, percentile, size=None, component='images', footprint=None, mode='reflect', cval=0.0, **kwargs):
+        out_data = percentile_filter(self.get(index, component), percentile=percentile,
+                                     size=size, cval=cval, footprint=footprint, mode=mode)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def gaussian_filter(self, index, sigma, component='images', order=0, mode='reflect', cval=0.0, truncate=4.0, **kwargs):
+        out_data = gaussian_filter(self.get(index, component), sigma=sigma, order=order,
+                                   mode=mode, cval=cval, truncate=truncate)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def additive_gaussian_noise(self, index, loc=0.0, scale=0.1, component='images', **kwargs):
+        out_data = self.get(index, component)
+        out_data = out_data + np.random.normal(loc, scale, size=out_data.shape)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def dropout(self, index, p=0.1, component='images', **kwargs):
+        out_data = self.get(index, component)
+        out_data = out_data * np.random.binomial(1, p, size=out_data.shape)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def fft(self, index, component='images', axes=(0, 1, 2), norm=True, **kwargs):
+        out_data = fftn(self.get(index, component), axes=axes)
+        if norm:
+            out_data = np.abs(out_data)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def ifft(self, index, component='images', axes=(0, 1, 2), norm=True, **kwargs):
+        out_data = ifftn(self.get(index, component), axes=axes)
+        if norm:
+            out_data = np.abs(out_data)
+        return {component: out_data}

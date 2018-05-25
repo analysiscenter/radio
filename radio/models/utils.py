@@ -115,41 +115,41 @@ def overlap_nodules(batch, nodules_true, nodules_pred):
     true_df = (
         batch
         .nodules_to_df(nodules_true)
-        .assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+        .assign(diam=lambda df: np.max(df[['diamZ', 'diamY', 'diamX']], axis=1))
     )
 
     pred_df = (
         batch
         .nodules_to_df(nodules_pred)
-        .assign(diam=lambda df: np.max(df.iloc[:, [4, 5, 6]], axis=1))
+        .assign(diam=lambda df: np.max(df[['diamZ', 'diamY', 'diamX']], axis=1))
     )
 
     true_out, pred_out = [], []
     true_gr, pred_gr = true_df.groupby('source_id'), pred_df.groupby('source_id')
     for group_name in {**true_gr.groups, **pred_gr.groups}:
         try:
-            nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
+            nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id', 'confidence']]
         except KeyError:
-            nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
+            nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id', 'confidence']]
             nods_pred.loc[:, 'overlap_index'] = np.nan
             nods_pred.loc[:, 'source_id'] = group_name
             nods_pred = nods_pred.set_index('nodule_id')
             pred_out.append(nods_pred)
             continue
         try:
-            nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
+            nods_pred = pred_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id', 'confidence']]
         except KeyError:
-            nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id']]
+            nods_true = true_gr.get_group(group_name).loc[:, ['diam', 'locZ', 'locY', 'locX', 'nodule_id', 'confidence']]
             nods_true.loc[:, 'overlap_index'] = np.nan
             nods_true.loc[:, 'source_id'] = group_name
             nods_true = nods_true.set_index('nodule_id')
             true_out.append(nods_true)
             continue
 
-        nods_true = nods_true.set_index('nodule_id').loc[:, ['diam', 'locZ', 'locY', 'locX']]
-        nods_pred = nods_pred.set_index('nodule_id').loc[:, ['diam', 'locZ', 'locY', 'locX']]
+        nods_true = nods_true.set_index('nodule_id').loc[:, ['diam', 'locZ', 'locY', 'locX', 'confidence']]
+        nods_pred = nods_pred.set_index('nodule_id').loc[:, ['diam', 'locZ', 'locY', 'locX', 'confidence']]
 
-        overlap_matrix = nodules_sets_overlap_jit(nods_true.values, nods_pred.values)
+        overlap_matrix = nodules_sets_overlap_jit(nods_true.values[:,:-1], nods_pred.values[:,:-1])
 
         ov_mask_true, ov_ind_true = _create_overlap_index(overlap_matrix)
         ov_mask_pred, ov_ind_pred = _create_overlap_index(overlap_matrix.T)
