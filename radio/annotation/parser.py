@@ -82,7 +82,7 @@ def get_dicom_info(paths, index_col=None):
             'ConvolutionalKernel': str(first_slice.ConvolutionalKernel),
             'FilterType': str(first_slice.FilterType),
             'WindowWidth': str(first_slice.WindowWidth),
-            'WindowCenter': str(first_slice.WindowCenter)
+            'WindowCenter': str(first_slice.WindowCenter),
             'PatientAge': str(first_slice.PatientAge) if hasattr(first_slice, 'PatientAge') else '',
             'PatientSex': str(first_slice.PatientSex) if hasattr(first_slice, 'PatientSex') else '',
             'AccessionNumber': str(first_slice.AccessionNumber),
