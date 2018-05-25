@@ -79,6 +79,12 @@ def get_dicom_info(paths, index_col=None):
             'SpacingY': float(first_slice.PixelSpacing[0]),
             'SpacingX': float(first_slice.PixelSpacing[1]),
             'StudyID': str(first_slice.StudyID),
+            'ConvolutionalKernel': str(first_slice.ConvolutionalKernel),
+            'FilterType': str(first_slice.FilterType),
+            'WindowWidth': str(first_slice.WindowWidth),
+            'WindowCenter': str(first_slice.WindowCenter)
+            'PatientAge': str(first_slice.PatientAge) if hasattr(first_slice, 'PatientAge') else '',
+            'PatientSex': str(first_slice.PatientSex) if hasattr(first_slice, 'PatientSex') else '',
             'AccessionNumber': str(first_slice.AccessionNumber),
             'PatientID': str(first_slice.PatientID),
             'Rows': int(first_slice.Rows),
