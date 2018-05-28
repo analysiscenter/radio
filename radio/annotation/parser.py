@@ -330,7 +330,7 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
     if (path is None and paths is None) or (path is not None and paths is not None):
         raise ValueError("Only one of 'path' or 'paths' arguments must be provided")
 
-    dataset_info = get_dicom_info(glob.glob(path, verbose=verbose) if path is not None else paths)
+    dataset_info = get_dicom_info(glob.glob(path) if path is not None else paths, verbose=verbose)
     if filter_by_min_spacing:
         output_indices = (
             dataset_info
