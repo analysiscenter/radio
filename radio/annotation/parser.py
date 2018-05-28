@@ -77,7 +77,7 @@ def get_dicom_info(paths, index_col=None, verbose=False):
         pandas DataFrame with scans' meta information.
     """
     meta_info = []
-    paths = tqdm_notebook(paths) if verbose else paths
+    paths = tqdm_notebook(paths, leave=False) if verbose else paths
     for path in paths:
         first_slice = dicom.read_file(os.path.join(path, os.listdir(path)[0]))
 
