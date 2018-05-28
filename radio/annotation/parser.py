@@ -77,8 +77,30 @@ def get_dicom_info(paths, index_col=None):
     for path in paths:
         first_slice = dicom.read_file(os.path.join(path, os.listdir(path)[0]))
 
+        if hasattr(first_slice, 'PatientAge'):
+            patient_age = str(first_slice.PatientAge)
+        else:
+            patient_age = ''
+
+        if hasattr(first_slice, 'PatientSex'):
+            patient_sex = str(first_slice.PatientSex)
+        else:
+            patient_sex = ''
+
+        locations = []
+        for name in os.listdir(path):
+            slice_path = os.path.join(path, name)
+            dicom_slice = dicom.read_file(slice_path, stop_before_pixels=True)
+            locations.append(float(dicom_slice.SliceLocation))
+
+        steps_z = np.diff(np.sort(np.array(locations)))
+        spacing_z = steps_z[0]
+        if not np.all(steps_z == spacing_z):
+            raise ValueError("Distance between slices along z axis must be constant")
+
         info_dict = {
-            'SpacingZ': float(first_slice.SliceThickness),
+            'SliceThickness': float(first_slice.SliceThickness),
+            'SpacingZ': spacing_z,
             'SpacingY': float(first_slice.PixelSpacing[0]),
             'SpacingX': float(first_slice.PixelSpacing[1]),
             'StudyID': str(first_slice.StudyID),
@@ -86,8 +108,8 @@ def get_dicom_info(paths, index_col=None):
             'FilterType': str(first_slice.FilterType),
             'WindowWidth': str(first_slice.WindowWidth),
             'WindowCenter': str(first_slice.WindowCenter),
-            'PatientAge': str(first_slice.PatientAge) if hasattr(first_slice, 'PatientAge') else '',
-            'PatientSex': str(first_slice.PatientSex) if hasattr(first_slice, 'PatientSex') else '',
+            'PatientAge': patient_age,
+            'PatientSex': patient_sex,
             'AccessionNumber': str(first_slice.AccessionNumber),
             'PatientID': str(first_slice.PatientID),
             'Rows': int(first_slice.Rows),
