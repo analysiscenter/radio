@@ -96,7 +96,8 @@ def get_dicom_info(paths, index_col=None):
         steps_z = np.diff(np.sort(np.array(locations)))
         spacing_z = steps_z[0]
         if not np.all(steps_z == spacing_z):
-            raise ValueError("Distance between slices along z axis must be constant")
+            raise ValueError("Distance between slices along z axis must be constant."
+                             + " But got {}.".format(steps_z))
 
         info_dict = {
             'SliceThickness': float(first_slice.SliceThickness),
