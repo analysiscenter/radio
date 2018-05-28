@@ -345,7 +345,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         bounds stores ndarray of last floors for each scan.
         say, bounds = np.asarray([0, 100, 400])
 
-        >>> batch.load(fmt='ndarray', images=images_array, bounds=bounds)
+        >>> batch.load(fmt='npdarray', images=images_array, bounds=bounds)
 
         """
         # if ndarray
@@ -375,6 +375,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         ----------
         """
         img_nii = nib.load(self.index.get_fullpath(patient_id))
+
+        patient_pos = self.index.get_pos(patient_id)
+        self.spacing[patient_pos, ...] = np.diag(img_nii.affine)[:-1]
+        self.origin[patient_pos, ...] = img_nii.affine[:-1, -1]
+
         return img_nii.get_data()
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads')
