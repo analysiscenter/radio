@@ -9,6 +9,7 @@ try:
     import pydicom as dicom # pydicom library was renamed in v1.0
 except ImportError:
     import dicom
+from tqdm import tqdm_notebook
 
 
 def generate_index(size=20):
@@ -58,7 +59,7 @@ def normalize_nodule_type(nodules):
     return nodules.assign(NoduleType=nodule_type)
 
 
-def get_dicom_info(paths, index_col=None):
+def get_dicom_info(paths, index_col=None, verbose=False):
     """ Accumulates scans meta information from dicom dataset in pandas DataFrame.
 
     Parameters
@@ -67,6 +68,8 @@ def get_dicom_info(paths, index_col=None):
         paths to directories with dicom files.
     index_col : str or None
         name of column that will be used as index of output DataFrame.
+    verbose : bool
+        whether to show progressbar or not.
 
     Returns
     -------
@@ -74,6 +77,7 @@ def get_dicom_info(paths, index_col=None):
         pandas DataFrame with scans' meta information.
     """
     meta_info = []
+    paths = tqdm_notebook(paths) if verbose else paths
     for path in paths:
         first_slice = dicom.read_file(os.path.join(path, os.listdir(path)[0]))
 
