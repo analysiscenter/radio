@@ -1274,7 +1274,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     def sample_xip(self, depth, stride, mode='max', start=0, squeeze=(False, True), projection='axial', channels=3,
-                   batch_size=20, share=0.5, src=('images', 'masks'), dst=('xip_images', 'xip_masks')):
+                   batch_size=20, share=0.5, sampler=None, src=('images', 'masks'), dst=('xip_images', 'xip_masks')):
         """ Create xips for a pair of components for training neural networks. Put xips them into `dst`-components.
 
         Parameters
@@ -1298,6 +1298,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             needed number of generated projections.
         share : float
             share of cancerous projections.
+        sampler : Sampler
+            sampler of points from scan box, either 3d or 1d. Used for selecting noncancerous slices.
         src : tuple
             pair of components to pass through the xip-procedure.
         dst : tuple
@@ -1315,14 +1317,25 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if batch_size is not None:
             cancer_filter = np.greater(np.sum(xips[1], axis=(1, 2, 3)), 0)
             all_cancer_ixs = np.argwhere(cancer_filter)
-            all_non_cancer_ixs = np.argwhere(~cancer_filter)
             max_cancer = len(all_cancer_ixs)
             num_cancer = min(int(batch_size * share), max_cancer)
             num_non_cancer = batch_size - num_cancer
 
             # random selection
-            cancer_ixs = np.random.choice(all_cancer_ixs, num_cancer, False)
-            non_cancer_ixs = np.random.choice(all_non_cancer_ixs, num_non_cancer, False)
+            cancer_ixs = np.random.choice(all_cancer_ixs, size=num_cancer, replace=False)
+
+            # select non-cancerous indices
+            if sampler is None:
+                non_cancer_ixs = np.random.choice(range(len(cancer_filter)), size=num_non_cancer, replace=False)
+            else:
+                # adjust the sampler: the number of xip-slices can differ from the shape of xip-axis
+                xip_axis_len = self.get(0, src[0]).shape[PROJECTIONS[projection][0]]
+                factor = np.ones((1, 3))
+                factor[PROJECTIONS[projection][0]] = len(cancer_filter) / xip_axis_len
+                sampler = sampler * factor
+                non_cancer_ixs = (sampler.sample(size=num_non_cancer)[:, PROJECTIONS[projection][0]]
+                                  .clip(min=0, max=len(cancer_filter)))
+
             p = np.random.permutation(batch_size)
             for i in range(2):
                 xips[i] = np.concatenate((xips[i][cancer_ixs], xips[i][non_cancer_ixs]), axis=0)
