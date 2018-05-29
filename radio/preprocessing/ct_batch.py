@@ -298,7 +298,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return merged, rest
 
     @action
-    def load(self, fmt='dicom', components=None, bounds=None, **kwargs):      # pylint: disable=arguments-differ
+    def load(self, fmt='dicom', components=None, bounds=None, dst=None, **kwargs):      # pylint: disable=arguments-differ
         """ Load 3d scans data in batch.
 
         Parameters
@@ -349,40 +349,51 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         """
         # if ndarray
-        if fmt == 'ndarray':
-            self._init_data(bounds=bounds, **kwargs)
-        elif fmt == 'dicom':
-            self._load_dicom()              # pylint: disable=no-value-for-parameter
-        elif fmt == 'blosc':
-            components = self.components if components is None else components
-            # convert components_blosc to iterable
-            components = np.asarray(components).reshape(-1)
+        components = self.components if components is None else components
+        components = np.asarray(components).reshape(-1)
 
-            self._load_blosc(components=components)              # pylint: disable=no-value-for-parameter
+        dst = components if dst is None else dst
+        dst = np.asarray(dst).reshape(-1)
+        if len(dst) != len(components):
+            raise ValueError('components and dst must be of the same length')
+
+        if fmt == 'ndarray':
+            self._init_data(bounds=bounds, components=components, **kwargs)
+        elif fmt == 'dicom':
+            self._load_dicom(dst=dst, components=components)     # pylint: disable=no-value-for-parameter
+        elif fmt == 'blosc':
+            self._load_blosc(dst=dst, components=components)              # pylint: disable=no-value-for-parameter
         elif fmt == 'raw':
             self._load_raw()                # pylint: disable=no-value-for-parameter
         elif fmt == 'nii':
             components = 'images' if components is None else components
-            self._load_nii(components=components)
+            self._load_nii(dst=dst, components=components)
         else:
             raise TypeError("Incorrect type of batch source")
         return self
 
-    @inbatch_parallel(init='indices', post='_post_default', target='threads')
+    @inbatch_parallel(init='indices', post='_post_custom_components', target='threads')
     def _load_nii(self, patient_id, **kwargs):
         """ Read .nii file and load image data array into batch component.
         Parameters
         ----------
         """
         img_nii = nib.load(self.index.get_fullpath(patient_id))
+        result = {}
 
-        patient_pos = self.index.get_pos(patient_id)
-        self.spacing[patient_pos, ...] = np.diag(img_nii.affine)[:-1]
-        self.origin[patient_pos, ...] = img_nii.affine[:-1, -1]
+        for i, comp_name in enumerate(kwargs['components']):
+            print('comp name', comp_name)
+            if comp_name == 'images':
+                comp_data = img_nii.get_data()
+            elif comp_name == 'spacing':
+                comp_data = np.diag(img_nii.affine)[:-1]
+            elif comp_name == 'origin':
+                comp_data = img_nii.affine[:-1, -1]
 
-        return img_nii.get_data()
+            result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
+        return result
 
-    @inbatch_parallel(init='indices', post='_post_default', target='threads')
+    @inbatch_parallel(init='indices', post='_post_custom_components', target='threads')
     def _load_dicom(self, patient_id, **kwargs):
         """ Read dicom file, load 3d-array and convert to Hounsfield Units (HU).
 
@@ -391,36 +402,47 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Conversion to hounsfield unit scale using meta from dicom-scans is performed.
         """
         # put 2d-scans for each patient in a list
-        patient_pos = self.index.get_pos(patient_id)
-        patient_folder = self.index.get_fullpath(patient_id)
-        list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
-                          for s in os.listdir(patient_folder)]
+        result = {}
 
-        list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
+        for i, comp_name in enumerate(kwargs['components']):
+            if comp_name == 'images':
+                patient_folder = self.index.get_fullpath(patient_id)
+                list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
+                                  for s in os.listdir(patient_folder)]
 
-        dicom_slice = list_of_dicoms[0]
-        intercept_pat = dicom_slice.RescaleIntercept
-        slope_pat = dicom_slice.RescaleSlope
+                list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
 
-        self.spacing[patient_pos, ...] = np.asarray([float(dicom_slice.SliceThickness),
-                                                     float(dicom_slice.PixelSpacing[0]),
-                                                     float(dicom_slice.PixelSpacing[1])], dtype=np.float)
+                dicom_slice = list_of_dicoms[0]
+                intercept_pat = dicom_slice.RescaleIntercept
+                slope_pat = dicom_slice.RescaleSlope
 
-        self.origin[patient_pos, ...] = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
-                                                    float(dicom_slice.ImagePositionPatient[0]),
-                                                    float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
+                patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
 
-        patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
+                patient_data[patient_data == AIR_HU] = 0
 
-        patient_data[patient_data == AIR_HU] = 0
+                # perform conversion to HU
+                if slope_pat != 1:
+                    patient_data = slope_pat * patient_data.astype(np.float64)
+                    patient_data = patient_data.astype(np.int16)
 
-        # perform conversion to HU
-        if slope_pat != 1:
-            patient_data = slope_pat * patient_data.astype(np.float64)
-            patient_data = patient_data.astype(np.int16)
+                patient_data += np.int16(intercept_pat)
+                comp_data = patient_data
 
-        patient_data += np.int16(intercept_pat)
-        return patient_data
+            elif comp_name == 'spacing':
+                comp_name = kwargs['dst'][i]
+                comp_data = np.asarray([float(dicom_slice.SliceThickness),
+                                                        float(dicom_slice.PixelSpacing[0]),
+                                                        float(dicom_slice.PixelSpacing[1])], dtype=np.float)
+
+
+            elif comp_name == 'origin': 
+                comp_name = kwargs['dst'][i]
+                comp_data = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
+                                                        float(dicom_slice.ImagePositionPatient[0]),
+                                                        float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
+
+            result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
+        return result
 
     def _load_blosc(self, **kwargs):
         """ Read scans from blosc and put them into batch components
@@ -481,6 +503,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
             setattr(self, component, np.zeros(skysc_shape))
 
+    def _prealloc_array_component(self, components=None, dst=None):
+        components = [components] if isinstance(components, str) else list(components)
+        dst = [dst] if isinstance(dst, str) else list(dst)
+        for i, comp_name in enumerate(components):
+            if comp_name in ['spacing', 'origin']:
+                setattr(self, dst[i], np.ones(shape=(len(self), 3)))
+            else:
+                setattr(self, dst[i], np.array([], dtype='int'))
+
     def _init_load_blosc(self, **kwargs):
         """ Init-function for load from blosc.
 
@@ -495,8 +526,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             list of ids of batch-items
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
-        if 'images' in kwargs['components']:
-            self._prealloc_skyscraper_components('images')
+        for i, comp_name in enumerate(kwargs['components']):
+            dst_component = kwargs['dst'][i]
+            if comp_name == 'images':
+                self._prealloc_skyscraper_components(dst_component)
+                print('done prealloc skyscrapper', comp_name, dst_component)
+            else:
+                self._prealloc_array_component(components=comp_name, dst=dst_component)
+                print('done prealloc array', comp_name, dst_component)
 
         return self.indices
 
@@ -524,7 +561,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads', update=False)
     def _debyte_blosc(self, ix, byted, **kwargs):
-        for source in kwargs['components']:
+        for i, source in enumerate(kwargs['components']):
             # set correct extension for each component and choose a tool
             # for debyting and (possibly) decoding it
             if source in ['spacing', 'origin']:
@@ -548,8 +585,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     return decoder(debyted)
             component = unpacker(byted[ix][source])
             # update needed slice(s) of component
-            comp_pos = self.get_pos(None, source, ix)
-            getattr(self, source)[comp_pos] = component
+            comp_dst = kwargs['dst'][i]
+            print('self spacing', self.spacing.shape)
+            print('self origin', self.origin.shape)
+            print('self images', self.images.shape)
+
+            comp_pos = self.get_pos(None, comp_dst, ix)
+            getattr(self, comp_dst)[comp_pos] = component
 
     def _load_raw(self, **kwargs):        # pylint: disable=unused-argument
         """ Load scans from .raw images (with meta in .mhd)
@@ -807,7 +849,38 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             all_errors = self.get_errors(worker_outputs)
             raise RuntimeError("Failed parallelizing. Some of the workers failed with following errors: ", all_errors)
 
-    def _post_default(self, list_of_arrs, update=True, new_batch=False, components='images', **kwargs):
+    def _post_custom_components(self, list_of_dicts, **kwargs):
+        """ Gather outputs of different workers, update many components.
+        Parameters
+        ----------
+        list_of_dicts : list
+            list of dicts {`name of destination component`: {'type': original component_name,
+                                                             'data': what_to_place_in_component}}
+        where original component_name is one of 'images', 'spacing', 'origin'
+        Returns
+        -------
+        self
+            changes self's components
+        """
+        self._reraise_worker_exceptions(list_of_dicts)
+        params = {}
+        for comp_dst, comp_data in list_of_dicts[0].items():
+            list_of_arrs = [worker_res[comp_dst]['data'] for worker_res in list_of_dicts]
+            if comp_data['type'] == 'images':
+                new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
+                params['bounds'] = new_bounds
+    
+                new_data = np.concatenate(list_of_arrs, axis=0)
+            else:
+                new_data = np.stack(list_of_arrs, axis=0)
+            params[comp_dst] = new_data
+
+        self._init_data(**params)
+        return self
+    
+
+
+    def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
         """ Gatherer outputs of different workers, update `images` component
 
         Parameters
@@ -834,9 +907,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if update:
             new_data = np.concatenate(list_of_arrs, axis=0)
             new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
-            params = dict(bounds=new_bounds, origin=self.origin,
-                          spacing=self.spacing)
-            params[components] = new_data            
+            params = dict(images=new_data, bounds=new_bounds,
+                          origin=self.origin, spacing=self.spacing)
             if new_batch:
                 batch = type(self)(self.index)
                 batch.load(fmt='ndarray', **params)
