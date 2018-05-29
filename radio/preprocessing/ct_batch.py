@@ -365,16 +365,16 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             params = {}
             for comp_dst, comp_data in zip(components, src):
                 params[comp_dst] = comp_data
-            self._init_data(bounds=bounds, params)
+            self._init_data(bounds=bounds, **params)
 
         elif fmt == 'dicom':
-            self._load_dicom(dst=dst, components=components)
+            self._load_dicom(dst=dst, components=components, **kwargs)
         elif fmt == 'blosc':
-            self._load_blosc(dst=dst, components=components)
+            self._load_blosc(dst=dst, components=components, **kwargs)
         elif fmt == 'raw':
-            self._load_raw(dst=dst, components=components)
+            self._load_raw(dst=dst, components=components, **kwargs)
         elif fmt == 'nii':
-            self._load_nii(dst=dst, components=components)
+            self._load_nii(dst=dst, components=components, **kwargs)
         else:
             raise TypeError("Incorrect type of batch source")
         return self
@@ -389,7 +389,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         result = {}
 
         for i, comp_name in enumerate(kwargs['components']):
-            print('comp name', comp_name)
             if comp_name == 'images':
                 comp_data = img_nii.get_data()
             elif comp_name == 'spacing':
@@ -469,7 +468,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         byted = self._read_blosc(**kwargs)
         self._debyte_blosc(byted=byted, **kwargs)
 
-    def _prealloc_skyscraper_components(self, components, fmt='blosc'):
+    def _prealloc_skyscraper_components(self, components=None, dst=None, fmt='blosc'):
         """ Read shapes of skyscraper-components dumped with blosc,
         allocate memory for them, update self._bounds.
 
@@ -487,10 +486,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
         # make iterable out of components-arg
+        # ?? probably making components iterable is unnecessary because it is called for one component only
         components = [components] if isinstance(components, str) else list(components)
+        dst = [dst] if isinstance(dst, str) else list(dst)
 
         # load shapes, perform memory allocation
-        for component in components:
+        for i, component in enumerate(components):
             shapes = np.zeros((len(self), 3), dtype=np.int)
             for ix in self.indices:
                 filename = os.path.join(self.index.get_fullpath(ix), component, 'data.shape')
@@ -506,16 +507,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             # TODO: once bounds for other components are added, make sure they are updated here in the right way
             self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
 
-            # preallocate the component
+            # preallocate space in dst
             skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
-            setattr(self, component, np.zeros(skysc_shape))
+            setattr(self, dst[i], np.zeros(skysc_shape))
 
     def _prealloc_array_components(self, components=None, dst=None):
         components = [components] if isinstance(components, str) else list(components)
         dst = [dst] if isinstance(dst, str) else list(dst)
         for i, comp_name in enumerate(components):
             if comp_name in ['spacing', 'origin']:
-                setattr(self, dst[i], np.ones(shape=(len(self), 3)))
+                # ?? is it better to preallocate np.ones for spacing (as it is done in __init__?
+                setattr(self, dst[i], np.zeros(shape=(len(self), 3)))
             else:
                 setattr(self, dst[i], np.array([], dtype='int'))
 
@@ -536,7 +538,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         for i, comp_name in enumerate(kwargs['components']):
             dst_component = kwargs['dst'][i]
             if comp_name == 'images':
-                self._prealloc_skyscraper_components(dst_component)
+                self._prealloc_skyscraper_components(components=comp_name, dst=dst_component)
             else:
                 self._prealloc_array_components(components=comp_name, dst=dst_component)
         return self.indices
@@ -587,10 +589,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                         decoder = lambda x: x
 
                     return decoder(debyted)
+            # ?? component name here is a little bit misleading
             component = unpacker(byted[ix][source])
             # update needed slice(s) of component
             comp_dst = kwargs['dst'][i]
-            comp_pos = self.get_pos(None, comp_dst, ix)
+            comp_pos = self.get_pos(None, source, ix, dst=comp_dst)
             getattr(self, comp_dst)[comp_pos] = component
 
     @inbatch_parallel(init='indices', post='_post_custom_components', target='for')
@@ -608,7 +611,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
 
-        for i, comp_name in enumerate(kwargs['component'])
+        for i, comp_name in enumerate(kwargs['component']):
             if comp_name == 'images':
                 comp_data = sitk.GetArrayFromImage(raw_data)
 
@@ -706,7 +709,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return await dump_data(data_items, item_dir, i8_encoding_mode)
 
-    def get_pos(self, data, component, index):
+    def get_pos(self, data, component, index, dst=None):
         """ Return a positon of an item for a given index in data
         or in self.`component`.
 
@@ -737,6 +740,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         This is an overload of get_pos from base Batch-class,
         see corresponding docstring for detailed explanation.
         """
+        # ?? it is not really mecessary but nice to have
+        dst = component if dst is None else dst
         if data is None:
             ind_pos = self._get_verified_pos(index)
             if component == 'images':
