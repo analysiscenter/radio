@@ -98,9 +98,11 @@ def get_dicom_info(paths, index_col=None, verbose=False):
             locations.append(float(dicom_slice.SliceLocation))
 
         steps_z = np.diff(np.sort(np.array(locations)))
-        spacing_z = steps_z[0]
+        spacing_z = np.min(steps_z)
         info_dict = {
-            "UniformSpacing": np.all(steps_z == spacing_z),
+            "UniformSpacing": np.allclose(steps_z, spacing_z),
+            'MinSpacingZ': np.min(steps_z),
+            'MaxSpacingZ': np.max(steps_z),
             'SliceThickness': float(first_slice.SliceThickness),
             'SpacingZ': spacing_z,
             'SpacingY': float(first_slice.PixelSpacing[0]),
