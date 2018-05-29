@@ -1316,7 +1316,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # if needed, randomly select cancerous and noncancerous xip-slices
         if batch_size is not None:
             cancer_filter = np.greater(np.sum(xips[1], axis=(1, 2, 3)), 0)
-            all_cancer_ixs = np.argwhere(cancer_filter)
+            all_cancer_ixs = np.argwhere(cancer_filter).reshape(-1)
             max_cancer = len(all_cancer_ixs)
             num_cancer = min(int(batch_size * share), max_cancer)
             num_non_cancer = batch_size - num_cancer
@@ -1331,10 +1331,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 # adjust the sampler: the number of xip-slices can differ from the shape of xip-axis
                 xip_axis_len = self.get(0, src[0]).shape[PROJECTIONS[projection][0]]
                 factor = np.ones((1, 3))
-                factor[PROJECTIONS[projection][0]] = len(cancer_filter) / xip_axis_len
+                factor[0, PROJECTIONS[projection][0]] = len(cancer_filter) / (len(self) * xip_axis_len)
                 sampler = sampler * factor
-                non_cancer_ixs = (sampler.sample(size=num_non_cancer)[:, PROJECTIONS[projection][0]]
-                                  .clip(min=0, max=len(cancer_filter)))
+
+                # sample from all items at once
+                shift = np.zeros((1, 3))
+                shift[0, PROJECTIONS[projection][0]] = len(cancer_filter) / len(self)
+                sampler = sampler | (sampler + shift) | (sampler + 2 * shift)
+                non_cancer_ixs = (sampler
+                                  .sample(size=num_non_cancer)[:, PROJECTIONS[projection][0]]
+                                  .clip(min=0, max=len(cancer_filter) - 1)
+                                  .astype(np.int))
 
             p = np.random.permutation(batch_size)
             for i in range(2):
