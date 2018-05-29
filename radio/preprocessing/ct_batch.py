@@ -361,9 +361,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if fmt is None:
             if src is None:
                 raise ValueError('If fmt is None src must be provided')
-            src = np.asarray(src).reshape(-1)
+            src = [src] if len(components) == 1 else list(src)
             params = {}
-            for comp_dst, comp_data in zip(components, src):
+            for comp_dst, comp_data in zip(dst, src):
                 params[comp_dst] = comp_data
             self._init_data(bounds=bounds, **params)
 
@@ -611,7 +611,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
 
-        for i, comp_name in enumerate(kwargs['component']):
+        for i, comp_name in enumerate(kwargs['components']):
             if comp_name == 'images':
                 comp_data = sitk.GetArrayFromImage(raw_data)
 
@@ -623,7 +623,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
             elif comp_name == 'spacing':
                 comp_data = np.array(raw_data.GetSpacing())[::-1]
-
             result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
         return result
 
