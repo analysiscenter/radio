@@ -1337,8 +1337,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 # sample from all items at once
                 shift = np.zeros((1, 3))
                 shift[0, PROJECTIONS[projection][0]] = len(cancer_filter) / len(self)
-                for i in range(len(self) - 1):
-                    sampler = sampler | (sampler + i * shift)
+                sampler_all_items = sampler
+                for i in range(1, len(self)):
+                     sampler_all_items = sampler_all_items | (sampler + i * shift)
                 non_cancer_ixs = (sampler
                                   .sample(size=num_non_cancer)[:, PROJECTIONS[projection][0]]
                                   .clip(min=0, max=len(cancer_filter) - 1)
