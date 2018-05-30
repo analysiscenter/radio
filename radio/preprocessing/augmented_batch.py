@@ -33,6 +33,8 @@ class CTImagesAugmentedBatch(CTImagesMaskedBatch):
             value or filling scheme. Value can be float or an array of the shape,
             that can be broadcasted to box-shape. When string, can be either scan-wise
             mean ('mean') or scan-wise minimum/maximum ('min', 'max').
+        component : str
+            component to apply cutout to.
         """
         for i in range(len(self)):
             size, position = sizes[i].astype(np.int64), positions[i].astype(np.int64)
@@ -48,18 +50,20 @@ class CTImagesAugmentedBatch(CTImagesMaskedBatch):
         return self
 
     @action
-    def apply_noise(self, noise, op='+'):
+    def apply_noise(self, noise, op='+', component='images'):
         """ For each item apply the noise to the item using op.
 
         Parameters:
         -----------
         noise : Sampler/ndarray
-            1d-sampler/ndarray of shape=(len(batch), item.shape)
+            1d-sampler/ndarray of shape=(len(batch), item.shape).
         op : str
-            operation to perform on item. Can be either '+', '-', '*'
+            operation to perform on item. Can be either '+', '-', '*'.
+        component : str
+            component to add noise to.
         """
         # prepare noise-array
-        all_items = self.images
+        all_items = getattr(self, component)
         noise = noise.sample(size=all_items.size).reshape(all_items.shape) if isinstance(noise, Sampler) else noise
 
         # parse and apply op in-place

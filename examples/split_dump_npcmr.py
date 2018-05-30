@@ -1,53 +1,49 @@
-# split_dump on new npcmr-dataset
+""" Generate crops (using split_dump) from npcmr-dataset. """
 
 import os
 import sys
-sys.path.append('..')
-import radio
-import radio.annotation
+
 import glob
 import numpy as np
 import pandas as pd
 import pickle as pkl
-from radio.dataset import FilesIndex, Dataset, Pipeline, F
 
+import radio.annotation
+from radio.dataset import FilesIndex, Dataset, Pipeline, F
+from radio import split_dump, CTImagesMaskedBatch
+
+NPCMR_GLOB = '/notebooks/data/CT/npcmr/*/*/*/*/*/*'
+MERGED_NODULES_PATH = './merged_nodules.pkl'
+HISTO_PATH = './histo.pkl'
+NODULE_CONFIDENCE_THRESHOLD = 0.02
+TRAIN_SHARE = 0.9
+CANCEROUS_CROPS_PATH = '/notebooks/data/CT/npcmr_crops/train/cancerous'
+NONCANCEROUS_CROPS_PATH = '/notebooks/data/CT/npcmr_crops/train/noncancerous'
 
 # read df containing info about nodules on scans
-dataset_info = (
-    radio.annotation.read_dataset_info('/notebooks/data/CT/npcmr/*/*/*/*/*/*', index_col=None)
-)
-
-# drop duplicates, leave with minimal z-spacing
-ds_dropped = (dataset_info
-              .sort_values(by=['AccessionNumber', 'SpacingZ']).drop_duplicates(subset='AccessionNumber')
-              .set_index('AccessionNumber'))
-
+dataset_info = (radio.annotation.read_dataset_info(NPCMR_GLOB, index_col='seriesid',
+                                                   filter_by_min_spacing=True))
 
 # set up Index and Dataset for npcmr
-ct_index = FilesIndex(ds_dropped.index.values, paths=dict(ds_dropped.loc[:, 'ScanPath']), dirs=True)
-ct_dataset = Dataset(ct_index, batch_class=radio.CTImagesMaskedBatch)
-
-
-
+ct_index = FilesIndex(dataset_info.index.values, paths=dict(dataset_info.loc[:, 'ScanPath']), dirs=True)
+ct_dataset = Dataset(ct_index, batch_class=CTImagesMaskedBatch)
 
 # read dumped annots
-with open('merged_nodules.pkl', 'rb') as file:
-    final = pkl.load(file)
+with open(MERGED_NODULES_PATH, 'rb') as file:
+    merged = pkl.load(file)
 
 # filter nodules by confidences
-filtered = final[final.confidence > 0.02]
+filtered = merged[merged.confidence > NODULE_CONFIDENCE_THRESHOLD]
 
-# NOTE!!! This is split_dump*, with added zeroing of origin
-from radio import split_dump
-ct_dataset.cv_split(0.9)
+ct_dataset.cv_split(TRAIN_SHARE)
 
 # read histo of nodules locs
-with open('histo.pkl', 'rb') as file:
+with open(HISTO_PATH, 'rb') as file:
     histo = pkl.load(file)
 
 # split dump pipeline
-takeoff = split_dump('/notebooks/data/CT/npcmr_crops/train/cancerous', '/notebooks/data/CT/npcmr_crops/train/noncancerous',
-                     filtered, histo, fmt='dicom')
+sd = split_dump(CANCEROUS_CROPS_PATH, NONCANCEROUS_CROPS_PATH, filtered, histo, fmt='dicom')
+
 # run the pipeline
-print('takeoff...')
-(ct_dataset >> takeoff).run()
+print('Running split_dump...')
+(ct_dataset >> sd).run()
