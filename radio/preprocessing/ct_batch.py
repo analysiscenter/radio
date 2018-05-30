@@ -11,7 +11,7 @@ import dill as pickle
 import numpy as np
 import aiofiles
 import blosc
-import pydicom as dicom
+import pydicom as dicom                    # pylint: disable=import-error
 import SimpleITK as sitk
 from skimage.measure import label, regionprops
 
@@ -1273,7 +1273,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                        start=start, channels=channels, squeeze=squeeze, projection=projection)
 
     @action
-    def sample_xip(self, depth, stride, mode='max', start=0, squeeze=(False, True), projection='axial', channels=3,
+    def sample_xip(self, depth, stride, mode='max', start=0, squeeze=(False, True), projection='axial', channels=3,             # pylint: disable=too-many-locals
                    batch_size=20, share=0.5, sampler=None, src=('images', 'masks'), dst=('xip_images', 'xip_masks')):
         """ Create xips for a pair of components for training neural networks. Put xips them into `dst`-components.
 
@@ -1339,7 +1339,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 shift[0, PROJECTIONS[projection][0]] = len(cancer_filter) / len(self)
                 sampler_all_items = sampler
                 for i in range(1, len(self)):
-                     sampler_all_items = sampler_all_items | (sampler + i * shift)
+                    sampler_all_items = sampler_all_items | (sampler + i * shift)
                 non_cancer_ixs = (sampler
                                   .sample(size=num_non_cancer)[:, PROJECTIONS[projection][0]]
                                   .clip(min=0, max=len(cancer_filter) - 1)
@@ -1394,7 +1394,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # unfold xip
         _init = range(len(self))
-        def _worker(self, ix, xip, new_data, depth, stride, start, squeeze, channels, adjust,
+        def _worker(self, ix, xip, new_data, depth, stride, start, squeeze, channels, adjust,               # pylint: disable=too-many-locals
                     projection, **kwargs):
             num_item_slices = len(xip) // len(self)
             shape = np.array(self.get(ix, 'images').shape)[PROJECTIONS[projection]]
