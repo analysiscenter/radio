@@ -1,7 +1,7 @@
 """ Module with jit-compilated functions for rotation operation of 3D scans. """
 
 import math
-from numba import njit
+from numba import njit, jit
 import scipy.ndimage
 
 
