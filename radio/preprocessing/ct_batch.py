@@ -11,7 +11,12 @@ import dill as pickle
 import numpy as np
 import aiofiles
 import blosc
-import dicom
+
+try:
+    import pydicom as dicom # pydicom library was renamed in v1.0
+except ImportError:
+    import dicom
+
 import SimpleITK as sitk
 
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module

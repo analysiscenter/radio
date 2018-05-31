@@ -1,4 +1,4 @@
-# pylint: disable=too-many-arguments
+# pylint: disable=too-many-arguments, invalid-sequence-index
 """ Implementation of custom volumetric network for lung cancer detection. """
 
 import numpy as np
@@ -36,7 +36,7 @@ class DilatedNoduleNet(TFModel):
 
         filters = 32
 
-        config['input_block'].update({})
+        config['input_block'].update({})          # pylint: disable=no-member
         config['body']['upsampling_kernel'] = 3
         config['body']['num_blocks'] = 4
         config['body'][
