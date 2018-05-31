@@ -77,7 +77,7 @@ def get_dicom_origin(path):
     return origin
 
 
-def get_dicom_info(paths, index_col=None, progress=False):
+def get_dicom_info(paths, index_col=None, progress=False, load_origin=True):
     """ Accumulates scans meta information from dicom dataset in pandas DataFrame.
 
     Parameters
@@ -88,6 +88,8 @@ def get_dicom_info(paths, index_col=None, progress=False):
         name of column that will be used as index of output DataFrame.
     progress : bool
         show progress bar or not
+    load_origin : bool
+        if False, zero origin will be setted
 
     Returns
     -------
@@ -98,7 +100,10 @@ def get_dicom_info(paths, index_col=None, progress=False):
     progress = tqdm.tqdm if progress else lambda x: x
     for path in progress(paths):
         first_slice = dicom.read_file(os.path.join(path, os.listdir(path)[0]))
-        origins = get_dicom_origin(path)
+        if load_origin:
+            origins = get_dicom_origin(path)
+        else:
+            origins = np.zeros(len(paths), 3)
         info_dict = {
             'SpacingZ': float(first_slice.SliceThickness),
             'SpacingY': float(first_slice.PixelSpacing[0]),
@@ -119,7 +124,7 @@ def get_dicom_info(paths, index_col=None, progress=False):
         meta_info.append(info_dict)
     return pd.DataFrame(meta_info) if index_col is None else pd.DataFrame(meta_info).set_index(index_col)
 
-def get_blosc_info(paths, index_col=None, progress=False):
+def get_blosc_info(paths, index_col=None, progress=False, load_origin=True):
     """ Accumulates scans meta information from dicom dataset in pandas DataFrame.
 
     Parameters
@@ -130,6 +135,8 @@ def get_blosc_info(paths, index_col=None, progress=False):
         name of column that will be used as index of output DataFrame.
     progress : bool
         show progress bar or not
+    load_origin : bool
+        if False, zero origin will be setted
 
     Returns
     -------
@@ -144,13 +151,16 @@ def get_blosc_info(paths, index_col=None, progress=False):
             with open(os.path.join(path, component, 'data.pkl'), 'rb') as f:
                 results.append(pickle.load(f))
         spacing, origin = results #pylint:disable=unbalanced-tuple-unpacking
+
+        spacing_transform = lambda x: x if load_origin else np.zeros_like
+
         info_dict = {
             'SpacingZ': spacing[0][0],
             'SpacingY': spacing[0][1],
             'SpacingX': spacing[0][2],
-            'OriginZ': origin[0][0],
-            'OriginY': origin[0][1],
-            'OriginX': origin[0][2],
+            'OriginZ': spacing_transform(origin[0][0]),
+            'OriginY': spacing_transform(origin[0][1]),
+            'OriginX': spacing_transform(origin[0][2]),
             'seriesid': path.split('/')[-1],
             'ScanPath': path,
             'ScanID': os.path.basename(path)
@@ -347,7 +357,7 @@ def read_nodules(path, include_annotators=False):
                                 right_on=['seriesid', 'DoctorID'], how='outer')
     return nodules
 
-def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False, fmt='dicom'):
+def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False, fmt='dicom', load_origin=True):
     """ Build index and mapping to paths for given dicom dataset.
 
     Parameters
@@ -365,6 +375,8 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
         for each accession number choose study with minimal spacing
     fmt : str
         'dicom' or 'blosc'
+    load_origin : bool
+        if False, zero origin will be setted
 
     Returns
     -------
@@ -375,7 +387,7 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
         raise ValueError("Only one of 'path' or 'paths' arguments must be provided")
 
     if fmt == 'dicom':
-        dataset_info = get_dicom_info(glob.glob(path) if path is not None else paths)
+        dataset_info = get_dicom_info(glob.glob(path) if path is not None else paths, load_origin=load_origin)
         if filter_by_min_spacing:
             output_indices = (
                 dataset_info
@@ -386,12 +398,12 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
         else:
             index_df = dataset_info
     elif fmt == 'blosc':
-        index_df = get_blosc_info(glob.glob(path) if path is not None else paths)
+        index_df = get_blosc_info(glob.glob(path) if path is not None else paths, load_origin=load_origin)
     else:
         raise ValueError('fmt must be dicom or blosc but {} were given'.format(fmt))
     return index_df if index_col is None else index_df.set_index(index_col)
 
-def transform_annotation(annotation_path, images_path, fmt='dicom', include_annotators=True, drop=True):
+def transform_annotation(annotation_path, images_path, fmt='dicom', include_annotators=True, drop=True, load_origin=True):
     """ Transform annotation file to LUNA format with coordinates and diamters in mm.
 
     Parameters
@@ -408,6 +420,8 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
     drop : bool
         if True and file `annotation_path` has annotation for images which don't contain
         in folder `images_path`, it will be dropped
+    load_origin : bool
+        if False, zero origin will be setted
 
     Returns
     -------
@@ -422,7 +436,7 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
         _nodules.append(read_nodules(annotation, include_annotators).reset_index(drop=True))
     nodules = pd.concat(_nodules).reset_index(drop=True)
 
-    dataset_info = read_dataset_info(images_path, filter_by_min_spacing=True, fmt=fmt)
+    dataset_info = read_dataset_info(images_path, filter_by_min_spacing=True, fmt=fmt, load_origin=load_origin)
     spacing_info = dataset_info[['seriesid', 'SpacingX', 'SpacingY', 'SpacingZ',
                                  'OriginX', 'OriginY', 'OriginZ']].set_index('seriesid')
     nodules = nodules.join(spacing_info, on='seriesid', how='inner')
