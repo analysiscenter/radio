@@ -103,7 +103,7 @@ def get_dicom_info(paths, index_col=None, progress=False, load_origin=True):
         if load_origin:
             origins = get_dicom_origin(path)
         else:
-            origins = np.zeros(len(paths), 3)
+            origins = np.zeros(3)
         info_dict = {
             'SpacingZ': float(first_slice.SliceThickness),
             'SpacingY': float(first_slice.PixelSpacing[0]),
