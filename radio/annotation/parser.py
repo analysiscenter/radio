@@ -152,7 +152,7 @@ def get_blosc_info(paths, index_col=None, progress=False, load_origin=True):
                 results.append(pickle.load(f))
         spacing, origin = results #pylint:disable=unbalanced-tuple-unpacking
 
-        spacing_transform = lambda x: x if load_origin else np.zeros_like
+        spacing_transform = (lambda x: x) if load_origin else (lambda x: 0)
 
         info_dict = {
             'SpacingZ': spacing[0][0],
