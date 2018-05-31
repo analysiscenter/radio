@@ -381,7 +381,7 @@ def generate_annotation(n_images, n_doctors=10, bad_doctors=None, middle_doctors
                     'DoctorID': [str(doctor).zfill(3)] * doctor_find,
                     **generate_nodule(doctor_find)
                 })
-                annotation = pd.concat([annotation, doctor_nodules], axis=0)
+                annotation = pd.concat([annotation, doctor_nodules], axis=0)            # pylint: disable=redefined-variable-type
 
         consilium_find = np.random.randint(0, 4)
         nod = generate_nodule(consilium_find)
