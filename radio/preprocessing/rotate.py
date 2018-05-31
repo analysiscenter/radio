@@ -41,6 +41,7 @@ def rotate_2d(image, angle, center=(0, 0), fill=0):
         for idy in range(dh):
             isx, isy = rotate_and_round(idx + min_cx, idy + min_cy,
                                         center[0], center[1], -angle)
+
             if (0 <= isx) and (isx < sw) and (0 <= isy) and (isy < sh):
                 out_image[idy, idx] = image[isy, isx]
             else:
