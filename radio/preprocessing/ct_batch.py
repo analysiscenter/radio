@@ -15,7 +15,7 @@ import dicom
 import SimpleITK as sitk
 import nibabel as nib
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex  # pylint: disable=no-name-in-module
+from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex, FilesIndex # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
@@ -358,6 +358,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if len(dst) != len(components):
             raise ValueError('components and dst must be of the same length')
 
+        if isinstance(src, FilesIndex):
+            # src = self.index.get_fullpath(ix)
+            print('src is FilesIndex')
+
         if fmt is None:
             if src is None:
                 raise ValueError('If fmt is None src must be provided')
@@ -365,19 +369,28 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             params = {}
             for comp_dst, comp_data in zip(dst, src):
                 params[comp_dst] = comp_data
-            self._init_data(bounds=bounds, **params)
+            self._init_data(bounds=bounds, **params)            
 
-        elif fmt == 'dicom':
+        if fmt == 'dicom':
             self._load_dicom(dst=dst, components=components, **kwargs)
         elif fmt == 'blosc':
             self._load_blosc(dst=dst, components=components, **kwargs)
         elif fmt == 'raw':
             self._load_raw(dst=dst, components=components, **kwargs)
         elif fmt == 'nii':
-            self._load_nii(dst=dst, components=components, **kwargs)
+            self._load_nii(dst=dst, components=components, src=src, **kwargs)
         else:
             raise TypeError("Incorrect type of batch source")
         return self
+
+    def _get_file_name(self, ix, src):
+        if isinstance(src, str):
+            fullpath = self.index.get_fullpath(ix)
+            file_name = os.path.join(fullpath, src)
+            print('in get file name ', file_name)
+        else:
+            file_name = self.index.get_fullpath(ix)
+        return file_name
 
     @inbatch_parallel(init='indices', post='_post_custom_components', target='threads')
     def _load_nii(self, patient_id, **kwargs):
@@ -385,7 +398,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         """
-        img_nii = nib.load(self.index.get_fullpath(patient_id))
+        # pos = self.index.get_pos(patient_id)
+        # print('pos ', pos, patient_id)
+
+        img_nii = nib.load(self._get_file_name(patient_id, kwargs['src']))
         result = {}
 
         for i, comp_name in enumerate(kwargs['components']):
@@ -546,6 +562,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     @inbatch_parallel(init='_prealloc_components', post='_post_read_blosc', target='async', update=False)
     async def _read_blosc(self, ix, *args, **kwargs):
         byted = dict()
+
         for source in kwargs['components']:
             if source in ['spacing', 'origin']:
                 ext = 'pkl'
