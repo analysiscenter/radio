@@ -21,8 +21,8 @@ CANCEROUS_CROPS_PATH = '/notebooks/data/CT/npcmr_crops/train/cancerous'
 NONCANCEROUS_CROPS_PATH = '/notebooks/data/CT/npcmr_crops/train/noncancerous'
 
 # read df containing info about nodules on scans
-dataset_info = (radio.annotation.read_dataset_info(NPCMR_GLOB, index_col='seriesid',
-                                                   filter_by_min_spacing=True))
+dataset_info = (radio.annotation.read_dataset_info(NPCMR_GLOB, index_col='seriesid', filter_by_min_spacing=True,
+                                                   load_origin=False))
 
 # set up Index and Dataset for npcmr
 ct_index = FilesIndex(dataset_info.index.values, paths=dict(dataset_info.loc[:, 'ScanPath']), dirs=True)

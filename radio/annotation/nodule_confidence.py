@@ -26,7 +26,7 @@ def compute_nodule_confidence(annotations, r=20, alpha=None, weight_by_doctor=Tr
     Parameters
     ----------
     annotations : pd.DataFrame
-        input df with annotations with columns 
+        input df with annotations with columns
         `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID', 'DoctorConfidence']`
     r : float
         radius of kernel-support.

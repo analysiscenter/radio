@@ -357,7 +357,8 @@ def read_nodules(path, include_annotators=False):
                                 right_on=['seriesid', 'DoctorID'], how='outer')
     return nodules
 
-def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False, fmt='dicom', load_origin=True):
+def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False, fmt='dicom',
+                      load_origin=True):
     """ Build index and mapping to paths for given dicom dataset.
 
     Parameters
@@ -403,7 +404,8 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
         raise ValueError('fmt must be dicom or blosc but {} were given'.format(fmt))
     return index_df if index_col is None else index_df.set_index(index_col)
 
-def transform_annotation(annotation_path, images_path, fmt='dicom', include_annotators=True, drop=True, load_origin=True):
+def transform_annotation(annotation_path, images_path, fmt='dicom', include_annotators=True, drop=True,
+                         load_origin=True):
     """ Transform annotation file to LUNA format with coordinates and diamters in mm.
 
     Parameters
