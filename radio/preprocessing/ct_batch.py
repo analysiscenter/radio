@@ -556,7 +556,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 ext = 'pkl'
             else:
                 ext = 'blk'
-            comp_path = os.path.join(self._get_file_name(ix, kwargs['src']), source, 'data' + '.' + ext)
+            patient_folder = self._get_file_name(ix, kwargs['src']) # pylint: disable=protected-access
+            comp_path = os.path.join(patient_folder, source, 'data' + '.' + ext)
             if not os.path.exists(comp_path):
                 raise OSError("File with component {} doesn't exist".format(source))
 
@@ -920,7 +921,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                           origin=self.origin, spacing=self.spacing)
             if new_batch:
                 batch = type(self)(self.index)
-                batch._init_data(**params)
+                batch._init_data(**params) # pylint: disable=protected-access
                 res = batch
             else:
                 self._init_data(**params)
@@ -1097,7 +1098,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                       origin=new_origin, spacing=new_spacing)
         if new_batch:
             batch_res = type(self)(self.index)
-            batch_res._init_data(**params) # pylint: disable=no-value-for-parameter protected-access
+            batch_res._init_data(**params) # pylint: disable=protected-access
             return batch_res
         else:
             self._init_data(**params)
