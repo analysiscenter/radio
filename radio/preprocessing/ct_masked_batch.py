@@ -2,6 +2,7 @@
 # pylint: disable=too-many-public-methods
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-arguments
+# pylint: disable=too-many-branches
 
 """ Batch class CTImagesMaskedBatch for storing CT-scans with masks. """
 
@@ -1085,20 +1086,21 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
-    def predict_on_scan(self, model_name, strides=(16, 32, 32), crop_shape=(32, 64, 64),
+    def predict_on_scan(self, model, strides=(16, 32, 32), crop_shape=(32, 64, 64),
                         batch_size=4, targets_mode='segmentation', data_format='channels_last',
                         show_progress=True, model_type='tf'):
         """ Get predictions of the model on data contained in batch.
 
-        Transforms scan data into patches of shape CROP_SHAPE and then feed
+        Transforms scan data into patches of shape crop_shape and then feed
         this patches sequentially into model with name specified by
-        argument 'model_name'; after that loads predicted masks or probabilities
+        argument 'model'; after that loads predicted masks or probabilities
         into 'masks' component of the current batch and returns it.
 
         Parameters
         ----------
-        model_name : str
-            name of model that will be used for predictions.
+        model : str
+            name of model that will be used for predictions
+            or callable (model_type must be 'callable').
         strides : tuple, list or ndarray of int
             (z,y,x)-strides for patching operation.
         crop_shape : tuple, list or ndarray of int
@@ -1112,13 +1114,24 @@ class CTImagesMaskedBatch(CTImagesBatch):
             can be 'channels_first' or 'channels_last'.
         model_type : str
             represents type of model that will be used for prediction.
-            Possible values are 'keras' or 'tf'.
+            Possible values are 'keras', 'tf' or 'callable'.
 
         Returns
         -------
         CTImagesMaskedBatch.
         """
-        _model = self.get_model_by_name(model_name)
+        if model_type not in ('tf', 'keras', 'callable'):
+            raise ValueError("Argument 'model_type' must be one of ['tf', 'keras', 'callable']")
+
+        if model_type in ('keras', 'tf') and isinstance(model, str):
+            _model = self.get_model_by_name(model)
+        elif callable(model):
+            _model = model
+        else:
+            raise ValueError("Argument 'model' must be str or callable. "
+                             + " If callable then 'model_type' argument's value "
+                             + "must be set to 'callable'")
+
         crop_shape = np.asarray(crop_shape).reshape(-1)
         strides = np.asarray(strides).reshape(-1)
 
@@ -1138,8 +1151,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
             if model_type == 'tf':
                 _prediction = _model.predict(feed_dict={'images': patches_arr[i: i + batch_size, ...]})
-            else:
+            elif model_type == 'keras':
                 _prediction = _model.predict(patches_arr[i: i + batch_size, ...])
+            elif model_type == 'callable':
+                _prediction = _model(patches_arr[i: i + batch_size, ...])
 
             current_prediction = np.asarray(_prediction)
             if targets_mode == 'classification':

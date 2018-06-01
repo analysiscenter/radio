@@ -11,7 +11,12 @@ import dill as pickle
 import numpy as np
 import aiofiles
 import blosc
-import dicom
+
+try:
+    import pydicom as dicom # pydicom library was renamed in v1.0
+except ImportError:
+    import dicom
+
 import SimpleITK as sitk
 try:
     import nibabel as nib
