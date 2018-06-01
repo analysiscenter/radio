@@ -609,7 +609,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         NO multithreading is used, as SimpleITK (sitk) lib crashes
         in multithreading mode in experiments.
         """
-        list_of_arrs = []
         result = {}
 
         raw_data = sitk.ReadImage(self._get_file_name(patient_id, kwargs['src']))
