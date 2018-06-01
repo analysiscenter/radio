@@ -310,13 +310,13 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             one of `images`, `spacing`, `origin`
             If None all components, i.e. `images`, `spacing`, `origin` will be loaded.
         src : str if fmt is not None.
-            if fmt is None src is ndarray(s) to load components from.
+            if fmt is None src must be ndarray(s) to load components from.
             Otherwise str should be a filename with extention of a file located
             in directory indexed in FileIndex (built with dirs=True).
             In case of FileIndex built for particular files and
             in case of fmt = 'blosc' or fmt = 'dicom' src will not work yet.
         bounds : ndarray(n_patients + 1, dtype=np.int) or None
-            Needed if fmt=None. Bound-floors for items from a `skyscraper`
+            Needed iff fmt=None. Bound-floors for items from a `skyscraper`
             (stacked scans).
         dst : tuple, list, ndarray of strings or str
             Contains names of batch component(s) where loaded components will be stored.
@@ -529,7 +529,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         dst = [dst] if isinstance(dst, str) else list(dst)
         for i, comp_name in enumerate(components):
             if comp_name in ['spacing', 'origin']:
-                # ?? is it better to preallocate np.ones for spacing (as it is done in __init__?
                 setattr(self, dst[i], np.zeros(shape=(len(self), 3)))
             else:
                 setattr(self, dst[i], np.array([], dtype='int'))
