@@ -1097,7 +1097,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                       origin=new_origin, spacing=new_spacing)
         if new_batch:
             batch_res = type(self)(self.index)
-            batch_res._init_data(**params)
+            batch_res._init_data(**params) # pylint: disable=no-value-for-parameter protected-access
             return batch_res
         else:
             self._init_data(**params)
