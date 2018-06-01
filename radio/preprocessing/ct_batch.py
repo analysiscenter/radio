@@ -13,8 +13,10 @@ import aiofiles
 import blosc
 import dicom
 import SimpleITK as sitk
-import nibabel as nib
-
+try:
+    import nibabel as nib
+except ImportError:
+    pass
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex, FilesIndex # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
