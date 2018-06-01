@@ -369,8 +369,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             params = {}
             for comp_dst, comp_data in zip(dst, src):
                 params[comp_dst] = comp_data
-            self._init_data(bounds=bounds, **params)            
-
+            self._init_data(bounds=bounds, **params)
         elif fmt == 'dicom':
             self._load_dicom(dst=dst, components=components, src=src, **kwargs)
         elif fmt == 'blosc':
@@ -448,15 +447,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             elif comp_name == 'spacing':
                 comp_name = kwargs['dst'][i]
                 comp_data = np.asarray([float(dicom_slice.SliceThickness),
-                                                        float(dicom_slice.PixelSpacing[0]),
-                                                        float(dicom_slice.PixelSpacing[1])], dtype=np.float)
+                                        float(dicom_slice.PixelSpacing[0]),
+                                        float(dicom_slice.PixelSpacing[1])], dtype=np.float)
 
-
-            elif comp_name == 'origin': 
+            elif comp_name == 'origin':
                 comp_name = kwargs['dst'][i]
                 comp_data = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
-                                                        float(dicom_slice.ImagePositionPatient[0]),
-                                                        float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
+                                        float(dicom_slice.ImagePositionPatient[0]),
+                                        float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
 
             result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
         return result
@@ -889,8 +887,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         self._init_data(**params)
         return self
-    
-
 
     def _post_default(self, list_of_arrs, update=True, new_batch=False, **kwargs):
         """ Gatherer outputs of different workers, update `images` component
