@@ -298,31 +298,33 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return merged, rest
 
     @action
-    def load(self, fmt='dicom', components=None, bounds=None, dst=None, src=None, **kwargs):      # pylint: disable=arguments-differ
+    def load(self, fmt='dicom', components=None, src=None, bounds=None, dst=None, **kwargs):      # pylint: disable=arguments-differ
         """ Load 3d scans data in batch.
 
         Parameters
         ----------
         fmt : str
-            type of data. Can be 'dicom'|'blosc'|'raw'|None
+            type of data. Can be 'dicom'|'blosc'|'raw'|'nii'|None
         components : tuple, list, ndarray of strings or str
-            Contains names of batch component(s) that should be loaded.
-            As of now, works only if fmt='blosc'. If fmt != 'blosc', all
-            available components are loaded. If None and fmt = 'blosc', again,
-            all components are loaded.
+            Contains types of batch component(s) that should be loaded, i.e. should be
+            one of `images`, `spacing`, `origin`
+            If None all components, i.e. `images`, `spacing`, `origin` will be loaded.
+        src : str if fmt is not None.
+            if fmt is None src is ndarray(s) to load components from.
+            Otherwise str should be a filename with extention of a file located
+            in directory indexed in FileIndex (built with dirs=True).
+            In case of FileIndex built for particular files and
+            in case of fmt = 'blosc' or fmt = 'dicom' src will not work yet.
         bounds : ndarray(n_patients + 1, dtype=np.int) or None
-            Needed iff fmt=None. Bound-floors for items from a `skyscraper`
+            Needed if fmt=None. Bound-floors for items from a `skyscraper`
             (stacked scans).
-        **kwargs
-            images : ndarray(n_patients * z, y, x) or None
-                Needed only if fmt = 'ndarray'
-                input array containing `skyscraper` (stacked scans).
-            origin : ndarray(n_patients, 3) or None
-                Needed only if fmt='ndarray'.
-                origins of scans in world coordinates.
-            spacing : ndarray(n_patients, 3) or None
-                Needed only if fmt='ndarray'
-                ndarray with spacings of patients along `z,y,x` axes.
+        dst : tuple, list, ndarray of strings or str
+            Contains names of batch component(s) where loaded components will be stored.
+            If None it will be the same as components argument, i.e. loaded data
+            will be saved in batch components named `images`, `spacing`, `origin`.
+            Needed if you want e.g. load both images and masks.
+            In that case you can add src='mask.ext' and specify
+            dst = ['mask', 'spacing_mask', 'origin_mask']
 
         Returns
         -------
@@ -345,10 +347,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         bounds stores ndarray of last floors for each scan.
         say, bounds = np.asarray([0, 100, 400])
 
-        >>> batch.load(fmt='npdarray', images=images_array, bounds=bounds)
+        >>> batch.load(fmt='npdarray', components='images', src=images_array, bounds=bounds)
 
         """
-        # if ndarray
         components = self.components if components is None else components
         components = np.asarray(components).reshape(-1)
 
@@ -359,8 +360,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise ValueError('components and dst must be of the same length')
 
         if isinstance(src, FilesIndex):
-            # src = self.index.get_fullpath(ix)
-            print('src is FilesIndex')
+            raise NotImplementedError('Load with src as FilesIndex not implemented yet')
 
         if fmt is None:
             if src is None:
@@ -371,12 +371,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 params[comp_dst] = comp_data
             self._init_data(bounds=bounds, **params)            
 
-        if fmt == 'dicom':
-            self._load_dicom(dst=dst, components=components, **kwargs)
+        elif fmt == 'dicom':
+            self._load_dicom(dst=dst, components=components, src=src, **kwargs)
         elif fmt == 'blosc':
-            self._load_blosc(dst=dst, components=components, **kwargs)
+            self._load_blosc(dst=dst, components=components, src=src, **kwargs)
         elif fmt == 'raw':
-            self._load_raw(dst=dst, components=components, **kwargs)
+            self._load_raw(dst=dst, components=components, src=src, **kwargs)
         elif fmt == 'nii':
             self._load_nii(dst=dst, components=components, src=src, **kwargs)
         else:
@@ -387,7 +387,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if isinstance(src, str):
             fullpath = self.index.get_fullpath(ix)
             file_name = os.path.join(fullpath, src)
-            print('in get file name ', file_name)
         else:
             file_name = self.index.get_fullpath(ix)
         return file_name
@@ -398,9 +397,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Parameters
         ----------
         """
-        # pos = self.index.get_pos(patient_id)
-        # print('pos ', pos, patient_id)
-
         img_nii = nib.load(self._get_file_name(patient_id, kwargs['src']))
         result = {}
 
@@ -428,10 +424,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         for i, comp_name in enumerate(kwargs['components']):
             if comp_name == 'images':
-                patient_folder = self.index.get_fullpath(patient_id)
+                patient_folder = self._get_file_name(patient_id, kwargs['src'])
                 list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
                                   for s in os.listdir(patient_folder)]
-
                 list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
 
                 dicom_slice = list_of_dicoms[0]
@@ -484,7 +479,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         byted = self._read_blosc(**kwargs)
         self._debyte_blosc(byted=byted, **kwargs)
 
-    def _prealloc_skyscraper_components(self, components=None, dst=None, fmt='blosc'):
+    def _prealloc_skyscraper_components(self, components=None, dst=None, src=None, fmt='blosc'):
         """ Read shapes of skyscraper-components dumped with blosc,
         allocate memory for them, update self._bounds.
 
@@ -510,7 +505,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         for i, component in enumerate(components):
             shapes = np.zeros((len(self), 3), dtype=np.int)
             for ix in self.indices:
-                filename = os.path.join(self.index.get_fullpath(ix), component, 'data.shape')
+                filename = os.path.join(self._get_file_name(ix, src), component, 'data.shape')
                 ix_pos = self._get_verified_pos(ix)
 
                 # read shape and put it into shapes
@@ -528,6 +523,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             setattr(self, dst[i], np.zeros(skysc_shape))
 
     def _prealloc_array_components(self, components=None, dst=None):
+        """ Allocate memory for array components (spacing and origin type) with names in dst.
+        """
         components = [components] if isinstance(components, str) else list(components)
         dst = [dst] if isinstance(dst, str) else list(dst)
         for i, comp_name in enumerate(components):
@@ -539,22 +536,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def _prealloc_components(self, **kwargs):
         """ Init-function for load from blosc.
-
-        Parameters
-        ----------
-        **kwargs
-            components : iterable of components that need to be loaded
-
-        Returns
-        -------
-        list
-            list of ids of batch-items
+        Allocate memory for both skyscrapper and array components.
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
         for i, comp_name in enumerate(kwargs['components']):
             dst_component = kwargs['dst'][i]
             if comp_name == 'images':
-                self._prealloc_skyscraper_components(components=comp_name, dst=dst_component)
+                self._prealloc_skyscraper_components(components=comp_name, dst=dst_component, \
+                                                     src=kwargs['src'])
             else:
                 self._prealloc_array_components(components=comp_name, dst=dst_component)
         return self.indices
@@ -568,7 +557,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 ext = 'pkl'
             else:
                 ext = 'blk'
-            comp_path = os.path.join(self.index.get_fullpath(ix), source, 'data' + '.' + ext)
+            comp_path = os.path.join(self._get_file_name(ix, kwargs['src']), source, 'data' + '.' + ext)
             if not os.path.exists(comp_path):
                 raise OSError("File with component {} doesn't exist".format(source))
 
@@ -596,7 +585,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     debyted = blosc.unpack_array(byted)
 
                     # read the decoder and apply it
-                    decod_path = os.path.join(self.index.get_fullpath(ix), source, 'data.decoder') # pylint: disable=cell-var-from-loop
+                    decod_path = os.path.join(self._get_file_name(ix, kwargs['src']), source, 'data.decoder') # pylint: disable=cell-var-from-loop
 
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
@@ -626,7 +615,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         list_of_arrs = []
         result = {}
 
-        raw_data = sitk.ReadImage(self.index.get_fullpath(patient_id))
+        raw_data = sitk.ReadImage(self._get_file_name(patient_id, kwargs['src']))
 
         for i, comp_name in enumerate(kwargs['components']):
             if comp_name == 'images':
