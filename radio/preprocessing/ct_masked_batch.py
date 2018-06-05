@@ -236,7 +236,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                              'diamY': nodules.nodule_size[:, 1],
                              'diamX': nodules.nodule_size[:, 2]}, columns=columns)
 
-    def get_pos(self, data, component, index): #pylint: disable=arguments-differ
+    def get_pos(self, data, component, index, dst=None):
         """ Return a positon of an item for a given index in data
         or in self.`component`.
 

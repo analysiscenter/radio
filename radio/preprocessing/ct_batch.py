@@ -22,6 +22,7 @@ try:
     import nibabel as nib
 except ImportError:
     pass
+
 from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex, FilesIndex # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
@@ -372,7 +373,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if fmt is None:
             if src is None:
                 raise ValueError('If fmt is None src must be provided')
-            src = [src] if len(components) == 1 else list(src)
+            src = np.asarray(src).reshape(-1)
             params = {}
             for comp_dst, comp_data in zip(dst, src):
                 params[comp_dst] = comp_data
@@ -389,17 +390,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             raise TypeError("Incorrect type of batch source")
         return self
 
-    def _get_file_name(self, ix, src):
-        if isinstance(src, str):
-            fullpath = self.index.get_fullpath(ix)
-            file_name = os.path.join(fullpath, src)
-        else:
-            file_name = self.index.get_fullpath(ix)
-        return file_name
-
     @inbatch_parallel(init='indices', post='_post_custom_components', target='threads')
     def _load_nii(self, patient_id, **kwargs):
         """ Read .nii file and load image data array into batch component.
+
         Parameters
         ----------
         """
@@ -492,40 +486,35 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ---------
-        components : str or iterable
-            iterable of components we need to preload.
+        components : str
+            name of component we need to preload.
+        dst : str
+            name of component where preloaded component will be saved.
         fmt : str
             format in which components are stored on disk.
-
         """
         if fmt != 'blosc':
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
-        # make iterable out of components-arg
-        # ?? probably making components iterable is unnecessary because it is called for one component only
-        components = [components] if isinstance(components, str) else list(components)
-        dst = [dst] if isinstance(dst, str) else list(dst)
-
         # load shapes, perform memory allocation
-        for i, component in enumerate(components):
-            shapes = np.zeros((len(self), 3), dtype=np.int)
-            for ix in self.indices:
-                filename = os.path.join(self._get_file_name(ix, src), component, 'data.shape')
-                ix_pos = self._get_verified_pos(ix)
+        shapes = np.zeros((len(self), 3), dtype=np.int)
+        for ix in self.indices:
+            filename = os.path.join(self._get_file_name(ix, src), components, 'data.shape')
+            ix_pos = self._get_verified_pos(ix)
 
-                # read shape and put it into shapes
-                if not os.path.exists(filename):
-                    raise OSError("Component {} for item {} cannot be found on disk".format(component, ix))
-                with open(filename, 'rb') as file:
-                    shapes[ix_pos, :] = pickle.load(file)
+            # read shape and put it into shapes
+            if not os.path.exists(filename):
+                raise OSError("Component {} for item {} cannot be found on disk".format(components, ix))
+            with open(filename, 'rb') as file:
+                shapes[ix_pos, :] = pickle.load(file)
 
-            # update bounds of items
-            # TODO: once bounds for other components are added, make sure they are updated here in the right way
-            self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
+        # update bounds of items
+        # TODO: once bounds for other components are added, make sure they are updated here in the right way
+        self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
 
-            # preallocate space in dst
-            skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
-            setattr(self, dst[i], np.zeros(skysc_shape))
+        # preallocate space in dst
+        skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
+        setattr(self, dst, np.zeros(skysc_shape))
 
     def _prealloc_array_components(self, components=None, dst=None):
         """ Allocate memory for array components (spacing and origin type) with names in dst.
@@ -600,12 +589,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                         decoder = lambda x: x
 
                     return decoder(debyted)
-            # ?? component name here is a little bit misleading
-            component = unpacker(byted[ix][source])
+            comp_data = unpacker(byted[ix][source])
             # update needed slice(s) of component
             comp_dst = kwargs['dst'][i]
             comp_pos = self.get_pos(None, source, ix, dst=comp_dst)
-            getattr(self, comp_dst)[comp_pos] = component
+            getattr(self, comp_dst)[comp_pos] = comp_data
 
     @inbatch_parallel(init='indices', post='_post_custom_components', target='for')
     def _load_raw(self, patient_id, **kwargs):        # pylint: disable=unused-argument
@@ -869,6 +857,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     def _post_custom_components(self, list_of_dicts, **kwargs):
         """ Gather outputs of different workers, update many components.
+
         Parameters
         ----------
         list_of_dicts : list
