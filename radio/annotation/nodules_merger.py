@@ -272,6 +272,7 @@ def compute_group_coords_and_diameter(nodules, proba=0.8):
     return  pd.Series({'coordZ': approx_mean[0], 'coordY': approx_mean[1],
                        'coordX': approx_mean[2], 'NoduleConfidence': confidence_array.max(),
                        'AccessionNumber': nodules.AccessionNumber.iloc[0],
+                       'Subset': nodules.Subset.iloc[0],
                        'diameter_mm': get_diameter_by_sigma(approx_sigma, proba=proba)[0]})
 
 
