@@ -291,8 +291,8 @@ def get_nodules_groups(nodules, proba=0.8):
     """
     new_nodules = (
         nodules
-        .set_index(['AccessionNumber', 'NoduleID'])
-        .groupby(level=0)
+        .set_index(['Subset', 'AccessionNumber'])
+        .groupby(level=(0, 1))
         .apply(assign_nodules_group_index)
         .reset_index()
         .groupby('GroupNoduleID')
