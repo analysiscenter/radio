@@ -255,6 +255,9 @@ def compute_group_coords_and_diameter(nodules, proba=0.8):
         dataframe with information about equivalent locations and diameters of
         groups of overlapping nodules.
     """
+    if 'NoduleConfidence' not in nodules.columns:
+        nodules = nodules.assign(NoduleConfidence=1.0)
+
     num_nodules = nodules.shape[0]
     confidence_array = np.zeros(num_nodules, dtype=np.float64)
     mean_array = np.zeros((num_nodules, 3), dtype=np.float64)
