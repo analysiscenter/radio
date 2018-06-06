@@ -878,7 +878,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         params = {}
         for comp_dst, comp_data in list_of_dicts[0].items():
             list_of_arrs = [worker_res[comp_dst]['data'] for worker_res in list_of_dicts]
-            if not comp_data['type'] in ['spacing', 'origin']:
+            if comp_data['type'] not in ['spacing', 'origin']:
                 new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
                 params['bounds'] = new_bounds
                 new_data = np.concatenate(list_of_arrs, axis=0)
