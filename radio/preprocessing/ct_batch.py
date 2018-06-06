@@ -401,12 +401,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         result = {}
 
         for i, comp_name in enumerate(kwargs['components']):
-            if comp_name == 'images':
-                comp_data = img_nii.get_data()
-            elif comp_name == 'spacing':
+            if comp_name == 'spacing':
                 comp_data = np.diag(img_nii.affine)[:-1]
             elif comp_name == 'origin':
                 comp_data = img_nii.affine[:-1, -1]
+            else:
+                comp_data = img_nii.get_data()
 
             result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
         return result
@@ -422,30 +422,28 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # put 2d-scans for each patient in a list
         result = {}
 
+        patient_folder = self._get_file_name(patient_id, kwargs['src'])
+        list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
+                          for s in os.listdir(patient_folder)]
+        list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
+
+        dicom_slice = list_of_dicoms[0]
+        intercept_pat = dicom_slice.RescaleIntercept
+        slope_pat = dicom_slice.RescaleSlope
+
+        patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
+
+        patient_data[patient_data == AIR_HU] = 0
+
+        # perform conversion to HU
+        if slope_pat != 1:
+            patient_data = slope_pat * patient_data.astype(np.float64)
+            patient_data = patient_data.astype(np.int16)
+
+        patient_data += np.int16(intercept_pat)
+
         for i, comp_name in enumerate(kwargs['components']):
-            if comp_name == 'images':
-                patient_folder = self._get_file_name(patient_id, kwargs['src'])
-                list_of_dicoms = [dicom.read_file(os.path.join(patient_folder, s))
-                                  for s in os.listdir(patient_folder)]
-                list_of_dicoms.sort(key=lambda x: int(x.ImagePositionPatient[2]), reverse=True)
-
-                dicom_slice = list_of_dicoms[0]
-                intercept_pat = dicom_slice.RescaleIntercept
-                slope_pat = dicom_slice.RescaleSlope
-
-                patient_data = np.stack([s.pixel_array for s in list_of_dicoms]).astype(np.int16)
-
-                patient_data[patient_data == AIR_HU] = 0
-
-                # perform conversion to HU
-                if slope_pat != 1:
-                    patient_data = slope_pat * patient_data.astype(np.float64)
-                    patient_data = patient_data.astype(np.int16)
-
-                patient_data += np.int16(intercept_pat)
-                comp_data = patient_data
-
-            elif comp_name == 'spacing':
+            if comp_name == 'spacing':
                 comp_name = kwargs['dst'][i]
                 comp_data = np.asarray([float(dicom_slice.SliceThickness),
                                         float(dicom_slice.PixelSpacing[0]),
@@ -456,6 +454,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 comp_data = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
                                         float(dicom_slice.ImagePositionPatient[0]),
                                         float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
+            else:
+                comp_data = patient_data
 
             result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
         return result
@@ -486,46 +486,40 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ---------
-        components : str
-            name of component we need to preload.
-        dst : str
-            name of component where preloaded component will be saved.
+        components : str or iterable
+            iterable of components we need to preload.
         fmt : str
             format in which components are stored on disk.
+
         """
         if fmt != 'blosc':
             raise NotImplementedError('Preload from {} not implemented yet'.format(fmt))
 
-        # load shapes, perform memory allocation
-        shapes = np.zeros((len(self), 3), dtype=np.int)
-        for ix in self.indices:
-            filename = os.path.join(self._get_file_name(ix, src), components, 'data.shape')
-            ix_pos = self._get_verified_pos(ix)
-
-            # read shape and put it into shapes
-            if not os.path.exists(filename):
-                raise OSError("Component {} for item {} cannot be found on disk".format(components, ix))
-            with open(filename, 'rb') as file:
-                shapes[ix_pos, :] = pickle.load(file)
-
-        # update bounds of items
-        # TODO: once bounds for other components are added, make sure they are updated here in the right way
-        self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
-
-        # preallocate space in dst
-        skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
-        setattr(self, dst, np.zeros(skysc_shape))
-
-    def _prealloc_array_components(self, components=None, dst=None):
-        """ Allocate memory for array components (spacing and origin type) with names in dst.
-        """
+        # make iterable out of components-arg
         components = [components] if isinstance(components, str) else list(components)
+        dst = components if dst is None else dst
         dst = [dst] if isinstance(dst, str) else list(dst)
-        for i, comp_name in enumerate(components):
-            if comp_name in ['spacing', 'origin']:
-                setattr(self, dst[i], np.zeros(shape=(len(self), 3)))
-            else:
-                setattr(self, dst[i], np.array([], dtype='int'))
+
+        # load shapes, perform memory allocation
+        for i, component in enumerate(components):
+            shapes = np.zeros((len(self), 3), dtype=np.int)
+            for ix in self.indices:
+                filename = os.path.join(self._get_file_name(ix, src), component, 'data.shape')
+                ix_pos = self._get_verified_pos(ix)
+
+                # read shape and put it into shapes
+                if not os.path.exists(filename):
+                    raise OSError("Component {} for item {} cannot be found on disk".format(component, ix))
+                with open(filename, 'rb') as file:
+                    shapes[ix_pos, :] = pickle.load(file)
+
+            # update bounds of items
+            # TODO: once bounds for other components are added, make sure they are updated here in the right way
+            self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
+
+            # preallocate space in dst
+            skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
+            setattr(self, dst[i], np.zeros(skysc_shape))
 
     def _prealloc_components(self, **kwargs):
         """ Init-function for load from blosc.
@@ -534,11 +528,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # set images-component to 3d-array of zeroes if the component is to be updated
         for i, comp_name in enumerate(kwargs['components']):
             dst_component = kwargs['dst'][i]
-            if comp_name == 'images':
+            if comp_name in ['spacing', 'origin']:
+                self._prealloc_array_components(components=comp_name, dst=dst_component)
+            else:
                 self._prealloc_skyscraper_components(components=comp_name, dst=dst_component, \
                                                      src=kwargs['src'])
-            else:
-                self._prealloc_array_components(components=comp_name, dst=dst_component)
         return self.indices
 
     @inbatch_parallel(init='_prealloc_components', post='_post_read_blosc', target='async', update=False)
@@ -610,10 +604,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         raw_data = sitk.ReadImage(self._get_file_name(patient_id, kwargs['src']))
 
         for i, comp_name in enumerate(kwargs['components']):
-            if comp_name == 'images':
-                comp_data = sitk.GetArrayFromImage(raw_data)
-
-            elif comp_name == 'origin':
+            if comp_name == 'origin':
                 # *.mhd files contain information about scans' origin and spacing;
                 # however the order of axes there is inversed:
                 # so, we just need to reverse arrays with spacing and origin.
@@ -621,6 +612,9 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
             elif comp_name == 'spacing':
                 comp_data = np.array(raw_data.GetSpacing())[::-1]
+            else:
+                comp_data = sitk.GetArrayFromImage(raw_data)
+
             result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
         return result
 
@@ -873,7 +867,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         params = {}
         for comp_dst, comp_data in list_of_dicts[0].items():
             list_of_arrs = [worker_res[comp_dst]['data'] for worker_res in list_of_dicts]
-            if comp_data['type'] == 'images':
+            if not comp_data['type'] in ['spacing', 'origin']:
                 new_bounds = np.cumsum(np.array([len(a) for a in [[]] + list_of_arrs]))
                 params['bounds'] = new_bounds
                 new_data = np.concatenate(list_of_arrs, axis=0)

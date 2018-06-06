@@ -920,7 +920,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def _init_load_blosc(self, **kwargs):
+    def _prealloc_components(self, **kwargs):
         """ Init-func for load from blosc.
 
         Fills images/masks-components with zeroes if the components are to be updated.
