@@ -22,7 +22,7 @@ from .mask import make_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
 from .rotate import rotate_3D
-from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
+from ..dataset import action, inbatch_parallel, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
 
 
 # logger initialization
