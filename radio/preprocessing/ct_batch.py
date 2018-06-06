@@ -521,6 +521,17 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
             setattr(self, dst[i], np.zeros(skysc_shape))
 
+    def _prealloc_array_components(self, components=None, dst=None):
+        """ Allocate memory for array components (spacing and origin type) with names in dst.
+        """
+        components = [components] if isinstance(components, str) else list(components)
+        dst = [dst] if isinstance(dst, str) else list(dst)
+        for i, comp_name in enumerate(components):
+            if comp_name in ['spacing', 'origin']:
+                setattr(self, dst[i], np.zeros(shape=(len(self), 3)))
+            else:
+                setattr(self, dst[i], np.array([], dtype='int'))
+
     def _prealloc_components(self, **kwargs):
         """ Init-function for load from blosc.
         Allocate memory for both skyscrapper and array components.
