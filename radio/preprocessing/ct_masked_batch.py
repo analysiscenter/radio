@@ -21,6 +21,7 @@ from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
+from .rotate import rotate_3D
 from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
 
 
@@ -506,6 +507,33 @@ class CTImagesMaskedBatch(CTImagesBatch):
                         start_scaled, nod_size_scaled)
         # return ndarray-mask
         return mask
+
+    def _rotate_nodules(self, index, angle, axes):
+        if self.nodules is not None:
+            position = self.index.get_pos(index)
+            origin = self.nodules.origin[position, axes]
+            spacing = self.nodules.spacing[position, axes]
+            nodule_center = self.nodules.nodule_center[position, axes]
+            crop_center = origin + np.ceil(self.nodules.img_size[position, axes] / 2)
+
+            transform = np.array([[np.cos(angle), -np.sin(angle)],
+                                  [np.sin(angle), np.cos(angle)]])
+
+            center_ = transform @ ((nodule_center - crop_center) / spacing)
+            center_ = center_ * spacing + crop_center
+            self.nodules.nodule_center[position, axes] = center_
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', new_batch=True, target='threads')
+    def rotate(self, index, angle, components='images', axes=(1, 2), random=True, **kwargs):
+        _components = np.asarray(components).reshape(-1)
+        _angle = angle * (2 * np.random.rand() - 1) if random else angle
+        out_dict = {}
+        for comp in _components:
+            data = self.get(index, comp)
+            out_dict[comp] = rotate_3D(data, _angle, axes)
+        self._rotate_nodules(index, angle, axes)
+        return out_dict
 
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
