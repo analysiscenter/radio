@@ -31,6 +31,8 @@ from .patches import get_patches_numba, assemble_patches, calc_padding_size
 from .rotate import rotate_3D
 from .dump import dump_data
 
+from .augmentation import salt_and_pepper
+
 # logger initialization
 logger = logging.getLogger(__name__) # pylint: disable=invalid-name
 
@@ -1579,9 +1581,29 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
-    def dropout(self, index, p=0.1, component='images', **kwargs):
-        out_data = self.get(index, component)
-        out_data = out_data * np.random.binomial(1, p, size=out_data.shape)
+    def dropout(self, index, p=0.1, size_percent=None, size=None, component='images', **kwargs):
+        out_data = salt_and_pepper(self.get(index, component), p=p,
+                                   size_percent=size_percent,
+                                   insert_value=0, size=size,
+                                   coarse=False)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def pepper(self, index, p=0.1, size_percent=None, size=None, coarse=False, component='images', **kwargs):
+        out_data = salt_and_pepper(self.get(index, component), p=p,
+                                   size_percent=size_percent,
+                                   insert_value=0, size=size,
+                                   coarse=coarse)
+        return {component: out_data}
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', target='threads', new_batch=True)
+    def salt(self, index, p=0.1, size_percent=None, size=None, coarse=False, component='images', **kwargs):
+        out_data = salt_and_pepper(self.get(index, component), p=p,
+                                   size_percent=size_percent,
+                                   insert_value=1.0, size=size,
+                                   coarse=coarse)
         return {component: out_data}
 
     @action
