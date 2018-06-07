@@ -367,9 +367,6 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if len(dst) != len(components):
             raise ValueError('components and dst must be of the same length')
 
-        if isinstance(src, FilesIndex):
-            raise NotImplementedError('Load with src as FilesIndex not implemented yet')
-
         if fmt is None:
             if src is None:
                 raise ValueError('If fmt is None src must be provided')
