@@ -508,32 +508,90 @@ class CTImagesMaskedBatch(CTImagesBatch):
         # return ndarray-mask
         return mask
 
-    def _rotate_nodules(self, index, angle, axes):
+    def _rotate_nodules(self, index, angle, axes, new_img_size):
+        """ Apply rotation to nodules coordinates.
+
+        Parameters
+        ----------
+        index : str
+            index of item in batch.
+        angle : float
+            angle of rotation in degrees.
+        axes : tuple(int, int)
+            rotation plane.
+        new_img_size : tuple(int, int, int)
+            size of image after rotation.
+
+        Returns
+        -------
+        numpy rec array with nodules.
+        """
         if self.nodules is not None:
+            angle = np.deg2rad(angle)
+            orth_axis = list(set([0, 1, 2]) - set(axes))[0]
+            axes = [orth_axis] + list(axes)
             position = self.index.get_pos(index)
-            origin = self.nodules.origin[position, axes]
-            spacing = self.nodules.spacing[position, axes]
-            nodule_center = self.nodules.nodule_center[position, axes]
-            crop_center = origin + np.ceil(self.nodules.img_size[position, axes] / 2)
+            all_nodules = self.nodules[self.nodules.patient_pos == position]
+            transformed_nodules = all_nodules.copy()
+            for i, nodule in enumerate(all_nodules):
+                center = nodule.nodule_center[axes]
 
-            transform = np.array([[np.cos(angle), -np.sin(angle)],
-                                  [np.sin(angle), np.cos(angle)]])
+                crop_center = (nodule.origin[axes]
+                               + nodule.img_size[axes]
+                               * nodule.spacing[axes] / 2)
 
-            center_ = transform @ ((nodule_center - crop_center) / spacing)
-            center_ = center_ * spacing + crop_center
-            self.nodules.nodule_center[position, axes] = center_
+                transform = np.array([[1.0,      0.0,                 0.0],
+                                      [0.0, np.cos(angle),  -np.sin(angle)],
+                                      [0.0, np.sin(angle), np.cos(angle)]])
+
+                center_ = np.matmul(transform, (center - crop_center)
+                                    / nodule.spacing[axes])
+                center_ *= nodule.spacing[axes]
+                overshoot = (nodule.origin[axes]
+                             + nodule.img_size[axes]
+                             * nodule.spacing[axes] / 2)
+                transformed_nodules.nodule_center[i, axes] = center_ + overshoot
+        else:
+            transformed_nodules = np.zeros(shape=0)
+        return transformed_nodules
 
     @action
     @inbatch_parallel(init='indices', post='_post_components', new_batch=True, target='threads')
     def rotate(self, index, angle, components='images', axes=(1, 2), random=True, **kwargs):
+        """ Rotate batch components.
+
+        Parameters
+        ----------
+        angle : float
+            angle of rotation in degrees.
+        components : str, tuple(str)
+            components to rotate. Can be 'images', 'masks' or ('images', 'masks').
+        axes : tuple(int, int)
+            rotation plane.
+        random : bool
+            whether to sample rotation angle from Uniform[-angle, angle]
+            distribution or take deterministic value provided by 'angle'
+            argument.
+        """
         _components = np.asarray(components).reshape(-1)
         _angle = angle * (2 * np.random.rand() - 1) if random else angle
         out_dict = {}
         for comp in _components:
             data = self.get(index, comp)
             out_dict[comp] = rotate_3D(data, _angle, axes)
-        self._rotate_nodules(index, angle, axes)
+
+        out_size = (out_dict.get('images').shape if 'images' in out_dict
+                    else out_dict.get('masks').shape)
+        out_size = np.array(out_size)
+        out_dict['nodules'] = self._rotate_nodules(index, angle, axes, out_size)
         return out_dict
+
+    def _post_components(self, list_of_dicts, new_batch=True, **kwargs):
+        batch = super()._post_components(list_of_dicts, new_batch=new_batch, **kwargs)
+        if not isinstance(batch.nodules, np.recarray):
+            batch.nodules = np.rec.array(batch.nodules)
+        batch._refresh_nodules_info()
+        return batch
 
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
