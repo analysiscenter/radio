@@ -1043,7 +1043,6 @@ class CTImagesMaskedBatch(CTImagesBatch):
         batch
         """
         size = np.asarray(size).reshape(-1)
-        crop_halfsize = np.rint(size / 2)
         img_shapes = [np.asarray(self.get(i, 'images').shape)
                       for i in range(len(self))]
         if any(np.any(shape < size) for shape in img_shapes):
@@ -1071,7 +1070,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             batch.masks = np.concatenate(cropped_masks, axis=0)
 
         # recalculate origin, refresh nodules_info, leave only relevant nodules
-        batch.origin = self.origin + self.spacing * crop_halfsize
+        batch.origin = self.origin + self.spacing * np.rint((img_shapes - size) / 2)
         batch.nodules = self.nodules
         if batch.nodules is not None:
             batch._refresh_nodules_info()
