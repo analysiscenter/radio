@@ -355,7 +355,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         bounds stores ndarray of last floors for each scan.
         say, bounds = np.asarray([0, 100, 400])
 
-        >>> batch.load(fmt='npdarray', components='images', src=images_array, bounds=bounds)
+        >>> batch.load(fmt=None, components='images', src=images_array, bounds=bounds)
 
         """
         components = self.components if components is None else components
