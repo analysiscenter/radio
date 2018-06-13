@@ -1178,8 +1178,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
             current_prediction = np.asarray(_prediction)
             if targets_mode == 'classification':
-                current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
-                                               for prob in current_prediction.ravel()])
+                current_prediction = np.stack([np.ones(shape=(crop_shape)) * proba
+                                               for proba in current_prediction.ravel()])
 
             if targets_mode == 'regression':
                 current_prediction = create_mask_reg(current_prediction[:, :3],
