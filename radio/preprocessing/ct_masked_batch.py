@@ -1071,6 +1071,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         # recalculate origin, refresh nodules_info, leave only relevant nodules
         batch.origin = self.origin + self.spacing * np.rint((img_shapes - size) / 2)
+        batch.spacing = self.spacing
         batch.nodules = self.nodules
         if batch.nodules is not None:
             batch._refresh_nodules_info()
