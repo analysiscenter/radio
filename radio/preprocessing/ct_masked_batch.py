@@ -246,6 +246,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def recreate_indices(self, concat=False):
+        """ Create new indices for batch.
+
+        Parameters
+        ----------
+        concat : bool
+            whether to concat generated indices with old indices or not.
+            Default is False.
+
+        Returns
+        -------
+        CTImagesMaskedBatch
+            copy of source batch with new indices.
+        """
         if concat:
             indices = ['_'.join([preffix, suffix]) for preffix, suffix
                        in zip(self.indices, self.make_indices(len(self)))]
