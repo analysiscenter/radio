@@ -245,6 +245,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return 0
 
     @action
+    def recreate_indices(self, concat=False):
+        if concat:
+            indices = ['_'.join([preffix, suffix]) for preffix, suffix
+                       in zip(self.indices, self.make_indices(len(self)))]
+        else:
+            indices = self.make_indices(len(self))
+
+        batch = type(self)(ds.DatasetIndex(indices))
+        batch._init_data(origin=self.origin, spacing=self.spacing,
+                         images=self.images, masks=self.masks,
+                         bounds=self._bounds, nodules=self.nodules)
+        return batch
+
+    @action
     def fetch_nodules_info(self, nodules=None, nodules_records=None, update=False, images_loaded=True):
         """Extract nodules' info from nodules into attribute self.nodules.
 
