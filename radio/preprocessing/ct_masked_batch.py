@@ -260,6 +260,20 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     @action
     def repeat_pipeline(self, pipeline, num_repeats=1):
+        """ Repeat given pipeline for current batch.
+
+        Parameters
+        ----------
+        pipeline : Pipeline
+            pipeline to repeat for current batch.
+        num_repeats : int
+            number of repeats
+
+        Returns
+        -------
+        CTImagesMaskedBatch
+            concatenated output batches from different iterations.
+        """
         batches_list = []
         for i in range(num_repeats):
             batches_list.append(self >> pipeline)
