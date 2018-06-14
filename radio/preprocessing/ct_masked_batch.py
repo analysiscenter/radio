@@ -252,7 +252,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         else:
             indices = self.make_indices(len(self))
 
-        batch = type(self)(ds.DatasetIndex(indices))
+        batch = type(self)(DatasetIndex(indices))
         batch._init_data(origin=self.origin, spacing=self.spacing,
                          images=self.images, masks=self.masks,
                          bounds=self._bounds, nodules=self.nodules)
