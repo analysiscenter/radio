@@ -259,6 +259,13 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
+    def repeat_pipeline(self, pipeline, num_repeats=1):
+        batches_list = []
+        for i in range(num_repeats):
+            batches_list.append(self >> pipeline)
+        return self.concat(batches_list)
+
+    @action
     def fetch_nodules_info(self, nodules=None, nodules_records=None, update=False, images_loaded=True):
         """Extract nodules' info from nodules into attribute self.nodules.
 
