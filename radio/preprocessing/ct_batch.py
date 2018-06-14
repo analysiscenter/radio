@@ -246,7 +246,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return None
 
         # create index for the large batch and init batch
-        ixbatch = DatasetIndex(np.arange(np.sum([len(batch) for batch in batches])))
+        # ixbatch = DatasetIndex(np.arange(np.sum([len(batch) for batch in batches])))
+        ixbatch = DatasetIndex(np.concatenate([b.indices for b in batches]))
         large_batch = cls(ixbatch)
 
         # set non-none components in the large batch
