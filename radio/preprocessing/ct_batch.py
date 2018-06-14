@@ -370,7 +370,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         if fmt is None:
             if src is None:
                 raise ValueError('If fmt is None src must be provided')
-            src = np.asarray(src).reshape(-1)
+            src = [src] if len(components) == 1 else list(src)
             params = {}
             for comp_dst, comp_data in zip(dst, src):
                 params[comp_dst] = comp_data
@@ -499,7 +499,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         # load shapes, perform memory allocation
         for i, component in enumerate(components):
-            shapes = np.zeros((len(self), 3), dtype=np.int)
+            shapes = []
             for ix in self.indices:
                 filename = os.path.join(self._get_file_name(ix, src), component, 'data.shape')
                 ix_pos = self._get_verified_pos(ix)
@@ -508,14 +508,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 if not os.path.exists(filename):
                     raise OSError("Component {} for item {} cannot be found on disk".format(component, ix))
                 with open(filename, 'rb') as file:
-                    shapes[ix_pos, :] = pickle.load(file)
+                    shapes.append(pickle.load(file))
+            shapes = np.stack(shapes, axis=0)
 
             # update bounds of items
             # TODO: once bounds for other components are added, make sure they are updated here in the right way
             self._bounds = np.cumsum(np.insert(shapes[:, 0], 0, 0), dtype=np.int)
 
             # preallocate space in dst
-            skysc_shape = (self._bounds[-1], shapes[0, 1], shapes[0, 2])
+            skysc_shape = (self._bounds[-1], *shapes[0, 1:])
             setattr(self, dst[i], np.zeros(skysc_shape))
 
     def _prealloc_array_components(self, components=None, dst=None):
