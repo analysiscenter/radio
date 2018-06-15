@@ -503,7 +503,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
                 # read shape and put it into shapes
                 if not os.path.exists(filename):
-                    raise OSError("Component {} for item {} cannot be found on disk in {}".format(comp_name, ix, filename))
+                    raise OSError("Component {} for item {} cannot be found on disks".format(comp_name, ix))
                 with open(filename, 'rb') as file:
                     shapes.append(pickle.load(file))
             shapes = np.stack(shapes, axis=0)
