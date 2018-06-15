@@ -332,7 +332,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             will be saved in batch components named `images`, `spacing`, `origin`.
             Needed if you want e.g. load both images and masks.
             In that case you can add src='mask.ext' and specify
-            dst = ['mask', 'spacing_mask', 'origin_mask']
+            dst = 'mask'
 
         Returns
         -------
@@ -397,15 +397,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         img_nii = nib.load(self._get_file_name(patient_id, kwargs['src']))
         result = {}
 
-        for i, comp_name in enumerate(kwargs['components']):
-            if comp_name == 'spacing':
+        for i, comp_type in enumerate(kwargs['components']):
+            if comp_type == 'spacing':
                 comp_data = np.diag(img_nii.affine)[:-1]
-            elif comp_name == 'origin':
+            elif comp_type == 'origin':
                 comp_data = img_nii.affine[:-1, -1]
             else:
                 comp_data = img_nii.get_data()
 
-            result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
+            result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
 
     @inbatch_parallel(init='indices', post='_post_custom_components', target='threads')
@@ -439,22 +439,20 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         patient_data += np.int16(intercept_pat)
 
-        for i, comp_name in enumerate(kwargs['components']):
-            if comp_name == 'spacing':
-                comp_name = kwargs['dst'][i]
+        for i, comp_type in enumerate(kwargs['components']):
+            if comp_type == 'spacing':
                 comp_data = np.asarray([float(dicom_slice.SliceThickness),
                                         float(dicom_slice.PixelSpacing[0]),
                                         float(dicom_slice.PixelSpacing[1])], dtype=np.float)
 
-            elif comp_name == 'origin':
-                comp_name = kwargs['dst'][i]
+            elif comp_type == 'origin':
                 comp_data = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
                                         float(dicom_slice.ImagePositionPatient[0]),
                                         float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
             else:
                 comp_data = patient_data
 
-            result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
+            result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
 
     def _load_blosc(self, **kwargs):
@@ -498,15 +496,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         dst = [dst] if isinstance(dst, str) else list(dst)
 
         # load shapes, perform memory allocation
-        for i, component in enumerate(components):
+        for comp_name in dst:
             shapes = []
             for ix in self.indices:
-                filename = os.path.join(self._get_file_name(ix, src), component, 'data.shape')
-                ix_pos = self._get_verified_pos(ix)
+                filename = os.path.join(self._get_file_name(ix, src), comp_name, 'data.shape')
 
                 # read shape and put it into shapes
                 if not os.path.exists(filename):
-                    raise OSError("Component {} for item {} cannot be found on disk".format(component, ix))
+                    raise OSError("Component {} for item {} cannot be found on disk in {}".format(comp_name, ix, filename))
                 with open(filename, 'rb') as file:
                     shapes.append(pickle.load(file))
             shapes = np.stack(shapes, axis=0)
@@ -517,15 +514,15 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
             # preallocate space in dst
             skysc_shape = (self._bounds[-1], *shapes[0, 1:])
-            setattr(self, dst[i], np.zeros(skysc_shape))
+            setattr(self, comp_name, np.zeros(skysc_shape))
 
     def _prealloc_array_components(self, components=None, dst=None):
         """ Allocate memory for array components (spacing and origin type) with names in dst.
         """
         components = [components] if isinstance(components, str) else list(components)
         dst = [dst] if isinstance(dst, str) else list(dst)
-        for i, comp_name in enumerate(components):
-            if comp_name in ['spacing', 'origin']:
+        for i, comp_type in enumerate(components):
+            if comp_type in ['spacing', 'origin']:
                 setattr(self, dst[i], np.zeros(shape=(len(self), 3)))
             else:
                 setattr(self, dst[i], np.array([], dtype='int'))
@@ -535,12 +532,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         Allocate memory for both skyscrapper and array components.
         """
         # set images-component to 3d-array of zeroes if the component is to be updated
-        for i, comp_name in enumerate(kwargs['components']):
+        for i, comp_type in enumerate(kwargs['components']):
             dst_component = kwargs['dst'][i]
-            if comp_name in ['spacing', 'origin']:
-                self._prealloc_array_components(components=comp_name, dst=dst_component)
+            if comp_type in ['spacing', 'origin']:
+                self._prealloc_array_components(components=comp_type, dst=dst_component)
             else:
-                self._prealloc_skyscraper_components(components=comp_name, dst=dst_component, \
+                self._prealloc_skyscraper_components(components=comp_type, dst=dst_component, \
                                                      src=kwargs['src'])
         return self.indices
 
@@ -548,19 +545,19 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
     async def _read_blosc(self, ix, *args, **kwargs):
         byted = dict()
 
-        for source in kwargs['components']:
-            if source in ['spacing', 'origin']:
+        for i, comp_type in enumerate(kwargs['components']):
+            if comp_type in ['spacing', 'origin']:
                 ext = 'pkl'
             else:
                 ext = 'blk'
             patient_folder = self._get_file_name(ix, kwargs['src']) # pylint: disable=protected-access
-            comp_path = os.path.join(patient_folder, source, 'data' + '.' + ext)
+            comp_path = os.path.join(patient_folder, kwargs['dst'][i], 'data' + '.' + ext)
             if not os.path.exists(comp_path):
-                raise OSError("File with component {} doesn't exist".format(source))
+                raise OSError("File with component {} doesn't exist in {}".format(kwargs['dst'][i], comp_path))
 
             # read the component
             async with aiofiles.open(comp_path, mode='rb') as file:
-                byted[source] = await file.read()
+                byted[comp_type] = await file.read()
         return byted
 
     def _post_read_blosc(self, list_of_arrs, **kwargs):
@@ -570,10 +567,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @inbatch_parallel(init='indices', post='_post_default', target='threads', update=False)
     def _debyte_blosc(self, ix, byted, **kwargs):
-        for i, source in enumerate(kwargs['components']):
+        for i, comp_type in enumerate(kwargs['components']):
             # set correct extension for each component and choose a tool
             # for debyting and (possibly) decoding it
-            if source in ['spacing', 'origin']:
+            if comp_type in ['spacing', 'origin']:
                 unpacker = pickle.loads
             else:
                 def unpacker(byted):
@@ -582,7 +579,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                     debyted = blosc.unpack_array(byted)
 
                     # read the decoder and apply it
-                    decod_path = os.path.join(self._get_file_name(ix, kwargs['src']), source, 'data.decoder') # pylint: disable=cell-var-from-loop
+                    decod_path = os.path.join(self._get_file_name(ix, kwargs['src']), kwargs['dst'][i], 'data.decoder') # pylint: disable=cell-var-from-loop
 
                     # if file with decoder not exists, assume that no decoding is needed
                     if os.path.exists(decod_path):
@@ -592,10 +589,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                         decoder = lambda x: x
 
                     return decoder(debyted)
-            comp_data = unpacker(byted[ix][source])
+            comp_data = unpacker(byted[ix][comp_type])
             # update needed slice(s) of component
             comp_dst = kwargs['dst'][i]
-            comp_pos = self.get_pos(None, source, ix, dst=comp_dst)
+            comp_pos = self.get_pos(None, comp_type, ix, dst=comp_dst)
             getattr(self, comp_dst)[comp_pos] = comp_data
 
     @inbatch_parallel(init='indices', post='_post_custom_components', target='for')
@@ -612,19 +609,19 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         raw_data = sitk.ReadImage(self._get_file_name(patient_id, kwargs['src']))
 
-        for i, comp_name in enumerate(kwargs['components']):
-            if comp_name == 'origin':
+        for i, comp_type in enumerate(kwargs['components']):
+            if comp_type == 'origin':
                 # *.mhd files contain information about scans' origin and spacing;
                 # however the order of axes there is inversed:
                 # so, we just need to reverse arrays with spacing and origin.
                 comp_data = np.array(raw_data.GetOrigin())[::-1]
 
-            elif comp_name == 'spacing':
+            elif comp_type == 'spacing':
                 comp_data = np.array(raw_data.GetSpacing())[::-1]
             else:
                 comp_data = sitk.GetArrayFromImage(raw_data)
 
-            result[kwargs['dst'][i]] = {'type': comp_name, 'data': comp_data}
+            result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
 
     @action
@@ -744,10 +741,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         dst = component if dst is None else dst
         if data is None:
             ind_pos = self._get_verified_pos(index)
-            if component == 'images':
-                return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
-            else:
+            if component in ['spacing', 'origin']:
                 return slice(ind_pos, ind_pos + 1)
+            else:
+                return slice(self.lower_bounds[ind_pos], self.upper_bounds[ind_pos])
         else:
             return index
 
