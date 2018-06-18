@@ -502,11 +502,34 @@ def get_dicom_dataset_and_nodules(dataset_path, nodules=None):
 
 
 def save_histo(histo, path):
+    """ Save numpy histogram using pickle protocol.
+
+    Parameters
+    ----------
+    histo : tuple(ndarray, ndarray)
+        histogramm and bins edges which are both outputs of
+        numpy.histogramdd function.
+    path : str
+        path to file where to save histogramm.
+    """
     with open(path, 'wb') as file:
         pickle.dump(histo, file)
 
 
 def load_histo(path):
+    """ Load numpy histogram using pickle protocol.
+
+    Parameters
+    ----------
+    path : str
+        path to binary file containing pickled tuple
+        with histogram and bins edges both represented
+        by numpy ndarray.
+
+    Returns
+    tuple(ndarray, ndarray)
+        tuple of histogramm and bins edges.
+    """
     with open(path, 'rb') as file:
         histo = pickle.load(file)
     return histo
