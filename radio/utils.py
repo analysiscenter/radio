@@ -4,6 +4,7 @@ import sys
 from functools import partial
 from binascii import hexlify
 from collections import OrderedDict
+import pickle
 import glob
 import numpy as np
 import scipy.stats as stats
@@ -498,3 +499,14 @@ def get_dicom_dataset_and_nodules(dataset_path, nodules=None):
             .rename(columns={'Index': 'seriesuid'})
         )
     return dataset, nodules
+
+
+def save_histo(histo, path):
+    with open(path, 'wb') as file:
+        pickle.dump(histo, file)
+
+
+def load_histo(path):
+    with open(path, 'rb') as file:
+        histo = pickle.load(file)
+    return histo
