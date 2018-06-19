@@ -2,7 +2,7 @@
 
 from copy import copy
 import PIL
-from .pipelines import options_seq, options_prod
+from .decorators import options_seq, options_prod
 from ..dataset import Pipeline  # pylint: disable=no-name-in-module
 
 # global constants defining args of some actions in pipeline
