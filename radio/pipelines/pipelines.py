@@ -4,7 +4,7 @@ from copy import copy
 import numpy as np
 import PIL
 from .decorators import options_seq, options_prod, repeat_pipeline
-from ..dataset import Pipeline  # pylint: disable=no-name-in-module
+from ..dataset import Pipeline, F  # pylint: disable=no-name-in-module
 
 # global constants defining args of some actions in pipeline
 SPACING = (1.7, 1.0, 1.0)  # spacing of scans after spacing unification
