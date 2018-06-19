@@ -4,7 +4,7 @@ from functools import partial, wraps
 from itertools import product
 import numpy as np
 
-from ..dataset import Pipeline
+from ..dataset import Pipeline, F
 
 
 def options_prod(**kwargs):
