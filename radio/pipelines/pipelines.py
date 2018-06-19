@@ -1,6 +1,7 @@
 """ Helper functions describing pipelines for creating large samples of nodules """
 
 from copy import copy
+import numpy as np
 import PIL
 from .decorators import options_seq, options_prod, repeat_pipeline
 from ..dataset import Pipeline  # pylint: disable=no-name-in-module
