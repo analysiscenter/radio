@@ -324,7 +324,7 @@ def sample_and_rotate(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169
     nodule_size = np.rint(np.array(crop_size) * np.sqrt(2)).astype(np.int)
     batch_size = max_crops if not cancerous else None
     pipeline = (
-        ds.Pipeline()
+        Pipeline()
         .sample_nodules(share=int(cancerous), nodule_size=nodule_size,
                         variance=variance, batch_size=batch_size, histo=histo)
         .rotate(angle=angle, axes=rot_axes, random=False, inplace=False)
@@ -338,12 +338,12 @@ def sample_and_rotate(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169
 
     if cancerous is None:
         return (
-            ds.Pipeline()
+            Pipeline()
             .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats, rate=rate))
         )
     else:
         return (
-            ds.Pipeline()
+            Pipeline()
             .repeat_pipeline(pipeline, F(ncancer_rate_to_num_repeats,
                                          rate=rate, max_crops=max_crops))
         )
@@ -382,7 +382,7 @@ def sample_random_resize(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 
     batch_size = max_crops if not cancerous else None
 
     pipeline = (
-        ds.Pipeline()
+        Pipeline()
         .sample_nodules(share=int(cancerous), nodule_size=nodule_size,
                         variance=variance, batch_size=batch_size, histo=histo)
         .resize(shape=F(sample_shape, size_percent=size_percent),
@@ -396,13 +396,13 @@ def sample_random_resize(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 
 
     if cancerous is None:
         return (
-            ds.Pipeline()
+            Pipeline()
             .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats,
                                          rate=rate / 10))
         )
     else:
         return (
-            ds.Pipeline()
+            Pipeline()
             .repeat_pipeline(pipeline, F(ncancer_rate_to_num_repeats,
                                          rate=rate / 10, max_crops=max_crops))
         )
@@ -435,7 +435,7 @@ def sample_simple(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169),
 
     batch_size = max_crops if not cancerous else None
     pipeline = (
-        ds.Pipeline()
+        Pipeline()
         .sample_nodules(share=int(cancerous), nodule_size=crop_size,
                         variance=variance, batch_size=batch_size, histo=histo)
     )
@@ -446,12 +446,12 @@ def sample_simple(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169),
 
     if cancerous is None:
         return (
-            ds.Pipeline()
+            Pipeline()
             .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats, rate=rate))
         )
     else:
         return (
-            ds.Pipeline()
+            Pipeline()
             .repeat_pipeline(pipeline, F(ncancer_rate_to_num_repeats,
                                          rate=rate, max_crops=max_crops))
         )
