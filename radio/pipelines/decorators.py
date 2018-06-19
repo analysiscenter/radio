@@ -59,7 +59,7 @@ def options_prod(**kwargs):
                                             **dict(zip(kwargs.keys(), params)))
                 pipelines.append(pipeline)
             return (
-                ds.Pipeline()
+                Pipeline()
                 .apply(lambda b: b.concat([b >> pipe for pipe in pipelines]))
             )
 
