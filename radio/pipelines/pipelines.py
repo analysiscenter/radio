@@ -1,5 +1,6 @@
 """ Helper functions describing pipelines for creating large samples of nodules """
 
+import math
 from copy import copy
 import numpy as np
 import PIL
