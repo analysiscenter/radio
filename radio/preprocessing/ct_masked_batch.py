@@ -236,7 +236,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                              'diamY': nodules.nodule_size[:, 1],
                              'diamX': nodules.nodule_size[:, 2]}, columns=columns)
 
-    def get_pos(self, data, component, index):
+    def get_pos(self, data, component, index, dst=None):
         """ Return a positon of an item for a given index in data
         or in self.`component`.
 
@@ -920,7 +920,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def _init_load_blosc(self, **kwargs):
+    def _prealloc_components(self, **kwargs):
         """ Init-func for load from blosc.
 
         Fills images/masks-components with zeroes if the components are to be updated.
