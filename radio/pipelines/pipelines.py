@@ -2,6 +2,7 @@
 
 from copy import copy
 import PIL
+from .pipelines import options_seq, options_prod
 from ..dataset import Pipeline  # pylint: disable=no-name-in-module
 
 # global constants defining args of some actions in pipeline
@@ -245,3 +246,211 @@ def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-10
                )
 
     return pipeline
+
+
+def cancer_rate_to_num_repeats(batch, rate):
+    """ Compute number of times to run batch through augmentation pipeline.
+
+    Parameters
+    ----------
+    batch : CTImagesMaskedBatch
+        batch with fetched info about nodules location.
+    rate : float
+        number of samples with nodules per scan.
+
+    Returns
+    -------
+    int
+        number of times to run batch through augmentation pipeline
+        required to get given average per scan sample rate.
+    """
+    if batch.nodules is None:
+        return 1
+    else:
+        return math.ceil(rate * len(batch) / len(batch.nodules))
+
+
+def ncancer_rate_to_num_repeats(batch, rate, max_crops):
+    """ Compute number of times to run batch through augmentation pipeline.
+
+    Parameters
+    ----------
+    batch : CTImagesMaskedBatch
+        batch with fetched info about nodules location.
+    rate : float
+        number of samples with nodules per scan.
+
+    Returns
+    -------
+    int
+        number of times to pass batch through augmentation pipeline
+        required to get given average per scan sample rate.
+    """
+    return math.ceil(rate * len(batch) / max_crops)
+
+
+@options_prod(angle=(-15, 15, -30, 30, -45, 45, -60, 60, -90, 90))
+@options_seq(cancerous=(True, False), suffix=('cancer/rotation', 'ncancer/rotation'))
+def sample_and_rotate(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169),
+                      angle=30, rot_axes=(1, 2), rate=16, max_crops=64,
+                      cancerous=True, dst=None, suffix=None):
+    """ Sample cancerous and non-cancerous and rotate them to 10 different angles.
+
+    Samples are rotated on angles (-15, 15, -30, 30, -45, 45, -60, 60, -90, 90).
+
+    Parameters
+    ----------
+    crop_size : ArrayLike(int)
+        size of crop along (z, y, x) axes.
+    histo : tuple(ndarray, ndarray)
+        histogramm that will be used for sampling non-cancerous crops.
+    variance : ArrayLike(int)
+        variance along (z, y, x) axes.
+    rot_axes : ArrayLike(int)
+        rotation plane defined by two axes.
+    rate : int
+        per scan expected number of samples. This parameter is
+        considered to be shared for both cancerous and non-cancerous cases.
+    max_crops : int
+        maximum number of crops for non-cancerous sampling.
+    cancerous : bool
+        whether to sample cancerous or non-cancerous crops.
+    dst : str or None
+        if None then crops are not dumped otherwise must be a string
+        representing path to dump directory.
+    """
+
+    nodule_size = np.rint(np.array(crop_size) * np.sqrt(2)).astype(np.int)
+    batch_size = max_crops if not cancerous else None
+    pipeline = (
+        ds.Pipeline()
+        .sample_nodules(share=int(cancerous), nodule_size=nodule_size,
+                        variance=variance, batch_size=batch_size, histo=histo)
+        .rotate(angle=angle, axes=rot_axes, random=False, inplace=False)
+        .create_mask()
+        .central_crop(size=crop_size, crop_mask=True, inplace=False)
+    )
+
+    if dst is not None:
+        _path = os.path.join(dst, suffix) if suffix else str(dst)
+        pipeline = pipeline.dump(dst=_path)
+
+    if cancerous is None:
+        return (
+            ds.Pipeline()
+            .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats, rate=rate))
+        )
+    else:
+        return (
+            ds.Pipeline()
+            .repeat_pipeline(pipeline, F(ncancer_rate_to_num_repeats,
+                                         rate=rate, max_crops=max_crops))
+        )
+
+
+@repeat_pipeline(num_repeats=10)
+@options_seq(cancerous=(True, False), suffix=('cancer/rnd_resize', 'ncancer/rnd_resize'))
+def sample_random_resize(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169),
+                         size_percent=0.15, rate=160, max_crops=64, cancerous=True,
+                         dump=False, dst=None, suffix=None):
+    """ Sample cancerous and non-cancerous and resize them to radom size.
+
+    Parameters
+    ----------
+    crop_size : ArrayLike(int)
+        size of crop along (z, y, x) axes.
+    histo : tuple(ndarray, ndarray)
+        histogramm that will be used for sampling non-cancerous crops.
+    variance : ArrayLike(int)
+        variance along (z, y, x) axes.
+    size_percent : float
+        scatter of size defined as percents of original size.
+    rate : int
+        per scan expected number of samples. This parameter is
+        considered to be shared for both cancerous and non-cancerous cases.
+    max_crops : int
+        maximum number of crops for non-cancerous sampling.
+    cancerous : bool
+        whether to sample cancerous or non-cancerous crops.
+    dst : str or None
+        if None then crops are not dumped otherwise must be a string
+        representing path to dump directory.
+    """
+
+    nodule_size = np.rint(np.array(crop_size) * np.sqrt(2)).astype(np.int)
+    batch_size = max_crops if not cancerous else None
+
+    pipeline = (
+        ds.Pipeline()
+        .sample_nodules(share=int(cancerous), nodule_size=nodule_size,
+                        variance=variance, batch_size=batch_size, histo=histo)
+        .resize(shape=F(sample_shape, size_percent=size_percent),
+                method='scipy', order=3)
+        .central_crop(size=crop_size, crop_mask=True, inplace=False)
+    )
+
+    if dst is not None:
+        _path = os.path.join(dst, suffix) if suffix else str(dst)
+        pipeline = pipeline.dump(dst=_path)
+
+    if cancerous is None:
+        return (
+            ds.Pipeline()
+            .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats,
+                                         rate=rate / 10))
+        )
+    else:
+        return (
+            ds.Pipeline()
+            .repeat_pipeline(pipeline, F(ncancer_rate_to_num_repeats,
+                                         rate=rate / 10, max_crops=max_crops))
+        )
+
+
+@options_seq(cancerous=(True, False), suffix=('cancer/original', 'ncancer/original'))
+def sample_simple(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169),
+                  rate=160, max_crops=64, cancerous=True, dst=None, suffix=None):
+    """ Sample cancerous and non-cancerous.
+
+    Parameters
+    ----------
+    crop_size : ArrayLike(int)
+        size of crop along (z, y, x) axes.
+    histo : tuple(ndarray, ndarray)
+        histogramm that will be used for sampling non-cancerous crops.
+    variance : ArrayLike(int)
+        variance along (z, y, x) axes.
+    rate : float
+        per scan expected number of samples. This parameter is
+        considered to be shared for both cancerous and non-cancerous cases.
+    max_crops : int
+        maximum number of crops for non-cancerous sampling.
+    cancerous : bool
+        whether to sample cancerous or non-cancerous crops.
+    dst : str or None
+        if None then crops are not dumped otherwise must be a string
+        representing path to dump directory.
+    """
+
+    batch_size = max_crops if not cancerous else None
+    pipeline = (
+        ds.Pipeline()
+        .sample_nodules(share=int(cancerous), nodule_size=crop_size,
+                        variance=variance, batch_size=batch_size, histo=histo)
+    )
+
+    if dst is not None:
+        _path = os.path.join(dst, suffix) if suffix else str(dst)
+        pipeline = pipeline.dump(dst=_path)
+
+    if cancerous is None:
+        return (
+            ds.Pipeline()
+            .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats, rate=rate))
+        )
+    else:
+        return (
+            ds.Pipeline()
+            .repeat_pipeline(pipeline, F(ncancer_rate_to_num_repeats,
+                                         rate=rate, max_crops=max_crops))
+        )
