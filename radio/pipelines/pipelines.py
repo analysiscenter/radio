@@ -302,7 +302,7 @@ def sample_shape(batch, size_percent=0.15):
 @options_prod(angle=(-15, 15, -30, 30, -45, 45, -60, 60, -90, 90))
 @options_seq(cancerous=(True, False), suffix=('cancer/rotation', 'ncancer/rotation'))
 def sample_and_rotate(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169),
-                      angle=30, rot_axes=(1, 2), rate=16, max_crops=64,
+                      angle=30, rot_axes=(1, 2), rate=160, max_crops=64,
                       cancerous=True, dst=None, suffix=None):
     """ Sample cancerous and non-cancerous and rotate them to 10 different angles.
 
@@ -348,13 +348,13 @@ def sample_and_rotate(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169
     if cancerous is None:
         return (
             Pipeline()
-            .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats, rate=rate))
+            .repeat_pipeline(pipeline, F(cancer_rate_to_num_repeats, rate=rate / 10))
         )
     else:
         return (
             Pipeline()
             .repeat_pipeline(pipeline, F(ncancer_rate_to_num_repeats,
-                                         rate=rate, max_crops=max_crops))
+                                         rate=rate / 10, max_crops=max_crops))
         )
 
 
