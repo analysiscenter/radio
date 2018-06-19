@@ -207,7 +207,8 @@ def update_histo(nodules, histo, fmt='raw', **kwargs):
 
     return pipeline
 
-def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-1000, 400)):
+def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-1000, 400),
+                  components=('images', 'masks', 'origin', 'spacing')):
     """ Pipeline for generating batches of cancerous and non-cancerous crops from
     ct-scans in chosen proportion.
 
@@ -221,6 +222,8 @@ def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-10
         seq of len=2, (num_cancer_batches, num_noncancer_batches).
     hu_lims : tuple, list of float
         seq of len=2, representing limits of hu-trimming in normalize_hu-action.
+    components : tuple, list of str
+        components to load.
 
     Returns
     -------
@@ -228,14 +231,14 @@ def combine_crops(cancer_set, non_cancer_set, batch_sizes=(10, 10), hu_lims=(-10
     """
     # pipeline generating cancerous crops
     ppl_cancer = (cancer_set.p
-                  .load(fmt='blosc')
+                  .load(fmt='blosc', components=components)
                   .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
                   .run(lazy=True, batch_size=batch_sizes[0], shuffle=9)
                  )
 
     # pipeline generating non-cancerous crops merged with first pipeline
     pipeline = (non_cancer_set.p
-                .load(fmt='blosc')
+                .load(fmt='blosc', components=components)
                 .normalize_hu(min_hu=hu_lims[0], max_hu=hu_lims[1])
                 .merge(ppl_cancer)
                 .run(lazy=True, batch_size=batch_sizes[1], shuffle=9)
