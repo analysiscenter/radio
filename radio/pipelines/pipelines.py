@@ -290,6 +290,14 @@ def ncancer_rate_to_num_repeats(batch, rate, max_crops):
     return math.ceil(rate * len(batch) / max_crops)
 
 
+def sample_shape(batch, size_percent=0.15):
+    """ Sample random shape for resize action for given batch. """
+    eshape = batch.images_shape[0, :]
+    sampled_shape = np.random.uniform(low=eshape * (1.0 + size_percent),
+                                      high=eshape * (1.0 - size_percent))
+    return np.rint(sampled_shape).astype(np.int)
+
+
 @options_prod(angle=(-15, 15, -30, 30, -45, 45, -60, 60, -90, 90))
 @options_seq(cancerous=(True, False), suffix=('cancer/rotation', 'ncancer/rotation'))
 def sample_and_rotate(crop_size=(32, 64, 64), histo=None, variance=(49, 169, 169),
