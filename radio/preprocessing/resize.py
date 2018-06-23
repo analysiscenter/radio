@@ -4,7 +4,7 @@ Module with auxillary
     for resize of
     CT scans
 """
-
+import math
 from numba import jit
 import scipy.ndimage
 from PIL import Image

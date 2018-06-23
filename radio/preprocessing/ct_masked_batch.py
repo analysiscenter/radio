@@ -21,7 +21,8 @@ from .ct_batch import CTImagesBatch
 from .mask import make_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
-from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
+from .rotate import rotate_3D
+from ..dataset import action, inbatch_parallel, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
 
 
 # logger initialization
@@ -113,9 +114,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
                               ('nodule_center', np.float, (3,)),
                               ('nodule_size', np.float, (3,)),
                               ('spacing', np.float, (3,)),
-                              ('origin', np.float, (3,))])
+                              ('origin', np.float, (3,)),
+                              ('confidence', np.float, (1,))])
 
-    components = "images", "masks", "spacing", "origin"
+    components = "images", "masks", "spacing", "origin", "nodules"
 
     @staticmethod
     def make_indices(size):
@@ -174,7 +176,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             centers, ids and sizes of nodules.
         """
         columns = ['nodule_id', 'source_id', 'locZ', 'locY',
-                   'locX', 'diamZ', 'diamY', 'diamX']
+                   'locX', 'diamZ', 'diamY', 'diamX', 'confidence']
 
         nodule_id = self.make_indices(nodules.shape[0])
         return pd.DataFrame({'source_id': self.indices[nodules.patient_pos],
@@ -184,7 +186,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
                              'locX': nodules.nodule_center[:, 2],
                              'diamZ': nodules.nodule_size[:, 0],
                              'diamY': nodules.nodule_size[:, 1],
-                             'diamX': nodules.nodule_size[:, 2]}, columns=columns)
+                             'diamX': nodules.nodule_size[:, 2],
+                             'confidence': nodules.confidence[:,0]}, columns=columns)
 
     def get_pos(self, data, component, index):
         """ Return a positon of an item for a given index in data
@@ -240,6 +243,54 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return self.nodules.patient_pos.shape[0]
         else:
             return 0
+
+    @action
+    def recreate_indices(self, concat=False):
+        """ Create new indices for batch.
+
+        Parameters
+        ----------
+        concat : bool
+            whether to concat generated indices with old indices or not.
+            Default is False.
+
+        Returns
+        -------
+        CTImagesMaskedBatch
+            copy of source batch with new indices.
+        """
+        if concat:
+            indices = ['_'.join([preffix, suffix]) for preffix, suffix
+                       in zip(self.indices, self.make_indices(len(self)))]
+        else:
+            indices = self.make_indices(len(self))
+
+        batch = type(self)(DatasetIndex(indices))
+        batch._init_data(origin=self.origin, spacing=self.spacing,
+                         images=self.images, masks=self.masks,
+                         bounds=self._bounds, nodules=self.nodules)
+        return batch
+
+    @action
+    def repeat_pipeline(self, pipeline, num_repeats=1):
+        """ Repeat given pipeline for current batch.
+
+        Parameters
+        ----------
+        pipeline : Pipeline
+            pipeline to repeat for current batch.
+        num_repeats : int
+            number of repeats
+
+        Returns
+        -------
+        CTImagesMaskedBatch
+            concatenated output batches from different iterations.
+        """
+        batches_list = []
+        for i in range(num_repeats):
+            batches_list.append(self >> pipeline)
+        return self.concat(batches_list)
 
     @action
     def fetch_nodules_info(self, nodules=None, nodules_records=None, update=False, images_loaded=True):
@@ -359,9 +410,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         nodules_list = []
         for pos in range(len(self)):
-            mask = self.get(pos, 'masks')
+            mask = self.get(pos, 'masks') * 2
             mask_labels = measure.label(mask, background=0)
-            for props in measure.regionprops(np.int16(mask_labels)):
+            for props in measure.regionprops(mask_labels, intensity_image=mask):
                 center = np.asarray((props.centroid[0],
                                      props.centroid[1],
                                      props.centroid[2]), dtype=np.float)
@@ -370,9 +421,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
                 diameter = np.asarray(
                     [props.equivalent_diameter] * 3, dtype=np.float)
                 diameter = diameter * self.spacing[pos]
+                confidence = props.mean_intensity / 2
                 nodules_list.append({'patient_pos': pos,
                                      'nodule_center': center,
-                                     'nodule_size': diameter})
+                                     'nodule_size': diameter,
+                                     'confidence': confidence})
 
         num_nodules = len(nodules_list)
         self.nodules = np.rec.array(
@@ -381,6 +434,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             self.nodules.patient_pos[i] = nodule['patient_pos']
             self.nodules.nodule_center[i, :] = nodule['nodule_center']
             self.nodules.nodule_size[i, :] = nodule['nodule_size']
+            self.nodules.confidence[i] = nodule['confidence']
+
         self._refresh_nodules_info(images_loaded)
         return self
 
@@ -428,7 +483,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return (start_pix + self.nodules.offset).astype(np.int)
 
     @action
-    def create_mask(self):
+    def create_mask(self, mode='ellipsoid'):
         """ Create `masks` component from `nodules` component.
 
         Notes
@@ -437,6 +492,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         see :func:`~radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.fetch_nodules_info`
         for more details.
         """
+        _mode = 0 if mode == 'cuboid' else 1
         if self.nodules is None:
             logger.warning("Info about nodules location must " +
                            "be loaded before calling this method. " +
@@ -450,7 +506,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         start_pix = np.rint(start_pix).astype(np.int)
         make_mask_numba(self.masks, self.nodules.offset,
                         self.nodules.img_size + self.nodules.offset, start_pix,
-                        np.rint(self.nodules.nodule_size / self.nodules.spacing))
+                        np.rint(self.nodules.nodule_size / self.nodules.spacing), mode=_mode)
 
         return self
 
@@ -499,6 +555,91 @@ class CTImagesMaskedBatch(CTImagesBatch):
                         start_scaled, nod_size_scaled)
         # return ndarray-mask
         return mask
+
+    def _rotate_nodules(self, index, angle, axes, new_img_size):
+        """ Apply rotation to nodules coordinates.
+
+        Parameters
+        ----------
+        index : str
+            index of item in batch.
+        angle : float
+            angle of rotation in degrees.
+        axes : tuple(int, int)
+            rotation plane.
+        new_img_size : tuple(int, int, int)
+            size of image after rotation.
+
+        Returns
+        -------
+        numpy rec array with nodules.
+        """
+        if self.nodules is not None:
+            angle = np.deg2rad(angle)
+            orth_axis = list(set([0, 1, 2]) - set(axes))[0]
+            axes = [orth_axis] + list(axes)
+            position = self.index.get_pos(index)
+            all_nodules = self.nodules[self.nodules.patient_pos == position]
+            transformed_nodules = all_nodules.copy()
+            for i, nodule in enumerate(all_nodules):
+                center = nodule.nodule_center[axes]
+
+                crop_center = (nodule.origin[axes]
+                               + nodule.img_size[axes]
+                               * nodule.spacing[axes] / 2)
+
+                transform = np.array([[1.0,      0.0,                 0.0],
+                                      [0.0, np.cos(angle),  -np.sin(angle)],
+                                      [0.0, np.sin(angle), np.cos(angle)]])
+
+                center_ = np.matmul(transform, (center - crop_center)
+                                    / nodule.spacing[axes])
+                center_ *= nodule.spacing[axes]
+                overshoot = (nodule.origin[axes]
+                             + nodule.img_size[axes]
+                             * nodule.spacing[axes] / 2)
+                transformed_nodules.nodule_center[i, axes] = center_ + overshoot
+        else:
+            transformed_nodules = np.zeros(shape=0)
+        return transformed_nodules
+
+    @action
+    @inbatch_parallel(init='indices', post='_post_components', new_batch=True, target='threads')
+    def rotate(self, index, angle, components='images', axes=(1, 2), random=True, **kwargs):
+        """ Rotate batch components.
+
+        Parameters
+        ----------
+        angle : float
+            angle of rotation in degrees.
+        components : str, tuple(str)
+            components to rotate. Can be 'images', 'masks' or ('images', 'masks').
+        axes : tuple(int, int)
+            rotation plane.
+        random : bool
+            whether to sample rotation angle from Uniform[-angle, angle]
+            distribution or take deterministic value provided by 'angle'
+            argument.
+        """
+        _components = np.asarray(components).reshape(-1)
+        _angle = angle * (2 * np.random.rand() - 1) if random else angle
+        out_dict = {}
+        for comp in _components:
+            data = self.get(index, comp)
+            out_dict[comp] = rotate_3D(data, _angle, axes)
+
+        out_size = (out_dict.get('images').shape if 'images' in out_dict
+                    else out_dict.get('masks').shape)
+        out_size = np.array(out_size)
+        out_dict['nodules'] = self._rotate_nodules(index, angle, axes, out_size)
+        return out_dict
+
+    def _post_components(self, list_of_dicts, new_batch=True, **kwargs):
+        batch = super()._post_components(list_of_dicts, new_batch=new_batch, **kwargs)
+        if not isinstance(batch.nodules, np.recarray):
+            batch.nodules = np.rec.array(batch.nodules)
+        batch._refresh_nodules_info()
+        return batch
 
     # TODO rename function to sample_random_nodules_positions
     def sample_random_nodules(self, num_nodules, nodule_size, histo=None):
@@ -933,25 +1074,26 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def central_crop(self, crop_size, crop_mask=False, **kwargs):
-        """ Make crop of crop_size from center of images.
+    def central_crop(self, size, crop_mask=False, inplace=True, **kwargs):
+        """ Make crop of given size from center of images or masks.
 
         Parameters
         ----------
-        crop_size : tuple, list or ndarray of int
+        size : tuple, list or ndarray of int
             (z,y,x)-shape of central crop along three axes(z,y,x order is used).
         crop_mask : bool
             if True, crop the mask in the same way.
+        inplace : bool
+            whether to perform cropping inplace or create new batch.
 
         Returns
         -------
         batch
         """
-        crop_size = np.asarray(crop_size).reshape(-1)
-        crop_halfsize = np.rint(crop_size / 2)
+        size = np.asarray(size).reshape(-1)
         img_shapes = [np.asarray(self.get(i, 'images').shape)
                       for i in range(len(self))]
-        if any(np.any(shape < crop_size) for shape in img_shapes):
+        if any(np.any(shape < size) for shape in img_shapes):
             raise ValueError(
                 "Crop size must be smaller than size of inner 3D images")
 
@@ -959,24 +1101,30 @@ class CTImagesMaskedBatch(CTImagesBatch):
         cropped_masks = []
         for i in range(len(self)):
             image = self.get(i, 'images')
-            cropped_images.append(make_central_crop(image, crop_size))
+            cropped_images.append(make_central_crop(image, size))
 
             if crop_mask and self.masks is not None:
                 mask = self.get(i, 'masks')
-                cropped_masks.append(make_central_crop(mask, crop_size))
+                cropped_masks.append(make_central_crop(mask, size))
 
-        self._bounds = np.cumsum([0] + [crop_size[0]] * len(self))
-        self.images = np.concatenate(cropped_images, axis=0)
+        if inplace:
+            batch = self
+        else:
+            batch = type(self)(self.index)
+
+        batch._bounds = np.cumsum([0] + [size[0]] * len(self))
+        batch.images = np.concatenate(cropped_images, axis=0)
         if crop_mask and self.masks is not None:
-            self.masks = np.concatenate(cropped_masks, axis=0)
+            batch.masks = np.concatenate(cropped_masks, axis=0)
 
         # recalculate origin, refresh nodules_info, leave only relevant nodules
-        self.origin = self.origin + self.spacing * crop_halfsize
-        if self.nodules is not None:
-            self._refresh_nodules_info()
-            self._filter_nodules_info()
-
-        return self
+        batch.origin = self.origin + self.spacing * np.rint((img_shapes - size) / 2)
+        batch.spacing = self.spacing
+        batch.nodules = self.nodules
+        if batch.nodules is not None:
+            batch._refresh_nodules_info()
+            batch._filter_nodules_info()
+        return batch
 
     def flip(self):  # pylint: disable=arguments-differ
         """ Invert the order of slices for each patient
@@ -994,6 +1142,19 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return self
 
     @action
+    def threshold_mask(self, threshold=0.35):
+        """ Filter masks values by given threshold.
+
+        Parameters
+        ----------
+        threshold : float
+            threshold for masks values.
+
+        """
+        self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
+        return self
+
+    @action
     def binarize_mask(self, threshold=0.35):
         """ Binarize masks by threshold.
 
@@ -1003,7 +1164,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             threshold for masks binarization.
 
         """
-        self.masks *= np.asarray(self.masks > threshold, dtype=np.int)
+        self.masks = np.asarray(self.masks > threshold, dtype=np.int)
         return self
 
     @action
@@ -1065,8 +1226,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
             current_prediction = np.asarray(_prediction)
             if targets_mode == 'classification':
-                current_prediction = np.stack([np.ones(shape=(crop_shape)) * prob
-                                               for prob in current_prediction.ravel()])
+                current_prediction = np.stack([np.ones(shape=(crop_shape)) * proba
+                                               for proba in current_prediction.ravel()])
 
             if targets_mode == 'regression':
                 current_prediction = create_mask_reg(current_prediction[:, :3],
