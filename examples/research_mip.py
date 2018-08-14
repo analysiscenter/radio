@@ -4,7 +4,6 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '1,2'
 import sys
 import warnings
 warnings.filterwarnings("ignore")
-from time import time
 
 import numpy as np
 import pandas as pd
@@ -15,11 +14,13 @@ from radio import CTImagesMaskedBatch as CTIMB
 from radio.dataset import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, L
 from radio.dataset.research import Research, Option, KV
 from radio.dataset.models.tf import UNet, VNet
-from radio.dataset.models.tf.losses import dice_batch, dice, dice2, dice_batch, dice_batch2
 
-# paths to scans in blosc and annotation
-PATH_SCANS = 'blosc/*'
-PATH_ANNOTS = 'annotations.csv'
+# paths to scans in blosc and annotations-table
+PATH_SCANS = './blosc/*'
+PATH_ANNOTS = './annotations.csv'
+
+# directory for saving models
+MODELS_DIR = './trained_models/'
 
 # dataset and annotations-table
 index = FilesIndex(path=PATH_SCANS, dirs=True, no_ext=False)
@@ -31,8 +32,8 @@ def train(batch, model='net', minibatch_size=8, mode='max', depth=6, stride=2, s
     """ Custom train method. Train a model in minibatches of xips, fetch loss and prediction.
     """
     # training components
-    batch.nimages = batch.xip('images', mode, depth, stride, start, channels)
-    batch.nmasks = batch.xip('masks', 'max', depth, stride, start, channels, squeeze=True)
+    batch.nimages = batch.xip('images', mode, depth, stride, start, channels=channels)
+    batch.nmasks = batch.xip('masks', 'max', depth, stride, start, channels=channels, squeeze=True)
 
     # train model on minibatches, fetch predictions
     model = batch.get_model_by_name(model)
@@ -68,9 +69,8 @@ def save_model(batch, pipeline, model='net'):
     """ Function for saving model.
     """
     model = pipeline.get_model_by_name(model)
-    #name = pipeline.config['model_config/loss'].__name__
     name = model.__class__.__name__
-    model.save('MIP_e_6_3c/models/' + name)
+    model.save(MODELS_DIR + name)
     print('Model', name, 'saved')
 
 # root, train, test pipelines
