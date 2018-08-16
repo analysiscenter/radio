@@ -493,9 +493,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         for more details.
         """
         if self.nodules is None:
-            logger.warning("Info about nodules location must " +
-                           "be loaded before calling this method. " +
-                           "Nothing happened.")
+            message = ("Info about nodules location must " +
+                       "be loaded before calling this method. " +
+                       "Nothing happened.")
+            logger.warning(message)
         self.masks = np.zeros_like(self.images)
 
         center_pix = np.abs(self.nodules.nodule_center -
@@ -551,9 +552,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
             better to unify these two func
         """
         if self.nodules is None:
-            logger.warning("Info about nodules location must " +
-                           "be loaded before calling this method. " +
-                           "Nothing happened.")
+            message = ("Info about nodules location must " +
+                       "be loaded before calling this method. " +
+                       "Nothing happened.")
+            logger.warning(message)
+
         mask = np.zeros(shape=(len(self) * shape[0], *shape[1:]))
 
         # infer scale factor; assume patients are already resized to equal
@@ -670,9 +673,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
             variance = np.asarray(variance, dtype=np.int)
             variance = variance.flatten()
             if len(variance) != 3:
-                logger.warning('Argument variance be np.array-like' +
-                               'and has shape (3,). ' +
-                               'Would be used no-scale-shift.')
+                message = ('Argument variance be np.array-like' +
+                           'and has shape (3,). ' +
+                           'Would be used no-scale-shift.')
+                logger.warning(message)
                 variance = None
 
         if share == 0.0 and batch_size is None:
