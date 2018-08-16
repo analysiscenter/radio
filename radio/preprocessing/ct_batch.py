@@ -770,8 +770,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         int
             patient's position inside batch
         """
-        if isinstance(index, int):      # pylint: disable=chained-comparison
-            if index < len(self) and index >= 0:
+        if isinstance(index, int):
+            if 0 <= index < len(self):
                 pos = index
             else:
                 raise IndexError("Index is out of range")

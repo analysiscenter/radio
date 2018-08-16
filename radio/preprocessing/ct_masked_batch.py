@@ -341,7 +341,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         if self.nodules is not None and not update:
             message = ("Nodules have already been extracted. " +
-                        "Put update argument as True for refreshing")
+                       "Put update argument as True for refreshing")
             logger.warning(message)
             return self
 
@@ -800,8 +800,8 @@ class CTImagesMaskedBatch(CTImagesBatch):
             of sample_nodules for more info.
         """
         for _ in range(n_iters):
-            nodules = self.sample_nodules(batch_size=batch_size, nodule_size=nodule_size, share=share, **kwargs)    # pylint: disable=no-value-for-parameter
-            nodules = nodules.dump(dst=dst)
+            nodules = self.sample_nodules(batch_size=batch_size, nodule_size=nodule_size, share=share, **kwargs)
+            nodules = nodules.dump(dst=dst)    # pylint: disable=no-value-for-parameter
 
         return self
 
@@ -1074,7 +1074,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         >>> batch = batch.flip()
         """
         message = ("There is no implementation of flip method for class " +
-                    "CTIMagesMaskedBatch. Nothing happened")
+                   "CTIMagesMaskedBatch. Nothing happened")
         logger.warning(message)
         return self
 
