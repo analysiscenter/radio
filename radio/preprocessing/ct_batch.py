@@ -1,6 +1,7 @@
 # pylint: disable=too-many-arguments
 # pylint: disable=undefined-variable
 # pylint: disable=no-member
+# pylint: disable=no-else-return
 
 """ Batch class for storing CT-scans. """
 
@@ -456,7 +457,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
 
-    def _load_blosc(self, **kwargs):
+    def _load_blosc(self, **kwargs):              # pylint: disable=arguments-differ
         """ Read scans from blosc and put them into batch components
 
         Parameters
@@ -627,7 +628,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_dump', post='_post_default', target='async', update=False)
-    async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
+    async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):     # pylint: disable=arguments-differ
         """ Dump chosen ``components`` of scans' batcn in folder ``dst`` in specified format.
 
         When some of the ``components`` are ``None``, a warning is printed and nothing is dumped.
@@ -707,7 +708,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return await dump_data(data_items, item_dir, i8_encoding_mode)
 
-    def get_pos(self, data, component, index, dst=None):
+    def get_pos(self, data, component, index, dst=None):              # pylint: disable=arguments-differ
         """ Return a positon of an item for a given index in data
         or in self.`component`.
 
@@ -769,7 +770,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         int
             patient's position inside batch
         """
-        if isinstance(index, int):
+        if isinstance(index, int):      # pylint: disable=chained-comparison
             if index < len(self) and index >= 0:
                 pos = index
             else:
@@ -1100,7 +1101,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return self
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')         # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
     def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
                axes_pairs=None, resample=None, order=3, *args, **kwargs):
         """ Resize (change shape of) each CT-scan in the batch.
@@ -1143,7 +1144,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return resize_pil(**args_resize)
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')         # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
     def unify_spacing(self, patient, out_patient, res, factor,
                       shape_resize, spacing=(1, 1, 1), shape=(128, 256, 256),
                       method='pil-simd', order=3, padding='edge', axes_pairs=None,
