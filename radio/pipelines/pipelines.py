@@ -30,8 +30,8 @@ def set_dataset_mode(dataset='luna'):
     dataset : str
         Dataset of scans to be used for crop-generation. Can be 'luna' or 'npcmr'.
     """
-    global NON_CANCER_BATCH_SIZE
-    global N_ITERS
+    global NON_CANCER_BATCH_SIZE          # pylint: disable=global-statement
+    global N_ITERS                        # pylint: disable=global-statement
     if dataset == 'npcmr':
         # this will give about 300000 of non-cancerous crops
         NON_CANCER_BATCH_SIZE = 480    # pylint: disable=redefined-outer-name, unused-variable

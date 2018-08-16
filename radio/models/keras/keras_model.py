@@ -22,7 +22,7 @@ class KerasModel(Model, BaseModel):
     keras models. Implements train and predict methods.
 
     """
-    def __init__(self, config=None, *args, **kwargs):
+    def __init__(self, config=None, *args, **kwargs):       # pylint: disable=keyword-arg-before-vararg
         """ Create keras model. """
         BaseModel.__init__(self, config, *args, **kwargs)
 

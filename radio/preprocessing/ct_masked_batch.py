@@ -340,8 +340,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         """
         if self.nodules is not None and not update:
-            logger.warning("Nodules have already been extracted. " +
-                           "Put update argument as True for refreshing")
+            message = ("Nodules have already been extracted. " +
+                        "Put update argument as True for refreshing")
+            logger.warning(message)
             return self
 
         if nodules_records is not None:
@@ -799,7 +800,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             of sample_nodules for more info.
         """
         for _ in range(n_iters):
-            nodules = self.sample_nodules(batch_size=batch_size, nodule_size=nodule_size, share=share, **kwargs)
+            nodules = self.sample_nodules(batch_size=batch_size, nodule_size=nodule_size, share=share, **kwargs)    # pylint: disable=no-value-for-parameter
             nodules = nodules.dump(dst=dst)
 
         return self
@@ -830,7 +831,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def get_axial_slice(self, patient_pos, height):
+    def get_axial_slice(self, patient_pos, height):     # pylint: disable=arguments-differ
         """ Get tuple of `images` slice and `masks` slice by patient and slice position.
 
         Parameters
@@ -1016,7 +1017,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def central_crop(self, crop_size, crop_mask=False, **kwargs):
+    def central_crop(self, crop_size, crop_mask=False, **kwargs):        # pylint: disable=arguments-differ
         """ Make crop of crop_size from center of images.
 
         Parameters
@@ -1072,8 +1073,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         --------
         >>> batch = batch.flip()
         """
-        logger.warning("There is no implementation of flip method for class " +
-                       "CTIMagesMaskedBatch. Nothing happened")
+        message = ("There is no implementation of flip method for class " +
+                    "CTIMagesMaskedBatch. Nothing happened")
+        logger.warning(message)
         return self
 
     @action
@@ -1150,7 +1152,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         predictions = []
         iterations = range(0, patches_arr.shape[0], batch_size)
         if show_progress:
-            iterations = tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
+            iterations = tqdm_notebook(iterations)  # pylint: disable=bad-option-value
         for i in iterations:
 
             if model_type == 'tf':

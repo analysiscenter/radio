@@ -1101,8 +1101,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return self
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')         # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
-    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',         # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
                axes_pairs=None, resample=None, order=3, *args, **kwargs):
         """ Resize (change shape of) each CT-scan in the batch.
 
@@ -1144,8 +1144,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             return resize_pil(**args_resize)
 
     @action
-    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')         # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
-    def unify_spacing(self, patient, out_patient, res, factor,
+    @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
+    def unify_spacing(self, patient, out_patient, res, factor,                          # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
                       shape_resize, spacing=(1, 1, 1), shape=(128, 256, 256),
                       method='pil-simd', order=3, padding='edge', axes_pairs=None,
                       resample=None, *args, **kwargs):
@@ -1263,7 +1263,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             rotate_3D(data, _angle, axes)
 
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
-    def _make_xip(self, image, depth, stride=2, mode='max',
+    def _make_xip(self, image, depth, stride=2, mode='max',                                 # pylint: disable=keyword-arg-before-vararg
                   projection='axial', padding='reflect', *args, **kwargs):
         """ Make intensity projection (maximum, minimum, mean or median).
 
