@@ -1,6 +1,6 @@
- # pylint: disable=super-init-not-called
- # pylint: disable=not-context-manager
- """ Contains base class for all keras models. """
+# pylint: disable=super-init-not-called
+# pylint: disable=not-context-manager
+""" Contains base class for all keras models. """
 
 import functools
 import numpy as np
