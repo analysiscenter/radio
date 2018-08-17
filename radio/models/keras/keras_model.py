@@ -1,7 +1,6 @@
  # pylint: disable=super-init-not-called
  # pylint: disable=not-context-manager
- # pylint: disable=arguments-differ
-""" Contains base class for all keras models. """
+ """ Contains base class for all keras models. """
 
 import functools
 import numpy as np
@@ -22,7 +21,7 @@ class KerasModel(Model, BaseModel):
     keras models. Implements train and predict methods.
 
     """
-    def __init__(self, config=None, *args, **kwargs):       # pylint: disable=keyword-arg-before-vararg
+    def __init__(self, config=None, *args, **kwargs):
         """ Create keras model. """
         BaseModel.__init__(self, config, *args, **kwargs)
 

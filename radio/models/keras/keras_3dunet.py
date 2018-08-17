@@ -226,6 +226,6 @@ class Keras3DUNet(KerasModel):
         return [inputs], [final_conv]
 
     @wraps(keras.models.Model.compile)
-    def compile(self, optimizer='adam', loss=dice_loss, **kwargs):  # pylint: disable=arguments-differ
+    def compile(self, optimizer='adam', loss=dice_loss, **kwargs):
         """ Compile 3D U-Net model. """
         super().compile(optimizer=optimizer, loss=loss)

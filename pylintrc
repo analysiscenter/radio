@@ -19,4 +19,4 @@ ignored-modules=numpy
 notes=
 
 [MESSAGE CONTROL]
-disable=invalid-name, unsubscriptable-object, unused-argument, no-self-use, not-context-manager, len-as-condition, no-else-return
+disable=invalid-name, unsubscriptable-object, unused-argument, no-self-use, not-context-manager, len-as-condition, no-else-return, keyword-arg-before-vararg, arguments-differ

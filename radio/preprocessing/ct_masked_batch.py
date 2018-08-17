@@ -831,7 +831,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def get_axial_slice(self, patient_pos, height):     # pylint: disable=arguments-differ
+    def get_axial_slice(self, patient_pos, height):
         """ Get tuple of `images` slice and `masks` slice by patient and slice position.
 
         Parameters
@@ -1017,7 +1017,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         return batch
 
     @action
-    def central_crop(self, crop_size, crop_mask=False, **kwargs):        # pylint: disable=arguments-differ
+    def central_crop(self, crop_size, crop_mask=False, **kwargs):
         """ Make crop of crop_size from center of images.
 
         Parameters
@@ -1062,7 +1062,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def flip(self):  # pylint: disable=arguments-differ
+    def flip(self):
         """ Invert the order of slices for each patient
 
         Returns

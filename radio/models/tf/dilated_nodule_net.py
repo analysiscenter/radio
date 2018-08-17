@@ -256,7 +256,7 @@ class DilatedNoduleNet(TFModel):
         return x
 
     @classmethod
-    def head(cls, inputs, num_classes, name='head', **kwargs):      # pylint: disable=arguments-differ
+    def head(cls, inputs, num_classes, name='head', **kwargs):
         """ Conv block followed by 1x1 convolution.
 
         Parameters

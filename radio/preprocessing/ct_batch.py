@@ -308,7 +308,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return merged, rest
 
     @action
-    def load(self, fmt='dicom', components=None, src=None, bounds=None, dst=None, **kwargs):      # pylint: disable=arguments-differ
+    def load(self, fmt='dicom', components=None, src=None, bounds=None, dst=None, **kwargs):
         """ Load 3d scans data in batch.
 
         Parameters
@@ -457,7 +457,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
 
-    def _load_blosc(self, **kwargs):              # pylint: disable=arguments-differ
+    def _load_blosc(self, **kwargs):
         """ Read scans from blosc and put them into batch components
 
         Parameters
@@ -628,7 +628,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_dump', post='_post_default', target='async', update=False)
-    async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):     # pylint: disable=arguments-differ
+    async def dump(self, ix, dst, components=None, fmt='blosc', index_to_name=None, i8_encoding_mode=None):
         """ Dump chosen ``components`` of scans' batcn in folder ``dst`` in specified format.
 
         When some of the ``components`` are ``None``, a warning is printed and nothing is dumped.
@@ -708,7 +708,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         return await dump_data(data_items, item_dir, i8_encoding_mode)
 
-    def get_pos(self, data, component, index, dst=None):              # pylint: disable=arguments-differ
+    def get_pos(self, data, component, index, dst=None):
         """ Return a positon of an item for a given index in data
         or in self.`component`.
 

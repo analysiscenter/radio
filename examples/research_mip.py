@@ -15,6 +15,7 @@ from radio.dataset import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, L
 from radio.dataset.research import Research, Option, KV
 from radio.dataset.models.tf import UNet, VNet
 
+
 # paths to scans in blosc and annotations-table
 PATH_SCANS = './blosc/*'
 PATH_ANNOTS = './annotations.csv'
@@ -22,11 +23,13 @@ PATH_ANNOTS = './annotations.csv'
 # directory for saving models
 MODELS_DIR = './trained_models/'
 
+
 # dataset and annotations-table
 index = FilesIndex(path=PATH_SCANS, dirs=True, no_ext=False)
 dataset = Dataset(index=index, batch_class=CTIMB)
 dataset.split(0.9, shuffle=120)
 nodules = pd.read_csv(PATH_ANNOTS)
+
 
 def train(batch, model='net', minibatch_size=8, mode='max', depth=6, stride=2, start=0, channels=3):
     """ Custom train method. Train a model in minibatches of xips, fetch loss and prediction.
@@ -54,11 +57,10 @@ def train(batch, model='net', minibatch_size=8, mode='max', depth=6, stride=2, s
     batch.pipeline.set_variable('loss', loss)
 
 
-def logloss(labels, predictions, coeff=10, e=1e-15):
+def logloss(labels, predictions, coeff=10):
     """ Weighted logloss.
     """
     predictions = tf.sigmoid(predictions)
-    predictions = predictions + e       # add separation from zero
     loss = coeff * labels * tf.log(predictions) + (1 - labels) * tf.log(1 - predictions)
     loss = -tf.reduce_mean(loss)
     tf.losses.add_loss(loss)
@@ -71,7 +73,7 @@ def save_model(batch, pipeline, model='net'):
     model = pipeline.get_model_by_name(model)
     name = model.__class__.__name__
     model.save(MODELS_DIR + name)
-    print('Model', name, 'saved')
+
 
 # root, train, test pipelines
 root_pipeline = (
@@ -113,7 +115,7 @@ model_config = dict(
     input_block=dict(inputs='images'),
     body=dict(filters=[8, 16, 32, 64]),
     output=dict(ops='sigmoid'),
-    loss=logloss,
+    loss=dict(name=logloss, coeff=10),
     optimizer='Adam',
     session=dict(config=tf.ConfigProto(allow_soft_placement=True)),
 )
@@ -125,17 +127,16 @@ train_pipeline.set_config(pipeline_config)
 
 
 # specify options
-p1 = KV('model', 'model')
-op = Option(p1, [UNet, VNet])
+op = Option('model', [UNet, VNet])
 
 
 # define research
 mr = Research()
-mr.add_pipeline(root_pipeline << dataset.train, train_pipeline, variables=['loss'], name='train')
-mr.add_pipeline(root_pipeline << dataset.test, test_pipeline, variables=['loss'], name='test',
-                train_pipeline='train', execute_for=1000)
-mr.add_grid_config(op)
+mr.pipeline(root_pipeline << dataset.train, train_pipeline, variables=['loss'], name='train')
+mr.pipeline(root_pipeline << dataset.test, test_pipeline, variables=['loss'], name='test',
+            train_pipeline='train', execute_for=1000)
+mr.grid(op)
 
 
 # run research
-mr.run(n_reps=1, n_iters=50000, n_workers=1, n_branches=gpus, name='MIP_research')
+mr.run(n_reps=1, n_iters=50000, workers=1, branches=gpus, name='MIP_research')
