@@ -1102,7 +1102,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',         # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
+    def resize(self, patient, out_patient, res, shape=(128, 256, 256), method='pil-simd',
                axes_pairs=None, resample=None, order=3, *args, **kwargs):
         """ Resize (change shape of) each CT-scan in the batch.
 
@@ -1142,10 +1142,12 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             args_resize = dict(input_array=patient, output_array=out_patient,
                                res=res, axes_pairs=axes_pairs, resample=resample)
             return resize_pil(**args_resize)
+        else:
+            raise ValueError("Unknown method", method)
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
-    def unify_spacing(self, patient, out_patient, res, factor,                          # pylint: disable=keyword-arg-before-vararg, inconsistent-return-statements
+    def unify_spacing(self, patient, out_patient, res, factor,
                       shape_resize, spacing=(1, 1, 1), shape=(128, 256, 256),
                       method='pil-simd', order=3, padding='edge', axes_pairs=None,
                       resample=None, *args, **kwargs):
@@ -1217,6 +1219,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                                res=res, axes_pairs=axes_pairs, resample=resample,
                                shape_resize=shape_resize, padding=padding)
             return resize_pil(**args_resize)
+        else:
+            raise ValueError("Unknown method", method)
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', update=False, target='threads')
@@ -1263,7 +1267,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             rotate_3D(data, _angle, axes)
 
     @inbatch_parallel(init='_init_images', post='_post_default', target='threads', new_batch=True)
-    def _make_xip(self, image, depth, stride=2, mode='max',                                 # pylint: disable=keyword-arg-before-vararg
+    def _make_xip(self, image, depth, stride=2, mode='max',
                   projection='axial', padding='reflect', *args, **kwargs):
         """ Make intensity projection (maximum, minimum, mean or median).
 
