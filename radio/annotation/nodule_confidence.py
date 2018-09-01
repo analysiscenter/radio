@@ -27,7 +27,7 @@ def compute_nodule_confidence(annotations, r=20, alpha=None, weight_by_doctor=Tr
     ----------
     annotations : pd.DataFrame
         input df with annotations with columns
-        `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID', 'DoctorConfidence']`
+        `['seriesuid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID', 'DoctorConfidence']`
     r : float
         radius of kernel-support.
     alpha : float or None
@@ -41,11 +41,11 @@ def compute_nodule_confidence(annotations, r=20, alpha=None, weight_by_doctor=Tr
         annotations-dataframe with added 'NoduleConfidence'-column.
     """
     # matrix of distances between nodules from the same scan
-    cleaned = annotations.loc[:, ['coordZ', 'coordY', 'coordX', 'seriesid',
+    cleaned = annotations.loc[:, ['coordZ', 'coordY', 'coordX', 'seriesuid',
                                   'DoctorID', 'NoduleID', 'DoctorConfidence']]
 
-    pairwise = pd.merge(cleaned, cleaned, how='inner', left_on='seriesid',
-                        right_on='seriesid', suffixes=('', '_other'))
+    pairwise = pd.merge(cleaned, cleaned, how='inner', left_on='seriesuid',
+                        right_on='seriesuid', suffixes=('', '_other'))
 
     pairwise['Distance'] = np.sqrt((pairwise.coordX - pairwise.coordX_other) ** 2
                                    + (pairwise.coordY - pairwise.coordY_other)** 2

@@ -412,7 +412,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         nodules_list = []
         for pos in range(len(self)):
             mask = self.unpack(src)[pos]
-            mask_labels = list(measure.label(mask, background=0))
+            mask_labels = measure.label(mask, background=0)
             for props in measure.regionprops(np.int16(mask_labels)):
                 center = np.asarray((props.centroid[0],
                                      props.centroid[1],
@@ -1089,7 +1089,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
     @action
     def predict_on_scan(self, model, strides=(16, 32, 32), crop_shape=(32, 64, 64),
                         batch_size=4, targets_mode='segmentation', data_format='channels_last',
-                        show_progress=True, model_type='tf'):
+                        show_progress=True, model_type='tf', dst='masks'):
         """ Get predictions of the model on data contained in batch.
 
         Transforms scan data into patches of shape crop_shape and then feed
@@ -1174,7 +1174,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         patches_mask = np.squeeze(patches_mask)
         self.load_from_patches(patches_mask, stride=strides,
                                scan_shape=tuple(self.images_shape[0, :]),
-                               data_attr='masks')
+                               data_attr=dst)
         return self
 
     def unpack(self, component='images', **kwargs):
