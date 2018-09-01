@@ -2,6 +2,9 @@ import numpy as np
 from PIL import Image
 
 def trim_cast_uint8(array, lim=None):
+    """ Trim an array using lim as limits, transform its range to [0, 255] and
+    cast the array to uint8.
+    """
     # trim
     lim = lim if lim is not None else (np.min(array), np.max(array))
     array = np.where(array <= lim[1], array, lim[1])
@@ -13,6 +16,8 @@ def trim_cast_uint8(array, lim=None):
 
 
 def pil_plot_slices(height, *arrays, lims=None):
+    """ Plot slices of several 3d-np.arrays using PIL.
+    """
     lims = lims if lims is not None else (None, ) * len(arrays)
     data = []
     for a, lim in zip(arrays, lims):
@@ -24,7 +29,7 @@ def pil_plot_slices(height, *arrays, lims=None):
 
 
 def combine_in_rgb(masks, supress=(False, False, False)):
-    """ Masks: iterable of three 2d-masks.
+    """ Combine in rgb three 2d-masks. Supress any of them, if needed.
     """
     colors = list(np.identity(3, dtype=np.uint8) * 255)
     blended = np.zeros(shape=masks[0].shape + (3, ), dtype=np.uint8)
@@ -38,6 +43,8 @@ def combine_in_rgb(masks, supress=(False, False, False)):
     return blended
 
 def blend_mask_to_scan(scan, mask, alpha=0.5):
+    """ Blend a 2d rgb-mask with 2d-scan.
+    """
     scan_masked = scan.copy().astype(np.int32)
     scan_masked += mask
     scan_masked = trim_cast_uint8(scan_masked, (0, 255))
@@ -45,9 +52,8 @@ def blend_mask_to_scan(scan, mask, alpha=0.5):
 
 def apply_masks(scan_3d, masks_3d, height, supress=(False, False, False), alpha=0.5,
                 shape=(384, 384)):
-    """
-    scan, masks: 3d-arrays casted to uint8
-    height: float, 0 <= height <= 1
+    """ Put 3d-mask on 3d-scan. Resize to given shape if needed.
+    Auxilliary function for convenient usage of interact.
     """
     depth = scan_3d.shape[0]
     n_slice = int(depth * height)
