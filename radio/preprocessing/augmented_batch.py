@@ -27,8 +27,10 @@ class CTImagesAugmentedBatch(CTImagesMaskedBatch):
         -----------
         positions : ndarray
             array of starting positions of boxes, has shape (len(batch), 3).
-        size : ndarray
+        sizes : ndarray
             array of box-sizes, has shape (len(batch), 3).
+        components : str or list
+            names of components to apply cutout
         fill_with : ndarray, float or string
             value or filling scheme. Value can be float or an array of the shape,
             that can be broadcasted to box-shape. When string, can be either scan-wise
