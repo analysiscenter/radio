@@ -225,7 +225,7 @@ def create_mask(image_nodules, doctor, annotators, factor):
 
 @njit
 def _create_mask_numba(mask, coords, diameters):
-    for i in range(len(coords)): #pylint:disable=consider-using-enumerate
+    for i, _ in enumerate(coords):
         center = coords[i]
         diameter = diameters[i]
 
@@ -381,7 +381,7 @@ def generate_annotation(n_images, n_doctors=10, bad_doctors=None, middle_doctors
                     'DoctorID': [str(doctor).zfill(3)] * doctor_find,
                     **generate_nodule(doctor_find)
                 })
-                annotation = pd.concat([annotation, doctor_nodules], axis=0)            # pylint: disable=redefined-variable-type
+                annotation = pd.concat([annotation, doctor_nodules], axis=0)
 
         consilium_find = np.random.randint(0, 4)
         nod = generate_nodule(consilium_find)

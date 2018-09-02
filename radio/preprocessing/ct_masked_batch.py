@@ -340,8 +340,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         """
         if self.nodules is not None and not update:
-            logger.warning("Nodules have already been extracted. " +
-                           "Put update argument as True for refreshing")
+            message = ("Nodules have already been extracted. " +
+                       "Put update argument as True for refreshing")
+            logger.warning(message)
             return self
 
         if nodules_records is not None:
@@ -494,9 +495,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
         for more details.
         """
         if self.nodules is None:
-            logger.warning("Info about nodules location must " +
-                           "be loaded before calling this method. " +
-                           "Nothing happened.")
+            message = ("Info about nodules location must " +
+                       "be loaded before calling this method. " +
+                       "Nothing happened.")
+            logger.warning(message)
         self.masks = np.zeros_like(self.images)
 
         center_pix = np.abs(self.nodules.nodule_center -
@@ -552,9 +554,11 @@ class CTImagesMaskedBatch(CTImagesBatch):
             better to unify these two func
         """
         if self.nodules is None:
-            logger.warning("Info about nodules location must " +
-                           "be loaded before calling this method. " +
-                           "Nothing happened.")
+            message = ("Info about nodules location must " +
+                       "be loaded before calling this method. " +
+                       "Nothing happened.")
+            logger.warning(message)
+
         mask = np.zeros(shape=(len(self) * shape[0], *shape[1:]))
 
         # infer scale factor; assume patients are already resized to equal
@@ -671,9 +675,10 @@ class CTImagesMaskedBatch(CTImagesBatch):
             variance = np.asarray(variance, dtype=np.int)
             variance = variance.flatten()
             if len(variance) != 3:
-                logger.warning('Argument variance be np.array-like' +
-                               'and has shape (3,). ' +
-                               'Would be used no-scale-shift.')
+                message = ('Argument variance be np.array-like' +
+                           'and has shape (3,). ' +
+                           'Would be used no-scale-shift.')
+                logger.warning(message)
                 variance = None
 
         if share == 0.0 and batch_size is None:
@@ -797,7 +802,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         """
         for _ in range(n_iters):
             nodules = self.sample_nodules(batch_size=batch_size, nodule_size=nodule_size, share=share, **kwargs)
-            nodules = nodules.dump(dst=dst)
+            nodules = nodules.dump(dst=dst)    # pylint: disable=no-value-for-parameter
 
         return self
 
@@ -1058,7 +1063,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         return self
 
-    def flip(self):  # pylint: disable=arguments-differ
+    def flip(self):
         """ Invert the order of slices for each patient
 
         Returns
@@ -1069,8 +1074,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         --------
         >>> batch = batch.flip()
         """
-        logger.warning("There is no implementation of flip method for class " +
-                       "CTIMagesMaskedBatch. Nothing happened")
+        message = ("There is no implementation of flip method for class " +
+                   "CTIMagesMaskedBatch. Nothing happened")
+        logger.warning(message)
         return self
 
     @action
@@ -1147,7 +1153,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
         predictions = []
         iterations = range(0, patches_arr.shape[0], batch_size)
         if show_progress:
-            iterations = tqdm_notebook(iterations)  # pylint: disable=redefined-variable-type
+            iterations = tqdm_notebook(iterations)  # pylint: disable=bad-option-value
         for i in iterations:
 
             if model_type == 'tf':
@@ -1184,9 +1190,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
         ----------
         component : str
             component to unpack, can be 'images' or 'masks'.
-        data_format : str
-            can be 'channels_last' or 'channels_first'. Reflects where to put
-            channels dimension: right after batch dimension or after all spatial axes.
+        data_format : 'channels_last' or 'channels_first' or None
+            Reflects where to put channels dimension: right after batch dimension or after all spatial axes
+            or do not put it all if None.
         kwargs : dict
             key-word arguments that will be passed in callable if
             component argument reffers to method of batch class.
@@ -1206,7 +1212,9 @@ class CTImagesMaskedBatch(CTImagesBatch):
             else:
                 value = np.stack([self.get(i, component) for i in range(len(self))])
 
-            if data_format == 'channels_last':
+            if data_format is None:
+                pass
+            elif data_format == 'channels_last':
                 value = value[..., np.newaxis]
             elif data_format == 'channels_first':
                 value = value[:, np.newaxis, ...]

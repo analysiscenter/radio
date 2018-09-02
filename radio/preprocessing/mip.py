@@ -95,7 +95,7 @@ def median_filter1d(data, out):
 
 
 @jit(nogil=True, nopython=True)
-def numba_xip(image, depth, mode, step):
+def numba_xip(image, depth, mode, step, start=0):
     """ Apply xip operation to scan of one patient.
 
     Parameters
@@ -109,16 +109,18 @@ def numba_xip(image, depth, mode, step):
         'maximum', 'minimum', 'mean' and 'median' projections.
     stride : int
         stride-step along zero axis.
+    start : int
+        an initial slice to start from
 
     Returns
     -------
     ndarray(m, k, l)
         image after xip operation transform.
     """
-    size = (image.shape[0] - 2 * math.floor(depth / 2)) // step
-    out_data = np.empty(shape=(size, image.shape[1], image.shape[2]), dtype=image.dtype)
-    for i in range(0, size):
-        ix = i * step
+    size = (image.shape[0] - depth - start) // step + 1
+    out_data = np.empty(shape=(size,) + image.shape[1:], dtype=image.dtype)
+    for i in range(size):
+        ix = i * step + start
         if mode == 0:
             maximum_filter1d(image[ix: ix + depth, ...], out_data[i, ...])
         elif mode == 1:
@@ -170,3 +172,26 @@ def make_xip_numba(image, depth, stride=1, mode='max', projection='axial', paddi
 
     result = numba_xip(image_tr, step=stride, depth=depth, mode=MODES[mode])
     return result.transpose(REVERSE_PROJECTIONS[projection])
+
+@jit(nogil=True, nopython=True)
+def unfold_xip(xip, shape, depth, stride, start, channels, squeezed=True):
+    """ Unfold xip into a 3d-image.
+    """
+    # tile if needed
+    channels = channels if squeezed else xip.shape[-1]
+    xip_tiled = np.zeros(shape=xip.shape[:3] + (channels, ), dtype=np.float64)
+    for i in range(channels):
+        if squeezed:
+            xip_tiled[..., i] = xip[..., 0]
+        else:
+            xip_tiled[..., i] = xip[..., i]
+
+    shape = shape.astype(np.int64)
+    image = np.zeros(shape=(shape[0], shape[1], shape[2]), dtype=np.float64)
+    ctr = 0
+    for i in range(xip.shape[0]):
+        for j in range(channels):
+            image[start + ctr * stride:start + ctr * stride + depth, ...] += xip_tiled[i, ..., j]
+            ctr += 1
+
+    return image

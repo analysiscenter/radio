@@ -9,10 +9,13 @@ from multiprocessing.dummy import Pool as ThreadPool
 import numpy as np
 import pandas as pd
 import tqdm
-import dicom
+try:
+    import pydicom as dicom # pydicom library was renamed in v1.0
+except ImportError:
+    import dicom
 
 def generate_index(size=20):
-    """ Generate random string index of givne size.
+    """ Generate random string index of given size.
 
     Parameters
     ----------
