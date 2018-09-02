@@ -40,7 +40,7 @@ class CTImagesAugmentedBatch(CTImagesMaskedBatch):
             components = [components]
         for i in range(len(self)):
             size, position = sizes[i].astype(np.int64), positions[i].astype(np.int64)
-            for component in components:        
+            for component in components:
                 item = self.get(i, component)
 
                 # parse filling scheme

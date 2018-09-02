@@ -9,7 +9,7 @@ import multiprocess as mp
 
 def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_iters=25, n_doctors=15,
                             factor=0.3, alpha=0.7, history=False, smooth=None):
-    """ Conpute confidences for doctors
+    """ Compute confidences for doctors
 
     Parameters
     ----------
@@ -81,7 +81,7 @@ def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_it
         res = pd.concat(confidences_history, axis=0)
     else:
         if smooth is None:
-            res = confidences_history[-1].drop(columns=['iteration']) # pylint: disable=redefined-variable-type
+            res = confidences_history[-1].drop(columns=['iteration'])
         else:
             res = (
                 pd
