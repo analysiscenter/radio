@@ -36,7 +36,7 @@ class DilatedNoduleNet(TFModel):
 
         filters = 32
 
-        config['input_block'].update({})          # pylint: disable=no-member
+        config['input_block'].update({})            # pylint: disable=no-member
         config['body']['upsampling_kernel'] = 3
         config['body']['num_blocks'] = 4
         config['body'][

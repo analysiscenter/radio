@@ -28,4 +28,3 @@ def rotate_3D(image, angle, axes=(1, 2)):
     """
     rotated_image = scipy.ndimage.interpolation.rotate(image, angle, axes, reshape=False)
     image[...] = rotated_image[...]
-    return None

@@ -1,6 +1,7 @@
 # pylint: disable=too-many-arguments
 # pylint: disable=undefined-variable
 # pylint: disable=no-member
+# pylint: disable=no-else-return
 
 """ Batch class for storing CT-scans. """
 
@@ -18,6 +19,7 @@ except ImportError:
     import dicom
 
 import SimpleITK as sitk
+from skimage.measure import label, regionprops
 try:
     import nibabel as nib
 except ImportError:
@@ -27,7 +29,7 @@ from ..dataset import Batch, action, inbatch_parallel, any_action_failed, Datase
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
-from .mip import make_xip_numba
+from .mip import make_xip_numba, numba_xip, unfold_xip, PROJECTIONS, REVERSE_PROJECTIONS
 from .flip import flip_patient_numba
 from .crop import make_central_crop
 from .patches import get_patches_numba, assemble_patches, calc_padding_size
@@ -306,7 +308,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         return merged, rest
 
     @action
-    def load(self, fmt='dicom', components=None, src=None, bounds=None, dst=None, **kwargs):      # pylint: disable=arguments-differ
+    def load(self, fmt='dicom', components=None, src=None, bounds=None, dst=None, **kwargs):
         """ Load 3d scans data in batch.
 
         Parameters
@@ -769,7 +771,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             patient's position inside batch
         """
         if isinstance(index, int):
-            if index < len(self) and index >= 0:
+            if 0 <= index < len(self):
                 pos = index
             else:
                 raise IndexError("Index is out of range")
@@ -1140,6 +1142,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             args_resize = dict(input_array=patient, output_array=out_patient,
                                res=res, axes_pairs=axes_pairs, resample=resample)
             return resize_pil(**args_resize)
+        else:
+            raise ValueError("Unknown method", method)
 
     @action
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads')
@@ -1215,6 +1219,8 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                                res=res, axes_pairs=axes_pairs, resample=resample,
                                shape_resize=shape_resize, padding=padding)
             return resize_pil(**args_resize)
+        else:
+            raise ValueError("Unknown method", method)
 
     @action
     @inbatch_parallel(init='indices', post='_post_default', update=False, target='threads')
@@ -1309,6 +1315,231 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                                       projection=projection, padding=padding)
         output_batch.spacing = self.rescale(output_batch.images_shape)
         return output_batch
+
+    def xip(self, component, mode, depth, stride, start=0, projection='axial', squeeze=False, channels=None):
+        """ Make channelled intensity projection (xip) from a component.
+
+        Parameters
+        ----------
+        component : str
+            component to pass through xip-procedure.
+        mode : str
+            mode of intensity projection. Can be either 'max', 'min', 'mean' or 'median'.
+        depth : int
+            size of xip-window.
+        stride : int
+            stride of xip.
+        start : int
+            the number of starting slice.
+        projection : str
+            can be either 'axial', 'coronal' or 'sagital'.
+        squeeze : bool
+            if True, squeezes channels into one. The parameter is used for convenient
+            preparation of training data.
+        channels : int, None
+            if supplied, makes xip with several channels. The overall number
+            of xip-slices stays the same.
+
+        Returns
+        -------
+        ndarray
+            4d-array of shape (len(self) * n_xips_in_item, slice_shape[0], slice_shape[1], channels)
+            containing intensity projections.
+        """
+        # parse arguments
+        _modes = {'max': 0, 'min': 1, 'mean': 2, 'median': 3}
+        mode = mode if isinstance(mode, (list, tuple)) else (mode, )
+        mode = [m if isinstance(m, int) else _modes[m] for m in mode]
+        channels = 1 if channels is None else channels
+
+        # set up init, post, worker
+        _init = self.indices
+        _post = lambda outputs, **kwargs: np.concatenate(outputs, axis=0)
+
+        def _worker(self, ix, component, mode, depth, stride, start, channels, squeeze, projection, **kwargs):
+            image = self.get(ix, component)
+            image = np.transpose(image, PROJECTIONS[projection])
+            xips = []
+            for m in mode:
+                xip = numba_xip(image, depth, m, stride, start)
+                if channels == 1:
+                    xip = np.expand_dims(xip, axis=-1)
+                else:
+                    # split xip into channels
+                    rem = len(xip) % channels
+                    if rem > 0:
+                        xip = xip[:-rem]
+
+                    xip = xip.reshape((-1, channels) + xip.shape[1:])
+                    xip = np.transpose(xip, (0, 2, 3, 1))
+                    xip = np.max(xip, axis=-1, keepdims=True) if squeeze else xip
+                xips.append(xip)
+
+            return np.concatenate(xips, axis=-1)
+
+        # decorate the worker and compute the result
+        wrapped = inbatch_parallel(_init, _post, 't')(_worker)
+        return wrapped(self, component=component, mode=mode, depth=depth, stride=stride,
+                       start=start, channels=channels, squeeze=squeeze, projection=projection)
+
+    @action
+    def sample_xip(self, depth, stride, mode='max', start=0, squeeze=(False, True), projection='axial', channels=3,             # pylint: disable=too-many-locals
+                   batch_size=20, share=0.5, sampler=None, src=('images', 'masks'), dst=('xip_images', 'xip_masks')):
+        """ Create xips for a pair of components for training neural networks. Put xips them into `dst`-components.
+
+        Parameters
+        ----------
+        depth : int
+            size of xip-window.
+        stride : int
+            stride of xip.
+        mode : str
+            mode of intensity projection. Can be either 'max', 'min', 'mean' or 'median'.
+        start : int
+            the number of starting slice.
+        squeeze : tuple
+            tuple of bools. If (False, True), the first xip has all three channels, while channels of the
+            second xip are squezeed into one.
+        projection : str
+            plane of intensity projection.
+        channels : int
+            number of channels in xips.
+        batch_size : int or None
+            needed number of generated projections.
+        share : float
+            share of cancerous projections.
+        sampler : Sampler
+            sampler of points from scan box, either 3d or 1d. Used for selecting noncancerous slices.
+        src : tuple
+            pair of components to pass through the xip-procedure.
+        dst : tuple
+            components to put the resulting xips into.
+        """
+        # obtain xips
+        xip_args = dict(depth=depth, mode=mode, stride=stride, start=start, projection=projection, channels=channels)
+        xips = []
+        for i in range(2):
+            xip_args.update(component=src[i], squeeze=squeeze[i])
+            xip = self.xip(**xip_args)
+            xips.append(xip)
+
+        # if needed, randomly select cancerous and noncancerous xip-slices
+        if batch_size is not None:
+            cancer_filter = np.greater(np.sum(xips[1], axis=(1, 2, 3)), 0)
+            all_cancer_ixs = np.argwhere(cancer_filter).reshape(-1)
+            max_cancer = len(all_cancer_ixs)
+            num_cancer = min(int(batch_size * share), max_cancer)
+            num_non_cancer = batch_size - num_cancer
+
+            # random selection
+            cancer_ixs = np.random.choice(all_cancer_ixs, size=num_cancer, replace=False)
+
+            # select non-cancerous indices
+            if sampler is None:
+                non_cancer_ixs = np.random.choice(range(len(cancer_filter)), size=num_non_cancer, replace=False)
+            else:
+                # adjust the sampler: the number of xip-slices can differ from the shape of xip-axis
+                xip_axis_len = self.get(0, src[0]).shape[PROJECTIONS[projection][0]]
+                factor = np.ones((1, 3))
+                factor[0, PROJECTIONS[projection][0]] = len(cancer_filter) / (len(self) * xip_axis_len)
+                sampler = sampler * factor
+
+                # sample from all items at once
+                shift = np.zeros((1, 3))
+                shift[0, PROJECTIONS[projection][0]] = len(cancer_filter) / len(self)
+                sampler_all_items = sampler
+                for i in range(1, len(self)):
+                    sampler_all_items = sampler_all_items | (sampler + i * shift)
+                non_cancer_ixs = (sampler
+                                  .sample(size=num_non_cancer)[:, PROJECTIONS[projection][0]]
+                                  .clip(min=0, max=len(cancer_filter) - 1)
+                                  .astype(np.int))
+
+            p = np.random.permutation(batch_size)
+            for i in range(2):
+                xips[i] = np.concatenate((xips[i][cancer_ixs], xips[i][non_cancer_ixs]), axis=0)
+                xips[i] = xips[i][p]
+
+        # put xips into the batch
+        for i in range(2):
+            setattr(self, dst[i], xips[i])
+
+        return self
+
+    def unxip(self, xip, component, depth, stride, start=0, projection='axial', squeeze=True,
+              channels=None, adjust_nodule_size=True, threshold=0.95, **kwargs):
+        """ Unfold xipped array into a full-sized component.
+
+        Parameters
+        ----------
+        xip : ndarray
+            4d-array containing channelled intensity projection.
+        component : str
+            component into which the unfolded image should be put.
+        depth : int
+            size of xip-window.
+        stride : int
+            stride of xip.
+        start : int
+            the number of starting slice.
+        projection : str
+            can be either 'axial', 'coronal' or 'sagital'.
+        squeeze : bool
+            If True, assumes the channels in xip should be squeezed into one.
+        channels : int, None
+            The number of channels in xip. Needed only if squeeze is True.
+        adjust_nodule_size : bool
+            if the adustment of sizes of detected nodules is needed.
+        threshold : float
+            threshold for binarization of xip. Needed only if adjusting of nodule sizes
+            is performed.
+        """
+        channels = 1 if channels is None else channels
+
+        # binarize predictions if needed
+        if threshold is not None and adjust_nodule_size:
+            xip = np.where(xip < threshold, 0, 1)
+
+        new_data = np.zeros_like(getattr(self, 'images'))
+
+        # unfold xip
+        _init = range(len(self))
+        def _worker(self, ix, xip, new_data, depth, stride, start, squeeze, channels, adjust,               # pylint: disable=too-many-locals
+                    projection, **kwargs):
+            num_item_slices = len(xip) // len(self)
+            shape = np.array(self.get(ix, 'images').shape)[PROJECTIONS[projection]]
+            slc = self.get_pos(None, 'images', ix)
+            unfolded = unfold_xip(xip[ix * num_item_slices:(ix + 1) * num_item_slices, ...],
+                                  shape, depth, stride, start, channels, squeeze)
+
+            # perform adjustment of nodule-sizes if needed
+            if adjust:
+                labels, num_nodules = label(np.where(unfolded < 1, 0, 1), return_num=True)
+                props = regionprops(labels)
+                unfolded[:] = 0
+                for i in range(num_nodules):
+                    bbox = np.reshape(props[i].bbox, (2, -1))
+                    size = bbox[1, :] - bbox[0, :]
+
+                    # adjust z-diameter and bounding box of a nodule
+                    size[0] = (size[1] + size[2]) / 2
+                    bbox[:, 0] = int(props[i].centroid[0] - size[0] / 2), int(props[i].centroid[0] + size[0] / 2)
+                    bbox = bbox.astype(np.int)
+
+                    # put adjusted nodule into the component
+                    nodule_slice = [slice(bbox[0, i], bbox[1, i]) for i in range(3)]
+                    unfolded[nodule_slice] = 1
+
+            new_data[slc] = np.transpose(unfolded, REVERSE_PROJECTIONS[projection])
+
+        # execute in parallel
+        wrapped = inbatch_parallel(_init, None, 't')(_worker)
+        wrapped(self, xip=xip, new_data=new_data, depth=depth, stride=stride, start=start,
+                squeeze=squeeze, channels=channels, adjust=adjust_nodule_size, projection=projection)
+
+        # set the component
+        setattr(self, component, new_data)
+
 
     @inbatch_parallel(init='_init_rebuild', post='_post_rebuild', target='threads', new_batch=True)
     def calc_lung_mask(self, patient, out_patient, res, erosion_radius, **kwargs):     # pylint: disable=unused-argument, no-self-use

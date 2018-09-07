@@ -8,8 +8,7 @@ from keras.layers import (Input,
                           concatenate,
                           Conv3D,
                           MaxPooling3D,
-                          UpSampling3D,
-                          Activation)
+                          UpSampling3D)
 from keras.layers.core import Activation
 from keras.layers.normalization import BatchNormalization
 
