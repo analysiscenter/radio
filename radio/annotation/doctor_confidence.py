@@ -9,13 +9,13 @@ import multiprocess as mp
 
 def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_iters=25, n_doctors=15,
                             factor=0.3, alpha=0.7, history=False, smooth=None):
-    """ Conpute confidences for doctors
+    """ Compute confidences for doctors
 
     Parameters
     ----------
     nodules : pd.DataFrame
         DataFrame with columns
-        `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID']`
+        `['seriesuid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID']`
     confidences : str or list of len n_doctors
         if 'random', initial confidences will be sampled
         if 'uniform', initial confidences is a uniform distribution
@@ -41,16 +41,16 @@ def get_doctors_confidences(nodules, confidences='random', n_consiliums=10, n_it
     """
     annotators_info = (
         nodules
-        .drop_duplicates(['seriesid', 'DoctorID'])
+        .drop_duplicates(['seriesuid', 'DoctorID'])
         .assign(DoctorID=lambda df: ['doctor_'+str(doctor).zfill(3) for doctor in df.DoctorID])
-        .pivot('seriesid', 'DoctorID', 'DoctorID')
+        .pivot('seriesuid', 'DoctorID', 'DoctorID')
         .notna()
         .astype('int')
     )
 
     nodules = (
         nodules
-        .join(annotators_info, on='seriesid', how='left')
+        .join(annotators_info, on='seriesuid', how='left')
         .assign(n_annotators=lambda df: df.filter(regex=r'doctor_\d{3}', axis=1).sum(axis=1))
         .query('n_annotators >= 3')
         .drop('n_annotators', axis=1)
@@ -102,7 +102,7 @@ def _consiliums_prob(nodules, n_doctors):
     for i, j in list(zip(*np.triu_indices(n_doctors, k=1))):
         doc1, doc2 = ['doctor_{:03d}'.format(doctor) for doctor in [i, j]] #pylint:disable=cell-var-from-loop
         accession_numbers = (
-            nodules[['seriesid', doc1, doc2]]
+            nodules[['seriesuid', doc1, doc2]]
             .assign(together=lambda df: df[doc1] == df[doc2]) #pylint:disable=cell-var-from-loop
             .drop_duplicates()
         )
@@ -114,13 +114,13 @@ def _consiliums_prob(nodules, n_doctors):
 
 def _consiliums_for_doctor(nodules, doctor, n_doctors):
     id_and_consiliums = []
-    for seriesid in nodules.query("doctor_{:03d} == 1".format(doctor)).seriesid.unique():
-        image_nodules = nodules[nodules.seriesid == seriesid]
+    for seriesuid in nodules.query("doctor_{:03d} == 1".format(doctor)).seriesuid.unique():
+        image_nodules = nodules[nodules.seriesuid == seriesuid]
         annotators = image_nodules.filter(regex=r'doctor_\d{3}', axis=1).sum()
         annotators = [int(name[-3:]) for name in annotators[annotators != 0].keys()]
         annotators.remove(doctor)
         consiliums = itertools.combinations(annotators, 2)
-        id_and_consiliums.extend(list(itertools.product([seriesid], consiliums)))
+        id_and_consiliums.extend(list(itertools.product([seriesuid], consiliums)))
     return id_and_consiliums
 
 def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliums_probabilities,
@@ -137,8 +137,8 @@ def _update_confidences(nodules, confidences, consiliums, n_consiliums, consiliu
                     replace=False
                 )
                 sample = [doctor_consiliums[i] for i in sample_indices]
-            for seriesid, consilium in sample:
-                args.append((nodules[nodules.seriesid == seriesid], doctor,
+            for seriesuid, consilium in sample:
+                args.append((nodules[nodules.seriesuid == seriesuid], doctor,
                              consilium, factor, confidences))
 
     pool = mp.Pool() #pylint:disable=no-member
@@ -307,7 +307,7 @@ def get_table(nodules, n_doctors=15, factor=0.3):
     for i, j in tqdm(list(zip(*np.triu_indices(n_doctors, k=1)))):
         accession_numbers = (
             nodules
-            .groupby('seriesid')
+            .groupby('seriesuid')
             .apply(lambda x: i in x.DoctorID.astype(int).values and j in x.DoctorID.astype(int).values) #pylint:disable=cell-var-from-loop
         )
         accession_numbers = accession_numbers[accession_numbers].index
@@ -315,8 +315,8 @@ def get_table(nodules, n_doctors=15, factor=0.3):
         table_meetings[j, i] = len(accession_numbers)
         dices = []
         for accession_number in accession_numbers:
-            if len(nodules[nodules.seriesid == accession_number].dropna()) != 0:
-                mask = create_mask(nodules[nodules.seriesid == accession_number].dropna(), i, [j], factor)
+            if len(nodules[nodules.seriesuid == accession_number].dropna()) != 0:
+                mask = create_mask(nodules[nodules.seriesuid == accession_number].dropna(), i, [j], factor)
                 mask1 = mask[..., 0]
                 mask2 = mask[..., 1]
                 dices.append(dice(mask1, mask2))
@@ -364,11 +364,11 @@ def generate_annotation(n_images, n_doctors=10, bad_doctors=None, middle_doctors
     Returns
     -------
     pd.DataFrame
-        annotation with columns `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm']`
+        annotation with columns `['seriesuid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm']`
     """
     bad_doctors = bad_doctors or [0]
     middle_doctors = middle_doctors or [0]
-    annotation = pd.DataFrame({'seriesid': [], 'DoctorID': [], 'coordX': [],
+    annotation = pd.DataFrame({'seriesuid': [], 'DoctorID': [], 'coordX': [],
                                'coordY': [], 'coordZ': [], 'diameter_mm': []})
     for i in range(n_images):
         doctors = np.random.choice(np.arange(0, n_doctors), size=np.random.randint(3, 5), replace=False)
@@ -377,7 +377,7 @@ def generate_annotation(n_images, n_doctors=10, bad_doctors=None, middle_doctors
             if doctor in doctors:
                 doctor_find = np.random.randint(0, 4)
                 doctor_nodules = pd.DataFrame({
-                    'seriesid': [str(i)] * doctor_find,
+                    'seriesuid': [str(i)] * doctor_find,
                     'DoctorID': [str(doctor).zfill(3)] * doctor_find,
                     **generate_nodule(doctor_find)
                 })
@@ -389,7 +389,7 @@ def generate_annotation(n_images, n_doctors=10, bad_doctors=None, middle_doctors
         for d in doctors:
             if d not in bad_doctors:
                 doctor_nodules = pd.DataFrame({
-                    'seriesid': [str(i)] * consilium_find,
+                    'seriesuid': [str(i)] * consilium_find,
                     'DoctorID': [str(d).zfill(3)] * consilium_find,
                     **nod
                 })

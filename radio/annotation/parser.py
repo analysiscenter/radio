@@ -112,7 +112,7 @@ def get_dicom_info(paths, index_col=None, progress=False, load_origin=True):
             'SpacingY': float(first_slice.PixelSpacing[0]),
             'SpacingX': float(first_slice.PixelSpacing[1]),
             'StudyID': str(first_slice.StudyID),
-            'seriesid': str(first_slice.AccessionNumber),
+            'seriesuid': str(first_slice.AccessionNumber),
             'PatientID': str(first_slice.PatientID),
             'Rows': int(first_slice.Rows),
             'Columns': int(first_slice.Columns),
@@ -164,7 +164,7 @@ def get_blosc_info(paths, index_col=None, progress=False, load_origin=True):
             'OriginZ': spacing_transform(origin[0][0]),
             'OriginY': spacing_transform(origin[0][1]),
             'OriginX': spacing_transform(origin[0][2]),
-            'seriesid': path.split('/')[-1],
+            'seriesuid': path.split('/')[-1],
             'ScanPath': path,
             'ScanID': os.path.basename(path)
         }
@@ -191,7 +191,7 @@ def filter_dicom_info_by_best_spacing(info_df):
     """
     output_indices = (
         info_df
-        .groupby('seriesid')
+        .groupby('seriesuid')
         .agg({'SpacingZ': 'idxmin'})
     )
     info_df = info_df.loc[output_indices.loc[:, 'SpacingZ'], :]
@@ -213,7 +213,7 @@ def parse_annotation(path, max_nodules=40):
     pandas.DataFrame
         annotation.
     """
-    base_columns = ['seriesid', 'StudyID', 'DoctorID', 'Comment', 'NumNodules']
+    base_columns = ['seriesuid', 'StudyID', 'DoctorID', 'Comment', 'NumNodules']
     location_columns = ['locX', 'locY', 'locZ', 'diam', 'type']
 
     nodules_list = []
@@ -258,7 +258,7 @@ def annotation_to_nodules(annotation_df):
     pandas.DataFrame
     """
     data_list = []
-    for group in annotation_df.groupby(['seriesid', 'DoctorID']):
+    for group in annotation_df.groupby(['seriesuid', 'DoctorID']):
         accession_number = group[0][0]
         doctor_id = group[0][1]
 
@@ -266,7 +266,7 @@ def annotation_to_nodules(annotation_df):
         for i in range(nodules.shape[0]):
             nodule_id = generate_index()
             nodule_dict = {
-                'seriesid': accession_number,
+                'seriesuid': accession_number,
                 'DoctorID': doctor_id,
                 'NoduleID': nodule_id,
                 'NoduleType': nodules[i, 4],
@@ -308,9 +308,9 @@ def read_annotators_info(path, annotator_prefix=None):
     annotators_info = (
         parse_annotation(path)
         .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-        .query("seriesid != ''")
+        .query("seriesuid != ''")
         .drop_duplicates()
-        .pivot('seriesid', 'DoctorID', 'DoctorID')
+        .pivot('seriesuid', 'DoctorID', 'DoctorID')
         .notna()
         .astype('int')
     )
@@ -328,7 +328,7 @@ def read_nodules(path, include_annotators=False):
 
     Output DataFrame contains following columns:
     'NoduleID' unique id of nodule.
-    'seriesid' - accession number of CT scan that corresponding to nodule.
+    'seriesuid' - accession number of CT scan that corresponding to nodule.
     'DoctorID' - id of annotator.
     'coordZ', 'coordY', 'coordX' - coordinates of nodule's center.
     'diameter_mm' - diameter of nodule.
@@ -355,9 +355,9 @@ def read_nodules(path, include_annotators=False):
     if include_annotators:
         annotators_info = (annotation
                            .assign(DoctorID=lambda df: df.DoctorID.str.replace("'", ""))
-                           .query("seriesid != ''"))[['seriesid', 'DoctorID']]
-        nodules = nodules.merge(annotators_info, left_on=['seriesid', 'DoctorID'],
-                                right_on=['seriesid', 'DoctorID'], how='outer')
+                           .query("seriesuid != ''"))[['seriesuid', 'DoctorID']]
+        nodules = nodules.merge(annotators_info, left_on=['seriesuid', 'DoctorID'],
+                                right_on=['seriesuid', 'DoctorID'], how='outer')
     return nodules
 
 def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spacing=False, fmt='dicom',
@@ -395,7 +395,7 @@ def read_dataset_info(path=None, paths=None, index_col=None, filter_by_min_spaci
         if filter_by_min_spacing:
             output_indices = (
                 dataset_info
-                .groupby('seriesid')
+                .groupby('seriesuid')
                 .agg({'SpacingZ': 'idxmin'})
             )
             index_df = dataset_info.loc[output_indices.loc[:, 'SpacingZ'], :]
@@ -420,8 +420,8 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
     fmt : str
         'dicom' or 'blosc'
     include_annotators : bool
-        if doctor annotates image but don't find nodules, row with his ID, seriesid
-        (seriesid) and other nans will be added
+        if doctor annotates image but don't find nodules, row with his ID, seriesuid
+        (seriesuid) and other nans will be added
     drop : bool
         if True and file `annotation_path` has annotation for images which don't contain
         in folder `images_path`, it will be dropped
@@ -432,7 +432,7 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
     -------
     pandas.DataFrame
         dataframe with annotation with columns
-        `['seriesid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID']`.
+        `['seriesuid', 'DoctorID', 'coordZ', 'coordY', 'coordX', 'diameter_mm', 'NoduleID']`.
         Coordinates and diameter in mm.
     """
     annotations = glob.glob(annotation_path)
@@ -442,9 +442,9 @@ def transform_annotation(annotation_path, images_path, fmt='dicom', include_anno
     nodules = pd.concat(_nodules).reset_index(drop=True)
 
     dataset_info = read_dataset_info(images_path, filter_by_min_spacing=True, fmt=fmt, load_origin=load_origin)
-    spacing_info = dataset_info[['seriesid', 'SpacingX', 'SpacingY', 'SpacingZ',
-                                 'OriginX', 'OriginY', 'OriginZ']].set_index('seriesid')
-    nodules = nodules.join(spacing_info, on='seriesid', how='inner')
+    spacing_info = dataset_info[['seriesuid', 'SpacingX', 'SpacingY', 'SpacingZ',
+                                 'OriginX', 'OriginY', 'OriginZ']].set_index('seriesuid')
+    nodules = nodules.join(spacing_info, on='seriesuid', how='inner')
 
     for name in ['X', 'Y', 'Z']:
         nodules['coord'+name] = nodules['coord'+name] * nodules['Spacing'+name] + nodules['Origin'+name]

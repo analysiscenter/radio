@@ -20,32 +20,35 @@ class CTImagesAugmentedBatch(CTImagesMaskedBatch):
         return self
 
     @action
-    def cutout(self, positions, sizes, fill_with=0, component='images'):
+    def cutout(self, positions, sizes, components='images', fill_with=0):
         """ Fill a box from each scan with some density-value.
 
         Parameters:
         -----------
         positions : ndarray
             array of starting positions of boxes, has shape (len(batch), 3).
-        size : ndarray
+        sizes : ndarray
             array of box-sizes, has shape (len(batch), 3).
+        components : str or list
+            names of components to apply cutout
         fill_with : ndarray, float or string
             value or filling scheme. Value can be float or an array of the shape,
             that can be broadcasted to box-shape. When string, can be either scan-wise
             mean ('mean') or scan-wise minimum/maximum ('min', 'max').
-        component : str
-            component to apply cutout to.
         """
+        if isinstance(components, str):
+            components = [components]
         for i in range(len(self)):
             size, position = sizes[i].astype(np.int64), positions[i].astype(np.int64)
-            item = self.get(i, component)
+            for component in components:
+                item = self.get(i, component)
 
-            # parse filling scheme
-            fill_with = getattr(np, fill_with)(item) if isinstance(fill_with, str) else fill_with
-            filled = np.ones(shape=size) * fill_with
+                # parse filling scheme
+                fill_with = getattr(np, fill_with)(item) if isinstance(fill_with, str) else fill_with
+                filled = np.ones(shape=size) * fill_with
 
-            # perform insertion
-            insert_cropped(item, filled, position)
+                # perform insertion
+                insert_cropped(item, filled, position)
 
         return self
 

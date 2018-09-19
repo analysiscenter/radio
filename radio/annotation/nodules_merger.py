@@ -196,7 +196,7 @@ def compute_group_coords_and_diameter(nodules, proba=0.8):
     """ Get coordinates of center and diameter of nodules united in group.
 
     For each group of overlapping nodules computes equivalent diameter and
-    coordinates of center. Preserves 'confidence' and 'seriesid'
+    coordinates of center. Preserves 'confidence' and 'seriesuid'
     columns from source nodules dataframe. Note, that this columns
     are considered to contain same values within group.
 
@@ -227,7 +227,7 @@ def compute_group_coords_and_diameter(nodules, proba=0.8):
     approx_mean, approx_sigma = approximate_gaussians(confidence_array, mean_array, variance_array)
     return  pd.Series({'coordZ': approx_mean[0], 'coordY': approx_mean[1],
                        'coordX': approx_mean[2], 'NoduleConfidence': confidence_array.max(),
-                       'seriesid': nodules.seriesid.iloc[0],
+                       'seriesuid': nodules.seriesuid.iloc[0],
                        'diameter_mm': get_diameter_by_sigma(approx_sigma, proba=proba)[0]})
 
 
@@ -250,7 +250,7 @@ def get_nodules_groups(nodules, proba=0.8):
     """
     new_nodules = (
         nodules
-        .set_index(['seriesid', 'NoduleID'])
+        .set_index(['seriesuid', 'NoduleID'])
         .groupby(level=0)
         .apply(assign_nodules_group_index)
         .reset_index()
