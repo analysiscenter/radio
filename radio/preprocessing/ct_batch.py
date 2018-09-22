@@ -1659,8 +1659,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         patches = np.zeros(shape=(len(self), np.prod(num_sections), *patch_shape))
 
         # put patches into the tensor
-        fake = np.zeros(len(self))
-        get_patches_numba(data_padded, patch_shape, stride, patches, fake)
+        get_patches_numba(data_padded, patch_shape, stride, patches)
         patches = np.reshape(patches, (len(self) * np.prod(num_sections), *patch_shape))
         return patches
 
@@ -1705,8 +1704,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         # init 4d tensor and put assembled scans into it
         data_4d = np.zeros((len(self), *scan_shape_adj))
         patches = np.reshape(patches, (len(self), -1, *patch_shape))
-        fake = np.zeros(len(self))
-        assemble_patches(patches, stride, data_4d, fake)
+        assemble_patches(patches, stride, data_4d)
 
         # crop (perform anti-padding) if necessary
         if pad_width is not None:
