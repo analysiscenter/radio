@@ -1205,7 +1205,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
             return None
 
         if component in ('images', 'masks'):
-            data_format = kwargs.get('data_format', 'channels_last')
+            data_format = kwargs.get('data_format')
 
             if np.all(self.images_shape == self.images_shape[0, :]):
                 value = self.get(None, component).reshape(-1, *self.images_shape[0, :])
