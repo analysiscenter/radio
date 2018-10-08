@@ -1,9 +1,21 @@
+import os
+import sys
+sys.path.append('..')
+
 from radio import CTImagesMaskedBatch as CTIMB
 from radio.dataset import Pipeline, B, V, F, FilesIndex, Dataset
 import numpy as np
 import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
+
+def get_pixel_coords(nodules):
+    """ Get nodules info in pixel coords from nodules recarray.
+    """
+    coords = (nodules.nodule_center - nodules.origin) / nodules.spacing
+    diams = np.ceil(nodules.nodule_size / nodules.spacing)
+    nodules = np.rint(np.hstack([coords, diams])).astype(np.int)
+    return nodules
 
 def get_nodules_pixel_coords(batch):
     """ get numpy array of nodules-locations and diameter in relative coords
@@ -20,7 +32,8 @@ def get_nodules_pixel_coords(batch):
 
 def load_example(path=None, fmt='blosc'):
     if path is None:
-        path = '../../scans_sample/1.3.6.1.4.1.14519.5.2.1.6279.6001.621916089407825046337959219998'
+        path = '../../scans_sample/'
+    path = os.path.join(path, '1.3.6.1.4.1.14519.5.2.1.6279.6001.621916089407825046337959219998')
     luna_index = FilesIndex(path=path, dirs=True)
     lunaset =  Dataset(luna_index, batch_class=CTIMB)
     load_ppl = (Pipeline()
