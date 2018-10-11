@@ -9,6 +9,14 @@ import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
 
+def show_images(mnist_batch):
+    """ Show images from ImageBatch with mnist
+    """
+    imgs = mnist_batch.images[..., 0]
+    _, axes = plt.subplots(1, len(imgs))
+    for i, img in enumerate(imgs):
+        axes[i].imshow(img, cmap=plt.cm.gray)
+
 def get_pixel_coords(nodules):
     """ Get nodules info in pixel coords from nodules recarray.
     """
