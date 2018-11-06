@@ -11,9 +11,9 @@ import tensorflow as tf
 
 sys.path.append('../../')
 from radio import CTImagesMaskedBatch as CTIMB
-from radio.dataset import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, L
-from radio.dataset.research import Research, Option, KV
-from radio.dataset.models.tf import UNet, VNet
+from radio.batchflow import Dataset, Pipeline, FilesIndex, F, V, B, C, Config, L
+from radio.batchflow.research import Research, Option, KV
+from radio.batchflow.models.tf import UNet, VNet
 
 
 # paths to scans in blosc and annotations-table

@@ -9,7 +9,7 @@ import pandas as pd
 import pickle as pkl
 
 import radio.annotation
-from radio.dataset import FilesIndex, Dataset, Pipeline, F
+from radio.batchflow import FilesIndex, Dataset, Pipeline, F
 from radio import split_dump, CTImagesMaskedBatch
 
 NPCMR_GLOB = '/notebooks/data/CT/npcmr/*/*/*/*/*/*'
