@@ -1,7 +1,7 @@
 # pylint: disable=too-few-public-methods
 """ Contains DenseNoduleNet model class. """
 
-from ...dataset.dataset.models.tf import DenseNet
+from ...batchflow.batchflow.models.tf import DenseNet
 
 
 class DenseNoduleNet(DenseNet):

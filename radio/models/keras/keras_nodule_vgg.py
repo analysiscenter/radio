@@ -20,9 +20,9 @@ class KerasNoduleVGG(KerasModel):
     Attributes
     ----------
     config : dict
-        config dictionary from dataset pipeline
-        see configuring model section of dataset module
-        https://analysiscenter.github.io/dataset/intro/models.html.
+        config dictionary from batchflow pipeline
+        see configuring model section of batchflow module
+        https://analysiscenter.github.io/batchflow/intro/models.html.
     name : str
         name of the model.
     units : tuple(int, int) or int or None

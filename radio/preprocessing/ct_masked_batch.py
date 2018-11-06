@@ -22,7 +22,7 @@ from .ct_batch import CTImagesBatch
 from .mask import make_rect_mask_numba, make_ellipse_mask_numba, create_mask_reg
 from .histo import sample_histo3d
 from .crop import make_central_crop
-from ..dataset import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
+from ..batchflow import action, DatasetIndex, SkipBatchException  # pylint: disable=no-name-in-module
 
 
 # logger initialization
@@ -125,7 +125,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     Parameters
     ----------
-    index : dataset.index
+    index : batchflow.index
         ids of scans to be put in a batch
 
     Attributes
@@ -197,7 +197,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         Parameters
         ----------
-        index : Dataset.Index class.
+        index : batchflow.Index class.
             Required indexing of objects (files).
         """
         super().__init__(index, *args, **kwargs)

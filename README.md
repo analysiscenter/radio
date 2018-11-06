@@ -34,7 +34,7 @@ Say, you have a bunch of **DICOM** scans with varying shapes.
 First, you create an index and define a dataset:
 ```python
 from radio import CTImagesBatch
-from dataset import FilesIndex, Dataset
+from batchflow import FilesIndex, Dataset
 
 dicom_ix = FilesIndex(path='path/to/dicom/*', dirs=True)            # set up the index
 dicom_dataset = Dataset(index=dicom_ix, batch_class=CTImagesBatch) # init the dataset of dicom files

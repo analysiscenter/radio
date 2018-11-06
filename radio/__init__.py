@@ -4,6 +4,6 @@
 import importlib
 from .preprocessing import *
 from .pipelines import *
-from . import dataset
+from . import batchflow
 
 __version__ = '0.1.0'

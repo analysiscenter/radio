@@ -11,7 +11,7 @@ from keras.layers import Flatten
 from keras.layers import Dropout, Activation
 from keras.layers import Dense, BatchNormalization
 
-from ...dataset.dataset.models import BaseModel
+from ...batchflow.batchflow.models import BaseModel
 
 
 class KerasModel(Model, BaseModel):
