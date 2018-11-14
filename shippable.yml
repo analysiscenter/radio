@@ -12,7 +12,7 @@ build:
     image_tag: $TAG
   ci:
     - pip3 install -U pylint
-    - find ./radio -not -path "./radio/dataset/*" -iname "*.py" | xargs -r pylint3 -rn --rcfile pylintrc
+    - find ./radio -not -path "./radio/batchflow/*" -iname "*.py" | xargs -r pylint3 -rn --rcfile pylintrc
 
 integrations:
   hub:
