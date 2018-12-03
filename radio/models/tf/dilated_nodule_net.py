@@ -4,8 +4,8 @@
 import numpy as np
 import tensorflow as tf
 from .utils import repeat_tensor
-from ...batchflow.models.tf.layers import conv_block
-from ...batchflow.models.tf import TFModel
+from ...batchflow.models.tf.layers import conv_block         # pylint: disable=no-name-in-module
+from ...batchflow.models.tf import TFModel                   # pylint: disable=no-name-in-module
 
 
 class DilatedNoduleNet(TFModel):

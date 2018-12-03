@@ -165,7 +165,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
                               ('spacing', np.float, (3,)),
                               ('origin', np.float, (3,))])
 
-    components = "images", "masks", "spacing", "origin", "predictions"
+    components = "images", "masks", "spacing", "origin"
 
     @staticmethod
     def make_indices(size):

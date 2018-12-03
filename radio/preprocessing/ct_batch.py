@@ -7,8 +7,8 @@
 
 import os
 import logging
-import dill as pickle
 from binascii import hexlify
+import dill as pickle
 
 import numpy as np
 import aiofiles
