@@ -8,6 +8,7 @@
 import os
 import logging
 import dill as pickle
+from binascii import hexlify
 
 import numpy as np
 import aiofiles
@@ -137,6 +138,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = bounds if bounds is not None else self._bounds
         for comp_name, comp_data in kwargs.items():
             setattr(self, comp_name, comp_data)
+
+    @staticmethod
+    def make_filename():
+        """ Generate unique filename for the batch """
+        random_data = np.random.uniform(0, 1, size=10) * 123456789
+        # probability of collision is around 2e-10.
+        filename = hexlify(random_data.data)[:8]
+        return filename.decode("utf-8")
 
     @classmethod
     def split(cls, batch, batch_size):

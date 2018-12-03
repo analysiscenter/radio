@@ -4,8 +4,8 @@
 import numpy as np
 import tensorflow as tf
 from .utils import repeat_tensor
-from ...batchflow.batchflow.models.tf.layers import conv_block
-from ...batchflow.batchflow.models.tf import TFModel
+from ...batchflow.models.tf.layers import conv_block
+from ...batchflow.models.tf import TFModel
 
 
 class DilatedNoduleNet(TFModel):
@@ -36,7 +36,7 @@ class DilatedNoduleNet(TFModel):
 
         filters = 32
 
-        config['input_block'].update({})            # pylint: disable=no-member
+        config['initial_block'].update({})            # pylint: disable=no-member
         config['body']['upsampling_kernel'] = 3
         config['body']['num_blocks'] = 4
         config['body'][
