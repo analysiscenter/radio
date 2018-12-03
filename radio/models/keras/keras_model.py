@@ -11,7 +11,7 @@ from keras.layers import Flatten
 from keras.layers import Dropout, Activation
 from keras.layers import Dense, BatchNormalization
 
-from ...batchflow.models import BaseModel        # pylint: disable=no-name-in-module
+from ...batchflow.models import BaseModel        # pylint: disable=no-name-in-module, import-error
 
 
 class KerasModel(Model, BaseModel):

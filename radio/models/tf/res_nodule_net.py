@@ -2,7 +2,7 @@
 """ Contains ResNodule3DNet50 model class. """
 
 import numpy as np
-from ...batchflow.models.tf import ResNet50         # pylint: disable=no-name-in-module
+from ...batchflow.models.tf import ResNet50         # pylint: disable=no-name-in-module, import-error
 
 
 class ResNodule3DNet50(ResNet50):
