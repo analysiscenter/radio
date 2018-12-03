@@ -50,7 +50,7 @@ Say, you have a bunch of **DICOM** scans with varying shapes.
 First, you create an index and define a dataset::
 
     from radio import CTImagesBatch
-    from dataset import FilesIndex, Dataset
+    from radio.batchflow import FilesIndex, Dataset
 
     dicom_ix = FilesIndex(path='path/to/dicom/*', no_ext=True)         # set up the index
     dicom_dataset = Dataset(index=dicom_ix, batch_class=CTImagesBatch) # init the dataset of dicom files
@@ -58,7 +58,7 @@ First, you create an index and define a dataset::
 You may want to resize the scans to equal shape **[128, 256, 256]**,
 normalize voxel densities to range **[0, 255]** and dump transformed
 scans. This preprocessing can be easily performed with the following
-:class:`pipeline <dataset.Pipeline>`::
+:class:`pipeline <batchflow.Pipeline>`::
 
     pipeline = (
         dicom_dataset.p
@@ -106,7 +106,7 @@ for cancer detection (e.g. ``DenseNoduleNet`` inspired by the state-of-the-art D
 
     from radio.preprocessing import CTImagesMaskedBatch as CTIMB
     from radio.models import DenseNoduleNet
-    from radio.dataset import F
+    from radio.batchflow import F
 
     training_pipeline = (
         dicom_dataset.p
@@ -148,7 +148,7 @@ After that just import `RadIO`::
 
 .. note:: `RadIO` supports python 3.5 or higher.
 
-.. note:: When cloning repo from GitHub use flag ``--recursive`` to make sure that ``Dataset`` submodule is also cloned.
+.. note:: When cloning repo from GitHub use flag ``--recursive`` to make sure that ``BatchFlow`` submodule is also cloned.
 
     ``git clone --recursive https://github.com/analysiscenter/radio.git``
 
@@ -163,12 +163,12 @@ Please cite RadIO in your publications if it helps your research.
 
 ::
 
-    Khudorozhkov R., Emelyanov K., Koryagin A. RadIO library for data science research of CT images. 2017.
+    Khudorozhkov R., Emelyanov K., Koryagin A., Kozhevin A. RadIO library for data science research of CT images. 2017.
 
 ::
 
     @misc{radio_2017_1156363,
-      author = {Khudorozhkov R., Emelyanov K., Koryagin A.},
+      author = {Khudorozhkov R., Emelyanov K., Koryagin A., Kozhevin A.},
       title  = {RadIO library for data science research of CT images},
       year   = 2017,
       doi    = {10.5281/zenodo.1156363},

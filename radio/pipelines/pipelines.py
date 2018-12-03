@@ -2,7 +2,7 @@
 
 from copy import copy
 import PIL
-from ..dataset import Pipeline  # pylint: disable=no-name-in-module
+from ..batchflow import Pipeline  # pylint: disable=no-name-in-module
 
 # global constants defining args of some actions in pipeline
 SPACING = (1.7, 1.0, 1.0)  # spacing of scans after spacing unification

@@ -1,3 +1,4 @@
-[submodule "radio/dataset"]
-	path = radio/dataset
-	url = https://github.com/analysiscenter/dataset.git
+
+[submodule "radio/batchflow"]
+	path = radio/batchflow
+	url = https://github.com/analysiscenter/batchflow

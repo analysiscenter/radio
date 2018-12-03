@@ -110,7 +110,7 @@ intersphinx_mapping = {
     'scipy': ('http://docs.scipy.org/doc/scipy/reference/', None),
     'pandas': ('http://pandas-docs.github.io/pandas-docs-travis/', None),
     'blosc': ('http://python-blosc.blosc.org/', None),
-    'dataset': ('https://analysiscenter.github.io/dataset/', None)
+    'batchflow': ('https://analysiscenter.github.io/batchflow/', None)
 }
 
 viewcode_import = True

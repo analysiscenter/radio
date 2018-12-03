@@ -10,7 +10,7 @@ Main features:
 - Train with ease a zoo of state-of-the-art neural networks for classification or semantic segmentation
 - Sample crops of any size from CT-scans for comprehensive training
 - Customize distribution of crop [locations](https://analysiscenter.github.io/radio/intro/preprocessing.html?highlight=histogram#sample-crops-from-scan) for improved training
-- Predict [on the whole scan](https://analysiscenter.github.io/lung_cancer/api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan)
+- Predict [on the whole scan](https://analysiscenter.github.io/radio/api/masked_batch.html#radio.preprocessing.ct_masked_batch.CTImagesMaskedBatch.predict_on_scan)
 
 [The documentation](https://analysiscenter.github.io/radio) contains a comprehensive review of RadIO's capabilities. While [tutorials](https://github.com/analysiscenter/radio/tree/master/tutorials) provide ready-to-use code blocks and a practical demonstration of the most important RadIO features.
 
@@ -28,13 +28,13 @@ will help you configure and train a neural network to detect cancer.
 
 ## Preprocess scans with chained actions
 
-Preprocessing-module contains a set of [actions](https://github.com/analysiscenter/dataset) to efficiently prepare a dataset of CT-scans for neural networks training.
+Preprocessing-module contains a set of [actions](https://github.com/analysiscenter/batchflow) to efficiently prepare a dataset of CT-scans for neural networks training.
 
 Say, you have a bunch of **DICOM** scans with varying shapes.
 First, you create an index and define a dataset:
 ```python
 from radio import CTImagesBatch
-from dataset import FilesIndex, Dataset
+from radio.batchflow import FilesIndex, Dataset
 
 dicom_ix = FilesIndex(path='path/to/dicom/*', dirs=True)            # set up the index
 dicom_dataset = Dataset(index=dicom_ix, batch_class=CTImagesBatch) # init the dataset of dicom files
@@ -93,7 +93,7 @@ for cancer detection (e.g. `DenseNoduleNet` inspired by the state-of-the-art Den
 ```python
 from radio.preprocessing import CTImagesMaskedBatch as CTIMB
 from radio.models import DenseNoduleNet
-from radio.dataset import F
+from radio.batchflow import F
 
 training_pipeline = (
     dicom_dataset.p
@@ -139,7 +139,7 @@ import radio
 
 ### Installation as a project repository:
 
-When cloning repo from GitHub use flag ``--recursive`` to make sure that ``Dataset`` submodule is also cloned.
+When cloning repo from GitHub use flag ``--recursive`` to make sure that ``BatchFlow`` submodule is also cloned.
 
     git clone --recursive https://github.com/analysiscenter/radio.git
 
@@ -150,11 +150,11 @@ Please cite RadIO in your publications if it helps your research.
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.1156363.svg)](https://doi.org/10.5281/zenodo.1156363)
 
-    Khudorozhkov R., Emelyanov K., Koryagin A. RadIO library for data science research of CT images. 2017.
+    Khudorozhkov R., Emelyanov K., Koryagin A., Kozhevin A. RadIO library for data science research of CT images. 2017.
 
 ```
 @misc{radio_2017_1156363,
-  author = {Khudorozhkov R., Emelyanov K., Koryagin A.},
+  author = {Khudorozhkov R., Emelyanov K., Koryagin A., Kozhevin A.},
   title  = {RadIO library for data science research of CT images},
   year   = 2017,
   doi    = {10.5281/zenodo.1156363},

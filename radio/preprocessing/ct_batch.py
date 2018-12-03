@@ -7,6 +7,7 @@
 
 import os
 import logging
+from binascii import hexlify
 import dill as pickle
 
 import numpy as np
@@ -25,7 +26,7 @@ try:
 except ImportError:
     pass
 
-from ..dataset import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex # pylint: disable=no-name-in-module
+from ..batchflow import Batch, action, inbatch_parallel, any_action_failed, DatasetIndex # pylint: disable=no-name-in-module
 
 from .resize import resize_scipy, resize_pil
 from .segment import calc_lung_mask_numba
@@ -52,7 +53,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
     Parameters
     ----------
-    index : dataset.index
+    index : batchflow.index
         ids of scans to be put in a batch
 
     Attributes
@@ -61,7 +62,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         List names of data components of a batch, which are `images`,
         `origin` and `spacing`.
         NOTE: Implementation of this attribute is required by Base class.
-    index : dataset.index
+    index : batchflow.index
         represents indices of scans from a batch
     images : ndarray
         contains ct-scans for all patients in batch.
@@ -78,7 +79,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
         Parameters
         ----------
-        index : Dataset.Index class.
+        index : batchflow.Index class.
             Required indexing of objects (files).
         """
 
@@ -137,6 +138,14 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         self._bounds = bounds if bounds is not None else self._bounds
         for comp_name, comp_data in kwargs.items():
             setattr(self, comp_name, comp_data)
+
+    @staticmethod
+    def make_filename():
+        """ Generate unique filename for the batch """
+        random_data = np.random.uniform(0, 1, size=10) * 123456789
+        # probability of collision is around 2e-10.
+        filename = hexlify(random_data.data)[:8]
+        return filename.decode("utf-8")
 
     @classmethod
     def split(cls, batch, batch_size):

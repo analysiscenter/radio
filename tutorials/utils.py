@@ -1,6 +1,63 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import os
+from PIL import Image
+
+def get_pixel_coords(nodules):
+    """ Get nodules info in pixel coords from nodules recarray.
+    """
+    coords = (nodules.nodule_center - nodules.origin) / nodules.spacing
+    diams = np.ceil(nodules.nodule_size / nodules.spacing)
+    nodules = np.rint(np.hstack([coords, diams])).astype(np.int)
+    return nodules
+
+def pil_plot_slices(height, *arrays, lims=None):
+    """ Plot slices of several 3d-np.arrays using PIL.
+    """
+    lims = lims if lims is not None else (None, ) * len(arrays)
+    data = []
+    for a, lim in zip(arrays, lims):
+        n_slice = int(a.shape[0] * height)
+        data.append(trim_cast_uint8(a[n_slice], lim))
+
+    data = np.concatenate(data, axis=1)
+    return Image.fromarray(data)
+
+def trim_cast_uint8(array, lim=None):
+    """ Trim an array using lim as limits, transform its range to [0, 255] and
+    cast the array to uint8.
+    """
+    # trim
+    lim = lim if lim is not None else (np.min(array), np.max(array))
+    array = np.where(array <= lim[1], array, lim[1])
+    array = np.where(array >= lim[0], array, lim[0])
+
+    # cast
+    array = np.rint((array - lim[0]) / (lim[1] - lim[0]) * 255).astype(np.uint8)
+    return array
+
+def show_images(mnist_batch):
+    """ Show images from ImageBatch with mnist
+    """
+    imgs = mnist_batch.images[..., 0]
+    _, axes = plt.subplots(1, len(imgs))
+    for i, img in enumerate(imgs):
+        axes[i].imshow(img, cmap=plt.cm.gray)
+
+def load_example(path, radio, fmt='blosc', ix='1.3.6.1.4.1.14519.5.2.1.6279.6001.621916089407825046337959219998'):
+    """ Load example batch from disk
+    """
+    from radio import CTImagesMaskedBatch as CTIMB
+    from radio.batchflow import Pipeline, FilesIndex, Dataset
+    path = os.path.join(path, ix)
+    luna_index = FilesIndex(path=path, dirs=True)
+    lunaset =  Dataset(luna_index, batch_class=CTIMB)
+    load_ppl = (Pipeline()
+                 .load(fmt='blosc', components=['images', 'spacing', 'origin', 'masks']) << lunaset)
+
+    btch = load_ppl.next_batch(1)
+    return btch
 
 def get_nodules_pixel_coords(batch):
     """ get numpy array of nodules-locations and diameter in relative coords
