@@ -35,7 +35,7 @@ with open(MERGED_NODULES_PATH, 'rb') as file:
 # filter nodules by confidences
 filtered = merged[merged.confidence > NODULE_CONFIDENCE_THRESHOLD]
 
-ct_dataset.cv_split(TRAIN_SHARE)
+ct_dataset.split(TRAIN_SHARE)
 
 # read histo of nodules locs
 with open(HISTO_PATH, 'rb') as file:
