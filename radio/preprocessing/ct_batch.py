@@ -629,8 +629,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
 
             elif comp_type == 'spacing':
                 comp_data = np.array(raw_data.GetSpacing())[::-1]
-            else:
+            elif comp_type == 'images':
                 comp_data = sitk.GetArrayFromImage(raw_data)
+            else:
+                continue
 
             result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
