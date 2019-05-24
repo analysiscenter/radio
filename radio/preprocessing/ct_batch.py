@@ -413,8 +413,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 comp_data = np.diag(img_nii.affine)[:-1]
             elif comp_type == 'origin':
                 comp_data = img_nii.affine[:-1, -1]
-            else:
+            elif comp_type == 'images':
                 comp_data = img_nii.get_data()
+            else:
+                raise ValueError('Unknown component: ', comp_data)
 
             result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
@@ -460,8 +462,10 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
                 comp_data = np.asarray([float(dicom_slice.ImagePositionPatient[2]),
                                         float(dicom_slice.ImagePositionPatient[0]),
                                         float(dicom_slice.ImagePositionPatient[1])], dtype=np.float)
-            else:
+            elif comp_type == 'images':
                 comp_data = patient_data
+            else:
+                raise ValueError('Unknown component: ', comp_data)
 
             result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
@@ -632,7 +636,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
             elif comp_type == 'images':
                 comp_data = sitk.GetArrayFromImage(raw_data)
             else:
-                continue
+                raise ValueError('Unknown component: ', comp_data)
 
             result[kwargs['dst'][i]] = {'type': comp_type, 'data': comp_data}
         return result
