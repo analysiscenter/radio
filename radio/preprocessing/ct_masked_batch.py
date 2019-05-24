@@ -167,6 +167,63 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
     components = "images", "masks", "spacing", "origin"
 
+    @action
+    def load(self, fmt='dicom', components=None, src=None, bounds=None, dst=None, **kwargs):
+        """ Load 3d scans data in batch.
+
+        Parameters
+        ----------
+        fmt : str
+            type of data. Can be 'dicom'|'blosc'|'raw'|'nii'|None
+        components : tuple, list, ndarray of strings or str
+            Contains types of batch component(s) that should be loaded, i.e. should be
+            one of `images`, `spacing`, `origin`
+            If None all components, i.e. `images`, `spacing`, `origin` will be loaded.
+        src : str if fmt is not None.
+            if fmt is None src must be ndarray(s) to load components from.
+            Otherwise str should be a filename with extention of a file located
+            in directory indexed in FileIndex (built with dirs=True).
+            In case of FileIndex built for particular files and
+            in case of fmt = 'blosc' or fmt = 'dicom' src will not work yet.
+        bounds : ndarray(n_patients + 1, dtype=np.int) or None
+            Needed iff fmt=None. Bound-floors for items from a `skyscraper`
+            (stacked scans).
+        dst : tuple, list, ndarray of strings or str
+            Contains names of batch component(s) where loaded components will be stored.
+            If None it will be the same as components argument, i.e. loaded data
+            will be saved in batch components named `images`, `spacing`, `origin`.
+            Needed if you want e.g. load both images and masks.
+            In that case you can add src='mask.ext' and specify
+            dst = 'mask'
+
+        Returns
+        -------
+        self
+
+        Examples
+        --------
+        DICOM example
+        initialize batch for storing batch of 3 patients with following IDs:
+
+        >>> index = FilesIndex(path="/some/path/*.dcm", no_ext=True)
+        >>> batch = CTImagesBatch(index)
+        >>> batch.load(fmt='dicom')
+
+        Ndarray example
+
+        images_array stores a set of 3d-scans concatted along 0-zxis, "skyscraper".
+        Say, it is a ndarray with shape (400, 256, 256)
+
+        bounds stores ndarray of last floors for each scan.
+        say, bounds = np.asarray([0, 100, 400])
+
+        >>> batch.load(fmt=None, components='images', src=images_array, bounds=bounds)
+
+        """
+        components = ['images', 'origin', 'spacing'] if components is None else components
+        super().load(self, fmt, components, src, bounds, dst, **kwargs)
+
+
     @staticmethod
     def make_indices(size):
         """ Generate list of batch indices of given `size`.
