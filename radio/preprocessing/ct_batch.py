@@ -369,7 +369,7 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch.load(fmt=None, components='images', src=images_array, bounds=bounds)
 
         """
-        components = self.components if components is None else components
+        components = ['images', 'origin', 'spacing'] if components is None else components
         components = np.asarray(components).reshape(-1)
 
         dst = components if dst is None else dst
