@@ -369,7 +369,11 @@ class CTImagesBatch(Batch):  # pylint: disable=too-many-public-methods
         >>> batch.load(fmt=None, components='images', src=images_array, bounds=bounds)
 
         """
-        components = ['images', 'origin', 'spacing'] if components is None else components
+        if fmt in ['dicom', 'nii', 'raw']:
+            default_comp = ['images', 'origin', 'spacing']
+        else:
+            default_comp = self.components
+        components = default_comp if components is None else components
         components = np.asarray(components).reshape(-1)
 
         dst = components if dst is None else dst
