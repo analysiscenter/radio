@@ -221,7 +221,7 @@ class CTImagesMaskedBatch(CTImagesBatch):
 
         """
         components = ['images', 'origin', 'spacing'] if components is None else components
-        super().load(self, fmt, components, src, bounds, dst, **kwargs)
+        super().load(fmt, components, src, bounds, dst, **kwargs)
 
 
     @staticmethod
